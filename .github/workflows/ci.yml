@@ -31,7 +31,7 @@ jobs:
       - name: Test
         run: dotnet test --verbosity normal
 
-  Build:
+  build:
     runs-on: windows-latest
     defaults:
       run:
