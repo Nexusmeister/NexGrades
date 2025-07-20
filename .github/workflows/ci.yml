@@ -45,4 +45,4 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build SKCErgebnisanzeigeUpdater.csproj --no-restore
+        run: dotnet build NexGrades.App/NexGrades.App.csproj --no-restore
