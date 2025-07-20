@@ -5,6 +5,8 @@ VisualStudioVersion = 17.13.35825.156 d17.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexGrades.App", "NexGrades.App\NexGrades.App.csproj", "{19A638A5-3B76-4F75-A5E5-6C4FD096DC7F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexGrades.Common", "NexGrades.Common\NexGrades.Common.csproj", "{A9DA319D-B323-464A-B531-907CF24592F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{19A638A5-3B76-4F75-A5E5-6C4FD096DC7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19A638A5-3B76-4F75-A5E5-6C4FD096DC7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19A638A5-3B76-4F75-A5E5-6C4FD096DC7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9DA319D-B323-464A-B531-907CF24592F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9DA319D-B323-464A-B531-907CF24592F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9DA319D-B323-464A-B531-907CF24592F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9DA319D-B323-464A-B531-907CF24592F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
