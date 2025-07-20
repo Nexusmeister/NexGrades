@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  # Not on master
+  push:
+    branches-ignore:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+env:
+  DOTNET_VERSION: 9.x.x
+
+jobs:
+  test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ./src/NexGrades
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Test
+        run: dotnet test --verbosity normal
+
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ./src/NexGrades
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build NexGrades.App/NexGrades.App.csproj --no-restore
