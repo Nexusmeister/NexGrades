@@ -4,11 +4,31 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:NexGrades.App.Pages"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="ClassesOverviewPage">
 
-    <Grid>
-        
-    </Grid>
+    <StackPanel Orientation="Vertical">
+        <ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
+            <ui:DropDownButton.Flyout>
+                <ContextMenu>
+                    <MenuItem Header="2024/25" />
+                    <MenuItem Header="2025/26" />
+                    <MenuItem Header="Send" />
+                    <MenuItem Header="Hello" />
+                </ContextMenu>
+            </ui:DropDownButton.Flyout>
+        </ui:DropDownButton>
+        <ui:DataGrid>
+            <ui:GridViewColumn
+                    MinWidth="100"
+                    MaxWidth="200"
+                    Header="Klasse" />
+            <ui:GridViewColumn 
+                    Header="Schuljahr"
+                    MinWidth="100"
+                    MaxWidth="200"/>
+        </ui:DataGrid>
+    </StackPanel>
 </Page>
