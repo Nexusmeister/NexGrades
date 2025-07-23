@@ -1,4 +1,4 @@
-﻿namespace NexGrades.Domain;
+﻿namespace NexGrades.Domain.Models;
 
 public class Class
 {
