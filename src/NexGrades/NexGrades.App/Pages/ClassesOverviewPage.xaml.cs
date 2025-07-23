@@ -12,17 +12,20 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using NexGrades.App.ViewModels;
+using Wpf.Ui.Abstractions.Controls;
+using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Pages
 {
-    /// <summary>
-    /// Interaction logic for ClassesOverviewPage.xaml
-    /// </summary>
-    public partial class ClassesOverviewPage : Page
+    public partial class ClassesOverviewPage : INavigableView<ClassesOverviewViewModel>
     {
-        public ClassesOverviewPage()
+        public ClassesOverviewPage(ClassesOverviewViewModel vm)
         {
             InitializeComponent();
+            DataContext = vm;
         }
+
+        public ClassesOverviewViewModel ViewModel { get; }
     }
 }

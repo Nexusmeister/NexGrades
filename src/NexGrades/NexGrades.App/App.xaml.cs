@@ -56,6 +56,7 @@ public partial class App : Application
                 _ = services.AddSingleton<Pages.HomePage>();
                 _ = services.AddSingleton<ViewModels.HomeViewModel>();
                 _ = services.AddSingleton<Pages.ClassesOverviewPage>();
+                services.AddSingleton<ClassesOverviewViewModel>();
                 //_ = services.AddSingleton<ViewModels.DataViewModel>();
                 _ = services.AddSingleton<StudentPage>();
                 services.AddSingleton<SettingsPage>();
@@ -64,7 +65,7 @@ public partial class App : Application
                 // Configuration
                 //_ = services.Configure<AppConfig>(context.Configuration.GetSection(nameof(AppConfig)));
 
-                services.AddTransient<IUserService, UserService>();
+                services.AddSingleton<IUserService, UserService>();
             }
         )
         .Build();
