@@ -11,6 +11,9 @@
       d:DesignWidth="800"
       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
       Title="Settings Page">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
+    </Page.Resources>
 
     <StackPanel Margin="10">
         <ui:TextBlock Text="Settings" 
@@ -48,7 +51,7 @@
                     Margin="10,5,0,0"
                     VerticalAlignment="Center"
                     Orientation="Horizontal"
-                    Visibility="{Binding ViewModel.OpenedFolderPathVisibility}">
+                    Visibility="{Binding ViewModel.OpenedFolderPathVisibility, Converter={StaticResource booleanToVisibilityConverter}}">
                     <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ViewModel.OpenedFolderPath}" />
                 </StackPanel>
             </StackPanel>

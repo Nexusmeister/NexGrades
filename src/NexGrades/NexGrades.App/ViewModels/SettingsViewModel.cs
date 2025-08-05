@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
-using System.Windows;
 
 namespace NexGrades.App.ViewModels;
 
@@ -10,7 +9,8 @@ public partial class SettingsViewModel : ViewModel
     private bool _isInitialized = false;
 
     [ObservableProperty]
-    private Visibility _openedFolderPathVisibility = Visibility.Collapsed;
+    private bool _openedFolderPathVisibility;
+
     [ObservableProperty]
     private string _openedFolderPath = string.Empty;
 
@@ -25,7 +25,7 @@ public partial class SettingsViewModel : ViewModel
     [RelayCommand]
     public void OnOpenFolder()
     {
-        OpenedFolderPathVisibility = Visibility.Collapsed;
+        OpenedFolderPathVisibility = false;
 
         OpenFolderDialog openFolderDialog = new()
         {
@@ -44,6 +44,6 @@ public partial class SettingsViewModel : ViewModel
         }
 
         OpenedFolderPath = string.Join("\n", openFolderDialog.FolderNames);
-        OpenedFolderPathVisibility = Visibility.Visible;
+        OpenedFolderPathVisibility = true;
     }
 }
