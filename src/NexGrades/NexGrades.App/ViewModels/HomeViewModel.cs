@@ -1,4 +1,4 @@
-﻿using NexGrades.App.Services;
+﻿using NexGrades.Common.Services;
 
 namespace NexGrades.App.ViewModels;
 

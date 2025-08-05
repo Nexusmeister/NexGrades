@@ -10,7 +10,7 @@ using System.IO;
 using System.Runtime.InteropServices.JavaScript;
 using System.Windows;
 using System.Windows.Threading;
-using NexGrades.App.Services;
+using NexGrades.Common.Services;
 using Wpf.Ui;
 using Wpf.Ui.DependencyInjection;
 
@@ -43,7 +43,7 @@ public partial class App : Application
                 _ = services.AddSingleton<IThemeService, ThemeService>();
 
                 // TaskBar manipulation
-                _ = services.AddSingleton<ITaskBarService, TaskBarService>();
+                //_ = services.AddSingleton<ITaskBarService, TaskBarService>();
 
                 // Service containing navigation, same as INavigationWindow... but without window
                 _ = services.AddSingleton<INavigationService, NavigationService>();

@@ -1,4 +1,4 @@
-﻿namespace NexGrades.App.Services;
+﻿namespace NexGrades.Common.Services;
 
 public interface IUserService
 {
