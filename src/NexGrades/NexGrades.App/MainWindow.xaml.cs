@@ -24,7 +24,7 @@ public partial class MainWindow : INavigationWindow
 {
     public ViewModels.MainWindowViewModel ViewModel { get; }
 
-    public MainWindow(ViewModels.MainWindowViewModel viewModel, INavigationService navigationService)
+    public MainWindow(ViewModels.MainWindowViewModel viewModel, INavigationService navigationService, ISnackbarService snackbarService)
     {
         ViewModel = viewModel;
         DataContext = this;
@@ -32,6 +32,8 @@ public partial class MainWindow : INavigationWindow
         SystemThemeWatcher.Watch(this);
 
         InitializeComponent();
+
+        snackbarService.SetSnackbarPresenter(SnackbarPresenter);
 
         navigationService.SetNavigationControl(RootNavigation);
     }
