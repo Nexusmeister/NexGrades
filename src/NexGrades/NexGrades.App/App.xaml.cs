@@ -2,15 +2,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Pages;
+using NexGrades.App.Services;
 using NexGrades.App.ViewModels;
-using System;
-using System.Configuration;
-using System.Data;
+using NexGrades.Common.Services;
 using System.IO;
-using System.Runtime.InteropServices.JavaScript;
 using System.Windows;
 using System.Windows.Threading;
-using NexGrades.Common.Services;
 using Wpf.Ui;
 using Wpf.Ui.DependencyInjection;
 
@@ -66,6 +63,8 @@ public partial class App : Application
                 //_ = services.Configure<AppConfig>(context.Configuration.GetSection(nameof(AppConfig)));
 
                 services.AddSingleton<IUserService, UserService>();
+                services.AddTransient<IFileSystemDialogService, WindowsFileSystemDialogService>();
+                services.AddSingleton<ISnackbarService, SnackbarService>();
             }
         )
         .Build();
