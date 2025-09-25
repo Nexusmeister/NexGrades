@@ -1,6 +1,6 @@
 ﻿namespace NexGrades.Domain.Models;
 
-public class Student
+public record Student
 {
     public required string Name { get; set; }
 
