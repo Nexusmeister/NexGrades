@@ -7,10 +7,11 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
+      d:DataContext="{d:DesignInstance local:ClassesOverviewPage, IsDesignTimeCreatable=False}"
       Title="ClassesOverviewPage">
 
     <StackPanel Orientation="Vertical">
-        <ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
+        <!--<ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
             <ui:DropDownButton.Flyout>
                 <ContextMenu>
                     <MenuItem Header="2024/25" />
@@ -19,16 +20,14 @@
                     <MenuItem Header="Hello" />
                 </ContextMenu>
             </ui:DropDownButton.Flyout>
-        </ui:DropDownButton>
-        <ui:DataGrid>
-            <ui:GridViewColumn
-                    MinWidth="100"
-                    MaxWidth="200"
-                    Header="Klasse" />
-            <ui:GridViewColumn 
-                    Header="Schuljahr"
-                    MinWidth="100"
-                    MaxWidth="200"/>
+        </ui:DropDownButton>-->
+        <ui:DataGrid ItemsSource="{Binding ViewModel.Students}" 
+                     SelectionMode="Single"
+                     AutoGenerateColumns="False">
+            <ui:DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>            
+                <DataGridTextColumn Header="Class" Binding="{Binding Class.Name}"></DataGridTextColumn>
+            </ui:DataGrid.Columns>
         </ui:DataGrid>
     </StackPanel>
 </Page>
