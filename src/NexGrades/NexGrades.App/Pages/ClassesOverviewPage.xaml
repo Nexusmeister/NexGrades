@@ -11,6 +11,16 @@
       Title="ClassesOverviewPage">
 
     <StackPanel Orientation="Vertical">
+        <ui:TextBlock 
+            Text="Students" 
+            Appearance="Secondary"
+            FontTypography="Title" 
+            Margin="5,0,0,0"></ui:TextBlock>
+        <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
+            <ui:Button Margin="0,0,5,0" Content="AddStudent" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddStudentCommand}"/>
+            <ui:Button Margin="0,0,5,0" Content="EditStudent" Icon="{ui:SymbolIcon Edit32}"/>
+            <ui:Button Margin="0,0,5,0" Content="RemoveStudent" Icon="{ui:SymbolIcon SubtractCircle32}"/>
+        </StackPanel>
         <!--<ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
             <ui:DropDownButton.Flyout>
                 <ContextMenu>
