@@ -1,10 +1,15 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using NexGrades.App.Infrastructure;
 using NexGrades.App.Pages;
+using NexGrades.App.Services;
+using NexGrades.App.ViewModels;
+using NexGrades.Common.Services;
+using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using Wpf.Ui;
+using Wpf.Ui.DependencyInjection;
 
 namespace NexGrades.App;
 
@@ -13,16 +18,63 @@ namespace NexGrades.App;
 /// </summary>
 public partial class App : Application
 {
-    private static readonly IHost _host = CreateHost();
+    private static readonly IHost _host = Host.CreateDefaultBuilder()
+        .ConfigureAppConfiguration(c =>
+        {
+            var basePath =
+                Path.GetDirectoryName(AppContext.BaseDirectory)
+                ?? throw new DirectoryNotFoundException(
+                    "Unable to find the base directory of the application."
+                );
+            _ = c.SetBasePath(basePath);
+        })
+        .ConfigureServices(
+            (context, services) =>
+            {
+                _ = services.AddNavigationViewPageProvider();
 
-    private static IHost CreateHost()
+                // App Host
+                _ = services.AddHostedService<ApplicationHostService>();
+
+                // Theme manipulation
+                _ = services.AddSingleton<IThemeService, ThemeService>();
+
+                // TaskBar manipulation
+                //_ = services.AddSingleton<ITaskBarService, TaskBarService>();
+
+                // Service containing navigation, same as INavigationWindow... but without window
+                _ = services.AddSingleton<INavigationService, NavigationService>();
+
+                // Main window with navigation
+                _ = services.AddSingleton<INavigationWindow, MainWindow>();
+                _ = services.AddSingleton<ViewModels.MainWindowViewModel>();
+
+                // Views and ViewModels
+                _ = services.AddSingleton<Pages.HomePage>();
+                _ = services.AddSingleton<ViewModels.HomeViewModel>();
+                _ = services.AddSingleton<Pages.ClassesOverviewPage>();
+                services.AddSingleton<ClassesOverviewViewModel>();
+                //_ = services.AddSingleton<ViewModels.DataViewModel>();
+                _ = services.AddSingleton<StudentPage>();
+                services.AddSingleton<SettingsPage>();
+                _ = services.AddSingleton<ViewModels.SettingsViewModel>();
+
+                // Configuration
+                //_ = services.Configure<AppConfig>(context.Configuration.GetSection(nameof(AppConfig)));
+
+                services.AddSingleton<IUserService, UserService>();
+                services.AddTransient<IFileSystemDialogService, WindowsFileSystemDialogService>();
+                services.AddSingleton<ISnackbarService, SnackbarService>();
+            }
+        )
+        .Build();
+
+    /// <summary>
+    /// Gets services.
+    /// </summary>
+    public static IServiceProvider Services
     {
-        var host = Host.CreateApplicationBuilder();
-        host.Services.AddGradeServices()
-            .AddFrontendServices()
-            .AddDatabase(host.Configuration);
-
-        return host.Build();
+        get { return _host.Services; }
     }
 
     /// <summary>
@@ -30,18 +82,7 @@ public partial class App : Application
     /// </summary>
     private async void OnStartup(object sender, StartupEventArgs e)
     {
-        try
-        {
-            await using var scope = _host.Services.CreateAsyncScope();
-            var mig = scope.ServiceProvider.GetRequiredService<DatabaseMigrationService>();
-            await mig.RunAsync(CancellationToken.None);
-
-            await _host.StartAsync();
-        }
-        catch (Exception e1)
-        {
-            // TODO Some logging
-        }
+        await _host.StartAsync();
     }
 
     /// <summary>
