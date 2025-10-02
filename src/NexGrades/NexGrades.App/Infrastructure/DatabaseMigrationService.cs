@@ -3,15 +3,16 @@ using NexGrades.Data;
 
 namespace NexGrades.App.Infrastructure;
 
-public class DatabaseMigrationService(AppDbContext dbContext)
+public class DatabaseMigrationService(IDbContextFactory<AppDbContext> dbContext)
 {
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
-        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync(cancellationToken);
+        var db = await dbContext.CreateDbContextAsync(cancellationToken);
+        var pendingMigrations = await db.Database.GetPendingMigrationsAsync(cancellationToken);
 
         if (pendingMigrations.Any())
         {
-            await dbContext.Database.MigrateAsync(cancellationToken);
+            await db.Database.MigrateAsync(cancellationToken);
         }
     }
 }
