@@ -4,11 +4,30 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:NexGrades.App.Pages"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
+      d:DataContext="{d:DesignInstance local:StudentPage, IsDesignTimeCreatable=False}"
       Title="StudentPage">
 
-    <Grid>
-        
-    </Grid>
+    <StackPanel Margin="5,0,5, 0" Orientation="Vertical">
+        <ui:TextBlock FontTypography="Title" 
+                      Text="{Binding ViewModel.Title}"
+                      Appearance="Secondary"/>
+        <StackPanel Margin="0,5" Orientation="Horizontal">
+            <ui:Button 
+                Margin="0,0,5,0" 
+                Content="Save" 
+                Icon="{ui:SymbolIcon Save28}"
+                Command="{Binding ViewModel.SaveStudentCommand}"/>
+            <ui:Button 
+                Margin="0,0,5,0" 
+                Content="Cancel" 
+                Icon="{ui:SymbolIcon Prohibited28}"
+                Command="{Binding ViewModel.CancelCommand}"/>
+        </StackPanel>
+
+        <ui:TextBox ClearButtonEnabled="True" PlaceholderText="FirstName" PlaceholderEnabled="True" Text="{Binding ViewModel.Student.FirstName}"></ui:TextBox>
+        <ui:TextBox ClearButtonEnabled="True" Text="{Binding ViewModel.Student.Name}"></ui:TextBox>
+    </StackPanel>
 </Page>
