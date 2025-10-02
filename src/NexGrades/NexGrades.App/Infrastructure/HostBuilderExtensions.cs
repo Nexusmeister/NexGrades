@@ -54,8 +54,7 @@ public static class HostBuilderExtensions
     public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
         var dbCon = GetAppDbConnectionString(configuration);
-        services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(dbCon));
-
+        services.AddDbContextFactory<AppDbContext>(opt => opt.UseSqlite(dbCon));
         services.AddTransient<DatabaseMigrationService>();
 
         return services;
