@@ -5,12 +5,29 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:NexGrades.App.Pages"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
+      xmlns:interactivity="http://schemas.microsoft.com/xaml/behaviors"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance local:ClassesOverviewPage, IsDesignTimeCreatable=False}"
       Title="ClassesOverviewPage">
 
-    <StackPanel Orientation="Vertical">
+    <interactivity:Interaction.Triggers>
+        <interactivity:EventTrigger EventName="Loaded">
+            <interactivity:InvokeCommandAction Command="{Binding ViewModel.LoadStudentsCommand}"/>
+        </interactivity:EventTrigger>
+    </interactivity:Interaction.Triggers>
+
+        <StackPanel Orientation="Vertical">
+        <ui:TextBlock 
+            Text="Students" 
+            Appearance="Secondary"
+            FontTypography="Title" 
+            Margin="5,0,0,0"></ui:TextBlock>
+        <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
+            <ui:Button Margin="0,0,5,0" Content="AddStudent" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddStudentCommand}"/>
+            <ui:Button Margin="0,0,5,0" Content="EditStudent" Icon="{ui:SymbolIcon Edit32}"/>
+            <ui:Button Margin="0,0,5,0" Content="RemoveStudent" Icon="{ui:SymbolIcon SubtractCircle32}"/>
+        </StackPanel>
         <!--<ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
             <ui:DropDownButton.Flyout>
                 <ContextMenu>
@@ -25,7 +42,8 @@
                      SelectionMode="Single"
                      AutoGenerateColumns="False">
             <ui:DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>            
+                <DataGridTextColumn Header="LastName" Binding="{Binding Name}"/>            
+                <DataGridTextColumn Header="FirstName" Binding="{Binding FirstName}"/>            
                 <DataGridTextColumn Header="Class" Binding="{Binding Class.Name}"></DataGridTextColumn>
             </ui:DataGrid.Columns>
         </ui:DataGrid>
