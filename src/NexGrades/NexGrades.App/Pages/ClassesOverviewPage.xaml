@@ -13,20 +13,20 @@
 
     <interactivity:Interaction.Triggers>
         <interactivity:EventTrigger EventName="Loaded">
-            <interactivity:InvokeCommandAction Command="{Binding ViewModel.LoadStudentsCommand}"/>
+            <interactivity:InvokeCommandAction Command="{Binding ViewModel.LoadClassesCommand}"/>
         </interactivity:EventTrigger>
     </interactivity:Interaction.Triggers>
 
         <StackPanel Orientation="Vertical">
         <ui:TextBlock 
-            Text="Students" 
+            Text="Classes" 
             Appearance="Secondary"
             FontTypography="Title" 
             Margin="5,0,0,0"></ui:TextBlock>
         <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
-            <ui:Button Margin="0,0,5,0" Content="AddStudent" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddStudentCommand}"/>
-            <ui:Button Margin="0,0,5,0" Content="EditStudent" Icon="{ui:SymbolIcon Edit32}"/>
-            <ui:Button Margin="0,0,5,0" Content="RemoveStudent" Icon="{ui:SymbolIcon SubtractCircle32}"/>
+            <ui:Button Margin="0,0,5,0" Content="AddClass" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddClassCommand}"/>
+            <ui:Button Margin="0,0,5,0" Content="EditClass" Icon="{ui:SymbolIcon Edit32}"/>
+            <ui:Button Margin="0,0,5,0" Content="RemoveClass" Icon="{ui:SymbolIcon SubtractCircle32}"/>
         </StackPanel>
         <!--<ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
             <ui:DropDownButton.Flyout>
@@ -38,13 +38,11 @@
                 </ContextMenu>
             </ui:DropDownButton.Flyout>
         </ui:DropDownButton>-->
-        <ui:DataGrid ItemsSource="{Binding ViewModel.Students}" 
+        <ui:DataGrid ItemsSource="{Binding ViewModel.Classes}" 
                      SelectionMode="Single"
                      AutoGenerateColumns="False">
             <ui:DataGrid.Columns>
-                <DataGridTextColumn Header="LastName" Binding="{Binding Name}"/>            
-                <DataGridTextColumn Header="FirstName" Binding="{Binding FirstName}"/>            
-                <DataGridTextColumn Header="Class" Binding="{Binding Class.Name}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>            
             </ui:DataGrid.Columns>
         </ui:DataGrid>
     </StackPanel>

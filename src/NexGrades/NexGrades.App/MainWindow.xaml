@@ -58,6 +58,11 @@
                         <ui:SymbolIcon Symbol="Home24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="Students" TargetPageType="{x:Type pages:StudentsOverviewPage}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="HatGraduation24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
                 <ui:NavigationViewItem Content="Classes" TargetPageType="{x:Type pages:ClassesOverviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="HatGraduation24" />

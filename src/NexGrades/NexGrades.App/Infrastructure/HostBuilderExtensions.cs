@@ -66,6 +66,7 @@ public static class HostBuilderExtensions
     {
         return services.AddSingleton<Pages.HomePage>()
             .AddSingleton<Pages.ClassesOverviewPage>()
+            .AddSingleton<Pages.StudentsOverviewPage>()
             .AddTransient<StudentPage>()
             .AddSingleton<SettingsPage>();
     }
@@ -75,6 +76,7 @@ public static class HostBuilderExtensions
         return services
             .AddSingleton<ViewModels.HomeViewModel>()
             .AddSingleton<ClassesOverviewViewModel>()
+            .AddSingleton<StudentsOverviewViewModel>()
             .AddSingleton<ViewModels.SettingsViewModel>()
             .AddTransient<StudentViewModel>();
     }

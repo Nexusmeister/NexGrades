@@ -1,0 +1,52 @@
+﻿<Page x:Class="NexGrades.App.Pages.StudentsOverviewPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:NexGrades.App.Pages"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      d:DataContext="{d:DesignInstance local:StudentsOverviewPage, IsDesignTimeCreatable=False}"
+      Title="StudentsOverviewPage">
+
+    <b:Interaction.Triggers>
+        <b:EventTrigger EventName="Loaded">
+            <b:InvokeCommandAction Command="{Binding ViewModel.LoadStudentsCommand}"/>
+        </b:EventTrigger>
+    </b:Interaction.Triggers>
+
+    <StackPanel Orientation="Vertical">
+        <ui:TextBlock 
+            Text="Students" 
+            Appearance="Secondary"
+            FontTypography="Title" 
+            Margin="5,0,0,0"></ui:TextBlock>
+        <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
+            <ui:Button Margin="0,0,5,0" Content="AddStudent" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddStudentCommand}"/>
+            <ui:Button Margin="0,0,5,0" Content="EditStudent" Icon="{ui:SymbolIcon Edit32}"/>
+            <ui:Button Margin="0,0,5,0" Content="RemoveStudent" Icon="{ui:SymbolIcon SubtractCircle32}"/>
+        </StackPanel>
+        <!--<ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
+        <ui:DropDownButton.Flyout>
+            <ContextMenu>
+                <MenuItem Header="2024/25" />
+                <MenuItem Header="2025/26" />
+                <MenuItem Header="Send" />
+                <MenuItem Header="Hello" />
+            </ContextMenu>
+        </ui:DropDownButton.Flyout>
+    </ui:DropDownButton>-->
+        <ui:DataGrid ItemsSource="{Binding ViewModel.Students}" 
+                     SelectionMode="Single"
+                     AutoGenerateColumns="False">
+            <ui:DataGrid.Columns>
+                <DataGridTextColumn Header="Id" Binding="{Binding Id}"/>
+                <DataGridTextColumn Header="LastName" Binding="{Binding Name}"/>
+                <DataGridTextColumn Header="FirstName" Binding="{Binding FirstName}"/>
+                <DataGridTextColumn Header="Class" Binding="{Binding Class.Name}"></DataGridTextColumn>
+            </ui:DataGrid.Columns>
+        </ui:DataGrid>
+    </StackPanel>
+</Page>

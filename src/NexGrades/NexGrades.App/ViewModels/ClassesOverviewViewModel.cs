@@ -13,25 +13,25 @@ namespace NexGrades.App.ViewModels;
 public partial class ClassesOverviewViewModel(INavigationService navigation, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {
     [ObservableProperty] 
-    private ObservableCollection<Student> _students;
+    private ObservableCollection<Class> _classes;
     
     [RelayCommand]
-    private void OnAddStudent()
+    private void OnAddClass()
     {
-        navigation.NavigateWithHierarchy(typeof(StudentPage));
+        //navigation.NavigateWithHierarchy(typeof(StudentPage));
     }
 
     [RelayCommand]
-    private async Task LoadStudentsAsync(CancellationToken cancellationToken = default)
+    private async Task LoadClassesAsync(CancellationToken cancellationToken = default)
     {
         var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var students = await (from student in dbcontext.Students.AsQueryable()
-                select new Student
-                {
-                    FirstName = student.FirstName,
-                    Name = student.LastName
-                }).ToListAsync(cancellationToken);
+        var classes = await (from schoolClass in dbcontext.Classes.AsQueryable()
+            select new Class
+            {
+                Id = schoolClass.Id,
+                Name = schoolClass.Name
+            }).ToListAsync(cancellationToken);
 
-        Students = students.ToObservableCollection();
+        Classes = classes.ToObservableCollection();
     }
 }
