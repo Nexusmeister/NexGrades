@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NexGrades.App.Pages;
+using NexGrades.App.Pages.Classes;
+using NexGrades.App.Pages.Students;
 using NexGrades.App.Services;
 using NexGrades.App.ViewModels;
 using NexGrades.Common.Services;
@@ -65,8 +67,8 @@ public static class HostBuilderExtensions
     private static IServiceCollection AddViews(this IServiceCollection services)
     {
         return services.AddSingleton<Pages.HomePage>()
-            .AddSingleton<Pages.ClassesOverviewPage>()
-            .AddSingleton<Pages.StudentsOverviewPage>()
+            .AddSingleton<ClassesOverviewPage>()
+            .AddSingleton<StudentsOverviewPage>()
             .AddTransient<StudentPage>()
             .AddSingleton<SettingsPage>();
     }

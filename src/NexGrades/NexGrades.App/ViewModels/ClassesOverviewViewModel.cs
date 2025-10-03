@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
-using NexGrades.App.Pages;
 using NexGrades.Common;
 using NexGrades.Data;
 using NexGrades.Domain.Models;
@@ -13,7 +12,7 @@ namespace NexGrades.App.ViewModels;
 public partial class ClassesOverviewViewModel(INavigationService navigation, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {
     [ObservableProperty] 
-    private ObservableCollection<Class> _classes;
+    private ObservableCollection<Class> _classes = [];
     
     [RelayCommand]
     private void OnAddClass()

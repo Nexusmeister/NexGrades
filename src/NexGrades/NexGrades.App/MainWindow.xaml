@@ -10,6 +10,8 @@
         Width="1100"
         Height="650"
         xmlns:pages="clr-namespace:NexGrades.App.Pages"
+        xmlns:classes="clr-namespace:NexGrades.App.Pages.Classes"
+        xmlns:students="clr-namespace:NexGrades.App.Pages.Students"
         mc:Ignorable="d"
         ExtendsContentIntoTitleBar="True"
         Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -58,12 +60,12 @@
                         <ui:SymbolIcon Symbol="Home24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="Students" TargetPageType="{x:Type pages:StudentsOverviewPage}">
+                <ui:NavigationViewItem Content="Students" TargetPageType="{x:Type students:StudentsOverviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="HatGraduation24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="Classes" TargetPageType="{x:Type pages:ClassesOverviewPage}">
+                <ui:NavigationViewItem Content="Classes" TargetPageType="{x:Type classes:ClassesOverviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="HatGraduation24" />
                     </ui:NavigationViewItem.Icon>

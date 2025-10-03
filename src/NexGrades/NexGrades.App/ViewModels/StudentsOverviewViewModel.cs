@@ -5,6 +5,7 @@ using NexGrades.App.Pages;
 using NexGrades.Data;
 using NexGrades.Domain.Models;
 using System.Collections.ObjectModel;
+using NexGrades.App.Pages.Students;
 using NexGrades.Common;
 using Wpf.Ui;
 
