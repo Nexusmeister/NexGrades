@@ -5,6 +5,7 @@ using NexGrades.Common;
 using NexGrades.Data;
 using NexGrades.Domain.Models;
 using System.Collections.ObjectModel;
+using NexGrades.App.Pages.Classes;
 using Wpf.Ui;
 
 namespace NexGrades.App.ViewModels;
@@ -17,7 +18,7 @@ public partial class ClassesOverviewViewModel(INavigationService navigation, IDb
     [RelayCommand]
     private void OnAddClass()
     {
-        //navigation.NavigateWithHierarchy(typeof(StudentPage));
+        navigation.NavigateWithHierarchy(typeof(ClassPage));
     }
 
     [RelayCommand]
