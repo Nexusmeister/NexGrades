@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using NexGrades.App.Infrastructure;
-using NexGrades.App.Pages;
+using NexGrades.App.Extensions;
+using NexGrades.Data.Services;
 using System.Windows;
 using System.Windows.Threading;
+using NexGrades.App.Features.Home;
+using NexGrades.App.Shell;
 using Wpf.Ui;
 
 namespace NexGrades.App;

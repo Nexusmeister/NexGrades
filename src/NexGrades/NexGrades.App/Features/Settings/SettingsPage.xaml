@@ -1,0 +1,60 @@
+﻿<Page x:Class="NexGrades.App.Features.Settings.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:settings="clr-namespace:NexGrades.App.Features.Settings"
+      d:DataContext="{d:DesignInstance settings:SettingsPage, IsDesignTimeCreatable=False}"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" 
+      d:DesignWidth="800"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+      Title="Settings Page">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
+    </Page.Resources>
+
+    <StackPanel Margin="10">
+        <ui:TextBlock Text="Settings" 
+                      FontTypography="Title"
+                      Margin="0, 10"/>
+        <ui:CardControl Icon="{ui:SymbolIcon Folder24}"
+                        Margin="0,0,0,12">
+            <ui:CardControl.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ui:TextBlock
+                        Grid.Row="0"
+                        FontTypography="Body"
+                        Text="Save location" />
+                    <ui:TextBlock
+                        Grid.Row="1"
+                        FontTypography="Caption"
+                        Text="Select folder to save app data" />
+                </Grid>
+            </ui:CardControl.Header>
+            <StackPanel Orientation="Vertical">
+                <StackPanel.Resources>
+                    <Style TargetType="{x:Type Control}">
+                        <Setter Property="Margin" Value="0,0,20,0"></Setter>
+                    </Style>
+                </StackPanel.Resources>
+                <ui:Button 
+                    HorizontalAlignment="Right"
+                    Command="{Binding ViewModel.OpenFolderCommand}"
+                    Content="Select Folder"/>
+                <StackPanel
+                    Margin="10,5,0,0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Visibility="{Binding ViewModel.OpenedFolderPathVisibility, Converter={StaticResource booleanToVisibilityConverter}}">
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ViewModel.OpenedFolderPath}" />
+                </StackPanel>
+            </StackPanel>
+        </ui:CardControl>
+    </StackPanel>
+</Page>
