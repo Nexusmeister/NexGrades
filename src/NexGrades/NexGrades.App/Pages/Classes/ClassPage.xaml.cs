@@ -15,14 +15,14 @@ using System.Windows.Shapes;
 using NexGrades.App.ViewModels;
 using Wpf.Ui.Abstractions.Controls;
 
-namespace NexGrades.App.Pages
+namespace NexGrades.App.Pages.Classes
 {
     /// <summary>
-    /// Interaction logic for StudentPage.xaml
+    /// Interaction logic for ClassPage.xaml
     /// </summary>
-    public partial class StudentPage : INavigableView<StudentViewModel>
+    public partial class ClassPage : INavigableView<ClassViewModel>
     {
-        public StudentPage(StudentViewModel vm)
+        public ClassPage(ClassViewModel vm)
         {
             ViewModel = vm;
             DataContext = this;
@@ -30,6 +30,6 @@ namespace NexGrades.App.Pages
             InitializeComponent();
         }
 
-        public StudentViewModel ViewModel { get; }
+        public ClassViewModel ViewModel { get; }
     }
 }

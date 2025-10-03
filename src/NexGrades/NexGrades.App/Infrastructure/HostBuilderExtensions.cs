@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NexGrades.App.Pages;
+using NexGrades.App.Pages.Classes;
+using NexGrades.App.Pages.Students;
 using NexGrades.App.Services;
 using NexGrades.App.ViewModels;
 using NexGrades.Common.Services;
@@ -21,7 +23,7 @@ public static class HostBuilderExtensions
             .AddSingleton<IThemeService, ThemeService>()
             .AddSingleton<INavigationService, NavigationService>()
             .AddSingleton<INavigationWindow, MainWindow>()
-            .AddSingleton<ViewModels.MainWindowViewModel>();
+            .AddSingleton<MainWindowViewModel>();
 
         // TaskBar manipulation
         //_ = services.AddSingleton<ITaskBarService, TaskBarService>();
@@ -64,18 +66,22 @@ public static class HostBuilderExtensions
 
     private static IServiceCollection AddViews(this IServiceCollection services)
     {
-        return services.AddSingleton<Pages.HomePage>()
-            .AddSingleton<Pages.ClassesOverviewPage>()
+        return services.AddSingleton<HomePage>()
+            .AddSingleton<ClassesOverviewPage>()
+            .AddSingleton<StudentsOverviewPage>()
             .AddTransient<StudentPage>()
+            .AddTransient<ClassPage>()
             .AddSingleton<SettingsPage>();
     }
 
     private static IServiceCollection AddViewModels(this IServiceCollection services)
     {
         return services
-            .AddSingleton<ViewModels.HomeViewModel>()
+            .AddSingleton<HomeViewModel>()
             .AddSingleton<ClassesOverviewViewModel>()
-            .AddSingleton<ViewModels.SettingsViewModel>()
-            .AddTransient<StudentViewModel>();
+            .AddSingleton<StudentsOverviewViewModel>()
+            .AddSingleton<SettingsViewModel>()
+            .AddTransient<StudentViewModel>()
+            .AddTransient<ClassViewModel>();
     }
 }

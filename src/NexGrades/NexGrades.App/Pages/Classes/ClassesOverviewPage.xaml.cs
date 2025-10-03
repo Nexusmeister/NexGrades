@@ -1,7 +1,7 @@
 ﻿using NexGrades.App.ViewModels;
 using Wpf.Ui.Abstractions.Controls;
 
-namespace NexGrades.App.Pages
+namespace NexGrades.App.Pages.Classes
 {
     public partial class ClassesOverviewPage : INavigableView<ClassesOverviewViewModel>
     {
