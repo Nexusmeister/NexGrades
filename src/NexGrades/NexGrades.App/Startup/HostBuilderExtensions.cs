@@ -8,10 +8,11 @@ using NexGrades.App.Services;
 using NexGrades.App.ViewModels;
 using NexGrades.Common.Services;
 using NexGrades.Data;
+using NexGrades.Data.Services;
 using Wpf.Ui;
 using Wpf.Ui.DependencyInjection;
 
-namespace NexGrades.App.Infrastructure;
+namespace NexGrades.App.Startup;
 
 public static class HostBuilderExtensions
 {

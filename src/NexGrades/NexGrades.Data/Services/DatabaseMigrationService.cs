@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using NexGrades.Data;
 
-namespace NexGrades.App.Infrastructure;
+namespace NexGrades.Data.Services;
 
 public class DatabaseMigrationService(IDbContextFactory<AppDbContext> dbContext)
 {
