@@ -6,9 +6,10 @@
       xmlns:local="clr-namespace:NexGrades.App.Pages"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+      xmlns:students="clr-namespace:NexGrades.App.Pages.Students"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      d:DataContext="{d:DesignInstance local:StudentsOverviewPage, IsDesignTimeCreatable=False}"
+      d:DataContext="{d:DesignInstance students:StudentsOverviewPage, IsDesignTimeCreatable=False}"
       Title="StudentsOverviewPage">
 
     <b:Interaction.Triggers>
