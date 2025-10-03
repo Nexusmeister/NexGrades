@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Wpf.Ui.Abstractions.Controls;
 
-namespace NexGrades.App.ViewModels;
+namespace NexGrades.App.Core;
 
 public abstract partial class ViewModel : ObservableObject, INavigationAware
 {

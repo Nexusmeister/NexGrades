@@ -1,18 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NexGrades.App.Pages;
-using NexGrades.App.Pages.Classes;
-using NexGrades.App.Pages.Students;
-using NexGrades.App.Services;
-using NexGrades.App.ViewModels;
+using NexGrades.App.Features.Classes;
+using NexGrades.App.Features.Home;
+using NexGrades.App.Features.Settings;
+using NexGrades.App.Features.Students;
+using NexGrades.App.Infrastructure;
+using NexGrades.App.Shell;
 using NexGrades.Common.Services;
 using NexGrades.Data;
 using NexGrades.Data.Services;
 using Wpf.Ui;
 using Wpf.Ui.DependencyInjection;
+using SettingsViewModel = NexGrades.App.Features.Settings.SettingsViewModel;
 
-namespace NexGrades.App.Startup;
+namespace NexGrades.App.Extensions;
 
 public static class HostBuilderExtensions
 {

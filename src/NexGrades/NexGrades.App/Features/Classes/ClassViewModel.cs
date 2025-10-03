@@ -1,13 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
+using NexGrades.App.Core;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
 using NexGrades.Domain.Models;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
-namespace NexGrades.App.ViewModels;
+namespace NexGrades.App.Features.Classes;
 
 public partial class ClassViewModel(INavigationService navigation, ISnackbarService snackbar, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {

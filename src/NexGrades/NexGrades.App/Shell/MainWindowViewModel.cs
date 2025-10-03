@@ -1,4 +1,4 @@
-﻿namespace NexGrades.App.ViewModels;
+﻿namespace NexGrades.App.Shell;
 
 public class MainWindowViewModel 
 {

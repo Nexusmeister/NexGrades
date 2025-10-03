@@ -1,7 +1,6 @@
-﻿using NexGrades.App.ViewModels;
-using Wpf.Ui.Abstractions.Controls;
+﻿using Wpf.Ui.Abstractions.Controls;
 
-namespace NexGrades.App.Pages.Students
+namespace NexGrades.App.Features.Students
 {
     /// <summary>
     /// Interaction logic for StudentsOverviewPage.xaml

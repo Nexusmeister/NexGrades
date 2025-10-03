@@ -1,7 +1,7 @@
 ﻿using Microsoft.Win32;
 using NexGrades.Common.Services;
 
-namespace NexGrades.App.Services;
+namespace NexGrades.App.Infrastructure;
 
 public class WindowsFileSystemDialogService : IFileSystemDialogService
 {

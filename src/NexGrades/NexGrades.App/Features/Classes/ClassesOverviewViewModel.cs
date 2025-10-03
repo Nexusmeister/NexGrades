@@ -1,14 +1,14 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
+using NexGrades.App.Core;
 using NexGrades.Common;
 using NexGrades.Data;
 using NexGrades.Domain.Models;
-using System.Collections.ObjectModel;
-using NexGrades.App.Pages.Classes;
 using Wpf.Ui;
 
-namespace NexGrades.App.ViewModels;
+namespace NexGrades.App.Features.Classes;
 
 public partial class ClassesOverviewViewModel(INavigationService navigation, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {

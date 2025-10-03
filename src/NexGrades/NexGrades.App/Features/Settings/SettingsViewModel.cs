@@ -1,10 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using NexGrades.App.Core;
 using NexGrades.Common.Services;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
-namespace NexGrades.App.ViewModels;
+namespace NexGrades.App.Features.Settings;
 
 public partial class SettingsViewModel(IFileSystemDialogService dialogService, ISnackbarService snackbarService) : ViewModel
 {

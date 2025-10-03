@@ -1,7 +1,6 @@
-﻿using NexGrades.App.ViewModels;
-using Wpf.Ui.Abstractions.Controls;
+﻿using Wpf.Ui.Abstractions.Controls;
 
-namespace NexGrades.App.Pages
+namespace NexGrades.App.Features.Settings
 {
     /// <summary>
     /// Interaction logic for SettingsPage.xaml

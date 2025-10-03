@@ -1,6 +1,7 @@
-﻿using NexGrades.Common.Services;
+﻿using NexGrades.App.Core;
+using NexGrades.Common.Services;
 
-namespace NexGrades.App.ViewModels;
+namespace NexGrades.App.Features.Home;
 
 public class HomeViewModel : ViewModel
 {

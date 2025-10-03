@@ -4,16 +4,16 @@ using Wpf.Ui.Abstractions;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
-namespace NexGrades.App;
+namespace NexGrades.App.Shell;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public partial class MainWindow : INavigationWindow
 {
-    public ViewModels.MainWindowViewModel ViewModel { get; }
+    public MainWindowViewModel ViewModel { get; }
 
-    public MainWindow(ViewModels.MainWindowViewModel viewModel, INavigationService navigationService, ISnackbarService snackbarService)
+    public MainWindow(MainWindowViewModel viewModel, INavigationService navigationService, ISnackbarService snackbarService)
     {
         ViewModel = viewModel;
         DataContext = this;
