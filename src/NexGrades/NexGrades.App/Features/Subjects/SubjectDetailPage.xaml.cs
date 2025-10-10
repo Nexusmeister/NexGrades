@@ -1,15 +1,20 @@
 ﻿using System.Windows.Controls;
+using Wpf.Ui.Abstractions.Controls;
 
-namespace NexGrades.App.Features.Subjects
+namespace NexGrades.App.Features.Subjects;
+
+/// <summary>
+/// Interaction logic for SubjectDetailPage.xaml
+/// </summary>
+public partial class SubjectDetailPage : INavigableView<SubjectDetailViewModel>
 {
-    /// <summary>
-    /// Interaction logic for SubjectDetailPage.xaml
-    /// </summary>
-    public partial class SubjectDetailPage : Page
+    public SubjectDetailPage(SubjectDetailViewModel vm)
     {
-        public SubjectDetailPage()
-        {
-            InitializeComponent();
-        }
+        ViewModel = vm;
+        DataContext = this;
+
+        InitializeComponent();
     }
+
+    public SubjectDetailViewModel ViewModel { get; }
 }

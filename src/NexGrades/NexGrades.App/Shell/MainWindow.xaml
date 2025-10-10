@@ -8,6 +8,7 @@
         xmlns:pages="clr-namespace:NexGrades.App.Features.Home"
         xmlns:settings="clr-namespace:NexGrades.App.Features.Settings"
         xmlns:students="clr-namespace:NexGrades.App.Features.Students"
+        xmlns:subjects="clr-namespace:NexGrades.App.Features.Subjects"
         xmlns:shell="clr-namespace:NexGrades.App.Shell"
         d:DataContext="{d:DesignInstance shell:MainWindow, IsDesignTimeCreatable=True}"
         Width="1100"
@@ -68,6 +69,11 @@
                 <ui:NavigationViewItem Content="Classes" TargetPageType="{x:Type classes:ClassesOverviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="HatGraduation24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="Subjects" TargetPageType="{x:Type subjects:SubjectsOverviewPage}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Glasses24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
