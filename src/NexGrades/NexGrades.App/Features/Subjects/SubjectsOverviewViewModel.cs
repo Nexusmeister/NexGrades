@@ -9,7 +9,7 @@ namespace NexGrades.App.Features.Subjects;
 public partial class SubjectsOverviewViewModel(INavigationService navigation) : ViewModel
 {
     [RelayCommand]
-    private void OnAddSubject()
+    public void AddSubject()
     {
         navigation.NavigateWithHierarchy(typeof(SubjectDetailPage));
     }

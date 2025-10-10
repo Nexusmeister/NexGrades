@@ -1,8 +1,20 @@
-﻿using NexGrades.App.Core;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using NexGrades.App.Core;
+using NexGrades.Domain.Models;
+using Wpf.Ui;
 
 namespace NexGrades.App.Features.Subjects;
 
-public partial class SubjectDetailViewModel : ViewModel
+public partial class SubjectDetailViewModel(INavigationService navigation) : ViewModel
 {
-    
+    [ObservableProperty] private string _title = "AddSubject";
+    [ObservableProperty] private Subject _subject = new();
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        navigation.GoBack();
+    }
 }
