@@ -5,10 +5,17 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:subjects="clr-namespace:NexGrades.App.Features.Subjects"
+      xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance subjects:SubjectsOverviewPage, IsDesignTimeCreatable=False}"
       Title="SubjectsOverviewPage">
+
+    <b:Interaction.Triggers>
+        <b:EventTrigger EventName="Loaded">
+            <b:InvokeCommandAction Command="{Binding ViewModel.LoadSubjectsCommand}"/>
+        </b:EventTrigger>
+    </b:Interaction.Triggers>
 
     <StackPanel Orientation="Vertical">
         <ui:TextBlock 
@@ -21,5 +28,14 @@
             <ui:Button Margin="0,0,5,0" Content="EditSubject" Icon="{ui:SymbolIcon Edit32}"/>
             <ui:Button Margin="0,0,5,0" Content="RemoveSubject" Icon="{ui:SymbolIcon SubtractCircle32}"/>
         </StackPanel>
+
+        <ui:DataGrid ItemsSource="{Binding ViewModel.Subjects}" 
+                     SelectionMode="Single"
+                     AutoGenerateColumns="False">
+            <ui:DataGrid.Columns>
+                <DataGridTextColumn Header="Id" Binding="{Binding Id}"/>
+                <DataGridTextColumn Header="LastName" Binding="{Binding Name}"/>
+            </ui:DataGrid.Columns>
+        </ui:DataGrid>
     </StackPanel>
 </Page>
