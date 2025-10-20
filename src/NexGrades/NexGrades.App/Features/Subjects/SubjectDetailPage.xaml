@@ -19,6 +19,7 @@
                 Margin="0,0,5,0" 
                 Content="Save" 
                 Icon="{ui:SymbolIcon Save28}"
+                Command="{Binding ViewModel.SaveCommand}"
                 />
             <ui:Button 
                 Margin="0,0,5,0" 
