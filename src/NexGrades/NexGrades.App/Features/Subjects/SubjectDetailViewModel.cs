@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using NexGrades.App.Core;
 using NexGrades.Domain.Models;
 using Wpf.Ui;
@@ -16,5 +15,11 @@ public partial class SubjectDetailViewModel(INavigationService navigation) : Vie
     private void Cancel()
     {
         navigation.GoBack();
+    }
+
+    [RelayCommand]
+    private async Task SaveAsync()
+    {
+
     }
 }
