@@ -76,7 +76,7 @@ namespace NexGrades.Data.Migrations
                     b.HasKey("Id")
                         .HasName("PK_Subjects");
 
-                    b.ToTable("SubjectEntity");
+                    b.ToTable("Subjects");
                 });
 #pragma warning restore 612, 618
         }

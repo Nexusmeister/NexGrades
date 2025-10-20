@@ -10,7 +10,7 @@ using NexGrades.Data;
 namespace NexGrades.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251020212137_AddSubjects")]
+    [Migration("20251020212612_AddSubjects")]
     partial class AddSubjects
     {
         /// <inheritdoc />
@@ -79,7 +79,7 @@ namespace NexGrades.Data.Migrations
                     b.HasKey("Id")
                         .HasName("PK_Subjects");
 
-                    b.ToTable("SubjectEntity");
+                    b.ToTable("Subjects");
                 });
 #pragma warning restore 612, 618
         }
