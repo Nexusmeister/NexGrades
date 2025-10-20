@@ -1,8 +1,12 @@
-﻿namespace NexGrades.Domain.Models;
+﻿using System.Drawing;
+
+namespace NexGrades.Domain.Models;
 
 public class Subject
 {
-    public required string Name { get; set; }
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Color Color { get; set; }
 
     public override bool Equals(object? obj)
     {

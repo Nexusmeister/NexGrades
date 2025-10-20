@@ -5,6 +5,7 @@ using NexGrades.App.Features.Classes;
 using NexGrades.App.Features.Home;
 using NexGrades.App.Features.Settings;
 using NexGrades.App.Features.Students;
+using NexGrades.App.Features.Subjects;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Shell;
 using NexGrades.Common.Services;
@@ -13,6 +14,7 @@ using NexGrades.Data.Services;
 using Wpf.Ui;
 using Wpf.Ui.DependencyInjection;
 using SettingsViewModel = NexGrades.App.Features.Settings.SettingsViewModel;
+using StudentsOverviewViewModel = NexGrades.App.Features.Students.StudentsOverviewViewModel;
 
 namespace NexGrades.App.Extensions;
 
@@ -72,7 +74,9 @@ public static class HostBuilderExtensions
         return services.AddSingleton<HomePage>()
             .AddSingleton<ClassesOverviewPage>()
             .AddSingleton<StudentsOverviewPage>()
+            .AddSingleton<SubjectsOverviewPage>()
             .AddTransient<StudentPage>()
+            .AddTransient<SubjectDetailPage>()
             .AddTransient<ClassPage>()
             .AddSingleton<SettingsPage>();
     }
@@ -83,7 +87,9 @@ public static class HostBuilderExtensions
             .AddSingleton<HomeViewModel>()
             .AddSingleton<ClassesOverviewViewModel>()
             .AddSingleton<StudentsOverviewViewModel>()
+            .AddSingleton<SubjectsOverviewViewModel>()
             .AddSingleton<SettingsViewModel>()
+            .AddSingleton<SubjectDetailViewModel>()
             .AddTransient<StudentViewModel>()
             .AddTransient<ClassViewModel>();
     }
