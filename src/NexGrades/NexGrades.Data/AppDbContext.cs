@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<StudentEntity> Students { get; set; }
     public DbSet<ClassEntity> Classes { get; set; }
+    public DbSet<SubjectEntity> Subjects { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
