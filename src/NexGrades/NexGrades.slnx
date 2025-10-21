@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Aspire/">
+    <Project Path="Aspire/NexGrades.AppHost/NexGrades.AppHost.csproj" />
+    <Project Path="Aspire/NexGrades.ServiceDefaults/NexGrades.ServiceDefaults.csproj" />
+  </Folder>
+  <Project Path="NexGrades.App/NexGrades.App.csproj" />
+  <Project Path="NexGrades.Common/NexGrades.Common.csproj" />
+  <Project Path="NexGrades.Data/NexGrades.Data.csproj" />
+  <Project Path="NexGrades.Domain/NexGrades.Domain.csproj" />
+</Solution>
