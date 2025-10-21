@@ -30,6 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Aspire\NexGrades.ServiceDefaults\NexGrades.ServiceDefaults.csproj" />
     <ProjectReference Include="..\NexGrades.Common\NexGrades.Common.csproj" />
     <ProjectReference Include="..\NexGrades.Data\NexGrades.Data.csproj" />
     <ProjectReference Include="..\NexGrades.Domain\NexGrades.Domain.csproj" />

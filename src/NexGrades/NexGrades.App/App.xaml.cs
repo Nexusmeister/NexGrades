@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Threading;
 using NexGrades.App.Features.Home;
 using NexGrades.App.Shell;
+using NexGrades.Data;
 using Wpf.Ui;
 
 namespace NexGrades.App;
@@ -20,9 +21,10 @@ public partial class App : Application
     private static IHost CreateHost()
     {
         var host = Host.CreateApplicationBuilder();
+
         host.Services.AddGradeServices()
-            .AddFrontendServices()
-            .AddDatabase(host.Configuration);
+            .AddFrontendServices();
+        host.AddDatabase();
 
         return host.Build();
     }
