@@ -1,6 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var sqlite = builder.AddSqlite("grades-db", databaseFileName: "app.db")
+var sqlite = builder.AddSqlite("sqlite", databaseFileName: "grades.db")
     .WithSqliteWeb();
 
 builder.AddProject<Projects.NexGrades_App>("wpf-app")

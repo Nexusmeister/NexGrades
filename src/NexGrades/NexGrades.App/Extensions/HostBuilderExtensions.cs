@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using NexGrades.App.Features.Classes;
 using NexGrades.App.Features.Home;
 using NexGrades.App.Features.Settings;
@@ -58,16 +59,20 @@ public static class HostBuilderExtensions
 
     }
 
-    public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
+    public static HostApplicationBuilder AddDatabase(this HostApplicationBuilder builder)
     {
-        var dbCon = GetAppDbConnectionString(configuration);
-        services.AddDbContextFactory<AppDbContext>(opt => opt.UseSqlite(dbCon));
-        services.AddTransient<DatabaseMigrationService>();
+        var dbCon = GetAppDbConnectionString(builder.Configuration, builder.Environment);
+        builder.Services.AddPooledDbContextFactory<AppDbContext>(opt => opt.UseSqlite(dbCon));
+        builder.Services.AddTransient<DatabaseMigrationService>();
 
-        return services;
+        return builder;
     }
 
-    private static string GetAppDbConnectionString(IConfiguration configuration) => configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("DbConnection must not be null");
+    private static string GetAppDbConnectionString(IConfiguration configuration, IHostEnvironment env)
+    {
+        var dbConnection = env.IsDevelopment() ? configuration.GetConnectionString("sqlite") : configuration.GetValue<string>("sqlite");
+        return dbConnection ?? throw new InvalidOperationException("DbConnection must not be null");
+    }
 
     private static IServiceCollection AddViews(this IServiceCollection services)
     {
