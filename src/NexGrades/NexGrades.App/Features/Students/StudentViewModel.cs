@@ -14,6 +14,19 @@ public partial class StudentViewModel(INavigationService navigation, ISnackbarSe
 {
     [ObservableProperty] private Student _student = new();
     [ObservableProperty] private string _title = "AddStudent";
+    [ObservableProperty] private IReadOnlyList<Class> _classes = [];
+
+    [RelayCommand]
+    private async Task InitAsync(CancellationToken cancellationToken = default)
+    {
+        var db = await dbContext.CreateDbContextAsync(cancellationToken);
+        var classes = await db.Classes.AsNoTracking().ToListAsync(cancellationToken);
+        Classes = classes.Select(x => new Class
+        {
+            Id = x.Id,
+            Name = x.Name
+        }).ToList();
+    }
 
     [RelayCommand]
     private async Task SaveStudent(CancellationToken cancellationToken = default)
@@ -23,7 +36,8 @@ public partial class StudentViewModel(INavigationService navigation, ISnackbarSe
         var studentToAdd = new StudentEntity
         {
             FirstName = Student.FirstName,
-            LastName = Student.Name
+            LastName = Student.Name,
+            ClassId = Student.Class.Id
         };
 
         students.Add(studentToAdd);
