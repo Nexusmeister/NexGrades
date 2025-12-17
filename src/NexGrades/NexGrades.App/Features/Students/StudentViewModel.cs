@@ -1,18 +1,22 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using NexGrades.App.Core;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
 using NexGrades.Domain.Models;
+using System.Collections.ObjectModel;
+using NexGrades.Common;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Students;
 
-public partial class StudentViewModel(INavigationService navigation, ISnackbarService snackbar, IDbContextFactory<AppDbContext> dbContext) : ViewModel
+public partial class StudentViewModel(INavigationService navigation, ISnackbarService snackbar, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {
     [ObservableProperty] private Student _student = new();
+    [ObservableProperty] private ObservableCollection<Class> _classes;
     [ObservableProperty] private string _title = "AddStudent";
     [ObservableProperty] private IReadOnlyList<Class> _classes = [];
 
@@ -31,7 +35,7 @@ public partial class StudentViewModel(INavigationService navigation, ISnackbarSe
     [RelayCommand]
     private async Task SaveStudent(CancellationToken cancellationToken = default)
     {
-        var db = await dbContext.CreateDbContextAsync(cancellationToken);
+        var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var students = db.Students;
         var studentToAdd = new StudentEntity
         {
@@ -58,5 +62,20 @@ public partial class StudentViewModel(INavigationService navigation, ISnackbarSe
     private void Cancel()
     {
         navigation.GoBack();
+    }
+
+    [RelayCommand]
+    private async Task LoadClasses(CancellationToken cancellationToken = default)
+    {
+        var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var classes = await (from @class in dbContext.Classes
+            orderby @class.Name
+            select new Class
+            {
+                Id = @class.Id,
+                Name = @class.Name
+            }).ToListAsync(cancellationToken);
+
+        Classes = classes.ToObservableCollection();
     }
 }
