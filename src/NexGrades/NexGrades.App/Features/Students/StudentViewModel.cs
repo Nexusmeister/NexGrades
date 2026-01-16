@@ -16,20 +16,19 @@ namespace NexGrades.App.Features.Students;
 public partial class StudentViewModel(INavigationService navigation, ISnackbarService snackbar, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {
     [ObservableProperty] private Student _student = new();
-    [ObservableProperty] private ObservableCollection<Class> _classes;
+    [ObservableProperty] private ObservableCollection<Class> _classes = [];
     [ObservableProperty] private string _title = "AddStudent";
-    [ObservableProperty] private IReadOnlyList<Class> _classes = [];
 
     [RelayCommand]
     private async Task InitAsync(CancellationToken cancellationToken = default)
     {
-        var db = await dbContext.CreateDbContextAsync(cancellationToken);
+        var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var classes = await db.Classes.AsNoTracking().ToListAsync(cancellationToken);
         Classes = classes.Select(x => new Class
         {
             Id = x.Id,
             Name = x.Name
-        }).ToList();
+        }).ToList().ToObservableCollection();
     }
 
     [RelayCommand]
