@@ -3,6 +3,9 @@
     <Project Path="Aspire/NexGrades.AppHost/NexGrades.AppHost.csproj" />
     <Project Path="Aspire/NexGrades.ServiceDefaults/NexGrades.ServiceDefaults.csproj" />
   </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Packages.props" />
+  </Folder>
   <Project Path="NexGrades.App/NexGrades.App.csproj" />
   <Project Path="NexGrades.Common/NexGrades.Common.csproj" />
   <Project Path="NexGrades.Data/NexGrades.Data.csproj" />
