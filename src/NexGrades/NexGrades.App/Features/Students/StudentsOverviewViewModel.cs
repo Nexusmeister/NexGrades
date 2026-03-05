@@ -26,11 +26,17 @@ public partial class StudentsOverviewViewModel(INavigationService navigation, ID
     {
         var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var students = await (from student in dbcontext.Students.AsQueryable()
+                              join classInstance in dbcontext.Classes.AsQueryable() on student.ClassId equals classInstance.Id
             select new Student
             {
                 Id = student.Id,
                 FirstName = student.FirstName,
-                Name = student.LastName
+                Name = student.LastName,
+                Class = new Class
+                {
+                    Id = classInstance.Id,
+                    Name = classInstance.Name
+                }
             }).ToListAsync(cancellationToken);
 
         Students = students.ToObservableCollection();
