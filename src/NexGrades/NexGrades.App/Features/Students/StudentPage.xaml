@@ -5,10 +5,17 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:students="clr-namespace:NexGrades.App.Features.Students"
+      xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance students:StudentPage, IsDesignTimeCreatable=False}"
       Title="StudentPage">
+
+    <b:Interaction.Triggers>
+        <b:EventTrigger EventName="Loaded">
+            <b:InvokeCommandAction Command="{Binding ViewModel.InitCommand}"/>
+        </b:EventTrigger>
+    </b:Interaction.Triggers>
 
     <StackPanel Margin="5,0,5, 0" Orientation="Vertical">
         <ui:TextBlock FontTypography="Title" 
@@ -29,5 +36,6 @@
 
         <ui:TextBox ClearButtonEnabled="True" PlaceholderText="FirstName" PlaceholderEnabled="True" Text="{Binding ViewModel.Student.FirstName}"></ui:TextBox>
         <ui:TextBox ClearButtonEnabled="True" Text="{Binding ViewModel.Student.Name}"></ui:TextBox>
+        <ComboBox ItemsSource="{Binding ViewModel.Classes}" DisplayMemberPath="Name" SelectedValue="{Binding ViewModel.Student.Class}"></ComboBox>
     </StackPanel>
 </Page>

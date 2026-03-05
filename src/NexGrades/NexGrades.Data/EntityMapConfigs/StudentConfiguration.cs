@@ -26,5 +26,14 @@ public class StudentConfiguration : IEntityTypeConfiguration<StudentEntity>
             .IsRequired()
             .HasMaxLength(50)
             .IsUnicode();
+
+        builder.Property(p => p.ClassId)
+            .IsRequired()
+            .HasColumnName("ClassId");
+
+        builder.HasOne<ClassEntity>()
+            .WithMany()
+            .HasForeignKey(p => p.ClassId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
