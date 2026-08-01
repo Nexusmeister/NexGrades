@@ -10,4 +10,5 @@
   <Project Path="NexGrades.Common/NexGrades.Common.csproj" />
   <Project Path="NexGrades.Data/NexGrades.Data.csproj" />
   <Project Path="NexGrades.Domain/NexGrades.Domain.csproj" />
+  <Project Path="NexGrades.Tests/NexGrades.Tests.csproj" />
 </Solution>
