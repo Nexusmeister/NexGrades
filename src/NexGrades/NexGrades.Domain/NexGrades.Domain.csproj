@@ -1,1 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk"/>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NexGrades.Data\NexGrades.Data.csproj" />
+  </ItemGroup>
+
+</Project>
