@@ -1,39 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.EntityMapConfigs;
 
-public class StudentConfiguration : IEntityTypeConfiguration<StudentEntity>
+public class StudentConfiguration : IEntityTypeConfiguration<Student>
 {
-    public void Configure(EntityTypeBuilder<StudentEntity> builder)
+    public void Configure(EntityTypeBuilder<Student> builder)
     {
         builder.ToTable("Students");
 
-        builder.HasKey(k => k.Id)
-            .HasName("PK_Students");
-
-        builder.Property(p => p.Id)
-            .HasColumnName("Id")
-            .ValueGeneratedOnAdd();
-
-        builder.Property(p => p.FirstName)
-            .IsRequired()
-            .HasMaxLength(50)
-            .IsUnicode();
-
-        builder.Property(p => p.LastName)
-            .IsRequired()
-            .HasMaxLength(50)
-            .IsUnicode();
-
-        builder.Property(p => p.ClassId)
-            .IsRequired()
-            .HasColumnName("ClassId");
-
-        builder.HasOne<ClassEntity>()
-            .WithMany()
-            .HasForeignKey(p => p.ClassId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(e => e.FirstName).IsRequired().HasMaxLength(50);
+        builder.Property(e => e.LastName).IsRequired().HasMaxLength(50);
+        builder.Property(e => e.Status).HasConversion<string>();
     }
 }
