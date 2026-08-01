@@ -35,6 +35,7 @@
             <ui:DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding Id}"/>
                 <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
+                <DataGridTextColumn Header="Code" Binding="{Binding ShortCode}"/>
             </ui:DataGrid.Columns>
         </ui:DataGrid>
     </StackPanel>

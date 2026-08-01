@@ -34,8 +34,8 @@
                 Command="{Binding ViewModel.CancelCommand}"/>
         </StackPanel>
 
-        <ui:TextBox ClearButtonEnabled="True" PlaceholderText="FirstName" PlaceholderEnabled="True" Text="{Binding ViewModel.Student.FirstName}"></ui:TextBox>
-        <ui:TextBox ClearButtonEnabled="True" Text="{Binding ViewModel.Student.Name}"></ui:TextBox>
-        <ComboBox ItemsSource="{Binding ViewModel.Classes}" DisplayMemberPath="Name" SelectedValue="{Binding ViewModel.Student.Class}"></ComboBox>
+        <ui:TextBox ClearButtonEnabled="True" PlaceholderText="FirstName" PlaceholderEnabled="True" Text="{Binding ViewModel.FirstName}"></ui:TextBox>
+        <ui:TextBox ClearButtonEnabled="True" PlaceholderText="LastName" PlaceholderEnabled="True" Text="{Binding ViewModel.LastName}"></ui:TextBox>
+        <ComboBox ItemsSource="{Binding ViewModel.Classes}" DisplayMemberPath="Name" SelectedItem="{Binding ViewModel.SelectedClass}"></ComboBox>
     </StackPanel>
 </Page>

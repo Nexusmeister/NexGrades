@@ -1,11 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
-using NexGrades.Domain.Models;
-using System.Threading;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
@@ -14,7 +12,8 @@ namespace NexGrades.App.Features.Subjects;
 public partial class SubjectDetailViewModel(INavigationService navigation, ISnackbarService snackbar, IDbContextFactory<AppDbContext> dbContext) : ViewModel
 {
     [ObservableProperty] private string _title = "AddSubject";
-    [ObservableProperty] private Subject _subject = new();
+    [ObservableProperty] private string _name = string.Empty;
+    [ObservableProperty] private string _shortCode = string.Empty;
 
     [RelayCommand]
     private void Cancel()
@@ -26,13 +25,13 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
     private async Task SaveAsync(CancellationToken cancellationToken = default)
     {
         var db = await dbContext.CreateDbContextAsync(cancellationToken);
-        var subjects = db.Subjects;
-        var subjectToAdd = new SubjectEntity()
+        var subjectToAdd = new Subject
         {
-            Name = Subject.Name
+            Name = Name,
+            ShortCode = ShortCode,
         };
 
-        subjects.Add(subjectToAdd);
+        db.Subjects.Add(subjectToAdd);
         var saved = await db.SaveChangesAsync(cancellationToken);
 
         if (saved != 0)

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,6 +12,9 @@ using NexGrades.App.Shell;
 using NexGrades.Common.Services;
 using NexGrades.Data;
 using NexGrades.Data.Services;
+using NexGrades.Domain.Auditing;
+using NexGrades.Domain.Services;
+using NexGrades.Domain.Time;
 using Wpf.Ui;
 using Wpf.Ui.DependencyInjection;
 using SettingsViewModel = NexGrades.App.Features.Settings.SettingsViewModel;
@@ -34,12 +37,20 @@ public static class HostBuilderExtensions
         // TaskBar manipulation
         //_ = services.AddSingleton<ITaskBarService, TaskBarService>();
 
-        // Service containing navigation, same as INavigationWindow... but without window
-
-
-        // Main window with navigation
-
-
+        // Domain: time, closed-year auditing, and the business services ported from the GradeTracker
+        // architecture spike. IClock/IUnlockReasonStore are singletons (see their remarks); the interceptor
+        // is also a singleton — EF Core shares one interceptor instance across every DbContext it creates and
+        // the interceptor itself is stateless per-context (state lives in a ConditionalWeakTable keyed by
+        // DbContext instance).
+        services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<IUnlockReasonStore, UnlockReasonStore>();
+        services.AddSingleton<ClosedYearAuditInterceptor>();
+        services.AddTransient<EnrollmentService>();
+        services.AddTransient<GradeService>();
+        services.AddTransient<AverageService>();
+        services.AddTransient<RolloverService>();
+        services.AddTransient<YearCloseService>();
+        services.AddTransient<UnlockService>();
 
         // Configuration
         //_ = services.Configure<AppConfig>(context.Configuration.GetSection(nameof(AppConfig)));
@@ -62,7 +73,10 @@ public static class HostBuilderExtensions
     public static HostApplicationBuilder AddDatabase(this HostApplicationBuilder builder)
     {
         var dbCon = GetAppDbConnectionString(builder.Configuration, builder.Environment);
-        builder.Services.AddPooledDbContextFactory<AppDbContext>(opt => opt.UseSqlite(dbCon));
+        builder.Services.AddPooledDbContextFactory<AppDbContext>((serviceProvider, options) =>
+            options
+                .UseSqlite(dbCon)
+                .AddInterceptors(serviceProvider.GetRequiredService<ClosedYearAuditInterceptor>()));
         builder.Services.AddTransient<DatabaseMigrationService>();
 
         return builder;

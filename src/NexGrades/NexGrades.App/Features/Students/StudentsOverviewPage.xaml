@@ -43,9 +43,9 @@
                      AutoGenerateColumns="False">
             <ui:DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding Id}"/>
-                <DataGridTextColumn Header="LastName" Binding="{Binding Name}"/>
+                <DataGridTextColumn Header="LastName" Binding="{Binding LastName}"/>
                 <DataGridTextColumn Header="FirstName" Binding="{Binding FirstName}"/>
-                <DataGridTextColumn Header="Class" Binding="{Binding Class.Name}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Class" Binding="{Binding ClassName}"></DataGridTextColumn>
             </ui:DataGrid.Columns>
         </ui:DataGrid>
     </StackPanel>

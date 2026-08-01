@@ -28,6 +28,7 @@
                 Command="{Binding ViewModel.CancelCommand}"/>
         </StackPanel>
 
-        <ui:TextBox ClearButtonEnabled="True" PlaceholderText="Subject name" PlaceholderEnabled="True" Text="{Binding ViewModel.Subject.Name}"></ui:TextBox>
+        <ui:TextBox ClearButtonEnabled="True" PlaceholderText="Subject name" PlaceholderEnabled="True" Text="{Binding ViewModel.Name}"></ui:TextBox>
+        <ui:TextBox Margin="0,8,0,0" ClearButtonEnabled="True" PlaceholderText="Short code (e.g. MA)" PlaceholderEnabled="True" Text="{Binding ViewModel.ShortCode}"></ui:TextBox>
     </StackPanel>
 </Page>

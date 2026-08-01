@@ -42,7 +42,9 @@
                      SelectionMode="Single"
                      AutoGenerateColumns="False">
             <ui:DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>            
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
+                <DataGridTextColumn Header="Cohort" Binding="{Binding CohortLabel}"/>
+                <DataGridTextColumn Header="Students" Binding="{Binding StudentCount}"/>
             </ui:DataGrid.Columns>
         </ui:DataGrid>
     </StackPanel>
