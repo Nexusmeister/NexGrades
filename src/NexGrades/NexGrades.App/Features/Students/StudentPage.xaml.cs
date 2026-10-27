@@ -1,6 +1,7 @@
 ﻿using Wpf.Ui.Abstractions.Controls;
 
 namespace NexGrades.App.Features.Students;
+
 /// <summary>
 /// Interaction logic for StudentPage.xaml
 /// </summary>

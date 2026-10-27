@@ -1,6 +1,7 @@
 ﻿using Wpf.Ui.Abstractions.Controls;
 
 namespace NexGrades.App.Features.Settings;
+
 /// <summary>
 /// Interaction logic for SettingsPage.xaml
 /// </summary>

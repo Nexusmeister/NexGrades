@@ -1,6 +1,7 @@
 ﻿using Wpf.Ui.Abstractions.Controls;
 
 namespace NexGrades.App.Features.Classes;
+
 /// <summary>
 /// Interaction logic for ClassPage.xaml
 /// </summary>

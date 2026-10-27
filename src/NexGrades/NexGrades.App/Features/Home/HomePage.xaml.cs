@@ -1,6 +1,7 @@
 ﻿using System.Windows.Controls;
 
 namespace NexGrades.App.Features.Home;
+
 /// <summary>
 /// Interaction logic for HomePage.xaml
 /// </summary>
