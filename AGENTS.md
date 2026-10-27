@@ -49,7 +49,10 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
 
 - In `Development`, the App reads its connection string from `ConnectionStrings:sqlite`, which the Aspire
   AppHost supplies. Running `NexGrades.App` on its own in Development needs that value from user secrets.
-  Outside Development it reads the `sqlite` key from `appsettings.json`.
+  Outside Development the database defaults to `%LOCALAPPDATA%\NexGrades\app.db` (see `IAppDataPaths`;
+  other per-user data such as logs belongs in the same folder). A `sqlite` key in configuration still
+  overrides that. On startup a legacy `app.db` next to the executable or in the working directory is moved
+  there once (`LegacyDatabaseRelocator`).
 - Pending migrations are applied at startup by `DatabaseMigrationService`, which also bootstraps an Active
   school year if none exists.
 - The App is a GUI and cannot be meaningfully exercised headless. Verify changes with a build of
