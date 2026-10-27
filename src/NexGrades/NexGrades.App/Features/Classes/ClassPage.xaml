@@ -10,6 +10,10 @@
       d:DataContext="{d:DesignInstance classes:ClassPage, IsDesignTimeCreatable=False}"
       Title="ClassPage">
 
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Page.Resources>
+
     <StackPanel Margin="5,0,5, 0" Orientation="Vertical">
         <ui:TextBlock FontTypography="Title" 
                       Text="{Binding ViewModel.Title}"
@@ -28,5 +32,32 @@
         </StackPanel>
 
         <ui:TextBox ClearButtonEnabled="True" Text="{Binding ViewModel.Name}" PlaceholderText="ClassName"></ui:TextBox>
+
+        <StackPanel Margin="0,16,0,0"
+                    Visibility="{Binding ViewModel.IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <ui:TextBlock FontTypography="Subtitle" Text="Students" Margin="0,0,0,8"/>
+            <ui:TextBlock Text="No students are enrolled in this class."
+                          Appearance="Secondary"
+                          Visibility="{Binding ViewModel.HasNoStudents, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <ListView ItemsSource="{Binding ViewModel.ActiveStudents}" MaxHeight="360">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Name" Width="260" DisplayMemberBinding="{Binding FullName}"/>
+                        <GridViewColumn Header="Joined" Width="160" DisplayMemberBinding="{Binding Period}"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+            <StackPanel Visibility="{Binding ViewModel.HasLeftStudents, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ui:TextBlock FontTypography="BodyStrong" Text="Left the class" Margin="0,16,0,8"/>
+                <ListView ItemsSource="{Binding ViewModel.LeftStudents}" MaxHeight="240">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Name" Width="260" DisplayMemberBinding="{Binding FullName}"/>
+                            <GridViewColumn Header="Enrolled" Width="220" DisplayMemberBinding="{Binding Period}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </StackPanel>
+        </StackPanel>
     </StackPanel>
 </Page>

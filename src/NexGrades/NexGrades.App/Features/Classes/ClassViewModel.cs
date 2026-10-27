@@ -1,7 +1,10 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
+using NexGrades.Common;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
 using Wpf.Ui;
@@ -18,6 +21,9 @@ public sealed class ClassEditRequest
     public int? ClassInstanceId { get; set; }
 }
 
+/// <summary>A student on a class roster; <paramref name="Period"/> is pre-formatted for the current UI culture.</summary>
+public sealed record ClassStudentRow(int StudentId, string FullName, string Period);
+
 public partial class ClassViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
@@ -28,11 +34,31 @@ public partial class ClassViewModel(
 
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _title = "AddClass";
+    [ObservableProperty] private bool _isEditing;
+    [ObservableProperty] private ObservableCollection<ClassStudentRow> _activeStudents = [];
+    [ObservableProperty] private ObservableCollection<ClassStudentRow> _leftStudents = [];
+
+    public bool HasNoStudents => ActiveStudents.Count == 0 && LeftStudents.Count == 0;
+    public bool HasLeftStudents => LeftStudents.Count > 0;
+
+    partial void OnActiveStudentsChanged(ObservableCollection<ClassStudentRow> value) => OnPropertyChanged(nameof(HasNoStudents));
+
+    partial void OnLeftStudentsChanged(ObservableCollection<ClassStudentRow> value)
+    {
+        OnPropertyChanged(nameof(HasNoStudents));
+        OnPropertyChanged(nameof(HasLeftStudents));
+    }
 
     public override async Task OnNavigatedToAsync()
     {
         _editingClassInstanceId = editRequest.ClassInstanceId;
         editRequest.ClassInstanceId = null;
+
+        ActiveStudents = [];
+        LeftStudents = [];
+        IsEditing = false;
+        Name = string.Empty;
+        Title = "AddClass";
 
         if (_editingClassInstanceId is not { } id)
         {
@@ -49,6 +75,27 @@ public partial class ClassViewModel(
 
         Name = existing.Name;
         Title = "EditClass";
+        IsEditing = true;
+
+        var enrollments = await db.Enrollments.AsNoTracking()
+            .Where(e => e.ClassInstanceId == id)
+            .OrderBy(e => e.Student.LastName).ThenBy(e => e.Student.FirstName)
+            .Select(e => new { e.StudentId, e.Student.FirstName, e.Student.LastName, e.JoinedOn, e.LeftOn })
+            .ToListAsync();
+
+        // Left students are listed separately so the active roster matches the class's current size.
+        var culture = CultureInfo.CurrentCulture;
+        ClassStudentRow ToRow(string first, string last, int studentId, DateTime joined, DateTime? left) => new(
+            studentId,
+            string.Format(culture, "{0}, {1}", last, first),
+            left is { } l
+                ? string.Format(culture, "{0:d} - {1:d}", joined, l)
+                : string.Format(culture, "{0:d}", joined));
+
+        ActiveStudents = enrollments.Where(e => e.LeftOn is null)
+            .Select(e => ToRow(e.FirstName, e.LastName, e.StudentId, e.JoinedOn, null)).ToObservableCollection();
+        LeftStudents = enrollments.Where(e => e.LeftOn is not null)
+            .Select(e => ToRow(e.FirstName, e.LastName, e.StudentId, e.JoinedOn, e.LeftOn)).ToObservableCollection();
     }
 
     [RelayCommand]
