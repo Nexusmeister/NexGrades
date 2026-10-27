@@ -103,6 +103,7 @@ public static class HostBuilderExtensions
     private static IServiceCollection AddViewModels(this IServiceCollection services)
     {
         return services
+            .AddSingleton<ClassEditRequest>()
             .AddSingleton<HomeViewModel>()
             .AddSingleton<ClassesOverviewViewModel>()
             .AddSingleton<StudentsOverviewViewModel>()
