@@ -54,9 +54,11 @@ public partial class App : Application
 
             await _host.StartAsync();
         }
-        catch (Exception e1)
+        catch (Exception)
         {
-            // TODO Some logging
+            // TODO Some logging (#51). Until then at least do not fail silently with no window.
+            MessageBox.Show("NexGrades could not start. Check that its data folder is writable.", "NexGrades", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
         }
     }
 

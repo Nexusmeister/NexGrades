@@ -16,6 +16,9 @@ public sealed class AppDataStorageTests : IDisposable
 
     private static string Db(string dir) => Path.Combine(dir, "app.db");
 
+    // Minimal bytes the relocator accepts as a NexGrades database.
+    private const string Header = "SQLite format 3\0__EFMigrationsHistory";
+
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
@@ -54,12 +57,12 @@ public sealed class AppDataStorageTests : IDisposable
     {
         var legacy = NewDir("legacy");
         var target = Db(Path.Combine(_root, "data"));
-        File.WriteAllText(Db(legacy), "content");
+        File.WriteAllText(Db(legacy), Header + "content");
 
         var result = new LegacyDatabaseRelocator().Relocate([legacy], target);
 
         Assert.Equal(LegacyRelocationResult.Moved, result);
-        Assert.Equal("content", File.ReadAllText(target));
+        Assert.Equal(Header + "content", File.ReadAllText(target));
         Assert.False(File.Exists(Db(legacy)));
     }
 
@@ -68,7 +71,7 @@ public sealed class AppDataStorageTests : IDisposable
     {
         var legacy = NewDir("legacy");
         var target = Db(NewDir("data"));
-        File.WriteAllText(Db(legacy), "main");
+        File.WriteAllText(Db(legacy), Header + "main");
         File.WriteAllText(Db(legacy) + "-wal", "wal");
         File.WriteAllText(Db(legacy) + "-shm", "shm");
 
@@ -84,13 +87,13 @@ public sealed class AppDataStorageTests : IDisposable
     {
         var legacy = NewDir("legacy");
         var target = Db(NewDir("data"));
-        File.WriteAllText(Db(legacy), "old");
+        File.WriteAllText(Db(legacy), Header + "old");
         File.WriteAllText(target, "new");
 
         var result = new LegacyDatabaseRelocator().Relocate([legacy], target);
 
         Assert.Equal(LegacyRelocationResult.TargetExists, result);
-        Assert.Equal("old", File.ReadAllText(Db(legacy)));
+        Assert.Equal(Header + "old", File.ReadAllText(Db(legacy)));
         Assert.Equal("new", File.ReadAllText(target));
     }
 
@@ -108,13 +111,13 @@ public sealed class AppDataStorageTests : IDisposable
     {
         var first = NewDir("first");
         var second = NewDir("second");
-        File.WriteAllText(Db(first), "first");
-        File.WriteAllText(Db(second), "second");
+        File.WriteAllText(Db(first), Header + "first");
+        File.WriteAllText(Db(second), Header + "second");
         var target = Db(Path.Combine(_root, "data"));
 
         new LegacyDatabaseRelocator().Relocate([first, second], target);
 
-        Assert.Equal("first", File.ReadAllText(target));
+        Assert.Equal(Header + "first", File.ReadAllText(target));
         Assert.True(File.Exists(Db(second)));
     }
 
@@ -122,7 +125,7 @@ public sealed class AppDataStorageTests : IDisposable
     public void Relocate_DeduplicatesIdenticalCandidates()
     {
         var legacy = NewDir("legacy");
-        File.WriteAllText(Db(legacy), "x");
+        File.WriteAllText(Db(legacy), Header + "x");
 
         var result = new LegacyDatabaseRelocator().Relocate([legacy, legacy + Path.DirectorySeparatorChar], Db(Path.Combine(_root, "data")));
 
@@ -130,14 +133,16 @@ public sealed class AppDataStorageTests : IDisposable
     }
 
     [Fact]
-    public void Relocate_IgnoresCandidate_EqualToTargetDirectory()
+    public void Relocate_ReturnsNotFound_WhenCandidateIsNotANexGradesDatabase()
     {
-        var data = NewDir("data");
-        var target = Db(data);
-        // Target missing but the sidecar-free candidate equals the target dir: nothing to relocate.
-        var result = new LegacyDatabaseRelocator().Relocate([data], target);
+        var other = NewDir("other");
+        File.WriteAllText(Db(other), "not a database");
+        var target = Db(Path.Combine(_root, "data"));
+
+        var result = new LegacyDatabaseRelocator().Relocate([other], target);
 
         Assert.Equal(LegacyRelocationResult.NotFound, result);
+        Assert.True(File.Exists(Db(other)));
     }
 
     [Fact]
@@ -145,14 +150,14 @@ public sealed class AppDataStorageTests : IDisposable
     {
         var legacy = NewDir("legacy");
         var target = Db(Path.Combine(_root, "data"));
-        File.WriteAllText(Db(legacy), "content");
+        File.WriteAllText(Db(legacy), Header + "content");
 
         // Share Read allows the copy but blocks deletion.
         using var lockStream = new FileStream(Db(legacy), FileMode.Open, FileAccess.Read, FileShare.Read);
         var result = new LegacyDatabaseRelocator().Relocate([legacy], target);
 
         Assert.Equal(LegacyRelocationResult.MovedSourceKept, result);
-        Assert.Equal("content", File.ReadAllText(target));
+        Assert.Equal(Header + "content", File.ReadAllText(target));
         Assert.True(File.Exists(Db(legacy)));
     }
 
@@ -162,7 +167,7 @@ public sealed class AppDataStorageTests : IDisposable
         var legacy = NewDir("legacy");
         var data = NewDir("data");
         var target = Db(data);
-        File.WriteAllText(Db(legacy), "main");
+        File.WriteAllText(Db(legacy), Header + "main");
         File.WriteAllText(Db(legacy) + "-wal", "wal");
         // A directory squatting on the main target path makes the final copy fail after the sidecar copied.
         Directory.CreateDirectory(target);

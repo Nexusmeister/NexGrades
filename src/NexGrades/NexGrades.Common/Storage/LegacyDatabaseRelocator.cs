@@ -39,8 +39,7 @@ public sealed class LegacyDatabaseRelocator
         var source = candidateDirectories
             .Select(d => Path.GetFullPath(Path.Combine(d, Path.GetFileName(target))))
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Where(p => !string.Equals(Path.GetDirectoryName(p), targetDirectory, StringComparison.OrdinalIgnoreCase))
-            .FirstOrDefault(File.Exists);
+            .FirstOrDefault(IsNexGradesDatabase);
         if (source is null)
         {
             return LegacyRelocationResult.NotFound;
@@ -81,6 +80,32 @@ public sealed class LegacyDatabaseRelocator
         }
 
         return allRemoved ? LegacyRelocationResult.Moved : LegacyRelocationResult.MovedSourceKept;
+    }
+
+    /// <summary>
+    /// The working directory may hold an unrelated <c>app.db</c>, which must not be taken over. Accept only an
+    /// SQLite file whose first 64 KB (where the schema table lives for a small database) mention EF's
+    /// migrations history table. Needs no SQLite dependency and does not open a connection.
+    /// </summary>
+    private static bool IsNexGradesDatabase(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var buffer = new byte[64 * 1024];
+            var read = stream.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
+            var head = buffer.AsSpan(0, read);
+            return head.StartsWith("SQLite format 3\0"u8) && head.IndexOf("__EFMigrationsHistory"u8) >= 0;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     private static bool TryDelete(string path)

@@ -100,6 +100,12 @@ public static class HostBuilderExtensions
             return new DatabaseLocation(configured, IsOverride: true);
         }
 
+        // Never fall back to the real per-user database in Development: a dev build could migrate the teacher's data.
+        if (env.IsDevelopment())
+        {
+            throw new InvalidOperationException("ConnectionStrings:sqlite must be set in Development (Aspire or user secrets).");
+        }
+
         var connection = new SqliteConnectionStringBuilder { DataSource = paths.DatabaseFilePath };
         return new DatabaseLocation(connection.ToString(), IsOverride: false);
     }
