@@ -5,6 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NexGrades.Common\NexGrades.Common.csproj" />
     <ProjectReference Include="..\NexGrades.Data\NexGrades.Data.csproj" />
   </ItemGroup>
 
