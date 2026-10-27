@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ using NexGrades.App.Features.Subjects;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Shell;
 using NexGrades.Common.Services;
+using NexGrades.Common.Storage;
 using NexGrades.Data;
 using NexGrades.Data.Services;
 using NexGrades.Domain.Auditing;
@@ -72,20 +74,34 @@ public static class HostBuilderExtensions
 
     public static HostApplicationBuilder AddDatabase(this HostApplicationBuilder builder)
     {
-        var dbCon = GetAppDbConnectionString(builder.Configuration, builder.Environment);
+        var paths = AppDataPaths.CreateDefault();
+        var location = ResolveDatabaseLocation(builder.Configuration, builder.Environment, paths);
+        builder.Services.AddSingleton<IAppDataPaths>(paths);
+        builder.Services.AddSingleton(location);
+        builder.Services.AddSingleton<LegacyDatabaseRelocator>();
         builder.Services.AddPooledDbContextFactory<AppDbContext>((serviceProvider, options) =>
             options
-                .UseSqlite(dbCon)
+                .UseSqlite(location.ConnectionString)
                 .AddInterceptors(serviceProvider.GetRequiredService<ClosedYearAuditInterceptor>()));
         builder.Services.AddTransient<DatabaseMigrationService>();
 
         return builder;
     }
 
-    private static string GetAppDbConnectionString(IConfiguration configuration, IHostEnvironment env)
+    /// <summary>
+    /// A configured connection string wins (Development: <c>ConnectionStrings:sqlite</c> from Aspire; otherwise
+    /// the <c>sqlite</c> key). With none configured, the database goes to the fixed per-user folder.
+    /// </summary>
+    private static DatabaseLocation ResolveDatabaseLocation(IConfiguration configuration, IHostEnvironment env, IAppDataPaths paths)
     {
-        var dbConnection = env.IsDevelopment() ? configuration.GetConnectionString("sqlite") : configuration.GetValue<string>("sqlite");
-        return dbConnection ?? throw new InvalidOperationException("DbConnection must not be null");
+        var configured = env.IsDevelopment() ? configuration.GetConnectionString("sqlite") : configuration.GetValue<string>("sqlite");
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            return new DatabaseLocation(configured, IsOverride: true);
+        }
+
+        var connection = new SqliteConnectionStringBuilder { DataSource = paths.DatabaseFilePath };
+        return new DatabaseLocation(connection.ToString(), IsOverride: false);
     }
 
     private static IServiceCollection AddViews(this IServiceCollection services)

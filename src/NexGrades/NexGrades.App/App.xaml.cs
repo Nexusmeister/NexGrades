@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Extensions;
+using NexGrades.App.Infrastructure;
+using NexGrades.Common.Storage;
 using NexGrades.Data.Services;
 using System.Windows;
 using System.Windows.Threading;
@@ -36,6 +38,16 @@ public partial class App : Application
     {
         try
         {
+            var location = _host.Services.GetRequiredService<DatabaseLocation>();
+            if (!location.IsOverride)
+            {
+                // Must happen before any connection opens the database file.
+                var paths = _host.Services.GetRequiredService<IAppDataPaths>();
+                paths.EnsureCreated();
+                _host.Services.GetRequiredService<LegacyDatabaseRelocator>()
+                    .Relocate([AppContext.BaseDirectory, Environment.CurrentDirectory], paths.DatabaseFilePath);
+            }
+
             await using var scope = _host.Services.CreateAsyncScope();
             var mig = scope.ServiceProvider.GetRequiredService<DatabaseMigrationService>();
             await mig.RunAsync(CancellationToken.None);
