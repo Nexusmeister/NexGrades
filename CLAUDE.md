@@ -1,0 +1,23 @@
+# CLAUDE.md
+
+Project conventions live in `AGENTS.md` so every AI tool shares them. Edit that file, not this one, when
+a convention changes.
+
+@AGENTS.md
+
+## Claude Code specifics
+
+- Shared permissions are in `.claude/settings.json`; put personal overrides in
+  `.claude/settings.local.json` (git-ignored).
+- The development machine is Windows. Commands in `AGENTS.md` work in both PowerShell and Git Bash; run
+  them from `src/NexGrades/`.
+- To work an issue end to end, run `/implement-issue <number>`. It drives the subagents in
+  `.claude/agents/` from the main session, because subagents cannot start other subagents.
+- Delegate to a subagent when its role fits:
+  - `architect`: design a change before code is written
+  - `csharp-coder`: Domain, Data and view-model code
+  - `ui-designer`: XAML pages and layout
+  - `tester`: tests
+  - `reviewer`: review a diff before a PR
+  - `docs-writer`: README and XML docs
+- Use `/grill-me` when requirements are unclear, before planning.
