@@ -19,7 +19,7 @@ public class EnrollmentServiceTests
         context.AddRange(year, group, classInstance, student);
         await context.SaveChangesAsync();
 
-        var service = new EnrollmentService(context);
+        var service = new EnrollmentService(db.CreateContextFactory());
         var enrollment = await service.CreateEnrollmentAsync(student.Id, classInstance.Id, year.StartDate);
 
         Assert.NotEqual(0, enrollment.Id);
@@ -42,7 +42,7 @@ public class EnrollmentServiceTests
         context.AddRange(year, groupA, groupB, classA, classB, student);
         await context.SaveChangesAsync();
 
-        var service = new EnrollmentService(context);
+        var service = new EnrollmentService(db.CreateContextFactory());
         await service.CreateEnrollmentAsync(student.Id, classA.Id, year.StartDate);
 
         await Assert.ThrowsAsync<InvariantViolationException>(
@@ -59,7 +59,7 @@ public class EnrollmentServiceTests
         context.Add(student);
         await context.SaveChangesAsync();
 
-        var service = new EnrollmentService(context);
+        var service = new EnrollmentService(db.CreateContextFactory());
 
         await Assert.ThrowsAsync<InvariantViolationException>(
             () => service.CreateEnrollmentAsync(student.Id, classInstanceId: 999, DateTime.Now));
