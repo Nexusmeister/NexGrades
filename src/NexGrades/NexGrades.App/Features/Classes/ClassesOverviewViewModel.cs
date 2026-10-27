@@ -47,7 +47,7 @@ public partial class ClassesOverviewViewModel(
     [RelayCommand]
     private async Task LoadClassesAsync(CancellationToken cancellationToken = default)
     {
-        var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         var classes = await dbcontext.ClassInstances
             .Where(ci => ci.SchoolYear.Status == SchoolYearStatus.Active)

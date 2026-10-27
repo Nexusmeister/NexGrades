@@ -29,7 +29,7 @@ public partial class StudentViewModel(
     [RelayCommand]
     private async Task InitAsync(CancellationToken cancellationToken = default)
     {
-        var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         // Only classes of the currently Active school year can be assigned — enrolling into a Planned or
         // Closed year's class doesn't mean anything yet (no rollover/close workflow exists to have produced one).
@@ -56,7 +56,7 @@ public partial class StudentViewModel(
             return;
         }
 
-        var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var studentToAdd = new Student
         {
             FirstName = FirstName,

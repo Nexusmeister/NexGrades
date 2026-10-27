@@ -10,7 +10,8 @@ namespace NexGrades.Domain.Services;
 /// Records grades after validating that the student must be enrolled in the class instance that owns the
 /// grade's bucket, and the student must be participating (not exempt) in that subject instance.
 /// </summary>
-public sealed class GradeService(AppDbContext context)
+/// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
+public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory)
 {
     /// <summary>
     /// Records a grade after validating that <paramref name="studentId"/> was enrolled in the class instance
@@ -32,6 +33,8 @@ public sealed class GradeService(AppDbContext context)
         CancellationToken cancellationToken = default)
     {
         GradingScale.Validate(value);
+
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
 
         var bucket = await context.GradeBuckets
             .Include(b => b.SubjectInstance)

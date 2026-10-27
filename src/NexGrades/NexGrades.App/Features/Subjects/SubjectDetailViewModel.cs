@@ -24,7 +24,7 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
     [RelayCommand]
     private async Task SaveAsync(CancellationToken cancellationToken = default)
     {
-        var db = await dbContext.CreateDbContextAsync(cancellationToken);
+        await using var db = await dbContext.CreateDbContextAsync(cancellationToken);
         var subjectToAdd = new Subject
         {
             Name = Name,
