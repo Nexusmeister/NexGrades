@@ -43,7 +43,7 @@ Run from `src/NexGrades/`:
 dotnet restore
 dotnet build NexGrades.App/NexGrades.App.csproj
 dotnet test
-dotnet ef migrations add <MigrationName> --project NexGrades.Data   # needs the dotnet-ef global tool
+dotnet ef migrations add <MigrationName> --project NexGrades.Data --startup-project NexGrades.Data   # needs the dotnet-ef global tool
 dotnet run --project Aspire/NexGrades.AppHost                        # run the app for development
 ```
 
@@ -158,7 +158,21 @@ localized later without a rewrite:
 
 ## Git and pull requests
 
-- Branch off `dev` as `issue/<number>-<short-slug>`; open pull requests against `dev`.
+- Branch off `dev` as `feature/<issue-number>-<short-slug>`; open pull requests against `dev`.
 - Commit subjects are short and imperative ("Add edit-class flow on the year-scoped model").
 - One logical change per PR; reference the issue it closes.
 - Never commit database files, user secrets or local settings (`.claude/settings.local.json`).
+
+## Agent roles and workflows
+
+Role definitions and step-by-step workflows are plain Markdown, so any tool can read them even though they
+live in Claude Code's folders:
+
+- `.claude/agents/`: specialist roles: `architect`, `csharp-coder`, `ui-designer`, `tester`, `reviewer`,
+  `docs-writer`.
+- `.claude/skills/`: workflows:
+  - `implement-issue`: end-to-end issue pipeline that uses the roles above
+  - `grill-me`: interviews the user to settle open decisions before work starts
+  - `wpf-ui-design`: UI design rules for this app
+  - `new-feature-page`: adds a Page + ViewModel + DI registration and navigation
+  - `ef-migration`: adds and verifies an EF Core migration
