@@ -48,6 +48,12 @@ internal sealed class SqliteTestDatabase : IDisposable
     }
 }
 
+/// <summary>Hands out fresh contexts on the shared test database, for services that take a context factory.</summary>
+internal sealed class TestDbContextFactory(SqliteTestDatabase db) : IDbContextFactory<AppDbContext>
+{
+    public AppDbContext CreateDbContext() => db.CreateContext();
+}
+
 /// <summary>Settable <see cref="IClock"/> test double, for deterministic time-dependent assertions.</summary>
 internal sealed class FixedClock(DateTime now) : IClock
 {

@@ -86,6 +86,8 @@
             </ui:NavigationView.FooterMenuItems>
         </ui:NavigationView>
 
+        <!-- Host for content dialogs; spans both rows so the dialog overlay also covers the title bar. -->
+        <ui:ContentDialogHost x:Name="RootContentDialog" Grid.Row="0" Grid.RowSpan="2" />
 
     </Grid>
 </ui:FluentWindow>
