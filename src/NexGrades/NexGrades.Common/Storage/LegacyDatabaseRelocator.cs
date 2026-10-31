@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace NexGrades.Common.Storage;
 
 /// <summary>Outcome of <see cref="LegacyDatabaseRelocator.Relocate"/>.</summary>
@@ -25,8 +27,10 @@ public sealed class LegacyDatabaseRelocator
 {
     private static readonly string[] _sidecarSuffixes = ["-wal", "-shm", "-journal"];
 
+    /// <summary>Moves the legacy database (and its sidecar files) to <paramref name="targetDatabasePath"/> if one is found.</summary>
     /// <param name="candidateDirectories">Directories to look in, in priority order; the first holding the file wins.</param>
     /// <param name="targetDatabasePath">Full path of the new database file; its file name is the legacy name too.</param>
+    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Registered and injected as a service; static would defeat that.")]
     public LegacyRelocationResult Relocate(IEnumerable<string> candidateDirectories, string targetDatabasePath)
     {
         var target = Path.GetFullPath(targetDatabasePath);

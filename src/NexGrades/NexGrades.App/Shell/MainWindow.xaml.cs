@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using Wpf.Ui;
 using Wpf.Ui.Abstractions;
 using Wpf.Ui.Appearance;
@@ -28,8 +28,6 @@ public partial class MainWindow : INavigationWindow
         navigationService.SetNavigationControl(RootNavigation);
     }
 
-
-
     public INavigationView GetNavigation() => RootNavigation;
 
     public bool Navigate(Type pageType) => RootNavigation.Navigate(pageType);
@@ -54,11 +52,11 @@ public partial class MainWindow : INavigationWindow
 
     INavigationView INavigationWindow.GetNavigation()
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void SetServiceProvider(IServiceProvider serviceProvider)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

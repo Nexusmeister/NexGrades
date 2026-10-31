@@ -239,7 +239,7 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
         return pending;
     }
 
-    private static IReadOnlyList<EntityEntry> RelevantEntries(DbContext context) =>
+    private static List<EntityEntry> RelevantEntries(DbContext context) =>
         context.ChangeTracker.Entries()
             .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
             .ToList();

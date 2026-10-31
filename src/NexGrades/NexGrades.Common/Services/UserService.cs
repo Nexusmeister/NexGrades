@@ -1,4 +1,4 @@
-﻿namespace NexGrades.Common.Services;
+namespace NexGrades.Common.Services;
 
 public class UserService : IUserService
 {
@@ -11,7 +11,7 @@ public class UserService : IUserService
             return string.Empty;
         }
 
-        var normalizedUsername = string.Concat(user1[0].ToString().ToUpper(), user1.AsSpan(1));
+        var normalizedUsername = string.Concat(char.ToUpperInvariant(user1[0]).ToString(), user1.AsSpan(1));
         return normalizedUsername;
     }
 }

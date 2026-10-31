@@ -99,7 +99,7 @@ public partial class ClassViewModel(
     }
 
     [RelayCommand]
-    private async Task SaveClass(CancellationToken cancellationToken = default)
+    private async Task SaveClassAsync(CancellationToken cancellationToken = default)
     {
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 

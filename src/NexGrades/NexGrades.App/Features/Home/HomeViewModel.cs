@@ -1,4 +1,4 @@
-﻿using NexGrades.App.Core;
+using NexGrades.App.Core;
 using NexGrades.Common.Services;
 
 namespace NexGrades.App.Features.Home;

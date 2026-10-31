@@ -310,7 +310,7 @@ public partial class StudentViewModel(
     private bool CanSaveStudent() => !IsBusy && StudentValidationMessage is null;
 
     [RelayCommand(CanExecute = nameof(CanSaveStudent))]
-    private async Task SaveStudent(CancellationToken cancellationToken = default)
+    private async Task SaveStudentAsync(CancellationToken cancellationToken = default)
     {
         if (_editingStudentId is { } editId)
         {
@@ -376,7 +376,7 @@ public partial class StudentViewModel(
 
     /// <summary>Goes back without saving, asking first when the page holds unsaved input.</summary>
     [RelayCommand]
-    private async Task Cancel(CancellationToken cancellationToken = default)
+    private async Task CancelAsync(CancellationToken cancellationToken = default)
     {
         if (HasUnsavedChanges
             && !await ConfirmDiscardAsync(
@@ -417,7 +417,7 @@ public partial class StudentViewModel(
     }
 
     [RelayCommand(CanExecute = nameof(CanAddNote))]
-    private async Task AddNote(CancellationToken cancellationToken = default)
+    private async Task AddNoteAsync(CancellationToken cancellationToken = default)
     {
         if (_editingStudentId is not { } studentId || SelectedNoteYear is not { } year)
         {
@@ -455,7 +455,7 @@ public partial class StudentViewModel(
     }
 
     [RelayCommand(CanExecute = nameof(CanSaveNote))]
-    private async Task SaveNote(CancellationToken cancellationToken = default)
+    private async Task SaveNoteAsync(CancellationToken cancellationToken = default)
     {
         if (EditingNoteId is not { } noteId)
         {
@@ -489,7 +489,7 @@ public partial class StudentViewModel(
     private bool CanChangeNoteState(NoteRow? note) => IsSelectedYearWritable && !IsBusy && note is not null;
 
     [RelayCommand(CanExecute = nameof(CanChangeNoteState))]
-    private async Task ArchiveNote(NoteRow note, CancellationToken cancellationToken = default)
+    private async Task ArchiveNoteAsync(NoteRow note, CancellationToken cancellationToken = default)
     {
         var confirmation = await contentDialogService.ShowSimpleDialogAsync(
             new SimpleContentDialogCreateOptions
@@ -524,7 +524,7 @@ public partial class StudentViewModel(
     }
 
     [RelayCommand(CanExecute = nameof(CanChangeNoteState))]
-    private async Task RestoreNote(NoteRow note, CancellationToken cancellationToken = default)
+    private async Task RestoreNoteAsync(NoteRow note, CancellationToken cancellationToken = default)
     {
         var succeeded = await RunNoteOperationAsync(
             () => noteService.RestoreNoteAsync(note.Id, cancellationToken),
