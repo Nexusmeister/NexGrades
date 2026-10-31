@@ -419,3 +419,6 @@ FodyWeavers.xsd
 
 # Claude Code personal settings
 .claude/settings.local.json
+
+# Agent worktrees
+.claude/worktrees/

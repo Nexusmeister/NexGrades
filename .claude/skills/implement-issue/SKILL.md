@@ -7,15 +7,19 @@ disable-model-invocation: true
 
 # Implement issue #$ARGUMENTS
 
-You are the orchestrator. Run this workflow from the main session: subagents cannot start other
-subagents, so you delegate each step and carry the results between them. Read `AGENTS.md` first if it is
-not already in context.
+You are the orchestrator. This skill runs the pipeline from the main session: you delegate each step and
+carry the results between them. The `issue-orchestrator` agent is the alternative that runs the same
+pipeline as one subagent. Read `AGENTS.md` first if it is not already in context.
+
+Where the `gh` CLI is not installed, the GitHub MCP tools do the same (`gh issue view` →
+`mcp__github__issue_read`, `gh pr create` → `mcp__github__create_pull_request`).
 
 Keep the user informed with one short line per step. Stop and ask whenever a step says so.
 
 ## 1. Understand the issue
 
-- Run `gh issue view $ARGUMENTS --comments`.
+- Read issue $ARGUMENTS and its comments (`gh issue view $ARGUMENTS --comments`, or
+  `mcp__github__issue_read` where `gh` is not installed).
 - If the goal, scope or acceptance criteria are unclear, run the `grill-me` skill with the user before
   planning. Don't start planning on guesses.
 
@@ -61,6 +65,6 @@ Only when the change affects behavior users see, commands, conventions or the do
 ## 9. Pull request
 
 - Commit with a short imperative subject, then push.
-- Open a PR against `dev` with `gh pr create --base dev`. The body has a summary, the design decisions,
+- Open a PR against `dev` (`gh pr create --base dev`, or `mcp__github__create_pull_request`). The body has a summary, the design decisions,
   the test coverage, anything the user must check by hand in the UI, and `Closes #$ARGUMENTS`.
 - Report the PR link. **Don't merge unless the user asks.**

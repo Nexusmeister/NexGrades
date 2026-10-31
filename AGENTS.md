@@ -195,7 +195,9 @@ Role definitions and step-by-step workflows are plain Markdown, so any tool can 
 live in Claude Code's folders:
 
 - `.claude/agents/`: specialist roles: `architect`, `csharp-coder`, `ui-designer`, `tester`, `reviewer`,
-  `docs-writer`.
+  `docs-writer`; plus `issue-orchestrator`, a coordinator that runs one issue end to end through those
+  roles, never edits files and never merges. The lead starts one orchestrator per issue, each in its own
+  worktree under `.claude/worktrees/issue-<n>`, so several can run in parallel; the lead merges.
 - `.claude/skills/`: workflows:
   - `implement-issue`: end-to-end issue pipeline that uses the roles above
   - `grill-me`: interviews the user to settle open decisions before work starts
