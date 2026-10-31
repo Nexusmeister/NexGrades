@@ -23,66 +23,67 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory)
     /// enrolled in the owning class instance at the time of <paramref name="recordedOn"/>, or the student is
     /// exempt from the owning subject instance.
     /// </exception>
-    public async Task<Grade> RecordGradeAsync(
+    public Task<Grade> RecordGradeAsync(
         int gradeBucketId,
         int studentId,
         decimal value,
         DateOnly recordedOn,
         string? label = null,
         string? comment = null,
-        CancellationToken cancellationToken = default)
-    {
-        GradingScale.Validate(value);
-
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-
-        var bucket = await context.GradeBuckets
-            .Include(b => b.SubjectInstance)
-            .FirstOrDefaultAsync(b => b.Id == gradeBucketId, cancellationToken)
-            ?? throw new InvariantViolationException($"Grade bucket {gradeBucketId} does not exist.");
-
-        var classInstanceId = bucket.SubjectInstance.ClassInstanceId;
-        var subjectInstanceId = bucket.SubjectInstanceId;
-
-        // Scoped "at the time of RecordedOn", not "ever": a student who has since left (or has not yet
-        // joined as of that date) does not satisfy it, even if some enrollment row for that class instance
-        // exists.
-        var enrollment = await context.Enrollments
-            .FirstOrDefaultAsync(e => e.StudentId == studentId && e.ClassInstanceId == classInstanceId, cancellationToken);
-        var recordedOnAsDateTime = recordedOn.ToDateTime(TimeOnly.MinValue);
-        if (enrollment is null || !EnrollmentActivity.IsActive(enrollment, recordedOnAsDateTime))
+        CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("GradeService.RecordGrade", async () =>
         {
-            throw new InvariantViolationException(
-                $"Student {studentId} was not enrolled in class instance {classInstanceId} (which owns grade bucket {gradeBucketId}) " +
-                $"on {recordedOn:O}.");
-        }
+            GradingScale.Validate(value);
 
-        var participationMode = await context.SubjectParticipations
-            .Where(p => p.SubjectInstanceId == subjectInstanceId && p.StudentId == studentId)
-            .Select(p => (ParticipationMode?)p.Mode)
-            .FirstOrDefaultAsync(cancellationToken);
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
 
-        // Default is participation by class enrollment; a SubjectParticipation row exists only where the
-        // student deviates. Enrollment was already confirmed above, so "no override row" means participating.
-        var isParticipating = participationMode != ParticipationMode.Exempt;
-        if (!isParticipating)
-        {
-            throw new InvariantViolationException(
-                $"Student {studentId} is exempt from subject instance {subjectInstanceId} and cannot receive a grade there.");
-        }
+            var bucket = await context.GradeBuckets
+                .Include(b => b.SubjectInstance)
+                .FirstOrDefaultAsync(b => b.Id == gradeBucketId, cancellationToken)
+                ?? throw new InvariantViolationException($"Grade bucket {gradeBucketId} does not exist.");
 
-        var grade = new Grade
-        {
-            GradeBucketId = gradeBucketId,
-            StudentId = studentId,
-            Value = value,
-            RecordedOn = recordedOn,
-            Label = label,
-            Comment = comment,
-        };
-        context.Grades.Add(grade);
-        await context.SaveChangesAsync(cancellationToken);
+            var classInstanceId = bucket.SubjectInstance.ClassInstanceId;
+            var subjectInstanceId = bucket.SubjectInstanceId;
 
-        return grade;
-    }
+            // Scoped "at the time of RecordedOn", not "ever": a student who has since left (or has not yet
+            // joined as of that date) does not satisfy it, even if some enrollment row for that class instance
+            // exists.
+            var enrollment = await context.Enrollments
+                .FirstOrDefaultAsync(e => e.StudentId == studentId && e.ClassInstanceId == classInstanceId, cancellationToken);
+            var recordedOnAsDateTime = recordedOn.ToDateTime(TimeOnly.MinValue);
+            if (enrollment is null || !EnrollmentActivity.IsActive(enrollment, recordedOnAsDateTime))
+            {
+                throw new InvariantViolationException(
+                    $"Student {studentId} was not enrolled in class instance {classInstanceId} (which owns grade bucket {gradeBucketId}) " +
+                    $"on {recordedOn:O}.");
+            }
+
+            var participationMode = await context.SubjectParticipations
+                .Where(p => p.SubjectInstanceId == subjectInstanceId && p.StudentId == studentId)
+                .Select(p => (ParticipationMode?)p.Mode)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            // Default is participation by class enrollment; a SubjectParticipation row exists only where the
+            // student deviates. Enrollment was already confirmed above, so "no override row" means participating.
+            var isParticipating = participationMode != ParticipationMode.Exempt;
+            if (!isParticipating)
+            {
+                throw new InvariantViolationException(
+                    $"Student {studentId} is exempt from subject instance {subjectInstanceId} and cannot receive a grade there.");
+            }
+
+            var grade = new Grade
+            {
+                GradeBucketId = gradeBucketId,
+                StudentId = studentId,
+                Value = value,
+                RecordedOn = recordedOn,
+                Label = label,
+                Comment = comment,
+            };
+            context.Grades.Add(grade);
+            await context.SaveChangesAsync(cancellationToken);
+
+            return grade;
+        });
 }

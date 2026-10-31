@@ -1,22 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using NexGrades.Data.Diagnostics;
 using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.Services;
 
 public class DatabaseMigrationService(IDbContextFactory<AppDbContext> dbContext)
 {
-    public async Task RunAsync(CancellationToken cancellationToken = default)
-    {
-        await using var db = await dbContext.CreateDbContextAsync(cancellationToken);
-        var pendingMigrations = await db.Database.GetPendingMigrationsAsync(cancellationToken);
-
-        if (pendingMigrations.Any())
+    public Task RunAsync(CancellationToken cancellationToken = default) =>
+        NexGradesTelemetry.TrackAsync("DatabaseMigrationService.Run", async () =>
         {
-            await db.Database.MigrateAsync(cancellationToken);
-        }
+            await using var db = await dbContext.CreateDbContextAsync(cancellationToken);
+            var pendingMigrations = await db.Database.GetPendingMigrationsAsync(cancellationToken);
 
-        await EnsureActiveSchoolYearAsync(db, cancellationToken);
-    }
+            if (pendingMigrations.Any())
+            {
+                await db.Database.MigrateAsync(cancellationToken);
+            }
+
+            await EnsureActiveSchoolYearAsync(db, cancellationToken);
+        });
 
     /// <summary>
     /// Everything in the model is scoped through a <see cref="SchoolYear"/>, but there is no year-management

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Threading;
@@ -8,6 +9,7 @@ using NexGrades.App.Features.Home;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Shell;
 using NexGrades.Common.Storage;
+using NexGrades.Data.Diagnostics;
 using NexGrades.Data.Services;
 using Wpf.Ui;
 
@@ -24,6 +26,9 @@ public partial class App : Application
     {
         var host = Host.CreateApplicationBuilder();
 
+        // OpenTelemetry logs, metrics and traces. Exported only when OTEL_EXPORTER_OTLP_ENDPOINT is set (Aspire).
+        _ = host.AddServiceDefaults(NexGradesTelemetry.Name);
+
         host.Services.AddGradeServices()
             .AddFrontendServices();
         host.AddDatabase();
@@ -37,6 +42,11 @@ public partial class App : Application
     [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "WPF event handler; all failures are caught below.")]
     private async void OnStartup(object sender, StartupEventArgs e)
     {
+        // Creates the trace and meter listeners now rather than in _host.StartAsync, so the startup span and the
+        // migration are not missed.
+        _ = _host.Services.InitializeTelemetry();
+
+        using var startup = NexGradesTelemetry.ActivitySource.StartActivity("App.Startup");
         try
         {
             var location = _host.Services.GetRequiredService<DatabaseLocation>();
@@ -54,13 +64,26 @@ public partial class App : Application
             await mig.RunAsync(CancellationToken.None);
 
             await _host.StartAsync();
+
+            // The window is shown by ApplicationHostService.StartAsync, so this is the time to a usable UI.
+            RecordStartupDuration(NexGradesTelemetry.Outcomes.Success);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            NexGradesTelemetry.MarkFailed(startup, ex);
+            RecordStartupDuration(NexGradesTelemetry.Outcomes.Error);
             // TODO Some logging (#51). Until then at least do not fail silently with no window.
             MessageBox.Show("NexGrades could not start. Check that its data folder is writable.", "NexGrades", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
         }
+    }
+
+    private static void RecordStartupDuration(string outcome)
+    {
+        using var process = Process.GetCurrentProcess();
+        NexGradesTelemetry.StartupDuration.Record(
+            (DateTime.Now - process.StartTime).TotalSeconds,
+            new KeyValuePair<string, object?>(NexGradesTelemetry.OutcomeTag, outcome));
     }
 
     /// <summary>

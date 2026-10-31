@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Windows;
+using NexGrades.Data.Diagnostics;
 using Wpf.Ui;
 using Wpf.Ui.Abstractions;
 using Wpf.Ui.Appearance;
@@ -11,6 +13,8 @@ namespace NexGrades.App.Shell;
 /// </summary>
 public partial class MainWindow : INavigationWindow
 {
+    private long _navigationStart;
+
     public MainWindowViewModel ViewModel { get; }
 
     public MainWindow(MainWindowViewModel viewModel, INavigationService navigationService, ISnackbarService snackbarService, IContentDialogService contentDialogService)
@@ -26,6 +30,24 @@ public partial class MainWindow : INavigationWindow
         contentDialogService.SetDialogHost(RootContentDialog);
 
         navigationService.SetNavigationControl(RootNavigation);
+
+        // Measures how long it takes to resolve and show a page, not how long its view model needs to load data.
+        RootNavigation.Navigating += (_, _) => _navigationStart = Stopwatch.GetTimestamp();
+        RootNavigation.Navigated += OnNavigated;
+    }
+
+    private void OnNavigated(NavigationView sender, NavigatedEventArgs args)
+    {
+        if (_navigationStart == 0)
+        {
+            return;
+        }
+
+        // Only the page type's name is a tag, never anything the page shows.
+        NexGradesTelemetry.NavigationDuration.Record(
+            Stopwatch.GetElapsedTime(_navigationStart).TotalSeconds,
+            new KeyValuePair<string, object?>(NexGradesTelemetry.PageTag, args.Page.GetType().Name));
+        _navigationStart = 0;
     }
 
     public INavigationView GetNavigation() => RootNavigation;

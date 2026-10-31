@@ -24,110 +24,111 @@ public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFacto
     /// The class instance does not exist, or a carried-forward student would end up double-enrolled in the
     /// target school year.
     /// </exception>
-    public async Task<ClassInstance> RollClassInstanceForwardAsync(
-        int classInstanceId, int targetSchoolYearId, string newName, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-
-        var oldInstance = await context.ClassInstances
-            .Include(ci => ci.Enrollments)
-            .Include(ci => ci.SubjectInstances).ThenInclude(si => si.GradeBuckets)
-            .Include(ci => ci.SubjectInstances).ThenInclude(si => si.SubjectParticipations)
-            .Include(ci => ci.SubjectInstances).ThenInclude(si => si.Subject).ThenInclude(s => s.BucketTemplates)
-            .FirstOrDefaultAsync(ci => ci.Id == classInstanceId, cancellationToken)
-            ?? throw new InvariantViolationException($"Class instance {classInstanceId} does not exist.");
-
-        if (oldInstance.Status != ClassInstanceStatus.Active)
+    public Task<ClassInstance> RollClassInstanceForwardAsync(
+        int classInstanceId, int targetSchoolYearId, string newName, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("RolloverService.RollClassInstanceForward", async () =>
         {
-            throw new InvariantViolationException(
-                $"Class instance {classInstanceId} is not Active (current status: {oldInstance.Status}); it has already been rolled forward or archived.");
-        }
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
-        // Step 1: old instance -> RolledForward. Nothing else about it changes.
-        oldInstance.Status = ClassInstanceStatus.RolledForward;
+            var oldInstance = await context.ClassInstances
+                .Include(ci => ci.Enrollments)
+                .Include(ci => ci.SubjectInstances).ThenInclude(si => si.GradeBuckets)
+                .Include(ci => ci.SubjectInstances).ThenInclude(si => si.SubjectParticipations)
+                .Include(ci => ci.SubjectInstances).ThenInclude(si => si.Subject).ThenInclude(s => s.BucketTemplates)
+                .FirstOrDefaultAsync(ci => ci.Id == classInstanceId, cancellationToken)
+                ?? throw new InvariantViolationException($"Class instance {classInstanceId} does not exist.");
 
-        // Step 2: new instance, same cohort and teacher, new name, in the target year.
-        var newInstance = new ClassInstance
-        {
-            ClassGroupId = oldInstance.ClassGroupId,
-            SchoolYearId = targetSchoolYearId,
-            Name = newName,
-            TeacherId = oldInstance.TeacherId,
-            Status = ClassInstanceStatus.Active,
-        };
-        context.ClassInstances.Add(newInstance);
-
-        // Saved now (rather than at the end) so newInstance.Id is a real, persisted key before it is used
-        // as a foreign key below — required for the closed-year audit interceptor's entity resolution, and
-        // simply good practice for multi-step graph construction.
-        await context.SaveChangesAsync(cancellationToken);
-
-        // Step 3: carry forward active enrollments, going through the same invariant check used by
-        // EnrollmentService, so a student can never end up double-enrolled in the target year.
-        var activeEnrollments = oldInstance.Enrollments
-            .Where(e => EnrollmentActivity.IsActive(e, clock))
-            .ToList();
-
-        foreach (var enrollment in activeEnrollments)
-        {
-            await EnrollmentInvariants.EnsureNoConflictingEnrollmentAsync(
-                context, enrollment.StudentId, targetSchoolYearId, cancellationToken);
-
-            context.Enrollments.Add(new Enrollment
+            if (oldInstance.Status != ClassInstanceStatus.Active)
             {
-                StudentId = enrollment.StudentId,
-                ClassInstanceId = newInstance.Id,
-                JoinedOn = clock.Now,
-            });
-        }
+                throw new InvariantViolationException(
+                    $"Class instance {classInstanceId} is not Active (current status: {oldInstance.Status}); it has already been rolled forward or archived.");
+            }
 
-        var carriedStudentIds = activeEnrollments.Select(e => e.StudentId).ToHashSet();
+            // Step 1: old instance -> RolledForward. Nothing else about it changes.
+            oldInstance.Status = ClassInstanceStatus.RolledForward;
 
-        // Step 4 & 5: one new SubjectInstance per old one, buckets copied from the CURRENT live
-        // BucketTemplate rows (not the old instance's GradeBucket snapshot — this is the mechanism that
-        // lets a template edit affect only future years), and participation overrides copied (not shared)
-        // for the students who carried over.
-        foreach (var oldSubjectInstance in oldInstance.SubjectInstances)
-        {
-            var newSubjectInstance = new SubjectInstance
+            // Step 2: new instance, same cohort and teacher, new name, in the target year.
+            var newInstance = new ClassInstance
             {
-                ClassInstanceId = newInstance.Id,
-                SubjectId = oldSubjectInstance.SubjectId,
-                TeacherId = oldSubjectInstance.TeacherId,
+                ClassGroupId = oldInstance.ClassGroupId,
+                SchoolYearId = targetSchoolYearId,
+                Name = newName,
+                TeacherId = oldInstance.TeacherId,
+                Status = ClassInstanceStatus.Active,
             };
-            context.SubjectInstances.Add(newSubjectInstance);
+            context.ClassInstances.Add(newInstance);
+
+            // Saved now (rather than at the end) so newInstance.Id is a real, persisted key before it is used
+            // as a foreign key below — required for the closed-year audit interceptor's entity resolution, and
+            // simply good practice for multi-step graph construction.
             await context.SaveChangesAsync(cancellationToken);
 
-            foreach (var template in oldSubjectInstance.Subject.BucketTemplates)
+            // Step 3: carry forward active enrollments, going through the same invariant check used by
+            // EnrollmentService, so a student can never end up double-enrolled in the target year.
+            var activeEnrollments = oldInstance.Enrollments
+                .Where(e => EnrollmentActivity.IsActive(e, clock))
+                .ToList();
+
+            foreach (var enrollment in activeEnrollments)
             {
-                context.GradeBuckets.Add(new GradeBucket
+                await EnrollmentInvariants.EnsureNoConflictingEnrollmentAsync(
+                    context, enrollment.StudentId, targetSchoolYearId, cancellationToken);
+
+                context.Enrollments.Add(new Enrollment
                 {
-                    SubjectInstanceId = newSubjectInstance.Id,
-                    Name = template.Name,
-                    Weight = template.Weight,
-                    SortOrder = template.SortOrder,
+                    StudentId = enrollment.StudentId,
+                    ClassInstanceId = newInstance.Id,
+                    JoinedOn = clock.Now,
                 });
             }
 
-            foreach (var participation in oldSubjectInstance.SubjectParticipations.Where(p => carriedStudentIds.Contains(p.StudentId)))
+            var carriedStudentIds = activeEnrollments.Select(e => e.StudentId).ToHashSet();
+
+            // Step 4 & 5: one new SubjectInstance per old one, buckets copied from the CURRENT live
+            // BucketTemplate rows (not the old instance's GradeBucket snapshot — this is the mechanism that
+            // lets a template edit affect only future years), and participation overrides copied (not shared)
+            // for the students who carried over.
+            foreach (var oldSubjectInstance in oldInstance.SubjectInstances)
             {
-                context.SubjectParticipations.Add(new SubjectParticipation
+                var newSubjectInstance = new SubjectInstance
                 {
-                    SubjectInstanceId = newSubjectInstance.Id,
-                    StudentId = participation.StudentId,
-                    Mode = participation.Mode,
-                    From = participation.From,
-                    To = participation.To,
-                });
+                    ClassInstanceId = newInstance.Id,
+                    SubjectId = oldSubjectInstance.SubjectId,
+                    TeacherId = oldSubjectInstance.TeacherId,
+                };
+                context.SubjectInstances.Add(newSubjectInstance);
+                await context.SaveChangesAsync(cancellationToken);
+
+                foreach (var template in oldSubjectInstance.Subject.BucketTemplates)
+                {
+                    context.GradeBuckets.Add(new GradeBucket
+                    {
+                        SubjectInstanceId = newSubjectInstance.Id,
+                        Name = template.Name,
+                        Weight = template.Weight,
+                        SortOrder = template.SortOrder,
+                    });
+                }
+
+                foreach (var participation in oldSubjectInstance.SubjectParticipations.Where(p => carriedStudentIds.Contains(p.StudentId)))
+                {
+                    context.SubjectParticipations.Add(new SubjectParticipation
+                    {
+                        SubjectInstanceId = newSubjectInstance.Id,
+                        StudentId = participation.StudentId,
+                        Mode = participation.Mode,
+                        From = participation.From,
+                        To = participation.To,
+                    });
+                }
             }
-        }
 
-        await context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
-        return newInstance;
-    }
+            return newInstance;
+        });
 
     /// <summary>
     /// Archives a class instance: marks it <see cref="ClassInstanceStatus.Archived"/> and unassigns its
@@ -136,31 +137,32 @@ public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFacto
     /// <see cref="ClassGroupStatus.Ended"/> is a teacher decision the caller supplies explicitly
     /// (<paramref name="endClassGroup"/>) — it cannot be inferred from the model.
     /// </summary>
-    public async Task ArchiveClassInstanceAsync(int classInstanceId, bool endClassGroup, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-
-        var instance = await context.ClassInstances
-            .Include(ci => ci.ClassGroup)
-            .FirstOrDefaultAsync(ci => ci.Id == classInstanceId, cancellationToken)
-            ?? throw new InvariantViolationException($"Class instance {classInstanceId} does not exist.");
-
-        if (instance.Status != ClassInstanceStatus.Active)
+    public Task ArchiveClassInstanceAsync(int classInstanceId, bool endClassGroup, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("RolloverService.ArchiveClassInstance", async () =>
         {
-            throw new InvariantViolationException(
-                $"Class instance {classInstanceId} is not Active (current status: {instance.Status}); it has already been rolled forward or archived.");
-        }
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
-        instance.Status = ClassInstanceStatus.Archived;
-        instance.TeacherId = null;
+            var instance = await context.ClassInstances
+                .Include(ci => ci.ClassGroup)
+                .FirstOrDefaultAsync(ci => ci.Id == classInstanceId, cancellationToken)
+                ?? throw new InvariantViolationException($"Class instance {classInstanceId} does not exist.");
 
-        if (endClassGroup)
-        {
-            instance.ClassGroup.Status = ClassGroupStatus.Ended;
-        }
+            if (instance.Status != ClassInstanceStatus.Active)
+            {
+                throw new InvariantViolationException(
+                    $"Class instance {classInstanceId} is not Active (current status: {instance.Status}); it has already been rolled forward or archived.");
+            }
 
-        await context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-    }
+            instance.Status = ClassInstanceStatus.Archived;
+            instance.TeacherId = null;
+
+            if (endClassGroup)
+            {
+                instance.ClassGroup.Status = ClassGroupStatus.Ended;
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        });
 }

@@ -21,51 +21,53 @@ public sealed class UnlockService(IDbContextFactory<AppDbContext> contextFactory
     /// Unlocks <paramref name="schoolYearId"/> until <paramref name="until"/>, recording <paramref name="reason"/>
     /// for the audit trail. Only valid for a year that is currently <see cref="SchoolYearStatus.Closed"/>.
     /// </summary>
-    public async Task UnlockAsync(int schoolYearId, DateTime until, string reason, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(reason))
+    public Task UnlockAsync(int schoolYearId, DateTime until, string reason, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("UnlockService.Unlock", async () =>
         {
-            throw new ArgumentException("A reason is required to unlock a closed school year.", nameof(reason));
-        }
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                throw new ArgumentException("A reason is required to unlock a closed school year.", nameof(reason));
+            }
 
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var schoolYear = await context.SchoolYears.FirstOrDefaultAsync(sy => sy.Id == schoolYearId, cancellationToken)
-            ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var schoolYear = await context.SchoolYears.FirstOrDefaultAsync(sy => sy.Id == schoolYearId, cancellationToken)
+                ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
 
-        if (schoolYear.Status != SchoolYearStatus.Closed)
-        {
-            throw new InvariantViolationException(
-                $"School year {schoolYearId} is not closed (current status: {schoolYear.Status}); only a closed year can be unlocked.");
-        }
+            if (schoolYear.Status != SchoolYearStatus.Closed)
+            {
+                throw new InvariantViolationException(
+                    $"School year {schoolYearId} is not closed (current status: {schoolYear.Status}); only a closed year can be unlocked.");
+            }
 
-        if (until <= clock.Now)
-        {
-            throw new ArgumentOutOfRangeException(nameof(until), until, "Unlock expiry must be in the future.");
-        }
+            if (until <= clock.Now)
+            {
+                throw new ArgumentOutOfRangeException(nameof(until), until, "Unlock expiry must be in the future.");
+            }
 
-        schoolYear.UnlockedUntil = until;
+            schoolYear.UnlockedUntil = until;
 
-        await context.SaveChangesAsync(cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
 
-        // Only recorded after the save succeeds: the interceptor independently re-checks UnlockedUntil from
-        // the database before trusting this reason, but setting it earlier would leave a stale reason in the
-        // store for a year that a failed save never actually unlocked.
-        reasonStore.SetReason(schoolYearId, reason);
-    }
+            // Only recorded after the save succeeds: the interceptor independently re-checks UnlockedUntil from
+            // the database before trusting this reason, but setting it earlier would leave a stale reason in the
+            // store for a year that a failed save never actually unlocked.
+            reasonStore.SetReason(schoolYearId, reason);
+        });
 
     /// <summary>
     /// Re-locks <paramref name="schoolYearId"/> immediately: clears <see cref="SchoolYear.UnlockedUntil"/>
     /// and forgets the stored unlock reason.
     /// </summary>
-    public async Task RelockAsync(int schoolYearId, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var schoolYear = await context.SchoolYears.FirstOrDefaultAsync(sy => sy.Id == schoolYearId, cancellationToken)
-            ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
+    public Task RelockAsync(int schoolYearId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("UnlockService.Relock", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var schoolYear = await context.SchoolYears.FirstOrDefaultAsync(sy => sy.Id == schoolYearId, cancellationToken)
+                ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
 
-        schoolYear.UnlockedUntil = null;
-        reasonStore.ClearReason(schoolYearId);
+            schoolYear.UnlockedUntil = null;
+            reasonStore.ClearReason(schoolYearId);
 
-        await context.SaveChangesAsync(cancellationToken);
-    }
+            await context.SaveChangesAsync(cancellationToken);
+        });
 }
