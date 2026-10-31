@@ -65,6 +65,7 @@ Only when the change affects behavior users see, commands, conventions or the do
 ## 9. Pull request
 
 - Commit with a short imperative subject, then push.
-- Open a PR against `dev` (`gh pr create --base dev`, or `mcp__github__create_pull_request`). The body has a summary, the design decisions,
-  the test coverage, anything the user must check by hand in the UI, and `Closes #$ARGUMENTS`.
+- Open a PR against `dev` (`gh pr create --base dev`, or `mcp__github__create_pull_request`). The body
+  has a summary, the design decisions, the test coverage, anything the user must check by hand in the UI,
+  and `Closes #$ARGUMENTS`.
 - Report the PR link. **Don't merge unless the user asks.**

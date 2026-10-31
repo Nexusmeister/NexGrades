@@ -187,6 +187,8 @@ localized later without a rewrite:
 - Branch off `dev` as `feature/<issue-number>-<short-slug>`; open pull requests against `dev`.
 - Commit subjects are short and imperative ("Add edit-class flow on the year-scoped model").
 - One logical change per PR; reference the issue it closes.
+- To take in newer `dev`, merge `origin/dev` into the feature branch; don't rebase or force-push a pushed
+  branch.
 - Never commit database files, user secrets or local settings (`.claude/settings.local.json`).
 
 ## Agent roles and workflows
