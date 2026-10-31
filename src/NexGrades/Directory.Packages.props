@@ -1,35 +1,35 @@
-<Project>
-	<PropertyGroup>
-		<!-- Enable central package management, https://learn.microsoft.com/en-us/nuget/consume-packages/Central-Package-Management -->
-		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-		<CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
-	</PropertyGroup>
-	<ItemGroup>
-		<PackageVersion Include="Aspire.Hosting.AppHost" Version="13.1.2" />
-		<PackageVersion Include="CommunityToolkit.Aspire.Hosting.Sqlite" Version="13.1.1" />
-		<PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
-		<PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
-		<!-- Pinned above the version Microsoft.EntityFrameworkCore.Sqlite pulls in transitively to resolve the
-		     NU1903 high-severity advisory (CVE-2025-6965). Do not downgrade or remove this pin. -->
-		<PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
-		<PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.3.0" />
-		<PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.3.0" />
-		<PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.0" />
-		<PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
-		<PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
-		<PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
-		<PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
-		<PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.3" />
-		<PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
-		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
-		<PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
-		<PackageVersion Include="WPF-UI" Version="4.2.0" />
-		<PackageVersion Include="WPF-UI.DependencyInjection" Version="4.2.0" />
-		<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3" />
-		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-		<PackageVersion Include="xunit" Version="2.9.3" />
-		<PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
-		<PackageVersion Include="coverlet.collector" Version="6.0.4" />
-	</ItemGroup>
+﻿<Project>
+  <PropertyGroup>
+    <!-- Enable central package management, https://learn.microsoft.com/en-us/nuget/consume-packages/Central-Package-Management -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.1.2" />
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Sqlite" Version="13.1.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
+    <!-- Pinned above the version Microsoft.EntityFrameworkCore.Sqlite pulls in transitively to resolve the
+         NU1903 high-severity advisory (CVE-2025-6965). Do not downgrade or remove this pin. -->
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.3.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.3.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
+    <PackageVersion Include="WPF-UI" Version="4.2.0" />
+    <PackageVersion Include="WPF-UI.DependencyInjection" Version="4.2.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+  </ItemGroup>
 </Project>

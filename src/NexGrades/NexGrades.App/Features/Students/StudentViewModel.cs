@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
@@ -7,8 +9,6 @@ using NexGrades.Data;
 using NexGrades.Data.Entities;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Services;
-using System.Collections.ObjectModel;
-using System.Globalization;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 using Wpf.Ui.Extensions;
@@ -335,7 +335,7 @@ public partial class StudentViewModel(
             existing.LastName = LastName.Trim();
             await editDb.SaveChangesAsync(cancellationToken);
 
-            snackbar.Show("Success", "Student has been saved.",ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+            snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
             navigation.GoBack();
             return;
         }
@@ -413,7 +413,7 @@ public partial class StudentViewModel(
     private bool IsNoteTextValid()
     {
         var trimmed = NoteText.Trim();
-        return trimmed.Length > 0 && trimmed.Length <= NoteService.MaxTextLength;
+        return trimmed.Length is > 0 and <= NoteService.MaxTextLength;
     }
 
     [RelayCommand(CanExecute = nameof(CanAddNote))]
