@@ -13,7 +13,7 @@ public partial class MainWindow : INavigationWindow
 {
     public MainWindowViewModel ViewModel { get; }
 
-    public MainWindow(MainWindowViewModel viewModel, INavigationService navigationService, ISnackbarService snackbarService)
+    public MainWindow(MainWindowViewModel viewModel, INavigationService navigationService, ISnackbarService snackbarService, IContentDialogService contentDialogService)
     {
         ViewModel = viewModel;
         DataContext = this;
@@ -23,6 +23,7 @@ public partial class MainWindow : INavigationWindow
         InitializeComponent();
 
         snackbarService.SetSnackbarPresenter(SnackbarPresenter);
+        contentDialogService.SetDialogHost(RootContentDialog);
 
         navigationService.SetNavigationControl(RootNavigation);
     }

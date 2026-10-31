@@ -53,6 +53,7 @@ public static class HostBuilderExtensions
         services.AddTransient<RolloverService>();
         services.AddTransient<YearCloseService>();
         services.AddTransient<UnlockService>();
+        services.AddTransient<NoteService>();
 
         // Configuration
         //_ = services.Configure<AppConfig>(context.Configuration.GetSection(nameof(AppConfig)));
@@ -60,6 +61,7 @@ public static class HostBuilderExtensions
         services.AddSingleton<IUserService, UserService>();
         services.AddTransient<IFileSystemDialogService, WindowsFileSystemDialogService>();
         services.AddSingleton<ISnackbarService, SnackbarService>();
+        services.AddSingleton<IContentDialogService, ContentDialogService>();
         return services;
     }
 
@@ -126,6 +128,7 @@ public static class HostBuilderExtensions
     {
         return services
             .AddSingleton<ClassEditRequest>()
+            .AddSingleton<StudentEditRequest>()
             .AddSingleton<HomeViewModel>()
             .AddSingleton<ClassesOverviewViewModel>()
             .AddSingleton<StudentsOverviewViewModel>()

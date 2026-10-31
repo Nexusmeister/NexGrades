@@ -7,15 +7,36 @@ using NexGrades.Common;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
 using Wpf.Ui;
+using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Students;
 
 public sealed record StudentRow(int Id, string FirstName, string LastName, string ClassName);
 
-public partial class StudentsOverviewViewModel(INavigationService navigation, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
+public partial class StudentsOverviewViewModel(
+    INavigationService navigation,
+    IDbContextFactory<AppDbContext> dbContextFactory,
+    ISnackbarService snackbarService,
+    StudentEditRequest editRequest) : ViewModel
 {
     [ObservableProperty]
     private ObservableCollection<StudentRow> _students = [];
+
+    [ObservableProperty]
+    private StudentRow? _selectedStudent;
+
+    [RelayCommand]
+    private void OnEditStudent()
+    {
+        if (SelectedStudent is null)
+        {
+            snackbarService.Show("No student selected", "Select a student to edit.", ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(5));
+            return;
+        }
+
+        editRequest.StudentId = SelectedStudent.Id;
+        navigation.NavigateWithHierarchy(typeof(StudentPage));
+    }
 
     [RelayCommand]
     private void OnAddStudent()

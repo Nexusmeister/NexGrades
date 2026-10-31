@@ -1,4 +1,7 @@
-﻿using Wpf.Ui.Abstractions.Controls;
+﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using Wpf.Ui.Abstractions.Controls;
 
 namespace NexGrades.App.Features.Students;
 
@@ -16,4 +19,23 @@ public partial class StudentsOverviewPage : INavigableView<StudentsOverviewViewM
     }
 
     public StudentsOverviewViewModel ViewModel { get; }
+
+    /// <summary>
+    /// Opens the double-clicked student. Only a click on a row counts: a double-click on a column header or the
+    /// empty area below the rows would otherwise open whichever student happened to be selected.
+    /// </summary>
+    private void OnStudentsGridMouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not DataGrid grid
+            || e.OriginalSource is not DependencyObject source
+            || ItemsControl.ContainerFromElement(grid, source) is not DataGridRow)
+        {
+            return;
+        }
+
+        if (ViewModel.EditStudentCommand.CanExecute(null))
+        {
+            ViewModel.EditStudentCommand.Execute(null);
+        }
+    }
 }

@@ -80,7 +80,9 @@ they record *why* the model is shaped the way it is.
 - **Grade** — one numeric grade in a bucket for a student.
 - **SubjectParticipation** — per-student override of the default "enrolled ⇒ participates" rule
   (elective, exemption, religion/ethics split). Rows exist only for deviations.
-- **Note** — free-text note on a student within a school year.
+- **Note** — free-text note on a student within a school year, managed through `NoteService`. A note
+  needs an enrollment of the student in that year and records its class. It is "removed" by archiving
+  (`ArchivedOn`), which can be undone, and is locked like everything else in a closed year.
 - **Teacher** — in practice one row (the app owner, `IsCurrentUser`).
 - **AuditEntry** — written for every change to a closed-but-unlocked year.
 

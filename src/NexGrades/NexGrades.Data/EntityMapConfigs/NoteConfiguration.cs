@@ -12,6 +12,8 @@ public class NoteConfiguration : IEntityTypeConfiguration<Note>
 
         builder.Property(e => e.Text).IsRequired();
 
+        builder.Property(e => e.ArchivedOn);
+
         builder.HasOne(e => e.Student)
             .WithMany(s => s.Notes)
             .HasForeignKey(e => e.StudentId)

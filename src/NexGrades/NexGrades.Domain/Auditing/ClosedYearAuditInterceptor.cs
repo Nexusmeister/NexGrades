@@ -277,8 +277,7 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
             return false; // Not closed (or no year association at all): no restriction, no audit trail.
         }
 
-        var isUnlocked = schoolYear.UnlockedUntil is { } until && until > clock.Now;
-        if (!isUnlocked)
+        if (!SchoolYearLock.IsWritable(schoolYear, clock.Now))
         {
             throw new ClosedYearException(
                 $"School year {schoolYear.Id} ('{schoolYear.Label}') is closed and not currently unlocked; " +
