@@ -25,7 +25,7 @@ public partial class SubjectsOverviewViewModel(INavigationService navigation, ID
     [RelayCommand]
     private async Task LoadSubjectsAsync(CancellationToken cancellationToken = default)
     {
-        var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var subjects = await dbcontext.Subjects
             .OrderBy(s => s.Name)
             .Select(s => new SubjectRow(s.Id, s.Name, s.ShortCode))

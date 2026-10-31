@@ -10,7 +10,8 @@ namespace NexGrades.Domain.Services;
 /// Implements the two year-close dispositions: rollover and archive. Both operations are pure status changes
 /// plus new rows: no historic row is ever mutated or deleted.
 /// </summary>
-public sealed class RolloverService(AppDbContext context, IClock clock)
+/// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
+public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFactory, IClock clock)
 {
     /// <summary>
     /// Rolls a class instance forward into a new school year: the old instance is marked
@@ -26,6 +27,7 @@ public sealed class RolloverService(AppDbContext context, IClock clock)
     public async Task<ClassInstance> RollClassInstanceForwardAsync(
         int classInstanceId, int targetSchoolYearId, string newName, CancellationToken cancellationToken = default)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         var oldInstance = await context.ClassInstances
@@ -136,6 +138,7 @@ public sealed class RolloverService(AppDbContext context, IClock clock)
     /// </summary>
     public async Task ArchiveClassInstanceAsync(int classInstanceId, bool endClassGroup, CancellationToken cancellationToken = default)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         var instance = await context.ClassInstances

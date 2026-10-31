@@ -9,11 +9,13 @@ namespace NexGrades.Domain.Services;
 /// one call to make per average instead of hand-rolling the query every time. All computation is delegated
 /// to <see cref="AverageCalculator"/>; this class only fetches the snapshot data it needs.
 /// </summary>
-public sealed class AverageService(AppDbContext context)
+/// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
+public sealed class AverageService(IDbContextFactory<AppDbContext> contextFactory)
 {
     /// <summary>Bucket average for one student in one <see cref="Data.Entities.GradeBucket"/>.</summary>
     public async Task<decimal?> GetBucketAverageAsync(int studentId, int gradeBucketId, CancellationToken cancellationToken = default)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         var values = await context.Grades
             .Where(g => g.GradeBucketId == gradeBucketId && g.StudentId == studentId)
             .Select(g => g.Value)
@@ -28,6 +30,7 @@ public sealed class AverageService(AppDbContext context)
     /// </summary>
     public async Task<decimal?> GetSubjectAverageAsync(int studentId, int subjectInstanceId, CancellationToken cancellationToken = default)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         var buckets = await context.GradeBuckets
             .Where(b => b.SubjectInstanceId == subjectInstanceId)
             .Select(b => new

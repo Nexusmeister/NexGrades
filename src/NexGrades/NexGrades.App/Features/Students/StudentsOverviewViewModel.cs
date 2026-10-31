@@ -26,7 +26,7 @@ public partial class StudentsOverviewViewModel(INavigationService navigation, ID
     [RelayCommand]
     private async Task LoadStudentsAsync(CancellationToken cancellationToken = default)
     {
-        var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         // A student's "current" class is their enrollment in the currently Active school year; a student
         // with no such enrollment (e.g. imported but not yet placed) shows no class rather than being hidden.

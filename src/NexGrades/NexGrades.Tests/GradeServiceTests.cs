@@ -33,7 +33,7 @@ public class GradeServiceTests
         var (context, bucket, student, _) = await SeedAsync(db, enrolledFrom: new DateTime(2025, 8, 1));
         await using var _ = context;
 
-        var service = new GradeService(context);
+        var service = new GradeService(db.CreateContextFactory());
         var grade = await service.RecordGradeAsync(bucket.Id, student.Id, 2.0m, new DateOnly(2025, 9, 15));
 
         Assert.NotEqual(0, grade.Id);
@@ -47,7 +47,7 @@ public class GradeServiceTests
         var (context, bucket, student, _) = await SeedAsync(db, enrolledFrom: new DateTime(2025, 8, 1));
         await using var _ = context;
 
-        var service = new GradeService(context);
+        var service = new GradeService(db.CreateContextFactory());
 
         await Assert.ThrowsAsync<InvariantViolationException>(
             () => service.RecordGradeAsync(bucket.Id, student.Id, 2.5m, new DateOnly(2025, 9, 15)));
@@ -60,7 +60,7 @@ public class GradeServiceTests
         var (context, bucket, student, _) = await SeedAsync(db, enrolledFrom: new DateTime(2025, 10, 1));
         await using var _ = context;
 
-        var service = new GradeService(context);
+        var service = new GradeService(db.CreateContextFactory());
 
         // RecordedOn is before the enrollment even started.
         await Assert.ThrowsAsync<InvariantViolationException>(
@@ -75,7 +75,7 @@ public class GradeServiceTests
             db, enrolledFrom: new DateTime(2025, 8, 1), enrolledTo: new DateTime(2025, 12, 1));
         await using var _ = context;
 
-        var service = new GradeService(context);
+        var service = new GradeService(db.CreateContextFactory());
 
         // RecordedOn is after LeftOn.
         await Assert.ThrowsAsync<InvariantViolationException>(
@@ -97,7 +97,7 @@ public class GradeServiceTests
         });
         await context.SaveChangesAsync();
 
-        var service = new GradeService(context);
+        var service = new GradeService(db.CreateContextFactory());
 
         await Assert.ThrowsAsync<InvariantViolationException>(
             () => service.RecordGradeAsync(bucket.Id, student.Id, 2.0m, new DateOnly(2025, 9, 15)));

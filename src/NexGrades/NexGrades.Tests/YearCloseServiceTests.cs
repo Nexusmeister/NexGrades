@@ -17,7 +17,7 @@ public class YearCloseServiceTests
         context.AddRange(year, group, instance);
         await context.SaveChangesAsync();
 
-        var service = new YearCloseService(context, new FixedClock(DateTime.Now));
+        var service = new YearCloseService(db.CreateContextFactory(), new FixedClock(DateTime.Now));
         var readiness = await service.GetCloseReadinessAsync(year.Id);
 
         Assert.False(readiness.CanClose);
@@ -39,7 +39,7 @@ public class YearCloseServiceTests
         context.AddRange(year, group, instance, subject, subjectInstance, bucket);
         await context.SaveChangesAsync();
 
-        var service = new YearCloseService(context, new FixedClock(DateTime.Now));
+        var service = new YearCloseService(db.CreateContextFactory(), new FixedClock(DateTime.Now));
         var readiness = await service.GetCloseReadinessAsync(year.Id);
 
         Assert.True(readiness.CanClose);
@@ -59,10 +59,11 @@ public class YearCloseServiceTests
         await context.SaveChangesAsync();
 
         var now = new DateTime(2026, 7, 20);
-        var service = new YearCloseService(context, new FixedClock(now));
+        var service = new YearCloseService(db.CreateContextFactory(), new FixedClock(now));
         await service.CloseSchoolYearAsync(year.Id);
 
-        var refreshed = await context.SchoolYears.FindAsync(year.Id);
+        await using var verify = db.CreateContext();
+        var refreshed = await verify.SchoolYears.FindAsync(year.Id);
         Assert.NotNull(refreshed);
         Assert.Equal(SchoolYearStatus.Closed, refreshed!.Status);
         Assert.Equal(now, refreshed.ClosedOn);
@@ -80,7 +81,7 @@ public class YearCloseServiceTests
         context.AddRange(year, group, instance);
         await context.SaveChangesAsync();
 
-        var service = new YearCloseService(context, new FixedClock(DateTime.Now));
+        var service = new YearCloseService(db.CreateContextFactory(), new FixedClock(DateTime.Now));
 
         await Assert.ThrowsAsync<Domain.Exceptions.InvariantViolationException>(() => service.CloseSchoolYearAsync(year.Id));
     }

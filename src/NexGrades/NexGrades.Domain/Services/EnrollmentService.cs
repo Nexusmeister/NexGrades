@@ -11,7 +11,14 @@ namespace NexGrades.Domain.Services;
 /// rule that spans every <see cref="ClassInstance"/> belonging to that year, not just the one being enrolled
 /// into.
 /// </summary>
-public sealed class EnrollmentService(AppDbContext context)
+/// <remarks>
+/// Like every Domain service, this takes an <see cref="IDbContextFactory{TContext}"/> rather than an
+/// <see cref="AppDbContext"/> and opens one short-lived context per public method. The services are resolved
+/// from the root provider by the WPF navigation (no DI scope exists around a page), so a scoped context would
+/// either fail scope validation or silently become one long-lived, never-disposed context shared by the whole
+/// app. A context per operation also gives each use case its own unit of work and transaction.
+/// </remarks>
+public sealed class EnrollmentService(IDbContextFactory<AppDbContext> contextFactory)
 {
     /// <summary>
     /// Creates a new <see cref="Enrollment"/> for <paramref name="studentId"/> in <paramref name="classInstanceId"/>,
@@ -24,6 +31,7 @@ public sealed class EnrollmentService(AppDbContext context)
     public async Task<Enrollment> CreateEnrollmentAsync(
         int studentId, int classInstanceId, DateTime joinedOn, CancellationToken cancellationToken = default)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         var classInstance = await context.ClassInstances

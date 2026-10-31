@@ -14,7 +14,8 @@ namespace NexGrades.Domain.Services;
 /// from that year — and records the reason in <see cref="IUnlockReasonStore"/> so it can be attached to
 /// every <see cref="AuditEntry"/> written while unlocked. Re-locking clears the window immediately.
 /// </summary>
-public sealed class UnlockService(AppDbContext context, IClock clock, IUnlockReasonStore reasonStore)
+/// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
+public sealed class UnlockService(IDbContextFactory<AppDbContext> contextFactory, IClock clock, IUnlockReasonStore reasonStore)
 {
     /// <summary>
     /// Unlocks <paramref name="schoolYearId"/> until <paramref name="until"/>, recording <paramref name="reason"/>
@@ -27,6 +28,7 @@ public sealed class UnlockService(AppDbContext context, IClock clock, IUnlockRea
             throw new ArgumentException("A reason is required to unlock a closed school year.", nameof(reason));
         }
 
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         var schoolYear = await context.SchoolYears.FirstOrDefaultAsync(sy => sy.Id == schoolYearId, cancellationToken)
             ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
 
@@ -57,6 +59,7 @@ public sealed class UnlockService(AppDbContext context, IClock clock, IUnlockRea
     /// </summary>
     public async Task RelockAsync(int schoolYearId, CancellationToken cancellationToken = default)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         var schoolYear = await context.SchoolYears.FirstOrDefaultAsync(sy => sy.Id == schoolYearId, cancellationToken)
             ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
 

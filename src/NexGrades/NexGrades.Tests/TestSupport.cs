@@ -34,6 +34,18 @@ internal sealed class SqliteTestDatabase : IDisposable
 
     public AppDbContext CreateContext() => new(Options);
 
+    /// <summary>
+    /// A factory over this database, for the Domain services, which open their own short-lived context per
+    /// operation. Assert against a fresh <see cref="CreateContext"/> afterwards: a context that seeded the
+    /// data still tracks the old values and would not see the service's writes.
+    /// </summary>
+    public IDbContextFactory<AppDbContext> CreateContextFactory() => new TestDbContextFactory(Options);
+
+    private sealed class TestDbContextFactory(DbContextOptions<AppDbContext> options) : IDbContextFactory<AppDbContext>
+    {
+        public AppDbContext CreateDbContext() => new(options);
+    }
+
     public void Dispose()
     {
         SqliteConnection.ClearAllPools();
