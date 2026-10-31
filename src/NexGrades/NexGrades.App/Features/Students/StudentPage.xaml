@@ -6,6 +6,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:students="clr-namespace:NexGrades.App.Features.Students"
       xmlns:core="clr-namespace:NexGrades.App.Core"
+      xmlns:services="clr-namespace:NexGrades.Domain.Services;assembly=NexGrades.Domain"
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="900"
       d:DataContext="{d:DesignInstance students:StudentPage, IsDesignTimeCreatable=False}"
@@ -42,16 +43,16 @@
                        Command="{Binding ViewModel.CancelCommand}"/>
         </StackPanel>
 
-        <!-- Details on the left, notes on the right: the notes list gets the full remaining height. -->
+        <!-- Details on the left, notes on the right: the notes list gets the full remaining height. Proportional
+             columns with limits, so the notes column keeps room when the window is narrow (about 900 x 600). -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="2*" MinWidth="220" MaxWidth="360"/>
+                <ColumnDefinition Width="3*"/>
             </Grid.ColumnDefinitions>
 
             <ui:Card Grid.Column="0"
-                     VerticalAlignment="Top"
-                     Width="340">
+                     VerticalAlignment="Top">
                 <StackPanel>
                     <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="First name"/>
                     <ui:TextBox Margin="0,0,0,12"
@@ -104,15 +105,18 @@
                     <StackPanel Grid.Row="0">
                         <ui:TextBlock FontTypography="Subtitle" Text="Notes"/>
                         <WrapPanel Margin="0,8,0,0">
-                            <ComboBox Margin="0,0,16,0"
-                                      MinWidth="160"
-                                      VerticalAlignment="Center"
-                                      AutomationProperties.Name="School year"
-                                      ToolTip="School year"
-                                      ItemsSource="{Binding ViewModel.NoteYears}"
-                                      SelectedItem="{Binding ViewModel.SelectedNoteYear}"
-                                      DisplayMemberPath="Label"/>
-                            <ui:ToggleSwitch VerticalAlignment="Center"
+                            <StackPanel Margin="0,0,16,8">
+                                <ui:TextBlock Margin="0,0,0,4" FontTypography="Caption" Text="School year"/>
+                                <!-- Locked while the editor holds unsaved input, because switching resets it. -->
+                                <ComboBox MinWidth="160"
+                                          AutomationProperties.Name="School year"
+                                          IsEnabled="{Binding ViewModel.CanChangeNoteYear}"
+                                          ItemsSource="{Binding ViewModel.NoteYears}"
+                                          SelectedItem="{Binding ViewModel.SelectedNoteYear}"
+                                          DisplayMemberPath="Label"/>
+                            </StackPanel>
+                            <ui:ToggleSwitch Margin="0,0,0,8"
+                                             VerticalAlignment="Bottom"
                                              Content="Show archived notes"
                                              IsChecked="{Binding ViewModel.ShowArchivedNotes}"/>
                         </WrapPanel>
@@ -138,14 +142,14 @@
                     <StackPanel Grid.Row="2"
                                 Margin="0,12,0,0"
                                 Visibility="{Binding ViewModel.IsSelectedYearWritable, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="New note"/>
+                        <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="{Binding ViewModel.NoteEditorLabel}"/>
                         <ui:TextBox MinHeight="72"
                                     MaxHeight="120"
                                     AcceptsReturn="True"
                                     TextWrapping="Wrap"
-                                    MaxLength="4000"
+                                    MaxLength="{x:Static services:NoteService.MaxTextLength}"
                                     VerticalScrollBarVisibility="Auto"
-                                    AutomationProperties.Name="New note"
+                                    AutomationProperties.Name="{Binding ViewModel.NoteEditorLabel}"
                                     PlaceholderText="Write a note about this student"
                                     Text="{Binding ViewModel.NoteText, UpdateSourceTrigger=PropertyChanged}"/>
                         <StackPanel Margin="0,8,0,0" Orientation="Horizontal">

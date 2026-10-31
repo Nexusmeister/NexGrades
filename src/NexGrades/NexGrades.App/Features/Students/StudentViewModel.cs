@@ -57,6 +57,8 @@ public partial class StudentViewModel(
     private bool _suppressNoteReload;
     private string _loadedFirstName = string.Empty;
     private string _loadedLastName = string.Empty;
+    private string _editingNoteOriginalText = string.Empty;
+    private int _notesReloadVersion;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StudentValidationMessage), nameof(HasStudentValidationMessage))]
@@ -99,20 +101,26 @@ public partial class StudentViewModel(
     [ObservableProperty] private bool _showArchivedNotes;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanChangeNoteYear))]
     [NotifyCanExecuteChangedFor(nameof(AddNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveNoteCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartEditNoteCommand))]
     private string _noteText = string.Empty;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsEditingNote))]
+    [NotifyPropertyChangedFor(nameof(IsEditingNote), nameof(NoteEditorLabel), nameof(CanChangeNoteYear))]
     [NotifyCanExecuteChangedFor(nameof(AddNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveNoteCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartEditNoteCommand))]
     private int? _editingNoteId;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(AddNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveStudentCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartEditNoteCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ArchiveNoteCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RestoreNoteCommand))]
     private bool _isBusy;
 
     /// <summary>True when an existing student is being edited; notes are only available then.</summary>
@@ -167,7 +175,23 @@ public partial class StudentViewModel(
         FirstName != _loadedFirstName
         || LastName != _loadedLastName
         || (!IsExistingStudent && SelectedClass is not null)
-        || !string.IsNullOrWhiteSpace(NoteText);
+        || HasPendingNoteInput;
+
+    /// <summary>
+    /// True while the note editor holds input that isn't saved: a new note being written, or an edited note
+    /// whose text differs from what was loaded.
+    /// </summary>
+    private bool HasPendingNoteInput =>
+        IsEditingNote ? NoteText != _editingNoteOriginalText : !string.IsNullOrWhiteSpace(NoteText);
+
+    /// <summary>
+    /// The school year can be switched only while the note editor holds no unsaved input, because switching
+    /// resets the editor.
+    /// </summary>
+    public bool CanChangeNoteYear => !HasPendingNoteInput;
+
+    /// <summary>Label of the note editor, which serves both adding and editing.</summary>
+    public string NoteEditorLabel => IsEditingNote ? "Edit note" : "New note";
 
     /// <summary>True while the note editor holds an existing note rather than a new one.</summary>
     public bool IsEditingNote => EditingNoteId is not null;
@@ -230,6 +254,17 @@ public partial class StudentViewModel(
         Title = "Edit student";
         IsExistingStudent = true;
 
+        await LoadNoteYearsAsync(studentId, keepYearId: null);
+        await ReloadNotesAsync();
+    }
+
+    /// <summary>
+    /// Loads the years the student can have notes in, with their current lock state. Selects
+    /// <paramref name="keepYearId"/> if given and still present, otherwise the Active year, otherwise the newest.
+    /// Does not reload the notes list itself.
+    /// </summary>
+    private async Task LoadNoteYearsAsync(int studentId, int? keepYearId)
+    {
         var years = await noteService.GetNoteYearsForStudentAsync(studentId);
         var options = years
             .Select(y => new NoteYearOption(
@@ -240,15 +275,13 @@ public partial class StudentViewModel(
         try
         {
             NoteYears = options.ToObservableCollection();
-            var activeId = years.FirstOrDefault(y => y.Status == SchoolYearStatus.Active)?.SchoolYearId;
-            SelectedNoteYear = options.FirstOrDefault(o => o.Id == activeId) ?? options.FirstOrDefault();
+            var preferredId = keepYearId ?? years.FirstOrDefault(y => y.Status == SchoolYearStatus.Active)?.SchoolYearId;
+            SelectedNoteYear = options.FirstOrDefault(o => o.Id == preferredId) ?? options.FirstOrDefault();
         }
         finally
         {
             _suppressNoteReload = false;
         }
-
-        await ReloadNotesAsync();
     }
 
     partial void OnSelectedNoteYearChanged(NoteYearOption? value)
@@ -256,6 +289,8 @@ public partial class StudentViewModel(
         AddNoteCommand.NotifyCanExecuteChanged();
         SaveNoteCommand.NotifyCanExecuteChanged();
         StartEditNoteCommand.NotifyCanExecuteChanged();
+        ArchiveNoteCommand.NotifyCanExecuteChanged();
+        RestoreNoteCommand.NotifyCanExecuteChanged();
         CancelEditNote();
 
         if (!_suppressNoteReload)
@@ -279,6 +314,14 @@ public partial class StudentViewModel(
     {
         if (_editingStudentId is { } editId)
         {
+            if (HasPendingNoteInput
+                && !await ConfirmDiscardAsync(
+                    "The note you are writing has not been saved. Save the student and discard the note?",
+                    cancellationToken))
+            {
+                return;
+            }
+
             // Editing changes the name only; class membership is managed through enrollments, not here.
             await using var editDb = await dbContextFactory.CreateDbContextAsync(cancellationToken);
             var existing = await editDb.Students.FirstOrDefaultAsync(s => s.Id == editId, cancellationToken);
@@ -335,25 +378,30 @@ public partial class StudentViewModel(
     [RelayCommand]
     private async Task Cancel(CancellationToken cancellationToken = default)
     {
-        if (HasUnsavedChanges)
+        if (HasUnsavedChanges
+            && !await ConfirmDiscardAsync(
+                "You have unsaved changes on this page. Leave the page and discard them?", cancellationToken))
         {
-            var confirmation = await contentDialogService.ShowSimpleDialogAsync(
-                new SimpleContentDialogCreateOptions
-                {
-                    Title = "Discard changes",
-                    Content = "You have unsaved changes on this page. Leave the page and discard them?",
-                    PrimaryButtonText = "Discard",
-                    CloseButtonText = "Keep editing",
-                },
-                cancellationToken);
-
-            if (confirmation != ContentDialogResult.Primary)
-            {
-                return;
-            }
+            return;
         }
 
         navigation.GoBack();
+    }
+
+    /// <summary>Asks whether unsaved input may be discarded; true when the user agrees.</summary>
+    private async Task<bool> ConfirmDiscardAsync(string content, CancellationToken cancellationToken)
+    {
+        var confirmation = await contentDialogService.ShowSimpleDialogAsync(
+            new SimpleContentDialogCreateOptions
+            {
+                Title = "Discard changes",
+                Content = content,
+                PrimaryButtonText = "Discard",
+                CloseButtonText = "Keep editing",
+            },
+            cancellationToken);
+
+        return confirmation == ContentDialogResult.Primary;
     }
 
     private bool CanAddNote() =>
@@ -390,13 +438,19 @@ public partial class StudentViewModel(
         }
     }
 
-    private bool CanStartEditNote(NoteRow? note) => IsSelectedYearWritable && note is { IsArchived: false };
+    /// <summary>
+    /// Editing a note loads it into the shared editor, so it is blocked while the editor holds unsaved input
+    /// rather than silently overwriting it.
+    /// </summary>
+    private bool CanStartEditNote(NoteRow? note) =>
+        IsSelectedYearWritable && !IsBusy && !HasPendingNoteInput && note is { IsArchived: false };
 
     [RelayCommand(CanExecute = nameof(CanStartEditNote))]
     private void StartEditNote(NoteRow note)
     {
-        NoteText = note.Text;
+        _editingNoteOriginalText = note.Text;
         _editingNoteCategory = note.Category;
+        NoteText = note.Text;
         EditingNoteId = note.Id;
     }
 
@@ -428,10 +482,13 @@ public partial class StudentViewModel(
     {
         EditingNoteId = null;
         _editingNoteCategory = null;
+        _editingNoteOriginalText = string.Empty;
         NoteText = string.Empty;
     }
 
-    [RelayCommand]
+    private bool CanChangeNoteState(NoteRow? note) => IsSelectedYearWritable && !IsBusy && note is not null;
+
+    [RelayCommand(CanExecute = nameof(CanChangeNoteState))]
     private async Task ArchiveNote(NoteRow note, CancellationToken cancellationToken = default)
     {
         var confirmation = await contentDialogService.ShowSimpleDialogAsync(
@@ -466,7 +523,7 @@ public partial class StudentViewModel(
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChangeNoteState))]
     private async Task RestoreNote(NoteRow note, CancellationToken cancellationToken = default)
     {
         var succeeded = await RunNoteOperationAsync(
@@ -498,9 +555,18 @@ public partial class StudentViewModel(
         catch (ClosedYearException)
         {
             snackbar.Show("Error", closedYearMessage, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+
+            // The year was locked while the page was open (e.g. its unlock expired): refresh the lock state so
+            // the page turns read-only instead of offering edits that will fail again.
+            if (_editingStudentId is { } studentId)
+            {
+                await LoadNoteYearsAsync(studentId, SelectedNoteYear?.Id);
+                await ReloadNotesAsync();
+            }
+
             return false;
         }
-        catch (InvariantViolationException)
+        catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
             snackbar.Show("Error", failureMessage, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
             return false;
@@ -511,8 +577,15 @@ public partial class StudentViewModel(
         }
     }
 
+    /// <summary>
+    /// Reloads the notes list for the selected year and archive filter. Reloads can overlap (switching year or
+    /// the filter quickly), so only the newest one may write its result; older ones are dropped. Failures are
+    /// reported rather than thrown, because this also runs fire-and-forget from property-change handlers.
+    /// </summary>
     private async Task ReloadNotesAsync()
     {
+        var version = ++_notesReloadVersion;
+
         if (_editingStudentId is not { } studentId || SelectedNoteYear is not { } year)
         {
             Notes = [];
@@ -520,8 +593,26 @@ public partial class StudentViewModel(
             return;
         }
 
-        var notes = await noteService.GetNotesForStudentAsync(
-            studentId, year.Id, includeArchived: ShowArchivedNotes);
+        IReadOnlyList<NoteDto> notes;
+        try
+        {
+            notes = await noteService.GetNotesForStudentAsync(
+                studentId, year.Id, includeArchived: ShowArchivedNotes);
+        }
+        catch (Exception)
+        {
+            if (version == _notesReloadVersion)
+            {
+                snackbar.Show("Error", "The notes could not be loaded.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            }
+
+            return;
+        }
+
+        if (version != _notesReloadVersion)
+        {
+            return;
+        }
 
         var culture = CultureInfo.CurrentCulture;
         Notes = notes
@@ -535,5 +626,7 @@ public partial class StudentViewModel(
                 n.ArchivedOn is { } archived ? string.Format(culture, "Archived {0}", archived.ToString("g", culture)) : null))
             .ToObservableCollection();
         StartEditNoteCommand.NotifyCanExecuteChanged();
+        ArchiveNoteCommand.NotifyCanExecuteChanged();
+        RestoreNoteCommand.NotifyCanExecuteChanged();
     }
 }

@@ -42,9 +42,9 @@
                      SelectedItem="{Binding ViewModel.SelectedStudent, Mode=TwoWay}"
                      SelectionMode="Single"
                      IsReadOnly="True"
-                     AutoGenerateColumns="False">
+                     AutoGenerateColumns="False"
+                     MouseDoubleClick="OnStudentsGridMouseDoubleClick">
             <ui:DataGrid.InputBindings>
-                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding ViewModel.EditStudentCommand}"/>
                 <KeyBinding Key="Enter" Command="{Binding ViewModel.EditStudentCommand}"/>
             </ui:DataGrid.InputBindings>
             <ui:DataGrid.Columns>

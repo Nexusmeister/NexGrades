@@ -504,6 +504,37 @@ public class NoteServiceTests
         Assert.Equal(archivedOn, (await LoadNoteAsync(env, noteId)).ArchivedOn);
     }
 
+    [Fact]
+    public async Task RestoreNoteAsync_Throws_ForUnknownNote()
+    {
+        using var env = new Env();
+        await SeedAsync(env);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => env.Service.RestoreNoteAsync(9999));
+    }
+
+    [Fact]
+    public async Task ArchiveAndRestoreNoteAsync_WriteAuditEntries_ForUnlockedClosedYear()
+    {
+        using var env = new Env();
+        var seed = await SeedAsync(env, SchoolYearStatus.Closed, FutureUnlock);
+        var noteId = await SeedNoteAsync(env, seed);
+        env.Reasons.SetReason(seed.YearId, "Tidy up");
+
+        await env.Service.ArchiveNoteAsync(noteId);
+
+        Assert.Equal(Now, (await LoadNoteAsync(env, noteId)).ArchivedOn);
+        var afterArchive = await NoteAuditEntriesAsync(env);
+        Assert.NotEmpty(afterArchive);
+
+        await env.Service.RestoreNoteAsync(noteId);
+
+        Assert.Null((await LoadNoteAsync(env, noteId)).ArchivedOn);
+        var afterRestore = await NoteAuditEntriesAsync(env);
+        Assert.True(afterRestore.Count > afterArchive.Count);
+        Assert.All(afterRestore, a => Assert.Equal("Tidy up", a.Reason));
+    }
+
     // ---------- GetNotesForStudentAsync ----------
 
     [Fact]
