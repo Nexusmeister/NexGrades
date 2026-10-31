@@ -55,24 +55,45 @@ public partial class StudentViewModel(
     private int? _editingStudentId;
     private string? _editingNoteCategory;
     private bool _suppressNoteReload;
+    private string _loadedFirstName = string.Empty;
+    private string _loadedLastName = string.Empty;
 
-    [ObservableProperty] private string _firstName = string.Empty;
-    [ObservableProperty] private string _lastName = string.Empty;
-    [ObservableProperty] private ObservableCollection<ClassInstanceOption> _classes = [];
-    [ObservableProperty] private ClassInstanceOption? _selectedClass;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StudentValidationMessage), nameof(HasStudentValidationMessage))]
+    [NotifyCanExecuteChangedFor(nameof(SaveStudentCommand))]
+    private string _firstName = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StudentValidationMessage), nameof(HasStudentValidationMessage))]
+    [NotifyCanExecuteChangedFor(nameof(SaveStudentCommand))]
+    private string _lastName = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StudentValidationMessage), nameof(HasStudentValidationMessage))]
+    [NotifyCanExecuteChangedFor(nameof(SaveStudentCommand))]
+    private ObservableCollection<ClassInstanceOption> _classes = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StudentValidationMessage), nameof(HasStudentValidationMessage))]
+    [NotifyCanExecuteChangedFor(nameof(SaveStudentCommand))]
+    private ClassInstanceOption? _selectedClass;
+
     [ObservableProperty] private string _title = "Add student";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasNoNotes))]
     private ObservableCollection<NoteRow> _notes = [];
 
-    [ObservableProperty] private ObservableCollection<NoteYearOption> _noteYears = [];
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EmptyNotesMessage))]
+    private ObservableCollection<NoteYearOption> _noteYears = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSelectedYearWritable))]
     [NotifyPropertyChangedFor(nameof(IsSelectedYearLocked))]
     [NotifyPropertyChangedFor(nameof(IsSelectedYearUnlocked))]
     [NotifyPropertyChangedFor(nameof(UnlockedUntilMessage))]
+    [NotifyPropertyChangedFor(nameof(EmptyNotesMessage))]
     private NoteYearOption? _selectedNoteYear;
 
     [ObservableProperty] private bool _showArchivedNotes;
@@ -91,10 +112,62 @@ public partial class StudentViewModel(
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(AddNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveNoteCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SaveStudentCommand))]
     private bool _isBusy;
 
     /// <summary>True when an existing student is being edited; notes are only available then.</summary>
-    [ObservableProperty] private bool _isExistingStudent;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StudentValidationMessage), nameof(HasStudentValidationMessage))]
+    [NotifyCanExecuteChangedFor(nameof(SaveStudentCommand))]
+    private bool _isExistingStudent;
+
+    /// <summary>
+    /// Why the student can't be saved yet, shown next to the form; <see langword="null"/> when the input is valid.
+    /// Editing an existing student changes the names only, so the class is required for a new student alone.
+    /// </summary>
+    public string? StudentValidationMessage
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName))
+            {
+                return "Enter a first name and a last name.";
+            }
+
+            if (IsExistingStudent)
+            {
+                return null;
+            }
+
+            if (Classes.Count == 0)
+            {
+                return "There is no class in the active school year to add the student to.";
+            }
+
+            return SelectedClass is null ? "Select a class for the student." : null;
+        }
+    }
+
+    /// <summary>True when <see cref="StudentValidationMessage"/> has something to show.</summary>
+    public bool HasStudentValidationMessage => StudentValidationMessage is not null;
+
+    /// <summary>Explains an empty notes list, depending on why it is empty and whether notes can be added.</summary>
+    public string EmptyNotesMessage =>
+        NoteYears.Count == 0
+            ? "This student is not enrolled in any school year yet, so there are no notes. Notes can be added once the student is enrolled in a class."
+            : IsSelectedYearWritable
+                ? "No notes for this school year yet. Write a note above to add one."
+                : "No notes for this school year.";
+
+    /// <summary>
+    /// True when leaving the page would lose input: changed names, a class picked for a new student, or a
+    /// note being written or edited.
+    /// </summary>
+    private bool HasUnsavedChanges =>
+        FirstName != _loadedFirstName
+        || LastName != _loadedLastName
+        || (!IsExistingStudent && SelectedClass is not null)
+        || !string.IsNullOrWhiteSpace(NoteText);
 
     /// <summary>True while the note editor holds an existing note rather than a new one.</summary>
     public bool IsEditingNote => EditingNoteId is not null;
@@ -150,6 +223,8 @@ public partial class StudentViewModel(
             return;
         }
 
+        _loadedFirstName = student.FirstName;
+        _loadedLastName = student.LastName;
         FirstName = student.FirstName;
         LastName = student.LastName;
         Title = "Edit student";
@@ -197,7 +272,9 @@ public partial class StudentViewModel(
         }
     }
 
-    [RelayCommand]
+    private bool CanSaveStudent() => !IsBusy && StudentValidationMessage is null;
+
+    [RelayCommand(CanExecute = nameof(CanSaveStudent))]
     private async Task SaveStudent(CancellationToken cancellationToken = default)
     {
         if (_editingStudentId is { } editId)
@@ -211,11 +288,11 @@ public partial class StudentViewModel(
                 return;
             }
 
-            existing.FirstName = FirstName;
-            existing.LastName = LastName;
+            existing.FirstName = FirstName.Trim();
+            existing.LastName = LastName.Trim();
             await editDb.SaveChangesAsync(cancellationToken);
 
-            snackbar.Show("Success", "Student has been saved", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+            snackbar.Show("Success", "Student has been saved.",ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
             navigation.GoBack();
             return;
         }
@@ -234,8 +311,8 @@ public partial class StudentViewModel(
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var studentToAdd = new Student
         {
-            FirstName = FirstName,
-            LastName = LastName,
+            FirstName = FirstName.Trim(),
+            LastName = LastName.Trim(),
         };
 
         db.Students.Add(studentToAdd);
@@ -245,18 +322,37 @@ public partial class StudentViewModel(
         {
             await enrollmentService.CreateEnrollmentAsync(studentToAdd.Id, SelectedClass.Id, DateTime.Now, cancellationToken);
 
-            snackbar.Show("Success", "Student has been saved", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+            snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
             navigation.GoBack();
         }
         else
         {
-            snackbar.Show("Error", "Student has not been saved", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show("Error", "Student has not been saved.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
         }
     }
 
+    /// <summary>Goes back without saving, asking first when the page holds unsaved input.</summary>
     [RelayCommand]
-    private void Cancel()
+    private async Task Cancel(CancellationToken cancellationToken = default)
     {
+        if (HasUnsavedChanges)
+        {
+            var confirmation = await contentDialogService.ShowSimpleDialogAsync(
+                new SimpleContentDialogCreateOptions
+                {
+                    Title = "Discard changes",
+                    Content = "You have unsaved changes on this page. Leave the page and discard them?",
+                    PrimaryButtonText = "Discard",
+                    CloseButtonText = "Keep editing",
+                },
+                cancellationToken);
+
+            if (confirmation != ContentDialogResult.Primary)
+            {
+                return;
+            }
+        }
+
         navigation.GoBack();
     }
 

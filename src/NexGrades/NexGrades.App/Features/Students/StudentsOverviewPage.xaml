@@ -25,7 +25,7 @@
             Margin="5,0,0,0"></ui:TextBlock>
         <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
             <ui:Button Margin="0,0,5,0" Content="AddStudent" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddStudentCommand}"/>
-            <ui:Button Margin="0,0,5,0" Content="Edit student" Icon="{ui:SymbolIcon Edit32}" Command="{Binding ViewModel.EditStudentCommand}"/>
+            <ui:Button Margin="0,0,5,0" Content="Edit student" Icon="{ui:SymbolIcon Edit24}" Command="{Binding ViewModel.EditStudentCommand}"/>
             <ui:Button Margin="0,0,5,0" Content="RemoveStudent" Icon="{ui:SymbolIcon SubtractCircle32}"/>
         </StackPanel>
         <!--<ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
@@ -45,6 +45,7 @@
                      AutoGenerateColumns="False">
             <ui:DataGrid.InputBindings>
                 <MouseBinding Gesture="LeftDoubleClick" Command="{Binding ViewModel.EditStudentCommand}"/>
+                <KeyBinding Key="Enter" Command="{Binding ViewModel.EditStudentCommand}"/>
             </ui:DataGrid.InputBindings>
             <ui:DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding Id}"/>

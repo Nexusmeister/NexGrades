@@ -73,6 +73,14 @@
                                   DisplayMemberPath="Name"
                                   SelectedItem="{Binding ViewModel.SelectedClass}"/>
                     </StackPanel>
+
+                    <!-- Why Save is disabled -->
+                    <ui:TextBlock Margin="0,8,0,0"
+                                  FontTypography="Caption"
+                                  Appearance="Secondary"
+                                  TextWrapping="Wrap"
+                                  Text="{Binding ViewModel.StudentValidationMessage}"
+                                  Visibility="{Binding ViewModel.HasStudentValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </StackPanel>
             </ui:Card>
 
@@ -164,7 +172,7 @@
                                   Margin="0,16,0,0"
                                   Appearance="Secondary"
                                   TextWrapping="Wrap"
-                                  Text="No notes for this school year yet. Write a note above to add one."
+                                  Text="{Binding ViewModel.EmptyNotesMessage}"
                                   Visibility="{Binding ViewModel.HasNoNotes, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                     <!-- Notes list -->

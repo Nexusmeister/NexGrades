@@ -30,7 +30,7 @@ public partial class StudentsOverviewViewModel(
     {
         if (SelectedStudent is null)
         {
-            snackbarService.Show("", "Please select a student to edit.", ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info32), TimeSpan.FromSeconds(5));
+            snackbarService.Show("No student selected", "Select a student to edit.", ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(5));
             return;
         }
 
