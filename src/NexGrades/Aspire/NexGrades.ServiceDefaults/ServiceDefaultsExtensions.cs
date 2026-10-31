@@ -62,6 +62,10 @@ public static class ServiceDefaultsExtensions
             // log arguments still travel as attributes, so code must not log pupil data at all.
             logging.IncludeFormattedMessage = false;
             logging.IncludeScopes = false;
+
+            // Exception messages and stack traces are not exported either, only the exception type. This is a
+            // processor of the same pipeline as the exporter and is registered before UseOtlpExporter below.
+            _ = logging.AddProcessor(new ExceptionRedactionLogProcessor());
         });
 
         // EF Core logs executed SQL text at Information level. Keep that out of the exported logs (and the dashboard).

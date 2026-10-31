@@ -42,9 +42,7 @@ public partial class App : Application
     [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "WPF event handler; all failures are caught below.")]
     private async void OnStartup(object sender, StartupEventArgs e)
     {
-        // Creates the trace and meter listeners now rather than in _host.StartAsync, so the startup span and the
-        // migration are not missed.
-        _ = _host.Services.InitializeTelemetry();
+        InitializeTelemetrySafely();
 
         using var startup = NexGradesTelemetry.ActivitySource.StartActivity("App.Startup");
         try
@@ -66,11 +64,13 @@ public partial class App : Application
             await _host.StartAsync();
 
             // The window is shown by ApplicationHostService.StartAsync, so this is the time to a usable UI.
+            _ = startup?.SetTag(NexGradesTelemetry.OutcomeTag, NexGradesTelemetry.Outcomes.Success);
             RecordStartupDuration(NexGradesTelemetry.Outcomes.Success);
         }
         catch (Exception ex)
         {
             NexGradesTelemetry.MarkFailed(startup, ex);
+            _ = startup?.SetTag(NexGradesTelemetry.OutcomeTag, NexGradesTelemetry.Outcomes.Error);
             RecordStartupDuration(NexGradesTelemetry.Outcomes.Error);
             // TODO Some logging (#51). Until then at least do not fail silently with no window.
             MessageBox.Show("NexGrades could not start. Check that its data folder is writable.", "NexGrades", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -78,11 +78,31 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// Creates the trace and meter listeners now rather than in <c>_host.StartAsync</c>, so the startup span and the
+    /// migration are not missed. Telemetry is a diagnostic aid: if it cannot be set up (for example the exporter
+    /// rejects its configuration), the app runs without it instead of failing to start. Only this call is guarded.
+    /// </summary>
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Telemetry must never prevent the app from starting.")]
+    private static void InitializeTelemetrySafely()
+    {
+        try
+        {
+            _ = _host.Services.InitializeTelemetry();
+        }
+        catch (Exception ex)
+        {
+            // Not logged: there is no logging yet (#51), and the exception message could carry configuration values.
+            Debug.WriteLine($"Telemetry is disabled: {ex.GetType().Name}");
+        }
+    }
+
     private static void RecordStartupDuration(string outcome)
     {
         using var process = Process.GetCurrentProcess();
         NexGradesTelemetry.StartupDuration.Record(
-            (DateTime.Now - process.StartTime).TotalSeconds,
+            // Both sides in UTC so a daylight saving change since process start cannot skew the duration.
+            (DateTime.UtcNow - process.StartTime.ToUniversalTime()).TotalSeconds,
             new KeyValuePair<string, object?>(NexGradesTelemetry.OutcomeTag, outcome));
     }
 

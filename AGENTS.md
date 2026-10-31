@@ -102,8 +102,8 @@ they record *why* the model is shaped the way it is.
 - **Averages use the snapshotted `GradeBucket.Weight`**, never the live `BucketTemplate.Weight`.
 - **Business rules live in `NexGrades.Domain`** (services such as `GradeService`, `EnrollmentService`,
   `RolloverService`, `YearCloseService`). New rules go there, with tests, not into view models.
-- **No pupil data in telemetry.** Logs, metrics and traces never carry names, grades, notes or other record
-  content, in a message, tag or metric dimension. Tag keys come only from `NexGradesTelemetry`. See
+- **No pupil data in telemetry.** Logs, metrics and traces never carry names, grades, notes, record ids or
+  other record content, in a message, tag or metric dimension. Tag keys come only from `NexGradesTelemetry`. See
   `docs/decisions/0002-telemetry-and-privacy.md`.
 
 ### Grading scale

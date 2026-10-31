@@ -179,6 +179,7 @@ public class TelemetryTests
         Assert.Equal(NexGradesTelemetry.Outcomes.ClosedYear, OutcomeOf(span));
         Assert.Equal(ActivityStatusCode.Error, span.Status);
         Assert.Equal(nameof(ClosedYearException), span.GetTagItem(NexGradesTelemetry.ErrorTypeTag));
+        Assert.Equal(nameof(ClosedYearException), span.StatusDescription);
         var duration = Assert.Single(capture.DurationsFor(AddNoteOperation));
         Assert.Equal(NexGradesTelemetry.Outcomes.ClosedYear, duration.Tags[NexGradesTelemetry.OutcomeTag]);
         await using var verify = env.Db.CreateContext();
@@ -199,6 +200,7 @@ public class TelemetryTests
         Assert.Equal(NexGradesTelemetry.Outcomes.InvariantViolation, OutcomeOf(span));
         Assert.Equal(ActivityStatusCode.Error, span.Status);
         Assert.Equal(nameof(InvariantViolationException), span.GetTagItem(NexGradesTelemetry.ErrorTypeTag));
+        Assert.Equal(nameof(InvariantViolationException), span.StatusDescription);
         var duration = Assert.Single(capture.DurationsFor(AddNoteOperation));
         Assert.Equal(NexGradesTelemetry.Outcomes.InvariantViolation, duration.Tags[NexGradesTelemetry.OutcomeTag]);
         await using var verify = env.Db.CreateContext();

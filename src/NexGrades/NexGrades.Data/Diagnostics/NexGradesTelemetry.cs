@@ -12,8 +12,8 @@ namespace NexGrades.Data.Diagnostics;
 /// <para>
 /// <b>Privacy rule: no pupil data in telemetry.</b> Tags may only use the keys below, and their values are
 /// operation names, outcomes, page type names and exception type names, never names, grades, note text or
-/// other record content. An id is acceptable; the current code does not need one. Exception messages are not
-/// recorded either, because they can name values. See docs/decisions/0002-telemetry-and-privacy.md.
+/// other record content, and no record ids either. Exception messages are not recorded, because they can name
+/// ids and values. See docs/decisions/0002-telemetry-and-privacy.md.
 /// </para>
 /// <para>
 /// Nothing here exports anything. Whether the data leaves the process is decided by the service defaults

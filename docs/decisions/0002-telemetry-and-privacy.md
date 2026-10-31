@@ -31,7 +31,11 @@ for data to leave the process, so it is designed with the same care as the datab
   `nexgrades.outcome`, `nexgrades.page` and `error.type`.
 - No record content appears in telemetry. Span names and tag values are fixed operation names, outcomes, page
   type names and exception type names. Exception messages are not recorded; only the exception type name is.
-  IDs are allowed by the rule, but no current code records one.
+  Record ids (student, enrollment, note and so on) and school-year labels are not allowed either.
+- Exception messages and stack traces are removed from every exported log record, including those logged by the
+  framework (EF Core, hosting): `ExceptionRedactionLogProcessor` replaces the exception with an
+  `exception.type` attribute holding the type name. It is registered in the same logging pipeline before
+  `UseOtlpExporter`, so it runs before the record is copied for export.
 - Formatted log messages and log scopes are not exported (`IncludeFormattedMessage = false`,
   `IncludeScopes = false`). Structured log arguments still travel as attributes. EF Core's
   `Microsoft.EntityFrameworkCore.Database.Command` category is raised to `Warning` for the OpenTelemetry
@@ -58,15 +62,15 @@ for data to leave the process, so it is designed with the same care as the datab
 - Future instrumentation must use `NexGradesTelemetry` and its allow-list. New sources or meters need a review
   against this record.
 - The allow-list and the no-pupil-data rule are conventions checked in review. No code enforces them: the tag
-  set is not validated at run time, and nothing strips exception messages from the logs pipeline. Do not pass an
-  exception to a log call if its message can contain record content.
+  set is not validated at run time. The log pipeline drops exception messages, but not structured log arguments
+  or the message template: never put record content or ids into either.
 - The startup span (`App.Startup`) and the migration span (`DatabaseMigrationService.Run`) are captured only
   because `App.xaml.cs` calls `InitializeTelemetry()` before the migration. Moving that call later drops them.
 
 ## Revisit when
 
-- Logging is added (#51). Log calls must then follow the rules above, and the handling of exceptions in log
-  calls needs a decision.
+- Logging is added (#51). Log calls must then follow the rules above. Exceptions in log calls are already
+  reduced to their type name for export, but a local log sink may want more.
 - A shipped build needs telemetry, such as crash or usage reports. That needs its own consent decision. The
   developer switch is not one.
 - Telemetry is exported by default to a service outside the teacher's device.
