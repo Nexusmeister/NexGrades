@@ -1,6 +1,5 @@
-﻿namespace NexGrades.App.Shell;
+namespace NexGrades.App.Shell;
 
 public class MainWindowViewModel
 {
-
 }

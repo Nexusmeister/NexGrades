@@ -10,7 +10,7 @@ namespace NexGrades.Domain.Grading;
 /// </summary>
 public static class GradingScale
 {
-    private static readonly IReadOnlyDictionary<string, decimal> TokenToValueMap = new Dictionary<string, decimal>
+    private static readonly Dictionary<string, decimal> TokenToValueMap = new(StringComparer.Ordinal)
     {
         ["1+"] = 0.7m,
         ["1"] = 1.0m,

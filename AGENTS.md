@@ -117,6 +117,12 @@ namespaces, `var`, `System` usings first, `_camelCase` private fields, braces, A
 indentation in XAML, project and JSON files. Run `dotnet format NexGrades.slnx` before committing. In
 particular:
 
+- **Static analysis:** `src/NexGrades/Directory.Build.props` turns on the .NET analyzers
+  (`AnalysisMode=Recommended`) and adds Roslynator, Meziantou.Analyzer and the Microsoft.VisualStudio.Threading
+  analyzers to every project. Severities are tuned in `.editorconfig`, each deviation with its reason. Fix a
+  finding rather than silencing it; if a rule really does not fit, lower it in `.editorconfig` with a comment,
+  or use `[SuppressMessage]` with a `Justification`. Async methods end in `Async` (`[RelayCommand]` strips the
+  suffix from the generated command name).
 - **Language:** all code, identifiers, comments, commit messages and docs are in English.
 - **Packages:** central package management. Add versions only to `src/NexGrades/Directory.Packages.props`;
   `PackageReference` items in `.csproj` files carry no `Version`. Do not remove or downgrade the

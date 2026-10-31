@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NexGrades.App.Core;
 using NexGrades.Common.Services;
@@ -9,21 +9,11 @@ namespace NexGrades.App.Features.Settings;
 
 public partial class SettingsViewModel(IFileSystemDialogService dialogService, ISnackbarService snackbarService) : ViewModel
 {
-    private readonly bool _isInitialized = false;
-
     [ObservableProperty]
     private bool _openedFolderPathVisibility;
 
     [ObservableProperty]
     private string _openedFolderPath = string.Empty;
-
-    public override void OnNavigatedTo()
-    {
-        if (!_isInitialized)
-        {
-            //InitializeViewModel();
-        }
-    }
 
     [RelayCommand]
     public void OnOpenFolder()

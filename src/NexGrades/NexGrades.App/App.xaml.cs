@@ -1,4 +1,5 @@
-﻿using System.Windows;
+using System.Diagnostics.CodeAnalysis;
+using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -33,6 +34,7 @@ public partial class App : Application
     /// <summary>
     /// Occurs when the application is loading.
     /// </summary>
+    [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "WPF event handler; all failures are caught below.")]
     private async void OnStartup(object sender, StartupEventArgs e)
     {
         try
@@ -64,6 +66,7 @@ public partial class App : Application
     /// <summary>
     /// Occurs when the application is closing.
     /// </summary>
+    [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "WPF event handler.")]
     private async void OnExit(object sender, ExitEventArgs e)
     {
         await _host.StopAsync();
