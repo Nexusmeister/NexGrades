@@ -55,7 +55,7 @@ only on the subagents' reports. Fix or delegate until both pass.
 
 - Delegate to `reviewer` for the branch diff against `dev`.
 - Send blockers and majors to the agent that owns the code, then review again.
-- After two review rounds with blockers remaining, stop and show the user the open findings.
+- After two review rounds with blockers or majors remaining, stop and show the user the open findings.
 
 ## 8. Docs: `docs-writer`
 

@@ -23,7 +23,8 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
 - the base branch (default `dev`)
 - constraints: dependencies on other issues, "runs alone", files to avoid
 - decisions the lead has already made; these are binding
-- optionally the commit attribution lines, the PR footer lines and model overrides
+- the commit attribution lines and the PR footer lines (always passed; use them verbatim)
+- optionally model overrides
 
 ## Tooling facts
 
@@ -63,25 +64,26 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    `dotnet test`, `dotnet format NexGrades.slnx --verify-no-changes`. Send failures to the agent that owns
    the failing files (`csharp-coder` may run the formatter). Compare warnings with `dev` and note any new
    ones.
-7. **Commit and push.** The lead always passes the attribution lines in the brief. Commit with a short
-   imperative subject and those lines. The generic fallback footer applies only if the brief doesn't
-   include any: `Co-Authored-By: Claude <noreply@anthropic.com>`. Push with
+7. **Commit and push.** The lead always passes the commit attribution lines and the PR footer lines in the
+   brief. Commit with a short imperative subject and the commit attribution lines, verbatim. Push with
    `git push -u origin <branch>`. Never push to `dev`, never force-push. To take in a newer `dev`, run
    `git merge origin/dev`; do not rebase.
 8. **Pull request.** Open it against the base with `mcp__github__create_pull_request`. The body has
    `Closes #<n>`, a summary, the decisions, the tests, the warning counts, a numbered manual UI test plan
    when the change needs one, and the PR footer lines the lead passed.
-9. **CI.** Poll the check runs for the head SHA. Don't busy-loop; a few checks spaced out with `sleep` in
-   Bash are fine. On failure, read the logs you can reach, send the fix to the owning agent, commit and
+9. **CI.** Poll the check runs for the head SHA. Foreground `sleep` is blocked in this harness; wait for CI
+   with a Bash command run in the background (`run_in_background`) that polls, or simply re-check the check
+   runs between other steps, rather than busy-looping. On failure, read the logs you can reach, send the fix to the owning agent, commit and
    push. After 3 CI fix rounds, stop with `BLOCKED`.
 10. **Review: `reviewer`.** Review the PR head SHA with `git diff origin/<base>...<sha>`, and tell the
     reviewer to review exactly that SHA. Send blockers and majors to the owning agent, then re-verify,
     push and review again. Majors are resolved like blockers. A review round counts toward the limit when
     it ends with blockers or majors remaining; after 2 such rounds, stop with `BLOCKED`. Minor or
     non-blocking findings that are out of scope become follow-up issues (`mcp__github__issue_write`),
-    linked in the PR; they don't trigger more rounds.
-11. **Stop at merge-ready:** CI is green on the head SHA and the latest reviewer run at that SHA found no
-    blockers and no majors. Do not merge.
+    linked in the PR body (`mcp__github__update_pull_request`) or in a PR comment
+    (`mcp__github__add_issue_comment`); they don't trigger more rounds.
+11. **Stop at merge-ready:** CI is green on the head SHA, and the latest reviewer run at that SHA has no
+    finding of severity blocker or major and its verdict line is "Ready to merge". Do not merge.
 
 ## Model choice per call
 
