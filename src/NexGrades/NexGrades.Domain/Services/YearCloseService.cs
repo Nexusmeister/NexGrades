@@ -10,13 +10,25 @@ namespace NexGrades.Domain.Services;
 /// Implements the year close workflow: reports readiness (blocking issues and advisory warnings), then, once
 /// nothing blocks it, flips the year to <see cref="SchoolYearStatus.Closed"/>.
 /// </summary>
-public sealed class YearCloseService(AppDbContext context, IClock clock)
+/// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
+public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFactory, IClock clock)
 {
     /// <summary>
     /// Reports what would prevent <paramref name="schoolYearId"/> from closing right now (blocking), and
     /// what looks unfinished but would not prevent the close (advisory).
     /// </summary>
     public async Task<CloseReadiness> GetCloseReadinessAsync(int schoolYearId, CancellationToken cancellationToken = default)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+        return await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Readiness check on a caller-supplied context, so <see cref="CloseSchoolYearAsync"/> checks and closes
+    /// within the same unit of work.
+    /// </summary>
+    private async Task<CloseReadiness> GetCloseReadinessAsync(
+        AppDbContext context, int schoolYearId, CancellationToken cancellationToken)
     {
         var schoolYearExists = await context.SchoolYears.AnyAsync(sy => sy.Id == schoolYearId, cancellationToken);
         if (!schoolYearExists)
@@ -101,7 +113,8 @@ public sealed class YearCloseService(AppDbContext context, IClock clock)
     /// <exception cref="InvariantViolationException">Blocking issues remain; they are listed in the message.</exception>
     public async Task CloseSchoolYearAsync(int schoolYearId, CancellationToken cancellationToken = default)
     {
-        var readiness = await GetCloseReadinessAsync(schoolYearId, cancellationToken);
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+        var readiness = await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);
         if (!readiness.CanClose)
         {
             throw new InvariantViolationException(

@@ -4,16 +4,14 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              Startup="OnStartup"
              Exit="OnExit"
-             xmlns:core="clr-namespace:NexGrades.App.Core"
              xmlns:local="clr-namespace:NexGrades.App">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Dark" />
                 <ui:ControlsDictionary />
+                
             </ResourceDictionary.MergedDictionaries>
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-            <core:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

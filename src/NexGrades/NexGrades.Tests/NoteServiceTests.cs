@@ -22,7 +22,7 @@ public class NoteServiceTests
         {
             Clock = new FixedClock(Now);
             Db = new SqliteTestDatabase(new ClosedYearAuditInterceptor(Clock, Reasons));
-            Service = new NoteService(new TestDbContextFactory(Db), Clock);
+            Service = new NoteService(Db.CreateContextFactory(), Clock);
         }
 
         /// <summary>A context without the interceptor, so seeding is allowed in any year state.</summary>

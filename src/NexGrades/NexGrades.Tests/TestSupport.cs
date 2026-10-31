@@ -34,6 +34,18 @@ internal sealed class SqliteTestDatabase : IDisposable
 
     public AppDbContext CreateContext() => new(Options);
 
+    /// <summary>
+    /// A factory over this database, for the Domain services, which open their own short-lived context per
+    /// operation. Assert against a fresh <see cref="CreateContext"/> afterwards: a context that seeded the
+    /// data still tracks the old values and would not see the service's writes.
+    /// </summary>
+    public IDbContextFactory<AppDbContext> CreateContextFactory() => new TestDbContextFactory(Options);
+
+    private sealed class TestDbContextFactory(DbContextOptions<AppDbContext> options) : IDbContextFactory<AppDbContext>
+    {
+        public AppDbContext CreateDbContext() => new(options);
+    }
+
     public void Dispose()
     {
         SqliteConnection.ClearAllPools();
@@ -46,12 +58,6 @@ internal sealed class SqliteTestDatabase : IDisposable
             // Best-effort cleanup; a lingering temp file doesn't fail the test run.
         }
     }
-}
-
-/// <summary>Hands out fresh contexts on the shared test database, for services that take a context factory.</summary>
-internal sealed class TestDbContextFactory(SqliteTestDatabase db) : IDbContextFactory<AppDbContext>
-{
-    public AppDbContext CreateDbContext() => db.CreateContext();
 }
 
 /// <summary>Settable <see cref="IClock"/> test double, for deterministic time-dependent assertions.</summary>

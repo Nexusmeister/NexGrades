@@ -29,6 +29,7 @@ All code lives under `src/NexGrades/` (solution: `NexGrades.slnx`).
 | `NexGrades.Data` | EF Core `AppDbContext`, entities, entity configurations, migrations | — |
 | `NexGrades.Common` | Small cross-cutting helpers and service interfaces | — |
 | `NexGrades.Tests` | xUnit tests for Domain and Data | Data, Domain |
+| `NexGrades.App.Tests` | xUnit tests for the App's DI composition (Windows only) | App |
 | `Aspire/NexGrades.AppHost` | Dev-time orchestration (SQLite + SQLite Web) | App |
 | `Aspire/NexGrades.ServiceDefaults` | Shared Aspire defaults | — |
 
@@ -49,7 +50,10 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
 
 - In `Development`, the App reads its connection string from `ConnectionStrings:sqlite`, which the Aspire
   AppHost supplies. Running `NexGrades.App` on its own in Development needs that value from user secrets.
-  Outside Development it reads the `sqlite` key from `appsettings.json`.
+  Outside Development the database defaults to `%LOCALAPPDATA%\NexGrades\app.db` (see `IAppDataPaths`;
+  other per-user data such as logs belongs in the same folder). A `sqlite` key in configuration still
+  overrides that. On startup a legacy `app.db` next to the executable or in the working directory is moved
+  there once (`LegacyDatabaseRelocator`).
 - Pending migrations are applied at startup by `DatabaseMigrationService`, which also bootstraps an Active
   school year if none exists.
 - The App is a GUI and cannot be meaningfully exercised headless. Verify changes with a build of
@@ -114,14 +118,21 @@ Match the surrounding code. In particular:
 - **Domain services:** `sealed` classes with primary constructors, async methods taking a
   `CancellationToken cancellationToken = default`. Violated business rules throw
   `InvariantViolationException` with a message that names the offending ids/values.
+- **DbContext lifetime: one short-lived context per operation.** Pages and view models are resolved from
+  the root DI provider and no scope exists around them, so nothing may depend on `AppDbContext` directly
+  (it is registered as scoped). Inject `IDbContextFactory<AppDbContext>` instead, in view models and Domain
+  services alike, and open the context with `await using` inside the method that needs it. A Domain
+  service method owns its context, and its transaction if it needs one; an operation that must be atomic
+  is one service method on one context, not several service calls. `NexGrades.App.Tests` resolves every
+  registered App and Domain service from the root provider with scope validation to enforce this.
 - **Time:** inject `IClock` and use `clock.Now`; never call `DateTime.Now`/`UtcNow` in Domain code.
 - **EF Core:** configure entities in `NexGrades.Data/EntityMapConfigs/<Entity>Configuration.cs`, not with
   attributes. Use `AsNoTracking()` for read-only queries. Never hand-edit generated migration files or the
   model snapshot — add a new migration instead.
 - **View models:** derive from `NexGrades.App.Core.ViewModel`; use `[ObservableProperty]` fields
   (`_camelCase`) and `[RelayCommand]` methods. Open a short-lived context per operation with
-  `await using var db = await dbContextFactory.CreateDbContextAsync(...)`. Report outcomes via
-  `ISnackbarService`.
+  `await using var db = await dbContextFactory.CreateDbContextAsync(...)` (see the lifetime rule above).
+  Report outcomes via `ISnackbarService`.
 - **Feature folders:** each screen lives in `NexGrades.App/Features/<Area>/` as `<Name>Page.xaml` (+ code
   behind) and `<Name>ViewModel.cs`. Register every new page, view model and service in
   `NexGrades.App/Extensions/HostBuilderExtensions.cs`.
@@ -149,9 +160,12 @@ localized later without a rewrite:
 
 ## Testing
 
-- Tests live in `NexGrades.Tests` and cover Domain and Data. There are no UI tests.
+- Tests live in `NexGrades.Tests` and cover Domain and Data. There are no UI tests; `NexGrades.App.Tests`
+  only checks that the App's DI graph resolves, so it picks up new pages and services automatically.
 - Use `SqliteTestDatabase` (a real, migrated SQLite file — never the EF in-memory provider) and
-  `FixedClock` for anything time-dependent. Both are in `TestSupport.cs`.
+  `FixedClock` for anything time-dependent. Both are in `TestSupport.cs`. Construct Domain services with
+  `db.CreateContextFactory()`, and assert through a fresh `db.CreateContext()`: the context that seeded the
+  data still tracks the old values.
 - Name tests `Method_Outcome_Condition`, e.g. `RecordGradeAsync_Throws_ForIllegalGradeValue`.
 - Every new Domain rule or invariant gets tests for both the allowed and the rejected case.
 - `dotnet test` must pass before a change is considered done.

@@ -5,10 +5,17 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:students="clr-namespace:NexGrades.App.Features.Students"
+      xmlns:core="clr-namespace:NexGrades.App.Core"
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="900"
       d:DataContext="{d:DesignInstance students:StudentPage, IsDesignTimeCreatable=False}"
       Title="StudentPage">
+
+    <!-- Page-local, like ClassPage: the page must build without App.xaml's resources (see NexGrades.App.Tests). -->
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <core:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+    </Page.Resources>
 
     <Grid Margin="24">
         <Grid.RowDefinitions>

@@ -23,10 +23,11 @@ public class RolloverServiceTests
         await context.SaveChangesAsync();
 
         var clock = new FixedClock(new DateTime(2026, 7, 15));
-        var service = new RolloverService(context, clock);
+        var service = new RolloverService(db.CreateContextFactory(), clock);
         var newInstance = await service.RollClassInstanceForwardAsync(oldInstance.Id, yearNew.Id, "6A");
 
-        var refreshedOld = await context.ClassInstances.FirstAsync(ci => ci.Id == oldInstance.Id);
+        await using var verify = db.CreateContext();
+        var refreshedOld = await verify.ClassInstances.FirstAsync(ci => ci.Id == oldInstance.Id);
         Assert.Equal(ClassInstanceStatus.RolledForward, refreshedOld.Status);
 
         Assert.Equal("6A", newInstance.Name);
@@ -34,7 +35,7 @@ public class RolloverServiceTests
         Assert.Equal(yearNew.Id, newInstance.SchoolYearId);
         Assert.Equal(ClassInstanceStatus.Active, newInstance.Status);
 
-        var newEnrollments = await context.Enrollments.Where(e => e.ClassInstanceId == newInstance.Id).ToListAsync();
+        var newEnrollments = await verify.Enrollments.Where(e => e.ClassInstanceId == newInstance.Id).ToListAsync();
         Assert.Single(newEnrollments);
         Assert.Equal(student.Id, newEnrollments[0].StudentId);
     }
@@ -62,17 +63,18 @@ public class RolloverServiceTests
         await context.SaveChangesAsync();
 
         var clock = new FixedClock(new DateTime(2026, 7, 15));
-        var service = new RolloverService(context, clock);
+        var service = new RolloverService(db.CreateContextFactory(), clock);
         var newInstance = await service.RollClassInstanceForwardAsync(oldInstance.Id, yearNew.Id, "6A");
 
-        var newBuckets = await context.GradeBuckets
+        await using var verify = db.CreateContext();
+        var newBuckets = await verify.GradeBuckets
             .Where(gb => gb.SubjectInstance.ClassInstanceId == newInstance.Id)
             .ToListAsync();
 
         Assert.Single(newBuckets);
         Assert.Equal(80m, newBuckets[0].Weight); // current template weight, not the old 50m snapshot.
 
-        var refreshedOldBucket = await context.GradeBuckets.FirstAsync(gb => gb.Id == oldBucket.Id);
+        var refreshedOldBucket = await verify.GradeBuckets.FirstAsync(gb => gb.Id == oldBucket.Id);
         Assert.Equal(50m, refreshedOldBucket.Weight); // old snapshot itself is untouched.
     }
 
@@ -88,7 +90,7 @@ public class RolloverServiceTests
         context.AddRange(year, group, instance);
         await context.SaveChangesAsync();
 
-        var service = new RolloverService(context, new FixedClock(DateTime.Now));
+        var service = new RolloverService(db.CreateContextFactory(), new FixedClock(DateTime.Now));
 
         await Assert.ThrowsAsync<InvariantViolationException>(
             () => service.RollClassInstanceForwardAsync(instance.Id, year.Id, "6A"));
@@ -107,11 +109,12 @@ public class RolloverServiceTests
         context.AddRange(year, teacher, group, instance);
         await context.SaveChangesAsync();
 
-        var service = new RolloverService(context, new FixedClock(DateTime.Now));
+        var service = new RolloverService(db.CreateContextFactory(), new FixedClock(DateTime.Now));
         await service.ArchiveClassInstanceAsync(instance.Id, endClassGroup: true);
 
-        var refreshedInstance = await context.ClassInstances.FirstAsync(ci => ci.Id == instance.Id);
-        var refreshedGroup = await context.ClassGroups.FirstAsync(g => g.Id == group.Id);
+        await using var verify = db.CreateContext();
+        var refreshedInstance = await verify.ClassInstances.FirstAsync(ci => ci.Id == instance.Id);
+        var refreshedGroup = await verify.ClassGroups.FirstAsync(g => g.Id == group.Id);
 
         Assert.Equal(ClassInstanceStatus.Archived, refreshedInstance.Status);
         Assert.Null(refreshedInstance.TeacherId);

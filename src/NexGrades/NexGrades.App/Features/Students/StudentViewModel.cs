@@ -47,6 +47,7 @@ public partial class StudentViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
     IDbContextFactory<AppDbContext> dbContextFactory,
+    EnrollmentService enrollmentService,
     NoteService noteService,
     StudentEditRequest editRequest,
     IContentDialogService contentDialogService) : ViewModel
@@ -242,9 +243,6 @@ public partial class StudentViewModel(
 
         if (saved != 0)
         {
-            // EnrollmentService works on a single context, so build it on this short-lived one rather than
-            // injecting it (only a context factory is registered).
-            var enrollmentService = new EnrollmentService(db);
             await enrollmentService.CreateEnrollmentAsync(studentToAdd.Id, SelectedClass.Id, DateTime.Now, cancellationToken);
 
             snackbar.Show("Success", "Student has been saved", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
