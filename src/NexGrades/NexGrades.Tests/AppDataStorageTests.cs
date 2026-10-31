@@ -22,7 +22,14 @@ public sealed class AppDataStorageTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        try { Directory.Delete(_root, recursive: true); } catch (IOException) { }
+        try
+        {
+            Directory.Delete(_root, recursive: true);
+        }
+        catch (IOException)
+        {
+            // Best-effort cleanup of the temp folder.
+        }
     }
 
     [Fact]

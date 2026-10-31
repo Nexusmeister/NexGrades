@@ -44,6 +44,7 @@ Run from `src/NexGrades/`:
 dotnet restore
 dotnet build NexGrades.App/NexGrades.App.csproj
 dotnet test
+dotnet format NexGrades.slnx                                         # apply the .editorconfig style and whitespace rules
 dotnet ef migrations add <MigrationName> --project NexGrades.Data --startup-project NexGrades.Data   # needs the dotnet-ef global tool
 dotnet run --project Aspire/NexGrades.AppHost                        # run the app for development
 ```
@@ -111,7 +112,10 @@ without touching callers.
 
 ## Coding conventions
 
-Match the surrounding code. In particular:
+Match the surrounding code. The root `.editorconfig` is the source of truth for C# style (file-scoped
+namespaces, `var`, `System` usings first, `_camelCase` private fields, braces, Allman layout) and for
+indentation in XAML, project and JSON files. Run `dotnet format NexGrades.slnx` before committing. In
+particular:
 
 - **Language:** all code, identifiers, comments, commit messages and docs are in English.
 - **Packages:** central package management. Add versions only to `src/NexGrades/Directory.Packages.props`;

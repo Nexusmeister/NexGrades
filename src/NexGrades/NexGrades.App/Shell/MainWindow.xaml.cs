@@ -28,7 +28,7 @@ public partial class MainWindow : INavigationWindow
         navigationService.SetNavigationControl(RootNavigation);
     }
 
-   
+
 
     public INavigationView GetNavigation() => RootNavigation;
 

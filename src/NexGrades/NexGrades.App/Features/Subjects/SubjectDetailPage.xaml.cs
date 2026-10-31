@@ -1,5 +1,4 @@
-﻿using System.Windows.Controls;
-using Wpf.Ui.Abstractions.Controls;
+﻿using Wpf.Ui.Abstractions.Controls;
 
 namespace NexGrades.App.Features.Subjects;
 

@@ -52,16 +52,16 @@ public partial class StudentsOverviewViewModel(
         // A student's "current" class is their enrollment in the currently Active school year; a student
         // with no such enrollment (e.g. imported but not yet placed) shows no class rather than being hidden.
         var students = await (from student in dbcontext.Students.AsQueryable()
-            let enrollment = student.Enrollments
-                .Where(e => e.ClassInstance.SchoolYear.Status == SchoolYearStatus.Active && e.LeftOn == null)
-                .OrderByDescending(e => e.JoinedOn)
-                .FirstOrDefault()
-            orderby student.LastName, student.FirstName
-            select new StudentRow(
-                student.Id,
-                student.FirstName,
-                student.LastName,
-                enrollment != null ? enrollment.ClassInstance.Name : string.Empty))
+                              let enrollment = student.Enrollments
+                                  .Where(e => e.ClassInstance.SchoolYear.Status == SchoolYearStatus.Active && e.LeftOn == null)
+                                  .OrderByDescending(e => e.JoinedOn)
+                                  .FirstOrDefault()
+                              orderby student.LastName, student.FirstName
+                              select new StudentRow(
+                                  student.Id,
+                                  student.FirstName,
+                                  student.LastName,
+                                  enrollment != null ? enrollment.ClassInstance.Name : string.Empty))
             .ToListAsync(cancellationToken);
 
         Students = students.ToObservableCollection();

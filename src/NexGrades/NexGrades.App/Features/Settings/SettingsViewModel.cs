@@ -9,7 +9,7 @@ namespace NexGrades.App.Features.Settings;
 
 public partial class SettingsViewModel(IFileSystemDialogService dialogService, ISnackbarService snackbarService) : ViewModel
 {
-    private bool _isInitialized = false;
+    private readonly bool _isInitialized = false;
 
     [ObservableProperty]
     private bool _openedFolderPathVisibility;
@@ -36,10 +36,10 @@ public partial class SettingsViewModel(IFileSystemDialogService dialogService, I
         if (foldersSelected.Count == 0)
         {
             snackbarService.Show(
-                "Missing setting", 
-                "Save location has to be selected. Rolling back to default save location in My Documents.", 
-                ControlAppearance.Caution, 
-                new SymbolIcon(SymbolRegular.FolderLightning20), 
+                "Missing setting",
+                "Save location has to be selected. Rolling back to default save location in My Documents.",
+                ControlAppearance.Caution,
+                new SymbolIcon(SymbolRegular.FolderLightning20),
                 TimeSpan.FromSeconds(15));
             return;
         }

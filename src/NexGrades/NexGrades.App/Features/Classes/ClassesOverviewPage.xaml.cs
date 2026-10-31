@@ -12,5 +12,5 @@ public partial class ClassesOverviewPage : INavigableView<ClassesOverviewViewMod
         InitializeComponent();
     }
 
-    public ClassesOverviewViewModel ViewModel { get; } 
+    public ClassesOverviewViewModel ViewModel { get; }
 }

@@ -32,8 +32,8 @@ public static class AverageCalculator
     /// </summary>
     public static decimal? SubjectAverage(IEnumerable<WeightedBucketAverage> buckets)
     {
-        decimal weightedSum = 0m;
-        decimal weightSum = 0m;
+        var weightedSum = 0m;
+        var weightSum = 0m;
 
         foreach (var bucket in buckets)
         {
