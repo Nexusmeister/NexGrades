@@ -24,4 +24,6 @@ a convention changes.
   - `tester`: tests
   - `reviewer`: review a diff before a PR
   - `docs-writer`: README and XML docs
+- An agent file merged while a session runs does not appear in that session's Agent tool
+  (`Agent type ... not found`) until you run `/reload-skills` or start a new session.
 - Use `/grill-me` when requirements are unclear, before planning.

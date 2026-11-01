@@ -43,4 +43,5 @@ A list of findings, most severe first. Each one has:
 - the input or state that triggers it
 - the fix you suggest
 
-End with one line verdict. Write "Changes needed" whenever any finding is a blocker or major; write "Ready to merge" only when every finding is minor or there are none. If the diff is clean, say so plainly.
+End with one line verdict. Write "Changes needed" whenever any finding is a blocker or major; write
+"Ready to merge" only when every finding is minor or there are none. If the diff is clean, say so plainly.
