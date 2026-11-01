@@ -10,6 +10,8 @@ namespace NexGrades.Domain.Services;
 /// Implements the two year-close dispositions: rollover and archive. Both operations are pure status changes
 /// plus new rows: no historic row is ever mutated or deleted.
 /// </summary>
+/// <param name="contextFactory">Creates the short-lived context that each public method opens.</param>
+/// <param name="clock">Source of "now" for deciding which enrollments are active and for their new join date.</param>
 /// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
 public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFactory, IClock clock)
 {

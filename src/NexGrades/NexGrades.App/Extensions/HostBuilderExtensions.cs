@@ -24,8 +24,17 @@ using StudentsOverviewViewModel = NexGrades.App.Features.Students.StudentsOvervi
 
 namespace NexGrades.App.Extensions;
 
+/// <summary>
+/// Registers the App's services, pages and database with the host. This is the composition root: the DI graph
+/// is defined here and nowhere else.
+/// </summary>
 public static class HostBuilderExtensions
 {
+    /// <summary>
+    /// Registers the shell, the domain services, the clock and the dialog and snackbar services. Domain services
+    /// are transient, so each one opens its own short-lived <c>DbContext</c>.
+    /// </summary>
+    /// <param name="services">The service collection to add the registrations to.</param>
     public static IServiceCollection AddGradeServices(this IServiceCollection services)
     {
         _ = services
@@ -65,6 +74,11 @@ public static class HostBuilderExtensions
         return services;
     }
 
+    /// <summary>
+    /// Registers the pages and view models. WPF-UI navigation resolves them from the root provider, so they are
+    /// registered here rather than created by hand.
+    /// </summary>
+    /// <param name="services">The service collection to add the registrations to.</param>
     public static IServiceCollection AddFrontendServices(this IServiceCollection services)
     {
         // Views and ViewModels
@@ -74,6 +88,11 @@ public static class HostBuilderExtensions
 
     }
 
+    /// <summary>
+    /// Registers the database location, the pooled <c>DbContext</c> factory and the migration service. It does not
+    /// open the database: migrations run at startup, and only after the data folder has been prepared.
+    /// </summary>
+    /// <param name="builder">The host builder to configure.</param>
     public static HostApplicationBuilder AddDatabase(this HostApplicationBuilder builder)
     {
         var paths = AppDataPaths.CreateDefault();

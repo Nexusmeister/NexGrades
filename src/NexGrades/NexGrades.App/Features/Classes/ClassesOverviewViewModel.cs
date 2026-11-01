@@ -11,6 +11,13 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Classes;
 
+/// <summary>
+/// Lists the classes of the active school year and opens the add and edit forms for them.
+/// </summary>
+/// <param name="navigation">Opens the class form.</param>
+/// <param name="dbContextFactory">Creates the short-lived context used to load the classes.</param>
+/// <param name="snackbarService">Reports when no class is selected for editing.</param>
+/// <param name="editRequest">Hands the id of the selected class to the class form.</param>
 public partial class ClassesOverviewViewModel(
     INavigationService navigation,
     IDbContextFactory<AppDbContext> dbContextFactory,

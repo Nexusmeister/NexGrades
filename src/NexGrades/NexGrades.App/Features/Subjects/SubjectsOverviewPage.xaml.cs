@@ -7,6 +7,8 @@ namespace NexGrades.App.Features.Subjects;
 /// </summary>
 public partial class SubjectsOverviewPage : INavigableView<SubjectsOverviewViewModel>
 {
+    /// <summary>Creates the page, which the navigation service resolves from DI together with its view model.</summary>
+    /// <param name="vm">The view model that drives this page.</param>
     public SubjectsOverviewPage(SubjectsOverviewViewModel vm)
     {
         ViewModel = vm;
@@ -15,5 +17,6 @@ public partial class SubjectsOverviewPage : INavigableView<SubjectsOverviewViewM
         InitializeComponent();
     }
 
+    /// <summary>The view model that drives this page.</summary>
     public SubjectsOverviewViewModel ViewModel { get; }
 }

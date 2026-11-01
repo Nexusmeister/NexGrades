@@ -6,4 +6,5 @@ namespace NexGrades.Domain.Exceptions;
 /// care about "was this write rejected for domain reasons" can catch the base type, while callers that
 /// specifically care about the locked-year case can catch this one.
 /// </summary>
+/// <param name="message">Diagnostic text that describes the rejected write. It is not shown to the user verbatim.</param>
 public sealed class ClosedYearException(string message) : InvariantViolationException(message);

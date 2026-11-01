@@ -10,6 +10,7 @@ namespace NexGrades.Domain.Services;
 /// Records grades after validating that the student must be enrolled in the class instance that owns the
 /// grade's bucket, and the student must be participating (not exempt) in that subject instance.
 /// </summary>
+/// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
 /// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
 public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory)
 {

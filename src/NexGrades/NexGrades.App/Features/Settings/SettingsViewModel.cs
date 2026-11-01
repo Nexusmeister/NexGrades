@@ -7,6 +7,12 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Settings;
 
+/// <summary>
+/// View model of the settings page. It lets the user pick a folder. For now the selection is only shown; it is
+/// not saved.
+/// </summary>
+/// <param name="dialogService">Opens the folder picker.</param>
+/// <param name="snackbarService">Shows a caution message when no folder is selected.</param>
 public partial class SettingsViewModel(IFileSystemDialogService dialogService, ISnackbarService snackbarService) : ViewModel
 {
     [ObservableProperty]
@@ -16,6 +22,10 @@ public partial class SettingsViewModel(IFileSystemDialogService dialogService, I
     private string _openedFolderPath = string.Empty;
 
     [RelayCommand]
+    /// <summary>
+    /// Opens the folder picker and shows the chosen path. Cancelling, or selecting nothing, hides the path and shows
+    /// a caution message instead.
+    /// </summary>
     public void OnOpenFolder()
     {
         OpenedFolderPathVisibility = false;

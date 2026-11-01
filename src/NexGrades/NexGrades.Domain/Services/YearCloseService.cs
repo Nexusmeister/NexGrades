@@ -10,6 +10,8 @@ namespace NexGrades.Domain.Services;
 /// Implements the year close workflow: reports readiness (blocking issues and advisory warnings), then, once
 /// nothing blocks it, flips the year to <see cref="SchoolYearStatus.Closed"/>.
 /// </summary>
+/// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
+/// <param name="clock">Source of "now", used for the closing timestamp and for active enrollments.</param>
 /// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
 public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFactory, IClock clock)
 {

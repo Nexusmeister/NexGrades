@@ -7,6 +7,8 @@ namespace NexGrades.App.Features.Students;
 /// </summary>
 public partial class StudentPage : INavigableView<StudentViewModel>
 {
+    /// <summary>Creates the page, which the navigation service resolves from DI together with its view model.</summary>
+    /// <param name="vm">The view model that drives this page.</param>
     public StudentPage(StudentViewModel vm)
     {
         ViewModel = vm;
@@ -15,5 +17,6 @@ public partial class StudentPage : INavigableView<StudentViewModel>
         InitializeComponent();
     }
 
+    /// <summary>The view model that drives this page.</summary>
     public StudentViewModel ViewModel { get; }
 }

@@ -15,6 +15,17 @@ using Wpf.Ui.Extensions;
 
 namespace NexGrades.App.Features.Students;
 
+/// <summary>
+/// Add and edit form for a student, including the student's notes per school year. Notes are only available
+/// for an existing student.
+/// </summary>
+/// <param name="navigation">Navigates back when the page is left.</param>
+/// <param name="snackbar">Reports the outcome of each action.</param>
+/// <param name="dbContextFactory">Creates the short-lived contexts for loading and saving the student.</param>
+/// <param name="enrollmentService">Enrolls a new student in the chosen class.</param>
+/// <param name="noteService">Lists, adds, edits, archives and restores notes.</param>
+/// <param name="editRequest">Carries the id of the student to edit from the overview.</param>
+/// <param name="contentDialogService">Shows the confirmations for discarding input and for archiving notes.</param>
 public partial class StudentViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
@@ -192,6 +203,7 @@ public partial class StudentViewModel(
                 until.ToString("g", CultureInfo.CurrentCulture))
             : string.Empty;
 
+    /// <summary>Loads the class choices and, when an existing student is being edited, the student and the notes.</summary>
     public override async Task OnNavigatedToAsync()
     {
         _editingStudentId = editRequest.StudentId;

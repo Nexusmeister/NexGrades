@@ -11,6 +11,7 @@ namespace NexGrades.Domain.Services;
 /// rule that spans every <see cref="ClassInstance"/> belonging to that year, not just the one being enrolled
 /// into.
 /// </summary>
+/// <param name="contextFactory">Creates the short-lived context that each public method opens.</param>
 /// <remarks>
 /// Like every Domain service, this takes an <see cref="IDbContextFactory{TContext}"/> rather than an
 /// <see cref="AppDbContext"/> and opens one short-lived context per public method. The services are resolved

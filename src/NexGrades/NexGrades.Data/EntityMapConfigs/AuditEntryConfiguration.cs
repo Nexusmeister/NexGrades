@@ -4,8 +4,10 @@ using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.EntityMapConfigs;
 
+/// <summary>Maps <see cref="AuditEntry"/> to the AuditEntries table.</summary>
 public class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntry>
 {
+    /// <summary>Applies the table, column, index and relationship rules for <see cref="AuditEntry"/>.</summary>
     public void Configure(EntityTypeBuilder<AuditEntry> builder)
     {
         builder.ToTable("AuditEntries");

@@ -6,5 +6,6 @@ namespace NexGrades.App.Features.Classes;
 /// </summary>
 public sealed class ClassEditRequest
 {
+    /// <summary>The id of the class to edit, or <see langword="null"/> to add a new class. <c>ClassViewModel</c> clears it once it has read the value.</summary>
     public int? ClassInstanceId { get; set; }
 }

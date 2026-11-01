@@ -3,6 +3,10 @@ using Wpf.Ui.Abstractions.Controls;
 
 namespace NexGrades.App.Core;
 
+/// <summary>
+/// Base class for all view models. It forwards the WPF-UI navigation callbacks to the synchronous hooks
+/// <c>OnNavigatedTo</c> and <c>OnNavigatedFrom</c>, which subclasses override when they need no async work.
+/// </summary>
 public abstract partial class ViewModel : ObservableObject, INavigationAware
 {
     /// <inheritdoc />

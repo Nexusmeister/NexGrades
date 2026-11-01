@@ -4,8 +4,10 @@ using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.EntityMapConfigs;
 
+/// <summary>Maps <see cref="GradeBucket"/> to the GradeBuckets table.</summary>
 public class GradeBucketConfiguration : IEntityTypeConfiguration<GradeBucket>
 {
+    /// <summary>Applies the table, column, index and relationship rules for <see cref="GradeBucket"/>.</summary>
     public void Configure(EntityTypeBuilder<GradeBucket> builder)
     {
         builder.ToTable("GradeBuckets");

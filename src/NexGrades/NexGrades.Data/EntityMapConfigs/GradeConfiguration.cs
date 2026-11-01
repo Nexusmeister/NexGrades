@@ -4,8 +4,10 @@ using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.EntityMapConfigs;
 
+/// <summary>Maps <see cref="Grade"/> to the Grades table.</summary>
 public class GradeConfiguration : IEntityTypeConfiguration<Grade>
 {
+    /// <summary>Applies the table, column, index and relationship rules for <see cref="Grade"/>.</summary>
     public void Configure(EntityTypeBuilder<Grade> builder)
     {
         builder.ToTable("Grades");

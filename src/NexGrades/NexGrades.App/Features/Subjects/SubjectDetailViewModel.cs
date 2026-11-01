@@ -9,6 +9,10 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Subjects;
 
+/// <summary>Form for adding a subject to the catalogue.</summary>
+/// <param name="navigation">Navigates back after a save or a cancel.</param>
+/// <param name="snackbar">Reports the outcome of a save.</param>
+/// <param name="dbContext">Creates the short-lived context used to save the subject.</param>
 public partial class SubjectDetailViewModel(INavigationService navigation, ISnackbarService snackbar, IDbContextFactory<AppDbContext> dbContext) : ViewModel
 {
     [ObservableProperty] private string _title = "AddSubject";

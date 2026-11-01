@@ -4,8 +4,10 @@ using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.EntityMapConfigs;
 
+/// <summary>Maps <see cref="Note"/> to the Notes table, including its links to student, school year and class.</summary>
 public class NoteConfiguration : IEntityTypeConfiguration<Note>
 {
+    /// <summary>Applies the table, column, index and relationship rules for <see cref="Note"/>.</summary>
     public void Configure(EntityTypeBuilder<Note> builder)
     {
         builder.ToTable("Notes");

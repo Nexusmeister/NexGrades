@@ -14,6 +14,8 @@ namespace NexGrades.Domain.Auditing;
 /// Enforces "no write to any entity reachable from a <c>Closed</c> <see cref="SchoolYear"/> unless that year
 /// is explicitly unlocked, and every such write produces an <see cref="AuditEntry"/>".
 /// </summary>
+/// <param name="clock">Source of "now" for the locked-year check and for <c>AuditEntry.ChangedOn</c>.</param>
+/// <param name="reasonStore">Supplies the unlock reason that is written to each audit entry.</param>
 /// <remarks>
 /// <para>
 /// <b>Two-phase design.</b> <c>SavingChanges</c>/<c>SavingChangesAsync</c> run before the underlying
@@ -55,6 +57,10 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
 {
     private readonly ConditionalWeakTable<DbContext, ContextState> _stateByContext = [];
 
+    /// <summary>
+    /// Collects the changes that need auditing before EF Core writes them, and rejects writes to a locked closed
+    /// year. The rejection throws before the base call, so nothing is persisted.
+    /// </summary>
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
         var context = RequireContext(eventData);
@@ -72,6 +78,7 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
         return base.SavingChanges(eventData, result);
     }
 
+    /// <summary>Async counterpart of the synchronous <c>SavingChanges</c> override.</summary>
     public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
     {
@@ -90,6 +97,9 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
         return await base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
+    /// <summary>
+    /// Writes the audit entries collected for this save, then commits the transaction this interceptor owns, if any.
+    /// </summary>
     public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
     {
         if (eventData.Context is { } context
@@ -124,6 +134,7 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
         return base.SavedChanges(eventData, result);
     }
 
+    /// <summary>Async counterpart of the synchronous <c>SavedChanges</c> override.</summary>
     public override async ValueTask<int> SavedChangesAsync(
         SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
     {
@@ -170,6 +181,7 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
         return await base.SavedChangesAsync(eventData, result, cancellationToken);
     }
 
+    /// <summary>Rolls back the transaction this interceptor owns and clears its per-context state after a failed save.</summary>
     public override void SaveChangesFailed(DbContextErrorEventData eventData)
     {
         if (eventData.Context is { } context && _stateByContext.TryGetValue(context, out var state))
@@ -184,6 +196,7 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
         base.SaveChangesFailed(eventData);
     }
 
+    /// <summary>Async counterpart of the synchronous <c>SaveChangesFailed</c> override.</summary>
     public override async Task SaveChangesFailedAsync(DbContextErrorEventData eventData, CancellationToken cancellationToken = default)
     {
         if (eventData.Context is { } context && _stateByContext.TryGetValue(context, out var state))

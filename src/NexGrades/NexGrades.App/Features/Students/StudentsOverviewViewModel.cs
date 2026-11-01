@@ -11,6 +11,13 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Students;
 
+/// <summary>
+/// Lists all students with their class in the active school year, and opens the add and edit forms.
+/// </summary>
+/// <param name="navigation">Opens the student form.</param>
+/// <param name="dbContextFactory">Creates the short-lived context used to load the students.</param>
+/// <param name="snackbarService">Reports when no student is selected for editing.</param>
+/// <param name="editRequest">Hands the id of the selected student to the student form.</param>
 public partial class StudentsOverviewViewModel(
     INavigationService navigation,
     IDbContextFactory<AppDbContext> dbContextFactory,

@@ -6,6 +6,11 @@ using Wpf.Ui;
 
 namespace NexGrades.App;
 
+/// <summary>
+/// Hosted service that shows the main window and opens the home page when the host starts, unless a main window
+/// is already open. Registered by <c>AddGradeServices</c>.
+/// </summary>
+/// <param name="serviceProvider">Resolves the navigation window and its pages from DI.</param>
 public class ApplicationHostService(IServiceProvider serviceProvider) : IHostedService
 {
     private INavigationWindow? _navigationWindow;

@@ -6,5 +6,6 @@ namespace NexGrades.App.Features.Students;
 /// </summary>
 public sealed class StudentEditRequest
 {
+    /// <summary>The id of the student to edit, or <see langword="null"/> to add a new student. <c>StudentViewModel</c> clears it once it has read the value.</summary>
     public int? StudentId { get; set; }
 }

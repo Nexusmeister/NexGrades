@@ -10,5 +10,6 @@ namespace NexGrades.Domain.Time;
 /// </remarks>
 public sealed class SystemClock : IClock
 {
+    /// <summary>The current local date and time, read from the system clock.</summary>
     public DateTime Now => DateTime.Now;
 }

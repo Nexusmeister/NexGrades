@@ -4,8 +4,10 @@ using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.EntityMapConfigs;
 
+/// <summary>Maps <see cref="SubjectInstance"/> to the SubjectInstances table.</summary>
 public class SubjectInstanceConfiguration : IEntityTypeConfiguration<SubjectInstance>
 {
+    /// <summary>Applies the table, column, index and relationship rules for <see cref="SubjectInstance"/>.</summary>
     public void Configure(EntityTypeBuilder<SubjectInstance> builder)
     {
         builder.ToTable("SubjectInstances");

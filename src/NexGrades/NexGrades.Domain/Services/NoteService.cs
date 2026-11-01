@@ -10,6 +10,8 @@ namespace NexGrades.Domain.Services;
 /// <summary>
 /// Creates, edits, archives and lists the free-text notes a teacher keeps on a student within a school year.
 /// </summary>
+/// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
+/// <param name="clock">Source of the creation, edit and archive timestamps.</param>
 /// <remarks>
 /// Takes a context factory rather than a context and opens a short-lived context per call, so the service can
 /// be registered as a plain transient and reused by other callers (for example a later note export) without

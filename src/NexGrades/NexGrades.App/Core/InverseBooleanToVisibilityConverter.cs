@@ -11,9 +11,11 @@ namespace NexGrades.App.Core;
 [ValueConversion(typeof(bool), typeof(Visibility))]
 public sealed class InverseBooleanToVisibilityConverter : IValueConverter
 {
+    /// <summary>Returns <see cref="Visibility.Collapsed"/> for <c>true</c>, and <see cref="Visibility.Visible"/> for any other value.</summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
         value is true ? Visibility.Collapsed : Visibility.Visible;
 
+    /// <summary>Returns <c>true</c> for <see cref="Visibility.Collapsed"/> and <c>false</c> for any other value.</summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
         value is Visibility.Collapsed;
 }

@@ -12,6 +12,14 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Classes;
 
+/// <summary>
+/// Add and edit form for a class. Editing changes the class name only. A new class also gets its own class group,
+/// so it starts a new cohort.
+/// </summary>
+/// <param name="navigation">Navigates back after a save or a cancel.</param>
+/// <param name="snackbar">Reports the outcome of a save.</param>
+/// <param name="dbContextFactory">Creates the short-lived contexts for loading and saving.</param>
+/// <param name="editRequest">Carries the id of the class to edit from the overview.</param>
 public partial class ClassViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
@@ -26,8 +34,10 @@ public partial class ClassViewModel(
     [ObservableProperty] private ObservableCollection<ClassStudentRow> _activeStudents = [];
     [ObservableProperty] private ObservableCollection<ClassStudentRow> _leftStudents = [];
 
-    public bool HasNoStudents => ActiveStudents.Count == 0 && LeftStudents.Count == 0;
-    public bool HasLeftStudents => LeftStudents.Count > 0;
+    /// <summary>True when the roster has no students, neither active nor left.</summary>
+    public bool HasNoStudents =>ActiveStudents.Count == 0 && LeftStudents.Count == 0;
+    /// <summary>True when at least one student has left the class.</summary>
+    public bool HasLeftStudents =>LeftStudents.Count > 0;
 
     partial void OnActiveStudentsChanged(ObservableCollection<ClassStudentRow> value) => OnPropertyChanged(nameof(HasNoStudents));
 
@@ -37,6 +47,7 @@ public partial class ClassViewModel(
         OnPropertyChanged(nameof(HasLeftStudents));
     }
 
+    /// <summary>Loads the class and its roster when the page opens for editing. Otherwise resets the form to the add state.</summary>
     public override async Task OnNavigatedToAsync()
     {
         _editingClassInstanceId = editRequest.ClassInstanceId;

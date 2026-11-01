@@ -9,12 +9,16 @@ using Wpf.Ui;
 
 namespace NexGrades.App.Features.Subjects;
 
+/// <summary>Lists the subject catalogue and opens the form for a new subject.</summary>
+/// <param name="navigation">Opens the subject form.</param>
+/// <param name="dbContextFactory">Creates the short-lived context used to load the subjects.</param>
 public partial class SubjectsOverviewViewModel(INavigationService navigation, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {
     [ObservableProperty]
     private ObservableCollection<SubjectRow> _subjects = [];
 
     [RelayCommand]
+    /// <summary>Opens the form for a new subject.</summary>
     public void AddSubject()
     {
         navigation.NavigateWithHierarchy(typeof(SubjectDetailPage));

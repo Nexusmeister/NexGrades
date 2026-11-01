@@ -7,6 +7,8 @@ namespace NexGrades.App.Features.Settings;
 /// </summary>
 public partial class SettingsPage : INavigableView<SettingsViewModel>
 {
+    /// <summary>Creates the page, which the navigation service resolves from DI together with its view model.</summary>
+    /// <param name="vm">The view model that drives this page.</param>
     public SettingsPage(SettingsViewModel vm)
     {
         ViewModel = vm;
@@ -15,5 +17,6 @@ public partial class SettingsPage : INavigableView<SettingsViewModel>
         InitializeComponent();
     }
 
+    /// <summary>The view model that drives this page.</summary>
     public SettingsViewModel ViewModel { get; }
 }
