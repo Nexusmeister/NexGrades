@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NexGrades.Data.Diagnostics;
 using NexGrades.Data.Entities;
 
@@ -8,7 +9,7 @@ namespace NexGrades.Data.Services;
 /// Brings the database up to date at startup: applies pending EF Core migrations, then makes sure an Active school
 /// year exists. The App runs it before any screen opens, so the rest of the app can assume a schema and a year.
 /// </summary>
-public class DatabaseMigrationService(IDbContextFactory<AppDbContext> dbContext)
+public partial class DatabaseMigrationService(IDbContextFactory<AppDbContext> dbContext, ILogger<DatabaseMigrationService> logger)
 {
     /// <summary>
     /// Applies pending migrations and bootstraps an Active school year if none exists. Tracked as
@@ -17,15 +18,29 @@ public class DatabaseMigrationService(IDbContextFactory<AppDbContext> dbContext)
     public Task RunAsync(CancellationToken cancellationToken = default) =>
         NexGradesTelemetry.TrackAsync("DatabaseMigrationService.Run", async () =>
         {
-            await using var db = await dbContext.CreateDbContextAsync(cancellationToken);
-            var pendingMigrations = await db.Database.GetPendingMigrationsAsync(cancellationToken);
-
-            if (pendingMigrations.Any())
+            try
             {
-                await db.Database.MigrateAsync(cancellationToken);
-            }
+                await using var db = await dbContext.CreateDbContextAsync(cancellationToken);
+                var pendingMigrations = (await db.Database.GetPendingMigrationsAsync(cancellationToken)).ToList();
+                LogCheckingMigrations(pendingMigrations.Count);
 
-            await EnsureActiveSchoolYearAsync(db, cancellationToken);
+                if (pendingMigrations.Count > 0)
+                {
+                    await db.Database.MigrateAsync(cancellationToken);
+                    LogMigrationsApplied();
+                }
+                else
+                {
+                    LogUpToDate();
+                }
+
+                await EnsureActiveSchoolYearAsync(db, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                LogRunFailed(ex);
+                throw;
+            }
         });
 
     /// <summary>
@@ -34,7 +49,7 @@ public class DatabaseMigrationService(IDbContextFactory<AppDbContext> dbContext)
     /// first run so Students/Classes/Subjects keep working. This is a stopgap for a real "start a new school
     /// year" workflow, not a substitute for one.
     /// </summary>
-    private static async Task EnsureActiveSchoolYearAsync(AppDbContext db, CancellationToken cancellationToken)
+    private async Task EnsureActiveSchoolYearAsync(AppDbContext db, CancellationToken cancellationToken)
     {
         var hasActiveYear = await db.SchoolYears.AnyAsync(sy => sy.Status == SchoolYearStatus.Active, cancellationToken);
         if (hasActiveYear)
@@ -55,5 +70,21 @@ public class DatabaseMigrationService(IDbContextFactory<AppDbContext> dbContext)
         });
 
         await db.SaveChangesAsync(cancellationToken);
+        LogActiveYearCreated();
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Checking database migrations; {PendingCount} pending")]
+    private partial void LogCheckingMigrations(int pendingCount);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Database migrations applied")]
+    private partial void LogMigrationsApplied();
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Database already up to date")]
+    private partial void LogUpToDate();
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Created an Active school year")]
+    private partial void LogActiveYearCreated();
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Database migration failed")]
+    private partial void LogRunFailed(Exception exception);
 }

@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="appsettings.json">
+    <Content Include="appsettings*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -21,6 +21,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="WPF-UI" />
     <PackageReference Include="WPF-UI.DependencyInjection" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">

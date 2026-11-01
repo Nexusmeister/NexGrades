@@ -24,7 +24,7 @@ All code lives under `src/NexGrades/` (solution: `NexGrades.slnx`).
 
 | Project | Role | References |
 |---|---|---|
-| `NexGrades.App` | WPF shell, pages, view models, DI wiring, host setup | Common, Data, Domain, ServiceDefaults |
+| `NexGrades.App` | WPF shell, pages, view models, DI wiring, host setup, file logging (`Logging/`) | Common, Data, Domain, ServiceDefaults |
 | `NexGrades.Domain` | Business rules: services, grading, closed-year auditing, `IClock` | Data |
 | `NexGrades.Data` | EF Core `AppDbContext`, entities, entity configurations, migrations | — |
 | `NexGrades.Common` | Small cross-cutting helpers and service interfaces | — |
@@ -57,11 +57,16 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
   `dotnet build NexGrades.slnx -warnaserror` and `dotnet format NexGrades.slnx --verify-no-changes`.
 - In `Development`, the App reads its connection string from `ConnectionStrings:sqlite`, which the Aspire
   AppHost supplies. Running `NexGrades.App` on its own in Development needs that value from user secrets.
-  Outside Development the database defaults to `%LOCALAPPDATA%\NexGrades\app.db` (see `IAppDataPaths`;
-  other per-user data such as logs belongs in the same folder). A `sqlite` key in configuration still
-  overrides that. On startup a legacy `app.db` next to the executable or in the working directory is moved
-  there once (`LegacyDatabaseRelocator`).
-- To see logs, metrics and traces, run the AppHost command above and open the Aspire dashboard at the URL it
+  Outside Development the database defaults to `%LOCALAPPDATA%\NexGrades\app.db` (see `IAppDataPaths`).
+  A `sqlite` key in configuration still overrides that. On startup a legacy `app.db` next to the executable or
+  in the working directory is moved there once (`LegacyDatabaseRelocator`).
+- Log files go to `%LOCALAPPDATA%\NexGrades\logs\` (`IAppDataPaths.LogDirectory`) in every environment, and the
+  database override does not move them. One file per day, `nexgrades-yyyyMMdd.log`, rolls to `nexgrades-yyyyMMdd_001.log`
+  when it reaches `Logging:File:MaxFileSizeMegabytes` (3 by default), and `Logging:File:RetainedFileCount` (14 by
+  default) files are kept. `Logging:LogLevel` and `Logging:File` in `NexGrades.App/appsettings.json` configure this,
+  and `appsettings.Development.json` overrides the levels only. The AppHost's own `appsettings*.json`
+  configure the AppHost, not the App. See `docs/decisions/0003-application-logging.md`.
+- To see logs, metrics and traces live, run the AppHost command above and open the Aspire dashboard at the URL it
   prints. Running `NexGrades.App` on its own exports nothing unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. See
   `docs/decisions/0002-telemetry-and-privacy.md`.
 - Pending migrations are applied at startup by `DatabaseMigrationService`, which also bootstraps an Active
@@ -108,9 +113,9 @@ they record *why* the model is shaped the way it is.
 - **Averages use the snapshotted `GradeBucket.Weight`**, never the live `BucketTemplate.Weight`.
 - **Business rules live in `NexGrades.Domain`** (services such as `GradeService`, `EnrollmentService`,
   `RolloverService`, `YearCloseService`). New rules go there, with tests, not into view models.
-- **No pupil data in telemetry.** Logs, metrics and traces never carry names, grades, notes, record ids or
+- **No pupil data in logs or telemetry.** Logs, metrics and traces never carry names, grades, notes, record ids or
   other record content, in a message, tag or metric dimension. Tag keys come only from `NexGradesTelemetry`. See
-  `docs/decisions/0002-telemetry-and-privacy.md`.
+  `docs/decisions/0002-telemetry-and-privacy.md` and `docs/decisions/0003-application-logging.md`.
 
 ### Grading scale
 
@@ -158,6 +163,13 @@ particular:
   is one service method on one context, not several service calls. `NexGrades.App.Tests` resolves every
   registered App and Domain service from the root provider with scope validation to enforce this.
 - **Time:** inject `IClock` and use `clock.Now`; never call `DateTime.Now`/`UtcNow` in Domain code.
+- **Logging:** inject `ILogger<T>`. Serilog types stay in `NexGrades.App/Logging/` and the crash handlers in
+  `App.xaml.cs`. Write log calls as
+  `[LoggerMessage]` source-generated methods (CA1848 flags direct calls), with a fixed message template. Templates
+  and arguments are logged as they are, so never put pupil data, record ids, school-year labels or exception text
+  (such as `ex.Message`) into them. Pass the exception as the exception argument; the file log redacts Domain
+  exception messages (see `docs/decisions/0003-application-logging.md`). Add logging providers only in
+  `AddAppLogging`.
 - **EF Core:** configure entities in `NexGrades.Data/EntityMapConfigs/<Entity>Configuration.cs`, not with
   attributes. Use `AsNoTracking()` for read-only queries. Never hand-edit generated migration files or the
   model snapshot — add a new migration instead.

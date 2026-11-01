@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Extensions;
+using NexGrades.App.Logging;
+using NexGrades.Common.Storage;
 using NexGrades.Data.Diagnostics;
 using NexGrades.ServiceDefaults;
 using Wpf.Ui.Markup;
@@ -39,6 +41,9 @@ public class ServiceRegistrationTests
             {
                 ["ConnectionStrings:sqlite"] = $"Data Source={dbPath}",
             });
+            // Logging first, as in App.CreateHost: it clears the providers, which would drop the OpenTelemetry one.
+            using var logFolder = new TempFolder();
+            builder.AddAppLogging(new AppDataPaths(logFolder.Path));
             builder.AddServiceDefaults(NexGradesTelemetry.Name);
             builder.Services.AddGradeServices().AddFrontendServices();
             builder.AddDatabase();
