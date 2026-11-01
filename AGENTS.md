@@ -24,17 +24,17 @@ All code lives under `src/NexGrades/` (solution: `NexGrades.slnx`).
 
 | Project | Role | References |
 |---|---|---|
-| `NexGrades.App` | WPF shell, pages, view models, DI wiring | Common, Data, Domain |
+| `NexGrades.App` | WPF shell, pages, view models, DI wiring, host setup | Common, Data, Domain, ServiceDefaults |
 | `NexGrades.Domain` | Business rules: services, grading, closed-year auditing, `IClock` | Data |
 | `NexGrades.Data` | EF Core `AppDbContext`, entities, entity configurations, migrations | — |
 | `NexGrades.Common` | Small cross-cutting helpers and service interfaces | — |
 | `NexGrades.Tests` | xUnit tests for Domain and Data | Data, Domain |
 | `NexGrades.App.Tests` | xUnit tests for the App's DI composition (Windows only) | App |
 | `Aspire/NexGrades.AppHost` | Dev-time orchestration (SQLite + SQLite Web) | App |
-| `Aspire/NexGrades.ServiceDefaults` | Shared Aspire defaults | — |
+| `Aspire/NexGrades.ServiceDefaults` | OpenTelemetry logs, metrics and traces, used by App; exports only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set | — |
 
 Dependency direction is App → Domain → Data. Data must not reference Domain or App; Domain must not
-reference App or WPF.
+reference App or WPF. ServiceDefaults is referenced only by App and must not reference any app project.
 
 ## Commands
 
@@ -55,6 +55,9 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
   other per-user data such as logs belongs in the same folder). A `sqlite` key in configuration still
   overrides that. On startup a legacy `app.db` next to the executable or in the working directory is moved
   there once (`LegacyDatabaseRelocator`).
+- To see logs, metrics and traces, run the AppHost command above and open the Aspire dashboard at the URL it
+  prints. Running `NexGrades.App` on its own exports nothing unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. See
+  `docs/decisions/0002-telemetry-and-privacy.md`.
 - Pending migrations are applied at startup by `DatabaseMigrationService`, which also bootstraps an Active
   school year if none exists.
 - The App is a GUI and cannot be meaningfully exercised headless. Verify changes with a build of
@@ -99,6 +102,9 @@ they record *why* the model is shaped the way it is.
 - **Averages use the snapshotted `GradeBucket.Weight`**, never the live `BucketTemplate.Weight`.
 - **Business rules live in `NexGrades.Domain`** (services such as `GradeService`, `EnrollmentService`,
   `RolloverService`, `YearCloseService`). New rules go there, with tests, not into view models.
+- **No pupil data in telemetry.** Logs, metrics and traces never carry names, grades, notes, record ids or
+  other record content, in a message, tag or metric dimension. Tag keys come only from `NexGradesTelemetry`. See
+  `docs/decisions/0002-telemetry-and-privacy.md`.
 
 ### Grading scale
 

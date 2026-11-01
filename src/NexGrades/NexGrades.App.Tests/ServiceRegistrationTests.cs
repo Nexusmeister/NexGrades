@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Extensions;
+using NexGrades.Data.Diagnostics;
 using Wpf.Ui.Markup;
 
 namespace NexGrades.App.Tests;
@@ -15,6 +16,7 @@ namespace NexGrades.App.Tests;
 /// root: a dependency on a scoped service such as <c>AppDbContext</c> works by accident outside Development and
 /// throws under Aspire/Development, where the host turns on scope validation.
 /// </summary>
+[Collection(SharedTelemetryState.Name)]
 public class ServiceRegistrationTests
 {
     [Fact]
@@ -36,6 +38,7 @@ public class ServiceRegistrationTests
             {
                 ["ConnectionStrings:sqlite"] = $"Data Source={dbPath}",
             });
+            builder.AddServiceDefaults(NexGradesTelemetry.Name);
             builder.Services.AddGradeServices().AddFrontendServices();
             builder.AddDatabase();
 

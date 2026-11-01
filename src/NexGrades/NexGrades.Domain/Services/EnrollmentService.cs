@@ -28,30 +28,31 @@ public sealed class EnrollmentService(IDbContextFactory<AppDbContext> contextFac
     /// <exception cref="InvariantViolationException">
     /// The student already has an enrollment somewhere in that school year, or the class instance does not exist.
     /// </exception>
-    public async Task<Enrollment> CreateEnrollmentAsync(
-        int studentId, int classInstanceId, DateTime joinedOn, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-
-        var classInstance = await context.ClassInstances
-            .FirstOrDefaultAsync(ci => ci.Id == classInstanceId, cancellationToken)
-            ?? throw new InvariantViolationException($"Class instance {classInstanceId} does not exist.");
-
-        await EnrollmentInvariants.EnsureNoConflictingEnrollmentAsync(
-            context, studentId, classInstance.SchoolYearId, cancellationToken);
-
-        var enrollment = new Enrollment
+    public Task<Enrollment> CreateEnrollmentAsync(
+        int studentId, int classInstanceId, DateTime joinedOn, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("EnrollmentService.CreateEnrollment", async () =>
         {
-            StudentId = studentId,
-            ClassInstanceId = classInstanceId,
-            JoinedOn = joinedOn,
-        };
-        context.Enrollments.Add(enrollment);
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
-        await context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+            var classInstance = await context.ClassInstances
+                .FirstOrDefaultAsync(ci => ci.Id == classInstanceId, cancellationToken)
+                ?? throw new InvariantViolationException($"Class instance {classInstanceId} does not exist.");
 
-        return enrollment;
-    }
+            await EnrollmentInvariants.EnsureNoConflictingEnrollmentAsync(
+                context, studentId, classInstance.SchoolYearId, cancellationToken);
+
+            var enrollment = new Enrollment
+            {
+                StudentId = studentId,
+                ClassInstanceId = classInstanceId,
+                JoinedOn = joinedOn,
+            };
+            context.Enrollments.Add(enrollment);
+
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return enrollment;
+        });
 }

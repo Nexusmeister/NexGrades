@@ -33,6 +33,7 @@
     <ProjectReference Include="..\NexGrades.Common\NexGrades.Common.csproj" />
     <ProjectReference Include="..\NexGrades.Data\NexGrades.Data.csproj" />
     <ProjectReference Include="..\NexGrades.Domain\NexGrades.Domain.csproj" />
+    <ProjectReference Include="..\Aspire\NexGrades.ServiceDefaults\NexGrades.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

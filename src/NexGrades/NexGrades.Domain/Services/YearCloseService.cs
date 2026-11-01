@@ -17,11 +17,12 @@ public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFact
     /// Reports what would prevent <paramref name="schoolYearId"/> from closing right now (blocking), and
     /// what looks unfinished but would not prevent the close (advisory).
     /// </summary>
-    public async Task<CloseReadiness> GetCloseReadinessAsync(int schoolYearId, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        return await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);
-    }
+    public Task<CloseReadiness> GetCloseReadinessAsync(int schoolYearId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("YearCloseService.GetCloseReadiness", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            return await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);
+        });
 
     /// <summary>
     /// Readiness check on a caller-supplied context, so <see cref="CloseSchoolYearAsync"/> checks and closes
@@ -111,20 +112,21 @@ public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFact
     /// every blocking issue from <see cref="GetCloseReadinessAsync"/> has been resolved.
     /// </summary>
     /// <exception cref="InvariantViolationException">Blocking issues remain; they are listed in the message.</exception>
-    public async Task CloseSchoolYearAsync(int schoolYearId, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var readiness = await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);
-        if (!readiness.CanClose)
+    public Task CloseSchoolYearAsync(int schoolYearId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("YearCloseService.CloseSchoolYear", async () =>
         {
-            throw new InvariantViolationException(
-                $"Cannot close school year {schoolYearId}: " + string.Join(" ", readiness.BlockingIssues));
-        }
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var readiness = await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);
+            if (!readiness.CanClose)
+            {
+                throw new InvariantViolationException(
+                    $"Cannot close school year {schoolYearId}: " + string.Join(" ", readiness.BlockingIssues));
+            }
 
-        var schoolYear = await context.SchoolYears.FirstAsync(sy => sy.Id == schoolYearId, cancellationToken);
-        schoolYear.Status = SchoolYearStatus.Closed;
-        schoolYear.ClosedOn = clock.Now;
+            var schoolYear = await context.SchoolYears.FirstAsync(sy => sy.Id == schoolYearId, cancellationToken);
+            schoolYear.Status = SchoolYearStatus.Closed;
+            schoolYear.ClosedOn = clock.Now;
 
-        await context.SaveChangesAsync(cancellationToken);
-    }
+            await context.SaveChangesAsync(cancellationToken);
+        });
 }

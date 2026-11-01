@@ -4,9 +4,14 @@
     <IsAspireSharedProject>true</IsAspireSharedProject>
   </PropertyGroup>
 
+  <!-- Deliberately no FrameworkReference to Microsoft.AspNetCore.App: the App is a desktop application and
+       must not ship the ASP.NET Core shared framework. Only packages built on Microsoft.Extensions.* here. -->
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
   </ItemGroup>
 
 </Project>

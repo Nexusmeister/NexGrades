@@ -13,36 +13,38 @@ namespace NexGrades.Domain.Services;
 public sealed class AverageService(IDbContextFactory<AppDbContext> contextFactory)
 {
     /// <summary>Bucket average for one student in one <see cref="Data.Entities.GradeBucket"/>.</summary>
-    public async Task<decimal?> GetBucketAverageAsync(int studentId, int gradeBucketId, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var values = await context.Grades
-            .Where(g => g.GradeBucketId == gradeBucketId && g.StudentId == studentId)
-            .Select(g => g.Value)
-            .ToListAsync(cancellationToken);
+    public Task<decimal?> GetBucketAverageAsync(int studentId, int gradeBucketId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("AverageService.GetBucketAverage", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var values = await context.Grades
+                .Where(g => g.GradeBucketId == gradeBucketId && g.StudentId == studentId)
+                .Select(g => g.Value)
+                .ToListAsync(cancellationToken);
 
-        return AverageCalculator.BucketAverage(values);
-    }
+            return AverageCalculator.BucketAverage(values);
+        });
 
     /// <summary>
     /// Subject average for one student in one <see cref="Data.Entities.SubjectInstance"/>, computed on read
     /// from the snapshotted <see cref="Data.Entities.GradeBucket.Weight"/> values of that instance.
     /// </summary>
-    public async Task<decimal?> GetSubjectAverageAsync(int studentId, int subjectInstanceId, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var buckets = await context.GradeBuckets
-            .Where(b => b.SubjectInstanceId == subjectInstanceId)
-            .Select(b => new
-            {
-                b.Weight,
-                Values = b.Grades.Where(g => g.StudentId == studentId).Select(g => g.Value).ToList(),
-            })
-            .ToListAsync(cancellationToken);
+    public Task<decimal?> GetSubjectAverageAsync(int studentId, int subjectInstanceId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("AverageService.GetSubjectAverage", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var buckets = await context.GradeBuckets
+                .Where(b => b.SubjectInstanceId == subjectInstanceId)
+                .Select(b => new
+                {
+                    b.Weight,
+                    Values = b.Grades.Where(g => g.StudentId == studentId).Select(g => g.Value).ToList(),
+                })
+                .ToListAsync(cancellationToken);
 
-        var weightedAverages = buckets.Select(b =>
-            new AverageCalculator.WeightedBucketAverage(b.Weight, AverageCalculator.BucketAverage(b.Values)));
+            var weightedAverages = buckets.Select(b =>
+                new AverageCalculator.WeightedBucketAverage(b.Weight, AverageCalculator.BucketAverage(b.Values)));
 
-        return AverageCalculator.SubjectAverage(weightedAverages);
-    }
+            return AverageCalculator.SubjectAverage(weightedAverages);
+        });
 }

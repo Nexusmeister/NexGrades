@@ -34,51 +34,52 @@ public sealed class NoteService(IDbContextFactory<AppDbContext> contextFactory, 
     /// in that year.
     /// </exception>
     /// <exception cref="ClosedYearException">The year is closed and not unlocked.</exception>
-    public async Task<NoteDto> AddNoteAsync(
+    public Task<NoteDto> AddNoteAsync(
         int studentId,
         int schoolYearId,
         string text,
         string? category = null,
-        CancellationToken cancellationToken = default)
-    {
-        var normalizedText = NormalizeText(text);
-        var normalizedCategory = NormalizeCategory(category);
-
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-
-        if (!await context.Students.AnyAsync(s => s.Id == studentId, cancellationToken))
+        CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("NoteService.AddNote", async () =>
         {
-            throw new InvariantViolationException($"Student {studentId} does not exist.");
-        }
+            var normalizedText = NormalizeText(text);
+            var normalizedCategory = NormalizeCategory(category);
 
-        var schoolYear = await context.SchoolYears
-            .FirstOrDefaultAsync(sy => sy.Id == schoolYearId, cancellationToken)
-            ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
 
-        // LeftOn is deliberately ignored: a student who left the class later in the year still has history there.
-        var enrollment = await context.Enrollments
-            .AsNoTracking()
-            .Where(e => e.StudentId == studentId && e.ClassInstance.SchoolYearId == schoolYearId)
-            .OrderByDescending(e => e.JoinedOn)
-            .Select(e => new { e.ClassInstanceId, e.ClassInstance.Name })
-            .FirstOrDefaultAsync(cancellationToken)
-            ?? throw new InvariantViolationException(
-                $"Student {studentId} has no enrollment in school year {schoolYearId}.");
+            if (!await context.Students.AnyAsync(s => s.Id == studentId, cancellationToken))
+            {
+                throw new InvariantViolationException($"Student {studentId} does not exist.");
+            }
 
-        var note = new Note
-        {
-            StudentId = studentId,
-            SchoolYearId = schoolYearId,
-            ClassInstanceId = enrollment.ClassInstanceId,
-            Category = normalizedCategory,
-            Text = normalizedText,
-            CreatedOn = clock.Now,
-        };
-        context.Notes.Add(note);
-        await context.SaveChangesAsync(cancellationToken);
+            var schoolYear = await context.SchoolYears
+                .FirstOrDefaultAsync(sy => sy.Id == schoolYearId, cancellationToken)
+                ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
 
-        return ToDto(note, schoolYear.Label, enrollment.Name);
-    }
+            // LeftOn is deliberately ignored: a student who left the class later in the year still has history there.
+            var enrollment = await context.Enrollments
+                .AsNoTracking()
+                .Where(e => e.StudentId == studentId && e.ClassInstance.SchoolYearId == schoolYearId)
+                .OrderByDescending(e => e.JoinedOn)
+                .Select(e => new { e.ClassInstanceId, e.ClassInstance.Name })
+                .FirstOrDefaultAsync(cancellationToken)
+                ?? throw new InvariantViolationException(
+                    $"Student {studentId} has no enrollment in school year {schoolYearId}.");
+
+            var note = new Note
+            {
+                StudentId = studentId,
+                SchoolYearId = schoolYearId,
+                ClassInstanceId = enrollment.ClassInstanceId,
+                Category = normalizedCategory,
+                Text = normalizedText,
+                CreatedOn = clock.Now,
+            };
+            context.Notes.Add(note);
+            await context.SaveChangesAsync(cancellationToken);
+
+            return ToDto(note, schoolYear.Label, enrollment.Name);
+        });
 
     /// <summary>
     /// Replaces the text and category of an active note. Saving identical values is a no-op and does not
@@ -88,66 +89,69 @@ public sealed class NoteService(IDbContextFactory<AppDbContext> contextFactory, 
     /// The note does not exist or is archived, or the text or category is invalid.
     /// </exception>
     /// <exception cref="ClosedYearException">The note's year is closed and not unlocked.</exception>
-    public async Task<NoteDto> EditNoteAsync(
-        int noteId, string text, string? category = null, CancellationToken cancellationToken = default)
-    {
-        var normalizedText = NormalizeText(text);
-        var normalizedCategory = NormalizeCategory(category);
-
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var note = await LoadNoteAsync(context, noteId, cancellationToken);
-
-        if (note.ArchivedOn is not null)
+    public Task<NoteDto> EditNoteAsync(
+        int noteId, string text, string? category = null, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("NoteService.EditNote", async () =>
         {
-            throw new InvariantViolationException($"Note {noteId} is archived; restore it first before editing.");
-        }
+            var normalizedText = NormalizeText(text);
+            var normalizedCategory = NormalizeCategory(category);
 
-        if (note.Text == normalizedText && note.Category == normalizedCategory)
-        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var note = await LoadNoteAsync(context, noteId, cancellationToken);
+
+            if (note.ArchivedOn is not null)
+            {
+                throw new InvariantViolationException($"Note {noteId} is archived; restore it first before editing.");
+            }
+
+            if (note.Text == normalizedText && note.Category == normalizedCategory)
+            {
+                return ToDto(note);
+            }
+
+            note.Text = normalizedText;
+            note.Category = normalizedCategory;
+            note.LastEditedOn = clock.Now;
+            await context.SaveChangesAsync(cancellationToken);
+
             return ToDto(note);
-        }
-
-        note.Text = normalizedText;
-        note.Category = normalizedCategory;
-        note.LastEditedOn = clock.Now;
-        await context.SaveChangesAsync(cancellationToken);
-
-        return ToDto(note);
-    }
+        });
 
     /// <summary>Archives an active note, hiding it from default listings. Reversible via <see cref="RestoreNoteAsync"/>.</summary>
     /// <exception cref="InvariantViolationException">The note does not exist or is already archived.</exception>
     /// <exception cref="ClosedYearException">The note's year is closed and not unlocked.</exception>
-    public async Task ArchiveNoteAsync(int noteId, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var note = await LoadNoteAsync(context, noteId, cancellationToken);
-
-        if (note.ArchivedOn is not null)
+    public Task ArchiveNoteAsync(int noteId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("NoteService.ArchiveNote", async () =>
         {
-            throw new InvariantViolationException($"Note {noteId} is already archived.");
-        }
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var note = await LoadNoteAsync(context, noteId, cancellationToken);
 
-        note.ArchivedOn = clock.Now;
-        await context.SaveChangesAsync(cancellationToken);
-    }
+            if (note.ArchivedOn is not null)
+            {
+                throw new InvariantViolationException($"Note {noteId} is already archived.");
+            }
+
+            note.ArchivedOn = clock.Now;
+            await context.SaveChangesAsync(cancellationToken);
+        });
 
     /// <summary>Restores an archived note. <see cref="Note.LastEditedOn"/> is left untouched.</summary>
     /// <exception cref="InvariantViolationException">The note does not exist or is not archived.</exception>
     /// <exception cref="ClosedYearException">The note's year is closed and not unlocked.</exception>
-    public async Task RestoreNoteAsync(int noteId, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var note = await LoadNoteAsync(context, noteId, cancellationToken);
-
-        if (note.ArchivedOn is null)
+    public Task RestoreNoteAsync(int noteId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("NoteService.RestoreNote", async () =>
         {
-            throw new InvariantViolationException($"Note {noteId} is not archived.");
-        }
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var note = await LoadNoteAsync(context, noteId, cancellationToken);
 
-        note.ArchivedOn = null;
-        await context.SaveChangesAsync(cancellationToken);
-    }
+            if (note.ArchivedOn is null)
+            {
+                throw new InvariantViolationException($"Note {noteId} is not archived.");
+            }
+
+            note.ArchivedOn = null;
+            await context.SaveChangesAsync(cancellationToken);
+        });
 
     /// <summary>
     /// Lists a student's notes, newest first. The <paramref name="from"/>/<paramref name="to"/> window filters
@@ -158,86 +162,88 @@ public sealed class NoteService(IDbContextFactory<AppDbContext> contextFactory, 
     /// <param name="includeArchived">Whether archived notes are returned as well.</param>
     /// <exception cref="InvariantViolationException">The student does not exist.</exception>
     /// <exception cref="ArgumentException"><paramref name="from"/> is later than <paramref name="to"/>.</exception>
-    public async Task<IReadOnlyList<NoteDto>> GetNotesForStudentAsync(
+    public Task<IReadOnlyList<NoteDto>> GetNotesForStudentAsync(
         int studentId,
         int? schoolYearId = null,
         DateTime? from = null,
         DateTime? to = null,
         bool includeArchived = false,
-        CancellationToken cancellationToken = default)
-    {
-        if (from is { } start && to is { } end && start > end)
+        CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync<IReadOnlyList<NoteDto>>("NoteService.GetNotesForStudent", async () =>
         {
-            throw new ArgumentException($"'from' ({start:O}) must not be later than 'to' ({end:O}).", nameof(from));
-        }
+            if (from is { } start && to is { } end && start > end)
+            {
+                throw new ArgumentException($"'from' ({start:O}) must not be later than 'to' ({end:O}).", nameof(from));
+            }
 
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        await EnsureStudentExistsAsync(context, studentId, cancellationToken);
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            await EnsureStudentExistsAsync(context, studentId, cancellationToken);
 
-        var query = context.Notes.AsNoTracking().Where(n => n.StudentId == studentId);
+            var query = context.Notes.AsNoTracking().Where(n => n.StudentId == studentId);
 
-        if (schoolYearId is { } yearId)
-        {
-            query = query.Where(n => n.SchoolYearId == yearId);
-        }
+            if (schoolYearId is { } yearId)
+            {
+                query = query.Where(n => n.SchoolYearId == yearId);
+            }
 
-        if (from is { } fromValue)
-        {
-            query = query.Where(n => n.CreatedOn >= fromValue);
-        }
+            if (from is { } fromValue)
+            {
+                query = query.Where(n => n.CreatedOn >= fromValue);
+            }
 
-        if (to is { } toValue)
-        {
-            query = query.Where(n => n.CreatedOn < toValue);
-        }
+            if (to is { } toValue)
+            {
+                query = query.Where(n => n.CreatedOn < toValue);
+            }
 
-        if (!includeArchived)
-        {
-            query = query.Where(n => n.ArchivedOn == null);
-        }
+            if (!includeArchived)
+            {
+                query = query.Where(n => n.ArchivedOn == null);
+            }
 
-        return await query
-            .OrderByDescending(n => n.CreatedOn)
-            .ThenByDescending(n => n.Id)
-            .Select(n => new NoteDto(
-                n.Id,
-                n.StudentId,
-                n.SchoolYearId,
-                n.SchoolYear.Label,
-                n.ClassInstanceId,
-                n.ClassInstance != null ? n.ClassInstance.Name : null,
-                n.Category,
-                n.Text,
-                n.CreatedOn,
-                n.LastEditedOn,
-                n.ArchivedOn))
-            .ToListAsync(cancellationToken);
-    }
+            return await query
+                .OrderByDescending(n => n.CreatedOn)
+                .ThenByDescending(n => n.Id)
+                .Select(n => new NoteDto(
+                    n.Id,
+                    n.StudentId,
+                    n.SchoolYearId,
+                    n.SchoolYear.Label,
+                    n.ClassInstanceId,
+                    n.ClassInstance != null ? n.ClassInstance.Name : null,
+                    n.Category,
+                    n.Text,
+                    n.CreatedOn,
+                    n.LastEditedOn,
+                    n.ArchivedOn))
+                .ToListAsync(cancellationToken);
+        });
 
     /// <summary>
     /// The school years the student is enrolled in, newest first, with whether each can currently be written to.
     /// These are the only years a note can be added for.
     /// </summary>
     /// <exception cref="InvariantViolationException">The student does not exist.</exception>
-    public async Task<IReadOnlyList<NoteYear>> GetNoteYearsForStudentAsync(
-        int studentId, CancellationToken cancellationToken = default)
-    {
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        await EnsureStudentExistsAsync(context, studentId, cancellationToken);
+    public Task<IReadOnlyList<NoteYear>> GetNoteYearsForStudentAsync(
+        int studentId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync<IReadOnlyList<NoteYear>>("NoteService.GetNoteYearsForStudent", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            await EnsureStudentExistsAsync(context, studentId, cancellationToken);
 
-        var years = await context.Enrollments
-            .AsNoTracking()
-            .Where(e => e.StudentId == studentId)
-            .Select(e => e.ClassInstance.SchoolYear)
-            .Distinct()
-            .OrderByDescending(sy => sy.StartDate)
-            .ToListAsync(cancellationToken);
+            var years = await context.Enrollments
+                .AsNoTracking()
+                .Where(e => e.StudentId == studentId)
+                .Select(e => e.ClassInstance.SchoolYear)
+                .Distinct()
+                .OrderByDescending(sy => sy.StartDate)
+                .ToListAsync(cancellationToken);
 
-        var now = clock.Now;
-        return years
-            .Select(sy => new NoteYear(sy.Id, sy.Label, sy.Status, sy.UnlockedUntil, SchoolYearLock.IsWritable(sy, now)))
-            .ToList();
-    }
+            var now = clock.Now;
+            return years
+                .Select(sy => new NoteYear(sy.Id, sy.Label, sy.Status, sy.UnlockedUntil, SchoolYearLock.IsWritable(sy, now)))
+                .ToList();
+        });
 
     private static async Task EnsureStudentExistsAsync(AppDbContext context, int studentId, CancellationToken cancellationToken)
     {
