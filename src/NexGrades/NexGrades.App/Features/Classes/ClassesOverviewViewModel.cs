@@ -14,15 +14,13 @@ namespace NexGrades.App.Features.Classes;
 /// <summary>
 /// Lists the classes of the active school year and opens the add and edit forms for them.
 /// </summary>
-/// <param name="navigation">Opens the class form.</param>
+/// <param name="navigator">Opens the class form and hands it the id of the class to edit.</param>
 /// <param name="dbContextFactory">Creates the short-lived context used to load the classes.</param>
 /// <param name="snackbarService">Reports when no class is selected for editing.</param>
-/// <param name="editRequest">Hands the id of the selected class to the class form.</param>
 public partial class ClassesOverviewViewModel(
-    INavigationService navigation,
+    PageNavigator navigator,
     IDbContextFactory<AppDbContext> dbContextFactory,
-    ISnackbarService snackbarService,
-    ClassEditRequest editRequest) : ViewModel
+    ISnackbarService snackbarService) : ViewModel
 {
     [ObservableProperty]
     private ObservableCollection<ClassRow> _classes = [];
@@ -39,14 +37,13 @@ public partial class ClassesOverviewViewModel(
             return;
         }
 
-        editRequest.ClassInstanceId = SelectedClass.Id;
-        navigation.NavigateWithHierarchy(typeof(ClassPage));
+        navigator.NavigateWithHierarchy<ClassPage>(SelectedClass.Id);
     }
 
     [RelayCommand]
     private void OnAddClass()
     {
-        navigation.NavigateWithHierarchy(typeof(ClassPage));
+        navigator.NavigateWithHierarchy<ClassPage>();
     }
 
     [RelayCommand]

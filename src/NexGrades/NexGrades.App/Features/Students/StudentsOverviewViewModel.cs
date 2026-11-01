@@ -14,15 +14,13 @@ namespace NexGrades.App.Features.Students;
 /// <summary>
 /// Lists all students with their class in the active school year, and opens the add and edit forms.
 /// </summary>
-/// <param name="navigation">Opens the student form.</param>
+/// <param name="navigator">Opens the student form and hands it the id of the student to edit.</param>
 /// <param name="dbContextFactory">Creates the short-lived context used to load the students.</param>
 /// <param name="snackbarService">Reports when no student is selected for editing.</param>
-/// <param name="editRequest">Hands the id of the selected student to the student form.</param>
 public partial class StudentsOverviewViewModel(
-    INavigationService navigation,
+    PageNavigator navigator,
     IDbContextFactory<AppDbContext> dbContextFactory,
-    ISnackbarService snackbarService,
-    StudentEditRequest editRequest) : ViewModel
+    ISnackbarService snackbarService) : ViewModel
 {
     [ObservableProperty]
     private ObservableCollection<StudentRow> _students = [];
@@ -39,14 +37,13 @@ public partial class StudentsOverviewViewModel(
             return;
         }
 
-        editRequest.StudentId = SelectedStudent.Id;
-        navigation.NavigateWithHierarchy(typeof(StudentPage));
+        navigator.NavigateWithHierarchy<StudentPage>(SelectedStudent.Id);
     }
 
     [RelayCommand]
     private void OnAddStudent()
     {
-        navigation.NavigateWithHierarchy(typeof(StudentPage));
+        navigator.NavigateWithHierarchy<StudentPage>();
     }
 
     [RelayCommand]

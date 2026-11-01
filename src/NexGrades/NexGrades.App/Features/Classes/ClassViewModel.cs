@@ -25,7 +25,6 @@ namespace NexGrades.App.Features.Classes;
 /// <param name="snackbar">Reports the outcome of a save.</param>
 /// <param name="dbContextFactory">Creates the short-lived context for loading the class and its roster.</param>
 /// <param name="classService">Creates and renames the class.</param>
-/// <param name="editRequest">Carries the id of the class to edit from the overview.</param>
 /// <param name="exporter">Writes the class overview of a subject to an Excel file.</param>
 /// <param name="fileSaveDialog">Asks where to save the export.</param>
 public partial class ClassViewModel(
@@ -33,7 +32,6 @@ public partial class ClassViewModel(
     ISnackbarService snackbar,
     IDbContextFactory<AppDbContext> dbContextFactory,
     ClassService classService,
-    ClassEditRequest editRequest,
     SubjectOverviewExporter exporter,
     IFileSaveDialogService fileSaveDialog) : ViewModel
 {
@@ -74,11 +72,13 @@ public partial class ClassViewModel(
         OnPropertyChanged(nameof(HasLeftStudents));
     }
 
-    /// <summary>Loads the class and its roster when the page opens for editing. Otherwise resets the form to the add state.</summary>
-    public override async Task OnNavigatedToAsync()
+    /// <summary>
+    /// Loads the class and its roster when the page opens for editing, with the class id as <paramref name="parameter"/>.
+    /// Otherwise resets the form to the add state.
+    /// </summary>
+    protected override async Task OnNavigatedToAsync(object? parameter)
     {
-        _editingClassInstanceId = editRequest.ClassInstanceId;
-        editRequest.ClassInstanceId = null;
+        _editingClassInstanceId = parameter as int?;
 
         ActiveStudents = [];
         LeftStudents = [];

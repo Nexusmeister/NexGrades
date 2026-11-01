@@ -168,6 +168,18 @@ particular:
 - **Feature folders:** each screen lives in `NexGrades.App/Features/<Area>/` as `<Name>Page.xaml` (+ code
   behind) and `<Name>ViewModel.cs`. Register every new page, view model and service in
   `NexGrades.App/Extensions/HostBuilderExtensions.cs`.
+- **Page lifetimes and navigation:** navigation-root overview pages (Home, Classes, Students, Subjects, Settings)
+  and their view models are singletons. Add, edit and detail pages and their view models are transient. Always
+  register a page and its view model with the same lifetime. To pass a parameter (such as an id) to another page,
+  call `PageNavigator.NavigateWithHierarchy<TPage>(parameter)` (`NexGrades.App/Core/PageNavigator.cs`) from the
+  source view model. The target view model reads it by overriding
+  `protected override Task OnNavigatedToAsync(object? parameter)`. The parameter is `null` when the page is opened
+  without one (an Add flow), so reset to the add state. Do not add per-page singleton "request" or mailbox objects.
+  `PageLifetimeTests` in `NexGrades.App.Tests` enforces this. It finds pages by implementing
+  `INavigableView<TViewModel>`, so a new page must implement it to be checked. It asserts that each page and its view
+  model share a lifetime, that the navigation roots in its `_rootPages` set are singletons, and that every other page
+  is transient. `HomePage` is in that set but is asserted by type, because it does not implement `INavigableView`.
+  A new overview page must be added to `_rootPages`, or the test fails.
 - **XAML:** use WPF-UI controls (`ui:Button`, `ui:TextBox`, `ui:TextBlock`, `ui:SymbolIcon`, …) and theme
   resources (`DynamicResource`) rather than hard-coded colors, so light and dark themes keep working.
 - **Comments:** XML doc comments on public types and members, explaining intent and the *why*. Avoid

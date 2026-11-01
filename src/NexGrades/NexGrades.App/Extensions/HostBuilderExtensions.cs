@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NexGrades.App.Core;
 using NexGrades.App.Features.Classes;
 using NexGrades.App.Features.Export;
 using NexGrades.App.Features.Home;
@@ -154,15 +155,16 @@ public static class HostBuilderExtensions
 
     private static IServiceCollection AddViewModels(this IServiceCollection services)
     {
+        // Lifetime rule: overview roots (Home, Classes, Students, Subjects, Settings) are singletons; add/edit/detail
+        // pairs are transient so every visit starts fresh. Parameters travel through PageNavigator.
         return services
-            .AddSingleton<ClassEditRequest>()
-            .AddSingleton<StudentEditRequest>()
+            .AddSingleton<PageNavigator>()
             .AddSingleton<HomeViewModel>()
             .AddSingleton<ClassesOverviewViewModel>()
             .AddSingleton<StudentsOverviewViewModel>()
             .AddSingleton<SubjectsOverviewViewModel>()
             .AddSingleton<SettingsViewModel>()
-            .AddSingleton<SubjectDetailViewModel>()
+            .AddTransient<SubjectDetailViewModel>()
             .AddTransient<StudentViewModel>()
             .AddTransient<ClassViewModel>();
     }
