@@ -22,7 +22,7 @@ namespace NexGrades.App.Features.Students;
 /// <param name="navigation">Navigates back when the page is left.</param>
 /// <param name="snackbar">Reports the outcome of each action.</param>
 /// <param name="dbContextFactory">Creates the short-lived contexts for loading and saving the student.</param>
-/// <param name="enrollmentService">Enrolls a new student in the chosen class.</param>
+/// <param name="studentService">Creates a new student in the chosen class and renames an existing one.</param>
 /// <param name="noteService">Lists, adds, edits, archives and restores notes.</param>
 /// <param name="editRequest">Carries the id of the student to edit from the overview.</param>
 /// <param name="contentDialogService">Shows the confirmations for discarding input and for archiving notes.</param>
@@ -30,7 +30,7 @@ public partial class StudentViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
     IDbContextFactory<AppDbContext> dbContextFactory,
-    EnrollmentService enrollmentService,
+    StudentService studentService,
     NoteService noteService,
     StudentEditRequest editRequest,
     IContentDialogService contentDialogService) : ViewModel
@@ -321,27 +321,18 @@ public partial class StudentViewModel(
             return;
         }
 
-        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var studentToAdd = new Student
+        try
         {
-            FirstName = FirstName.Trim(),
-            LastName = LastName.Trim(),
-        };
-
-        db.Students.Add(studentToAdd);
-        var saved = await db.SaveChangesAsync(cancellationToken);
-
-        if (saved != 0)
-        {
-            await enrollmentService.CreateEnrollmentAsync(studentToAdd.Id, SelectedClass.Id, DateTime.Now, cancellationToken);
-
-            snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-            navigation.GoBack();
+            await studentService.CreateStudentAsync(FirstName, LastName, SelectedClass.Id, cancellationToken);
         }
-        else
+        catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            snackbar.Show("Error", "Student has not been saved.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show("Error", "The student could not be saved. Check the selected class and try again.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            return;
         }
+
+        snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        navigation.GoBack();
     }
 
     /// <summary>Saves the name change of the student being edited, then leaves the page.</summary>
@@ -356,17 +347,15 @@ public partial class StudentViewModel(
         }
 
         // Editing changes the name only; class membership is managed through enrollments, not here.
-        await using var editDb = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var existing = await editDb.Students.FirstOrDefaultAsync(s => s.Id == editId, cancellationToken);
-        if (existing is null)
+        try
         {
-            snackbar.Show("Error", "Student no longer exists.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            await studentService.RenameStudentAsync(editId, FirstName, LastName, cancellationToken);
+        }
+        catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
+        {
+            snackbar.Show("Error", "The student could not be saved.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
             return;
         }
-
-        existing.FirstName = FirstName.Trim();
-        existing.LastName = LastName.Trim();
-        await editDb.SaveChangesAsync(cancellationToken);
 
         snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
         navigation.GoBack();
