@@ -5,13 +5,11 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Extensions;
-using NexGrades.App.Features.Home;
 using NexGrades.App.Infrastructure;
-using NexGrades.App.Shell;
 using NexGrades.Common.Storage;
 using NexGrades.Data.Diagnostics;
 using NexGrades.Data.Services;
-using Wpf.Ui;
+using NexGrades.ServiceDefaults;
 
 namespace NexGrades.App;
 
@@ -72,7 +70,7 @@ public partial class App : Application
             NexGradesTelemetry.MarkFailed(startup, ex);
             _ = startup?.SetTag(NexGradesTelemetry.OutcomeTag, NexGradesTelemetry.Outcomes.Error);
             RecordStartupDuration(NexGradesTelemetry.Outcomes.Error);
-            // TODO Some logging (#51). Until then at least do not fail silently with no window.
+            // Failures are not logged yet (tracked in #51). Until then at least do not fail silently with no window.
             MessageBox.Show("NexGrades could not start. Check that its data folder is writable.", "NexGrades", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
         }
@@ -125,45 +123,3 @@ public partial class App : Application
         // For more info see https://docs.microsoft.com/en-us/dotnet/api/system.windows.application.dispatcherunhandledexception?view=windowsdesktop-6.0
     }
 }
-
-public class ApplicationHostService(IServiceProvider serviceProvider) : IHostedService
-{
-    private INavigationWindow? _navigationWindow;
-
-    /// <summary>
-    /// Triggered when the application host is ready to start the service.
-    /// </summary>
-    /// <param name="cancellationToken">Indicates that the start process has been aborted.</param>
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        await HandleActivationAsync();
-    }
-
-    /// <summary>
-    /// Triggered when the application host is performing a graceful shutdown.
-    /// </summary>
-    /// <param name="cancellationToken">Indicates that the shutdown process should no longer be graceful.</param>
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        await Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Creates main window during activation.
-    /// </summary>
-    private async Task HandleActivationAsync()
-    {
-        await Task.CompletedTask;
-
-        if (!Application.Current.Windows.OfType<MainWindow>().Any())
-        {
-            _navigationWindow = (serviceProvider.GetService(typeof(INavigationWindow)) as INavigationWindow)!;
-            _navigationWindow!.ShowWindow();
-
-            _ = _navigationWindow.Navigate(typeof(HomePage));
-        }
-
-        await Task.CompletedTask;
-    }
-}
-

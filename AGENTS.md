@@ -43,12 +43,18 @@ Run from `src/NexGrades/`:
 ```sh
 dotnet restore
 dotnet build NexGrades.App/NexGrades.App.csproj
+dotnet build NexGrades.slnx -warnaserror                             # build every project with warnings as errors
 dotnet test
 dotnet format NexGrades.slnx                                         # apply the .editorconfig style and whitespace rules
 dotnet ef migrations add <MigrationName> --project NexGrades.Data --startup-project NexGrades.Data   # needs the dotnet-ef global tool
 dotnet run --project Aspire/NexGrades.AppHost                        # run the app for development
 ```
 
+- **Zero warnings:** the build must produce no warnings. GitHub Actions sets `CI=true`, which makes
+  `Directory.Build.props` set `TreatWarningsAsErrors`, and the workflow also passes `-warnaserror` explicitly to
+  `dotnet build` and `dotnet test`, so any warning fails CI. CI also runs `dotnet format NexGrades.slnx
+  --verify-no-changes`, so unformatted code fails too. Local builds stay non-fatal; reproduce the CI checks with
+  `dotnet build NexGrades.slnx -warnaserror` and `dotnet format NexGrades.slnx --verify-no-changes`.
 - In `Development`, the App reads its connection string from `ConnectionStrings:sqlite`, which the Aspire
   AppHost supplies. Running `NexGrades.App` on its own in Development needs that value from user secrets.
   Outside Development the database defaults to `%LOCALAPPDATA%\NexGrades\app.db` (see `IAppDataPaths`;
@@ -129,10 +135,18 @@ particular:
   finding rather than silencing it; if a rule really does not fit, lower it in `.editorconfig` with a comment,
   or use `[SuppressMessage]` with a `Justification`. Async methods end in `Async` (`[RelayCommand]` strips the
   suffix from the generated command name).
+  `EnforceCodeStyleInBuild` and `GenerateDocumentationFile` are on, so the `warning`-level IDE rules and missing
+  XML doc comments on public members (CS1591) are reported at build; test projects are exempt from CS1591.
+  `MA0048` means one type per file, named after the type. `IDE0130` means namespaces match folders. EF
+  migrations are generated code and excluded from the analyzers in `.editorconfig`.
 - **Language:** all code, identifiers, comments, commit messages and docs are in English.
 - **Packages:** central package management. Add versions only to `src/NexGrades/Directory.Packages.props`;
   `PackageReference` items in `.csproj` files carry no `Version`. Do not remove or downgrade the
   `SQLitePCLRaw.bundle_e_sqlite3` pin (security advisory, see the comment there).
+- **Package audit:** NuGet audit is on (`NuGetAuditMode=all`), and its warnings (NU1901-NU1904) are never
+  suppressed. Fix a vulnerable transitive package by pinning a patched version in `Directory.Packages.props`;
+  `CentralPackageTransitivePinningEnabled` is on for this (see the `MessagePack` pin). `nuget.config` maps
+  packages to sources, so a new feed needs a `packageSourceMapping` entry.
 - **Domain services:** `sealed` classes with primary constructors, async methods taking a
   `CancellationToken cancellationToken = default`. Violated business rules throw
   `InvariantViolationException` with a message that names the offending ids/values.
@@ -196,6 +210,8 @@ localized later without a rewrite:
 - To take in newer `dev`, merge `origin/dev` into the feature branch; don't rebase or force-push a pushed
   branch.
 - Never commit database files, user secrets or local settings (`.claude/settings.local.json`).
+- **Line endings:** `.gitattributes` sets `* text=auto`, so Git normalizes line endings on commit. Keep the
+  existing line endings of any file you edit.
 
 ## Agent roles and workflows
 

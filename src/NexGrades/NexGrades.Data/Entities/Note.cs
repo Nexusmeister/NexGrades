@@ -14,26 +14,37 @@ namespace NexGrades.Data.Entities;
 /// </remarks>
 public class Note
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
+    /// <summary>The student the note is about. Fixed at creation; see the remarks.</summary>
     public int StudentId { get; set; }
 
+    /// <summary>Navigation property for <see cref="StudentId"/>.</summary>
     public Student Student { get; set; } = null!;
 
+    /// <summary>The school year the note belongs to. Fixed at creation, because the closed-year lock is resolved from it.</summary>
     public int SchoolYearId { get; set; }
 
+    /// <summary>Navigation property for <see cref="SchoolYearId"/>.</summary>
     public SchoolYear SchoolYear { get; set; } = null!;
 
+    /// <summary>The class the note was written in, or null. Copied from the student's enrollment in that year at creation.</summary>
     public int? ClassInstanceId { get; set; }
 
+    /// <summary>Navigation property for <see cref="ClassInstanceId"/>.</summary>
     public ClassInstance? ClassInstance { get; set; }
 
+    /// <summary>Optional short label for grouping notes. Trimmed and length-limited by <c>NoteService</c>.</summary>
     public string? Category { get; set; }
 
+    /// <summary>The note body. Required; <c>NoteService</c> rejects empty or over-long text.</summary>
     public required string Text { get; set; }
 
+    /// <summary>When the note was created.</summary>
     public DateTime CreatedOn { get; set; }
 
+    /// <summary>When the text or category was last changed; null if the note has never been edited.</summary>
     public DateTime? LastEditedOn { get; set; }
 
     /// <summary>

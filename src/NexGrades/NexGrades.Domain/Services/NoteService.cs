@@ -10,6 +10,8 @@ namespace NexGrades.Domain.Services;
 /// <summary>
 /// Creates, edits, archives and lists the free-text notes a teacher keeps on a student within a school year.
 /// </summary>
+/// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
+/// <param name="clock">Source of the creation, edit and archive timestamps.</param>
 /// <remarks>
 /// Takes a context factory rather than a context and opens a short-lived context per call, so the service can
 /// be registered as a plain transient and reused by other callers (for example a later note export) without
@@ -158,8 +160,12 @@ public sealed class NoteService(IDbContextFactory<AppDbContext> contextFactory, 
     /// on <see cref="Note.CreatedOn"/>: <paramref name="from"/> is inclusive and <paramref name="to"/> is
     /// exclusive.
     /// </summary>
+    /// <param name="studentId">The student whose notes are listed.</param>
     /// <param name="schoolYearId">Restricts the result to one school year when set.</param>
+    /// <param name="from">Inclusive lower bound on the creation time, or <see langword="null"/> for no bound.</param>
+    /// <param name="to">Exclusive upper bound on the creation time, or <see langword="null"/> for no bound.</param>
     /// <param name="includeArchived">Whether archived notes are returned as well.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
     /// <exception cref="InvariantViolationException">The student does not exist.</exception>
     /// <exception cref="ArgumentException"><paramref name="from"/> is later than <paramref name="to"/>.</exception>
     public Task<IReadOnlyList<NoteDto>> GetNotesForStudentAsync(
@@ -240,9 +246,10 @@ public sealed class NoteService(IDbContextFactory<AppDbContext> contextFactory, 
                 .ToListAsync(cancellationToken);
 
             var now = clock.Now;
-            return years
-                .Select(sy => new NoteYear(sy.Id, sy.Label, sy.Status, sy.UnlockedUntil, SchoolYearLock.IsWritable(sy, now)))
-                .ToList();
+            return
+            [
+                .. years.Select(sy => new NoteYear(sy.Id, sy.Label, sy.Status, sy.UnlockedUntil, SchoolYearLock.IsWritable(sy, now))),
+            ];
         });
 
     private static async Task EnsureStudentExistsAsync(AppDbContext context, int studentId, CancellationToken cancellationToken)

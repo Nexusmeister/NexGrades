@@ -11,6 +11,8 @@ public static class AverageCalculator
     /// A bucket's snapshotted weight together with that student's average within it (or <see langword="null"/>
     /// if the student has no grades in that bucket).
     /// </summary>
+    /// <param name="Weight">The bucket's snapshotted weight.</param>
+    /// <param name="Average">The student's average in the bucket, or <see langword="null"/> when there are no grades.</param>
     public readonly record struct WeightedBucketAverage(decimal Weight, decimal? Average);
 
     /// <summary>
@@ -19,7 +21,7 @@ public static class AverageCalculator
     /// </summary>
     public static decimal? BucketAverage(IEnumerable<decimal> gradeValues)
     {
-        var values = gradeValues as IReadOnlyCollection<decimal> ?? gradeValues.ToList();
+        var values = gradeValues as IReadOnlyCollection<decimal> ?? [.. gradeValues];
         return values.Count == 0 ? null : values.Average();
     }
 

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Extensions;
 using NexGrades.Data.Diagnostics;
+using NexGrades.ServiceDefaults;
 using Wpf.Ui.Markup;
 
 namespace NexGrades.App.Tests;

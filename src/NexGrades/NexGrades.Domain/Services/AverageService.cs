@@ -9,6 +9,7 @@ namespace NexGrades.Domain.Services;
 /// one call to make per average instead of hand-rolling the query every time. All computation is delegated
 /// to <see cref="AverageCalculator"/>; this class only fetches the snapshot data it needs.
 /// </summary>
+/// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
 /// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
 public sealed class AverageService(IDbContextFactory<AppDbContext> contextFactory)
 {

@@ -1,7 +1,7 @@
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-namespace Microsoft.Extensions.Hosting;
+namespace NexGrades.ServiceDefaults;
 
 /// <summary>
 /// Strips exception messages and stack traces from log records before they reach an exporter, keeping only the

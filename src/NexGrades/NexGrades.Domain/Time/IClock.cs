@@ -7,5 +7,6 @@ namespace NexGrades.Domain.Time;
 /// </summary>
 public interface IClock
 {
+    /// <summary>The current local date and time. Read it from here instead of <c>DateTime.Now</c> so tests can fix the time.</summary>
     DateTime Now { get; }
 }

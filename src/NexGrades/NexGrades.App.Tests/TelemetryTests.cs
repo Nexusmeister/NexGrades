@@ -1,18 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using NexGrades.Data.Diagnostics;
+using NexGrades.ServiceDefaults;
 
 namespace NexGrades.App.Tests;
-
-/// <summary>
-/// Tests that touch the process-wide <c>NexGradesTelemetry.ActivitySource</c> listeners run one at a time (xUnit
-/// does not parallelize within a collection), so listeners from one test cannot show up in another.
-/// </summary>
-[CollectionDefinition(Name, DisableParallelization = true)]
-public sealed class SharedTelemetryState
-{
-    public const string Name = "Telemetry";
-}
 
 /// <summary>
 /// Guards the telemetry switches: nothing is exported unless an OTLP endpoint is configured, and the

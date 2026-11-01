@@ -13,17 +13,13 @@ using Wpf.Ui.Controls;
 namespace NexGrades.App.Features.Classes;
 
 /// <summary>
-/// Hands the id of the class to edit from the overview to the (transient) <see cref="ClassViewModel"/>,
-/// which is created by the navigation service and therefore can't take it as a constructor argument.
+/// Add and edit form for a class. Editing changes the class name only. A new class also gets its own class group,
+/// so it starts a new cohort.
 /// </summary>
-public sealed class ClassEditRequest
-{
-    public int? ClassInstanceId { get; set; }
-}
-
-/// <summary>A student on a class roster; <paramref name="Period"/> is pre-formatted for the current UI culture.</summary>
-public sealed record ClassStudentRow(int StudentId, string FullName, string Period);
-
+/// <param name="navigation">Navigates back after a save or a cancel.</param>
+/// <param name="snackbar">Reports the outcome of a save.</param>
+/// <param name="dbContextFactory">Creates the short-lived contexts for loading and saving.</param>
+/// <param name="editRequest">Carries the id of the class to edit from the overview.</param>
 public partial class ClassViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
@@ -38,7 +34,9 @@ public partial class ClassViewModel(
     [ObservableProperty] private ObservableCollection<ClassStudentRow> _activeStudents = [];
     [ObservableProperty] private ObservableCollection<ClassStudentRow> _leftStudents = [];
 
+    /// <summary>True when the roster has no students, neither active nor left.</summary>
     public bool HasNoStudents => ActiveStudents.Count == 0 && LeftStudents.Count == 0;
+    /// <summary>True when at least one student has left the class.</summary>
     public bool HasLeftStudents => LeftStudents.Count > 0;
 
     partial void OnActiveStudentsChanged(ObservableCollection<ClassStudentRow> value) => OnPropertyChanged(nameof(HasNoStudents));
@@ -49,6 +47,7 @@ public partial class ClassViewModel(
         OnPropertyChanged(nameof(HasLeftStudents));
     }
 
+    /// <summary>Loads the class and its roster when the page opens for editing. Otherwise resets the form to the add state.</summary>
     public override async Task OnNavigatedToAsync()
     {
         _editingClassInstanceId = editRequest.ClassInstanceId;

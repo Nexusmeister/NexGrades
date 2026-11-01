@@ -4,8 +4,10 @@ using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.EntityMapConfigs;
 
+/// <summary>Maps <see cref="BucketTemplate"/> to the BucketTemplates table.</summary>
 public class BucketTemplateConfiguration : IEntityTypeConfiguration<BucketTemplate>
 {
+    /// <summary>Applies the table, column, index and relationship rules for <see cref="BucketTemplate"/>.</summary>
     public void Configure(EntityTypeBuilder<BucketTemplate> builder)
     {
         builder.ToTable("BucketTemplates");

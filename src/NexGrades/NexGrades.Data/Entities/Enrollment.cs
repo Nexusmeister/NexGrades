@@ -15,17 +15,24 @@ namespace NexGrades.Data.Entities;
 /// </remarks>
 public class Enrollment
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
+    /// <summary>The enrolled student.</summary>
     public int StudentId { get; set; }
 
+    /// <summary>Navigation property for <see cref="StudentId"/>.</summary>
     public Student Student { get; set; } = null!;
 
+    /// <summary>The class the student is enrolled in.</summary>
     public int ClassInstanceId { get; set; }
 
+    /// <summary>Navigation property for <see cref="ClassInstanceId"/>.</summary>
     public ClassInstance ClassInstance { get; set; } = null!;
 
+    /// <summary>First day of the membership. The enrollment is active from this date on, inclusive.</summary>
     public DateTime JoinedOn { get; set; }
 
+    /// <summary>The day the student left. The enrollment is no longer active from this date on; null while the student is still enrolled.</summary>
     public DateTime? LeftOn { get; set; }
 }

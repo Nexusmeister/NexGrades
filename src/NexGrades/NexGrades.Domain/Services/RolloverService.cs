@@ -10,6 +10,8 @@ namespace NexGrades.Domain.Services;
 /// Implements the two year-close dispositions: rollover and archive. Both operations are pure status changes
 /// plus new rows: no historic row is ever mutated or deleted.
 /// </summary>
+/// <param name="contextFactory">Creates the short-lived context that each public method opens.</param>
+/// <param name="clock">Source of "now" for deciding which enrollments are active and for their new join date.</param>
 /// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
 public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFactory, IClock clock)
 {
@@ -64,71 +66,100 @@ public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFacto
             // simply good practice for multi-step graph construction.
             await context.SaveChangesAsync(cancellationToken);
 
-            // Step 3: carry forward active enrollments, going through the same invariant check used by
-            // EnrollmentService, so a student can never end up double-enrolled in the target year.
-            var activeEnrollments = oldInstance.Enrollments
-                .Where(e => EnrollmentActivity.IsActive(e, clock))
-                .ToList();
+            var carriedStudentIds = await CarryForwardEnrollmentsAsync(
+                context, oldInstance, newInstance.Id, targetSchoolYearId, cancellationToken);
 
-            foreach (var enrollment in activeEnrollments)
-            {
-                await EnrollmentInvariants.EnsureNoConflictingEnrollmentAsync(
-                    context, enrollment.StudentId, targetSchoolYearId, cancellationToken);
-
-                context.Enrollments.Add(new Enrollment
-                {
-                    StudentId = enrollment.StudentId,
-                    ClassInstanceId = newInstance.Id,
-                    JoinedOn = clock.Now,
-                });
-            }
-
-            var carriedStudentIds = activeEnrollments.Select(e => e.StudentId).ToHashSet();
-
-            // Step 4 & 5: one new SubjectInstance per old one, buckets copied from the CURRENT live
-            // BucketTemplate rows (not the old instance's GradeBucket snapshot — this is the mechanism that
-            // lets a template edit affect only future years), and participation overrides copied (not shared)
-            // for the students who carried over.
-            foreach (var oldSubjectInstance in oldInstance.SubjectInstances)
-            {
-                var newSubjectInstance = new SubjectInstance
-                {
-                    ClassInstanceId = newInstance.Id,
-                    SubjectId = oldSubjectInstance.SubjectId,
-                    TeacherId = oldSubjectInstance.TeacherId,
-                };
-                context.SubjectInstances.Add(newSubjectInstance);
-                await context.SaveChangesAsync(cancellationToken);
-
-                foreach (var template in oldSubjectInstance.Subject.BucketTemplates)
-                {
-                    context.GradeBuckets.Add(new GradeBucket
-                    {
-                        SubjectInstanceId = newSubjectInstance.Id,
-                        Name = template.Name,
-                        Weight = template.Weight,
-                        SortOrder = template.SortOrder,
-                    });
-                }
-
-                foreach (var participation in oldSubjectInstance.SubjectParticipations.Where(p => carriedStudentIds.Contains(p.StudentId)))
-                {
-                    context.SubjectParticipations.Add(new SubjectParticipation
-                    {
-                        SubjectInstanceId = newSubjectInstance.Id,
-                        StudentId = participation.StudentId,
-                        Mode = participation.Mode,
-                        From = participation.From,
-                        To = participation.To,
-                    });
-                }
-            }
+            await CopySubjectInstancesAsync(context, oldInstance, newInstance.Id, carriedStudentIds, cancellationToken);
 
             await context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             return newInstance;
         });
+
+    /// <summary>
+    /// Step 3 of the rollover: carries forward active enrollments into the new instance, going through the
+    /// same invariant check used by <see cref="EnrollmentService"/>. Returns the ids of the carried students.
+    /// </summary>
+    private async Task<HashSet<int>> CarryForwardEnrollmentsAsync(
+        AppDbContext context,
+        ClassInstance oldInstance,
+        int newInstanceId,
+        int targetSchoolYearId,
+        CancellationToken cancellationToken)
+    {
+        // Step 3: carry forward active enrollments, going through the same invariant check used by
+        // EnrollmentService, so a student can never end up double-enrolled in the target year.
+        var activeEnrollments = oldInstance.Enrollments
+            .Where(e => EnrollmentActivity.IsActive(e, clock))
+            .ToList();
+
+        foreach (var enrollment in activeEnrollments)
+        {
+            await EnrollmentInvariants.EnsureNoConflictingEnrollmentAsync(
+                context, enrollment.StudentId, targetSchoolYearId, cancellationToken);
+
+            context.Enrollments.Add(new Enrollment
+            {
+                StudentId = enrollment.StudentId,
+                ClassInstanceId = newInstanceId,
+                JoinedOn = clock.Now,
+            });
+        }
+
+        return [.. activeEnrollments.Select(e => e.StudentId)];
+    }
+
+    /// <summary>
+    /// Steps 4 and 5 of the rollover: one new <see cref="SubjectInstance"/> per old one, with buckets copied
+    /// from the current templates and participation overrides copied for the students who carried over.
+    /// </summary>
+    private static async Task CopySubjectInstancesAsync(
+        AppDbContext context,
+        ClassInstance oldInstance,
+        int newInstanceId,
+        HashSet<int> carriedStudentIds,
+        CancellationToken cancellationToken)
+    {
+        // Step 4 & 5: one new SubjectInstance per old one, buckets copied from the CURRENT live
+        // BucketTemplate rows (not the old instance's GradeBucket snapshot — this is the mechanism that
+        // lets a template edit affect only future years), and participation overrides copied (not shared)
+        // for the students who carried over.
+        foreach (var oldSubjectInstance in oldInstance.SubjectInstances)
+        {
+            var newSubjectInstance = new SubjectInstance
+            {
+                ClassInstanceId = newInstanceId,
+                SubjectId = oldSubjectInstance.SubjectId,
+                TeacherId = oldSubjectInstance.TeacherId,
+            };
+            context.SubjectInstances.Add(newSubjectInstance);
+            await context.SaveChangesAsync(cancellationToken);
+
+            foreach (var template in oldSubjectInstance.Subject.BucketTemplates)
+            {
+                context.GradeBuckets.Add(new GradeBucket
+                {
+                    SubjectInstanceId = newSubjectInstance.Id,
+                    Name = template.Name,
+                    Weight = template.Weight,
+                    SortOrder = template.SortOrder,
+                });
+            }
+
+            foreach (var participation in oldSubjectInstance.SubjectParticipations.Where(p => carriedStudentIds.Contains(p.StudentId)))
+            {
+                context.SubjectParticipations.Add(new SubjectParticipation
+                {
+                    SubjectInstanceId = newSubjectInstance.Id,
+                    StudentId = participation.StudentId,
+                    Mode = participation.Mode,
+                    From = participation.From,
+                    To = participation.To,
+                });
+            }
+        }
+    }
 
     /// <summary>
     /// Archives a class instance: marks it <see cref="ClassInstanceStatus.Archived"/> and unassigns its

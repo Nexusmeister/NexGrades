@@ -7,6 +7,7 @@ namespace NexGrades.Data.Entities;
 /// </summary>
 public class AuditEntry
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>The CLR entity name, e.g. "Grade".</summary>
@@ -18,11 +19,15 @@ public class AuditEntry
     /// <summary>The property/field that was changed.</summary>
     public required string Field { get; set; }
 
+    /// <summary>The previous value as text, or null when the change created the row.</summary>
     public string? OldValue { get; set; }
 
+    /// <summary>The new value as text, formatted with the invariant culture so the audit log reads the same on any machine.</summary>
     public string? NewValue { get; set; }
 
+    /// <summary>When the change was saved.</summary>
     public DateTime ChangedOn { get; set; }
 
+    /// <summary>The reason given when the closed year was unlocked for this change, or null if none was recorded.</summary>
     public string? Reason { get; set; }
 }

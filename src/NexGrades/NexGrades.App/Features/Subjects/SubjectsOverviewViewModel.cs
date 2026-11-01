@@ -9,13 +9,15 @@ using Wpf.Ui;
 
 namespace NexGrades.App.Features.Subjects;
 
-public sealed record SubjectRow(int Id, string Name, string ShortCode);
-
+/// <summary>Lists the subject catalogue and opens the form for a new subject.</summary>
+/// <param name="navigation">Opens the subject form.</param>
+/// <param name="dbContextFactory">Creates the short-lived context used to load the subjects.</param>
 public partial class SubjectsOverviewViewModel(INavigationService navigation, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {
     [ObservableProperty]
     private ObservableCollection<SubjectRow> _subjects = [];
 
+    /// <summary>Opens the form for a new subject.</summary>
     [RelayCommand]
     public void AddSubject()
     {

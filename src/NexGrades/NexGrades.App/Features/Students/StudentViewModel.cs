@@ -15,34 +15,17 @@ using Wpf.Ui.Extensions;
 
 namespace NexGrades.App.Features.Students;
 
-public sealed record ClassInstanceOption(int Id, string Name);
-
 /// <summary>
-/// Hands the id of the student to edit from the overview to the (transient) <see cref="StudentViewModel"/>,
-/// which is created by the navigation service and therefore can't take it as a constructor argument.
+/// Add and edit form for a student, including the student's notes per school year. Notes are only available
+/// for an existing student.
 /// </summary>
-public sealed class StudentEditRequest
-{
-    public int? StudentId { get; set; }
-}
-
-/// <summary>
-/// One note as shown in the list. Dates are pre-formatted with the current UI culture so the view does not
-/// depend on XAML string formats.
-/// </summary>
-public sealed record NoteRow(
-    int Id,
-    string Text,
-    string? Category,
-    string CreatedOnDisplay,
-    string? EditedOnDisplay,
-    bool IsArchived,
-    string? ArchivedOnDisplay);
-
-/// <summary>A school year selectable on the notes tab, with its lock state.</summary>
-/// <param name="IsClosed">The year is closed (whether or not it is currently unlocked).</param>
-public sealed record NoteYearOption(int Id, string Label, bool IsWritable, bool IsClosed, DateTime? UnlockedUntil);
-
+/// <param name="navigation">Navigates back when the page is left.</param>
+/// <param name="snackbar">Reports the outcome of each action.</param>
+/// <param name="dbContextFactory">Creates the short-lived contexts for loading and saving the student.</param>
+/// <param name="enrollmentService">Enrolls a new student in the chosen class.</param>
+/// <param name="noteService">Lists, adds, edits, archives and restores notes.</param>
+/// <param name="editRequest">Carries the id of the student to edit from the overview.</param>
+/// <param name="contentDialogService">Shows the confirmations for discarding input and for archiving notes.</param>
 public partial class StudentViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
@@ -220,6 +203,7 @@ public partial class StudentViewModel(
                 until.ToString("g", CultureInfo.CurrentCulture))
             : string.Empty;
 
+    /// <summary>Loads the class choices and, when an existing student is being edited, the student and the notes.</summary>
     public override async Task OnNavigatedToAsync()
     {
         _editingStudentId = editRequest.StudentId;
@@ -322,29 +306,7 @@ public partial class StudentViewModel(
     {
         if (_editingStudentId is { } editId)
         {
-            if (HasPendingNoteInput
-                && !await ConfirmDiscardAsync(
-                    "The note you are writing has not been saved. Save the student and discard the note?",
-                    cancellationToken))
-            {
-                return;
-            }
-
-            // Editing changes the name only; class membership is managed through enrollments, not here.
-            await using var editDb = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-            var existing = await editDb.Students.FirstOrDefaultAsync(s => s.Id == editId, cancellationToken);
-            if (existing is null)
-            {
-                snackbar.Show("Error", "Student no longer exists.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
-                return;
-            }
-
-            existing.FirstName = FirstName.Trim();
-            existing.LastName = LastName.Trim();
-            await editDb.SaveChangesAsync(cancellationToken);
-
-            snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-            navigation.GoBack();
+            await SaveEditedStudentAsync(editId, cancellationToken);
             return;
         }
 
@@ -380,6 +342,34 @@ public partial class StudentViewModel(
         {
             snackbar.Show("Error", "Student has not been saved.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
         }
+    }
+
+    /// <summary>Saves the name change of the student being edited, then leaves the page.</summary>
+    private async Task SaveEditedStudentAsync(int editId, CancellationToken cancellationToken)
+    {
+        if (HasPendingNoteInput
+            && !await ConfirmDiscardAsync(
+                "The note you are writing has not been saved. Save the student and discard the note?",
+                cancellationToken))
+        {
+            return;
+        }
+
+        // Editing changes the name only; class membership is managed through enrollments, not here.
+        await using var editDb = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var existing = await editDb.Students.FirstOrDefaultAsync(s => s.Id == editId, cancellationToken);
+        if (existing is null)
+        {
+            snackbar.Show("Error", "Student no longer exists.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            return;
+        }
+
+        existing.FirstName = FirstName.Trim();
+        existing.LastName = LastName.Trim();
+        await editDb.SaveChangesAsync(cancellationToken);
+
+        snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        navigation.GoBack();
     }
 
     /// <summary>Goes back without saving, asking first when the page holds unsaved input.</summary>

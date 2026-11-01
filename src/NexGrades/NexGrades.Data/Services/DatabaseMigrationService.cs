@@ -4,8 +4,16 @@ using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.Services;
 
+/// <summary>
+/// Brings the database up to date at startup: applies pending EF Core migrations, then makes sure an Active school
+/// year exists. The App runs it before any screen opens, so the rest of the app can assume a schema and a year.
+/// </summary>
 public class DatabaseMigrationService(IDbContextFactory<AppDbContext> dbContext)
 {
+    /// <summary>
+    /// Applies pending migrations and bootstraps an Active school year if none exists. Tracked as
+    /// <c>DatabaseMigrationService.Run</c>.
+    /// </summary>
     public Task RunAsync(CancellationToken cancellationToken = default) =>
         NexGradesTelemetry.TrackAsync("DatabaseMigrationService.Run", async () =>
         {

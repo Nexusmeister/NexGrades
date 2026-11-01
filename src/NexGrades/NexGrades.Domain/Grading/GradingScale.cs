@@ -34,7 +34,7 @@ public static class GradingScale
         TokenToValueMap.ToDictionary(pair => pair.Value, pair => pair.Key);
 
     /// <summary>All 16 legal grade values on the scale, e.g. for populating a picker.</summary>
-    public static IReadOnlyCollection<decimal> LegalValues { get; } = ValueToTokenMap.Keys.ToList();
+    public static IReadOnlyCollection<decimal> LegalValues { get; } = [.. ValueToTokenMap.Keys];
 
     /// <summary>Whether <paramref name="value"/> is one of the 16 legal points on the scale.</summary>
     public static bool IsLegalValue(decimal value) => ValueToTokenMap.ContainsKey(value);

@@ -14,6 +14,9 @@ namespace NexGrades.Domain.Services;
 /// from that year — and records the reason in <see cref="IUnlockReasonStore"/> so it can be attached to
 /// every <see cref="AuditEntry"/> written while unlocked. Re-locking clears the window immediately.
 /// </summary>
+/// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
+/// <param name="clock">Source of "now", used to reject an unlock that would expire in the past.</param>
+/// <param name="reasonStore">Holds the unlock reason so the audit interceptor can attach it to audit entries.</param>
 /// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
 public sealed class UnlockService(IDbContextFactory<AppDbContext> contextFactory, IClock clock, IUnlockReasonStore reasonStore)
 {

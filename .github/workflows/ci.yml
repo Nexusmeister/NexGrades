@@ -32,8 +32,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Restore dependencies
         run: dotnet restore
+      # Zero-warning policy: any compiler or analyzer warning fails the build (also enforced by
+      # TreatWarningsAsErrors in Directory.Build.props when CI=true; -warnaserror makes it explicit).
       - name: Test
-        run: dotnet test --verbosity normal
+        run: dotnet test --verbosity normal -warnaserror
 
   build:
     runs-on: windows-latest
@@ -48,5 +50,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Restore dependencies
         run: dotnet restore
+      # Zero-warning policy: build the whole solution (AppHost, ServiceDefaults and test projects
+      # included) so every project is analyzed, and fail on any warning.
       - name: Build
-        run: dotnet build NexGrades.App/NexGrades.App.csproj --no-restore
+        run: dotnet build NexGrades.slnx --no-restore -warnaserror
+      # Formatting follows .editorconfig; CI fails on any file dotnet format would change.
+      - name: Verify formatting
+        run: dotnet format NexGrades.slnx --verify-no-changes --no-restore

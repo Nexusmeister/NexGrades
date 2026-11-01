@@ -4,8 +4,10 @@ using NexGrades.Data.Entities;
 
 namespace NexGrades.Data.EntityMapConfigs;
 
+/// <summary>Maps <see cref="ClassGroup"/> to the ClassGroups table.</summary>
 public class ClassGroupConfiguration : IEntityTypeConfiguration<ClassGroup>
 {
+    /// <summary>Applies the table, column, index and relationship rules for <see cref="ClassGroup"/>.</summary>
     public void Configure(EntityTypeBuilder<ClassGroup> builder)
     {
         builder.ToTable("ClassGroups");
