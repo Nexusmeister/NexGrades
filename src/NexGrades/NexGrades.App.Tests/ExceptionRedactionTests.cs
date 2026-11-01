@@ -8,8 +8,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry;
 using NexGrades.ServiceDefaults;
+using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 namespace NexGrades.App.Tests;
