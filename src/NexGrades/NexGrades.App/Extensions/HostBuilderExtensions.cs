@@ -65,6 +65,9 @@ public static class HostBuilderExtensions
         services.AddTransient<YearCloseService>();
         services.AddTransient<UnlockService>();
         services.AddTransient<NoteService>();
+        services.AddTransient<ClassService>();
+        services.AddTransient<StudentService>();
+        services.AddTransient<SubjectService>();
         services.AddTransient<SubjectOverviewExportService>();
         services.AddTransient<SubjectOverviewExcelWriter>();
         services.AddTransient<SubjectOverviewExporter>();

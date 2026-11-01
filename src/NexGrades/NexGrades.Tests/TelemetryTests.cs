@@ -285,6 +285,134 @@ public class TelemetryTests
         Assert.DoesNotContain(strings, s => s is not null && s.Contains("Schmidt", StringComparison.Ordinal));
     }
 
+    // ---------- Operation names of the catalogue services ----------
+
+    private static async Task<int> SeedActiveClassAsync(Env env)
+    {
+        var seed = await SeedAsync(env);
+        await using var context = env.Db.CreateContext();
+        return await context.ClassInstances
+            .Where(ci => ci.SchoolYearId == seed.YearId)
+            .Select(ci => ci.Id)
+            .SingleAsync();
+    }
+
+    [Fact]
+    public async Task CreateClassAsync_RecordsOneSpan_WithFixedOperationName()
+    {
+        using var capture = new TelemetryCapture();
+        using var env = new Env();
+        await SeedAsync(env);
+
+        await new ClassService(env.Db.CreateContextFactory()).CreateClassAsync("Test 7B");
+
+        var span = Assert.Single(capture.SpansFor("ClassService.CreateClass"));
+        Assert.Equal(NexGradesTelemetry.Outcomes.Success, OutcomeOf(span));
+    }
+
+    [Fact]
+    public async Task RenameClassAsync_RecordsOneSpan_WithFixedOperationName()
+    {
+        using var capture = new TelemetryCapture();
+        using var env = new Env();
+        var classId = await SeedActiveClassAsync(env);
+
+        await new ClassService(env.Db.CreateContextFactory()).RenameClassAsync(classId, "Test 7B");
+
+        var span = Assert.Single(capture.SpansFor("ClassService.RenameClass"));
+        Assert.Equal(NexGradesTelemetry.Outcomes.Success, OutcomeOf(span));
+    }
+
+    [Fact]
+    public async Task CreateStudentAsync_RecordsOneSpan_WithFixedOperationName()
+    {
+        using var capture = new TelemetryCapture();
+        using var env = new Env();
+        var classId = await SeedActiveClassAsync(env);
+
+        await new StudentService(env.Db.CreateContextFactory(), env.Clock).CreateStudentAsync("Test", "Person", classId);
+
+        var span = Assert.Single(capture.SpansFor("StudentService.CreateStudent"));
+        Assert.Equal(NexGradesTelemetry.Outcomes.Success, OutcomeOf(span));
+    }
+
+    [Fact]
+    public async Task RenameStudentAsync_RecordsOneSpan_WithFixedOperationName()
+    {
+        using var capture = new TelemetryCapture();
+        using var env = new Env();
+        var seed = await SeedAsync(env);
+
+        await new StudentService(env.Db.CreateContextFactory(), env.Clock)
+            .RenameStudentAsync(seed.StudentId, "Other", "Name");
+
+        var span = Assert.Single(capture.SpansFor("StudentService.RenameStudent"));
+        Assert.Equal(NexGradesTelemetry.Outcomes.Success, OutcomeOf(span));
+    }
+
+    [Fact]
+    public async Task CreateSubjectAsync_RecordsOneSpan_WithFixedOperationName()
+    {
+        using var capture = new TelemetryCapture();
+        using var env = new Env();
+
+        await new SubjectService(env.Db.CreateContextFactory()).CreateSubjectAsync("Test Subject", "TS");
+
+        var span = Assert.Single(capture.SpansFor("SubjectService.CreateSubject"));
+        Assert.Equal(NexGradesTelemetry.Outcomes.Success, OutcomeOf(span));
+    }
+
+    [Fact]
+    public async Task CreateStudentAsync_EmitsNoNames_InSpansOrMetrics()
+    {
+        const string SecretFirst = "Zzyzx";
+        const string SecretLast = "Privatename";
+        using var capture = new TelemetryCapture();
+        using var env = new Env();
+        var classId = await SeedActiveClassAsync(env);
+        var service = new StudentService(env.Db.CreateContextFactory(), env.Clock);
+
+        await service.CreateStudentAsync(SecretFirst, SecretLast, classId);
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => service.CreateStudentAsync(SecretFirst, SecretLast, 9999));
+
+        Assert.Equal(2, capture.SpansFor("StudentService.CreateStudent").Count);
+        var allowed = NexGradesTelemetry.AllowedTagKeys;
+        var strings = new List<string?>();
+        foreach (var span in capture.AllSpans)
+        {
+            strings.Add(span.DisplayName);
+            strings.Add(span.OperationName);
+            strings.Add(span.StatusDescription);
+            foreach (var tag in span.TagObjects)
+            {
+                Assert.Contains(tag.Key, allowed);
+                strings.Add(tag.Value?.ToString());
+            }
+
+            foreach (var activityEvent in span.Events)
+            {
+                strings.Add(activityEvent.Name);
+                foreach (var tag in activityEvent.Tags)
+                {
+                    strings.Add(Convert.ToString(tag.Value, CultureInfo.InvariantCulture));
+                }
+            }
+        }
+
+        foreach (var measurement in capture.AllMeasurements)
+        {
+            foreach (var tag in measurement.Tags)
+            {
+                Assert.Contains(tag.Key, allowed);
+                strings.Add(tag.Value?.ToString());
+            }
+        }
+
+        Assert.DoesNotContain(strings, s => s is not null && s.Contains(SecretFirst, StringComparison.Ordinal));
+        Assert.DoesNotContain(strings, s => s is not null && s.Contains(SecretLast, StringComparison.Ordinal));
+    }
+
     // ---------- Startup migration ----------
 
     [Fact]

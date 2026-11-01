@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Data.Common;
 using System.Globalization;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -9,7 +10,8 @@ using NexGrades.App.Features.Export;
 using NexGrades.App.Infrastructure;
 using NexGrades.Common;
 using NexGrades.Data;
-using NexGrades.Data.Entities;
+using NexGrades.Domain.Exceptions;
+using NexGrades.Domain.Services;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
@@ -21,7 +23,8 @@ namespace NexGrades.App.Features.Classes;
 /// </summary>
 /// <param name="navigation">Navigates back after a save or a cancel.</param>
 /// <param name="snackbar">Reports the outcome of a save.</param>
-/// <param name="dbContextFactory">Creates the short-lived contexts for loading and saving.</param>
+/// <param name="dbContextFactory">Creates the short-lived context for loading the class and its roster.</param>
+/// <param name="classService">Creates and renames the class.</param>
 /// <param name="editRequest">Carries the id of the class to edit from the overview.</param>
 /// <param name="exporter">Writes the class overview of a subject to an Excel file.</param>
 /// <param name="fileSaveDialog">Asks where to save the export.</param>
@@ -29,6 +32,7 @@ public partial class ClassViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
     IDbContextFactory<AppDbContext> dbContextFactory,
+    ClassService classService,
     ClassEditRequest editRequest,
     SubjectOverviewExporter exporter,
     IFileSaveDialogService fileSaveDialog) : ViewModel
@@ -149,6 +153,10 @@ public partial class ClassViewModel(
         {
             snackbar.Show("Error", "The export could not be saved. Check that the file is not open and that you may write to the folder.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
         }
+        catch (Exception ex) when (ex is InvariantViolationException or DbException)
+        {
+            snackbar.Show("Error", "The export could not be created. Check that the subject still exists and try again.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+        }
         finally
         {
             IsExporting = false;
@@ -158,59 +166,38 @@ public partial class ClassViewModel(
     [RelayCommand]
     private async Task SaveClassAsync(CancellationToken cancellationToken = default)
     {
-        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-
-        if (_editingClassInstanceId is { } editId)
+        var editId = _editingClassInstanceId;
+        try
         {
-            var existing = await db.ClassInstances.FirstOrDefaultAsync(ci => ci.Id == editId, cancellationToken);
-            if (existing is null)
+            if (editId is { } id)
             {
-                snackbar.Show("Error", "Class no longer exists.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
-                return;
+                await classService.RenameClassAsync(id, Name, cancellationToken);
             }
-
-            existing.Name = Name;
-            await db.SaveChangesAsync(cancellationToken);
-            snackbar.Show("Success", "Class has been saved", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-            navigation.GoBack();
+            else
+            {
+                await classService.CreateClassAsync(Name, cancellationToken);
+            }
+        }
+        catch (ClosedYearException)
+        {
+            snackbar.Show("Error", "The class could not be renamed because its school year is closed.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            return;
+        }
+        catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
+        {
+            snackbar.Show(
+                "Error",
+                editId is null
+                ? "The class could not be created. Enter a name and make sure there is an active school year."
+                : "The class could not be renamed. Enter a name, and check that the class has not been rolled forward or archived.",
+                ControlAppearance.Caution,
+                new SymbolIcon(SymbolRegular.ErrorCircle24),
+                TimeSpan.FromSeconds(5));
             return;
         }
 
-        var activeYear = await db.SchoolYears.FirstOrDefaultAsync(sy => sy.Status == SchoolYearStatus.Active, cancellationToken);
-        if (activeYear is null)
-        {
-            snackbar.Show("Error", "No active school year found.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
-            return;
-        }
-
-        // A brand-new class (as opposed to one rolled forward from a prior year) starts life as its own
-        // cohort: the ClassGroup and its first ClassInstance share the same name.
-        var classGroup = new ClassGroup
-        {
-            CohortLabel = Name,
-            FoundedInSchoolYearId = activeYear.Id,
-        };
-        db.ClassGroups.Add(classGroup);
-        await db.SaveChangesAsync(cancellationToken);
-
-        var classInstance = new ClassInstance
-        {
-            ClassGroupId = classGroup.Id,
-            SchoolYearId = activeYear.Id,
-            Name = Name,
-        };
-        db.ClassInstances.Add(classInstance);
-        var saved = await db.SaveChangesAsync(cancellationToken);
-
-        if (saved != 0)
-        {
-            snackbar.Show("Success", "Class has been saved", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-            navigation.GoBack();
-        }
-        else
-        {
-            snackbar.Show("Error", "Class has not been saved", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
-        }
+        snackbar.Show("Success", "Class has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        navigation.GoBack();
     }
 
     [RelayCommand]
