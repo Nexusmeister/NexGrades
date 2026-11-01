@@ -12,18 +12,6 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Classes;
 
-/// <summary>
-/// Hands the id of the class to edit from the overview to the (transient) <see cref="ClassViewModel"/>,
-/// which is created by the navigation service and therefore can't take it as a constructor argument.
-/// </summary>
-public sealed class ClassEditRequest
-{
-    public int? ClassInstanceId { get; set; }
-}
-
-/// <summary>A student on a class roster; <paramref name="Period"/> is pre-formatted for the current UI culture.</summary>
-public sealed record ClassStudentRow(int StudentId, string FullName, string Period);
-
 public partial class ClassViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,

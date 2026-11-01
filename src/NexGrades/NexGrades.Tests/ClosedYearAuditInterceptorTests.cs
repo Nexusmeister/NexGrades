@@ -12,24 +12,22 @@ public class ClosedYearAuditInterceptorTests
     {
         var interceptor = new ClosedYearAuditInterceptor(clock, reasonStore);
         var db = new SqliteTestDatabase(interceptor);
-        await using (var seedContext = db.CreateContext())
+        await using var seedContext = db.CreateContext();
+        var year = new SchoolYear
         {
-            var year = new SchoolYear
-            {
-                Label = "2024/25",
-                StartDate = new DateTime(2024, 8, 1),
-                EndDate = new DateTime(2025, 7, 31),
-                Status = SchoolYearStatus.Closed,
-                ClosedOn = new DateTime(2025, 7, 31),
-                UnlockedUntil = unlockedUntil,
-            };
-            var group = new ClassGroup { CohortLabel = "Kohorte 2018", FoundedInSchoolYear = year };
-            var instance = new ClassInstance { ClassGroup = group, SchoolYear = year, Name = "6A" };
-            seedContext.AddRange(year, group, instance);
-            await seedContext.SaveChangesAsync();
+            Label = "2024/25",
+            StartDate = new DateTime(2024, 8, 1),
+            EndDate = new DateTime(2025, 7, 31),
+            Status = SchoolYearStatus.Closed,
+            ClosedOn = new DateTime(2025, 7, 31),
+            UnlockedUntil = unlockedUntil,
+        };
+        var group = new ClassGroup { CohortLabel = "Kohorte 2018", FoundedInSchoolYear = year };
+        var instance = new ClassInstance { ClassGroup = group, SchoolYear = year, Name = "6A" };
+        seedContext.AddRange(year, group, instance);
+        await seedContext.SaveChangesAsync();
 
-            return (db, year.Id, instance.Id);
-        }
+        return (db, year.Id, instance.Id);
     }
 
     [Fact]

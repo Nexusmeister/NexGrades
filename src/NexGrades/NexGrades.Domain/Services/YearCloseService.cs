@@ -62,54 +62,64 @@ public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFact
                 .Select(e => e.StudentId)
                 .ToHashSet();
 
-            foreach (var subjectInstance in classInstance.SubjectInstances)
-            {
-                var totalGradeCount = subjectInstance.GradeBuckets.Sum(gb => gb.Grades.Count);
-                if (totalGradeCount == 0)
-                {
-                    warnings.Add(
-                        $"Subject '{subjectInstance.Subject.Name}' in class '{classInstance.Name}' has no grades recorded in any bucket.");
-                }
-
-                var weightSum = subjectInstance.GradeBuckets.Sum(gb => gb.Weight);
-                if (weightSum != 100m)
-                {
-                    warnings.Add(
-                        $"Subject '{subjectInstance.Subject.Name}' in class '{classInstance.Name}' has bucket weights totalling {weightSum}, not 100.");
-                }
-
-                var exemptStudentIds = subjectInstance.SubjectParticipations
-                    .Where(p => p.Mode == ParticipationMode.Exempt)
-                    .Select(p => p.StudentId)
-                    .ToHashSet();
-                var explicitlyParticipatingStudentIds = subjectInstance.SubjectParticipations
-                    .Where(p => p.Mode == ParticipationMode.Participating)
-                    .Select(p => p.StudentId);
-
-                var participatingStudentIds = activeStudentIds
-                    .Where(studentId => !exemptStudentIds.Contains(studentId))
-                    .Union(explicitlyParticipatingStudentIds);
-
-                foreach (var studentId in participatingStudentIds)
-                {
-                    var hasGrade = subjectInstance.GradeBuckets
-                        .Any(gb => gb.Grades.Any(g => g.StudentId == studentId));
-                    if (!hasGrade)
-                    {
-                        warnings.Add(
-                            $"Student {studentId} participates in subject '{subjectInstance.Subject.Name}' in class '{classInstance.Name}' but has no grades recorded.");
-                    }
-                }
-            }
+            AddSubjectInstanceWarnings(classInstance, activeStudentIds, warnings);
         }
 
         return new CloseReadiness(blockingIssues, warnings);
     }
 
     /// <summary>
+    /// Adds the advisory warnings for every subject of one class: no grades, bucket weights not totalling 100,
+    /// and participating students without a grade.
+    /// </summary>
+    private static void AddSubjectInstanceWarnings(
+        ClassInstance classInstance, HashSet<int> activeStudentIds, List<string> warnings)
+    {
+        foreach (var subjectInstance in classInstance.SubjectInstances)
+        {
+            var totalGradeCount = subjectInstance.GradeBuckets.Sum(gb => gb.Grades.Count);
+            if (totalGradeCount == 0)
+            {
+                warnings.Add(
+                    $"Subject '{subjectInstance.Subject.Name}' in class '{classInstance.Name}' has no grades recorded in any bucket.");
+            }
+
+            var weightSum = subjectInstance.GradeBuckets.Sum(gb => gb.Weight);
+            if (weightSum != 100m)
+            {
+                warnings.Add(
+                    $"Subject '{subjectInstance.Subject.Name}' in class '{classInstance.Name}' has bucket weights totalling {weightSum}, not 100.");
+            }
+
+            var exemptStudentIds = subjectInstance.SubjectParticipations
+                .Where(p => p.Mode == ParticipationMode.Exempt)
+                .Select(p => p.StudentId)
+                .ToHashSet();
+            var explicitlyParticipatingStudentIds = subjectInstance.SubjectParticipations
+                .Where(p => p.Mode == ParticipationMode.Participating)
+                .Select(p => p.StudentId);
+
+            var participatingStudentIds = activeStudentIds
+                .Where(studentId => !exemptStudentIds.Contains(studentId))
+                .Union(explicitlyParticipatingStudentIds);
+
+            foreach (var studentId in participatingStudentIds)
+            {
+                var hasGrade = subjectInstance.GradeBuckets
+                    .Any(gb => gb.Grades.Any(g => g.StudentId == studentId));
+                if (!hasGrade)
+                {
+                    warnings.Add(
+                        $"Student {studentId} participates in subject '{subjectInstance.Subject.Name}' in class '{classInstance.Name}' but has no grades recorded.");
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Closes <paramref name="schoolYearId"/>: sets <see cref="SchoolYear.Status"/> to
     /// <see cref="SchoolYearStatus.Closed"/> and <see cref="SchoolYear.ClosedOn"/> to now, but only once
-    /// every blocking issue from <see cref="GetCloseReadinessAsync"/> has been resolved.
+    /// every blocking issue from <see cref="GetCloseReadinessAsync(int, CancellationToken)"/> has been resolved.
     /// </summary>
     /// <exception cref="InvariantViolationException">Blocking issues remain; they are listed in the message.</exception>
     public Task CloseSchoolYearAsync(int schoolYearId, CancellationToken cancellationToken = default) =>

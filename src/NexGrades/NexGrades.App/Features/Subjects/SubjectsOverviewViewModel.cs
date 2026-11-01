@@ -9,8 +9,6 @@ using Wpf.Ui;
 
 namespace NexGrades.App.Features.Subjects;
 
-public sealed record SubjectRow(int Id, string Name, string ShortCode);
-
 public partial class SubjectsOverviewViewModel(INavigationService navigation, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {
     [ObservableProperty]

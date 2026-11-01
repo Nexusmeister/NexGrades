@@ -19,7 +19,7 @@ public static class AverageCalculator
     /// </summary>
     public static decimal? BucketAverage(IEnumerable<decimal> gradeValues)
     {
-        var values = gradeValues as IReadOnlyCollection<decimal> ?? gradeValues.ToList();
+        var values = gradeValues as IReadOnlyCollection<decimal> ?? [.. gradeValues];
         return values.Count == 0 ? null : values.Average();
     }
 

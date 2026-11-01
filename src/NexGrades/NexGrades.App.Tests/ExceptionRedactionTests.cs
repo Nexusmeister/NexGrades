@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using NexGrades.ServiceDefaults;
 using OpenTelemetry.Logs;
 
 namespace NexGrades.App.Tests;
@@ -133,17 +134,8 @@ public class ExceptionRedactionTests
         }
     }
 
-    [Fact]
-    public async Task ConfigureOpenTelemetry_ExportsOnlyTheExceptionType_ThroughTheRealOtlpExporter()
-    {
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-        var url = $"http://localhost:{GetFreePort()}/";
-        using var listener = new HttpListener();
-        listener.Prefixes.Add(url);
-        listener.Start();
-
-        var bodies = new List<byte[]>();
-        var serve = Task.Run(async () =>
+    private static Task ServeAsync(HttpListener listener, List<byte[]> bodies, CancellationToken cancellationToken) =>
+        Task.Run(async () =>
         {
             try
             {
@@ -151,7 +143,7 @@ public class ExceptionRedactionTests
                 {
                     var context = await listener.GetContextAsync().ConfigureAwait(false);
                     using var buffer = new MemoryStream();
-                    await context.Request.InputStream.CopyToAsync(buffer, timeout.Token).ConfigureAwait(false);
+                    await context.Request.InputStream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
                     lock (bodies)
                     {
                         bodies.Add(buffer.ToArray());
@@ -165,8 +157,10 @@ public class ExceptionRedactionTests
             {
                 // The listener was stopped: nothing left to serve.
             }
-        }, timeout.Token);
+        }, cancellationToken);
 
+    private static async Task LogErrorThroughRealWiringAsync(string url, CancellationToken cancellationToken)
+    {
         var builder = Host.CreateApplicationBuilder();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
@@ -175,13 +169,26 @@ public class ExceptionRedactionTests
         });
         builder.AddServiceDefaults("Test");
 
-        using (var host = builder.Build())
-        {
-            await host.StartAsync(timeout.Token);
-            host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Test")
-                .LogError(new InvalidOperationException(SecretMessage), "Operation failed");
-            await host.StopAsync(timeout.Token);
-        }
+        using var host = builder.Build();
+        await host.StartAsync(cancellationToken);
+        host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Test")
+            .LogError(new InvalidOperationException(SecretMessage), "Operation failed");
+        await host.StopAsync(cancellationToken);
+    }
+
+    [Fact]
+    public async Task ConfigureOpenTelemetry_ExportsOnlyTheExceptionType_ThroughTheRealOtlpExporter()
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        var url = $"http://localhost:{GetFreePort()}/";
+        using var listener = new HttpListener();
+        listener.Prefixes.Add(url);
+        listener.Start();
+
+        var bodies = new List<byte[]>();
+        var serve = ServeAsync(listener, bodies, timeout.Token);
+
+        await LogErrorThroughRealWiringAsync(url, timeout.Token);
 
         listener.Stop();
         await serve.WaitAsync(timeout.Token);

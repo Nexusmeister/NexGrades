@@ -1,11 +1,5 @@
 namespace NexGrades.Data.Entities;
 
-public enum StudentStatus
-{
-    Active,
-    Left,
-}
-
 /// <summary>
 /// A person. Not year-scoped — the same row persists for the student's whole school career.
 /// </summary>

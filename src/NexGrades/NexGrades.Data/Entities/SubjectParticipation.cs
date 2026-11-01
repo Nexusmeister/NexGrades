@@ -1,11 +1,5 @@
 namespace NexGrades.Data.Entities;
 
-public enum ParticipationMode
-{
-    Participating,
-    Exempt,
-}
-
 /// <summary>
 /// The per-student override on top of the class curriculum. Default participation follows class enrollment;
 /// a row exists only where a student deviates (elective chosen, religion/ethics split, exemption), keeping

@@ -94,7 +94,7 @@ public static class HostBuilderExtensions
     /// A configured connection string wins (Development: <c>ConnectionStrings:sqlite</c> from Aspire; otherwise
     /// the <c>sqlite</c> key). With none configured, the database goes to the fixed per-user folder.
     /// </summary>
-    private static DatabaseLocation ResolveDatabaseLocation(IConfiguration configuration, IHostEnvironment env, IAppDataPaths paths)
+    private static DatabaseLocation ResolveDatabaseLocation(IConfiguration configuration, IHostEnvironment env, AppDataPaths paths)
     {
         var configured = env.IsDevelopment() ? configuration.GetConnectionString("sqlite") : configuration.GetValue<string>("sqlite");
         if (!string.IsNullOrWhiteSpace(configured))

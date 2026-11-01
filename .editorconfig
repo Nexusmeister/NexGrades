@@ -302,6 +302,8 @@ dotnet_diagnostic.CA1707.severity = none
 dotnet_diagnostic.MA0244.severity = none
 # Assertions compare strings with the default (ordinal) comparer on purpose.
 dotnet_diagnostic.MA0002.severity = none
+# Test code needs no public API documentation (GenerateDocumentationFile is on for every project).
+dotnet_diagnostic.CS1591.severity = none
 
 # EF Core generates these files (migrations, their Designer files and the model snapshot); never
 # hand-edit them (see AGENTS.md). All analyzer and IDE rules are off for them. They are written with a

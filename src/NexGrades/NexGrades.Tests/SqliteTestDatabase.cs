@@ -2,7 +2,6 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using NexGrades.Data;
-using NexGrades.Domain.Time;
 
 namespace NexGrades.Tests;
 
@@ -58,10 +57,4 @@ internal sealed class SqliteTestDatabase : IDisposable
             // Best-effort cleanup; a lingering temp file doesn't fail the test run.
         }
     }
-}
-
-/// <summary>Settable <see cref="IClock"/> test double, for deterministic time-dependent assertions.</summary>
-internal sealed class FixedClock(DateTime now) : IClock
-{
-    public DateTime Now { get; set; } = now;
 }

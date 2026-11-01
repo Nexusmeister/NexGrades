@@ -1,12 +1,5 @@
 namespace NexGrades.Data.Entities;
 
-public enum ClassInstanceStatus
-{
-    Active,
-    RolledForward,
-    Archived,
-}
-
 /// <summary>
 /// One cohort in one school year — where teaching actually happens. <see cref="Name"/> is per-instance,
 /// so a rename (e.g. 5A -> 6A) is a new row, never an update of a historic one.

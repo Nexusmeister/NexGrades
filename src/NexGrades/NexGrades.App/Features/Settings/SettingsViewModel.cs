@@ -20,7 +20,7 @@ public partial class SettingsViewModel(IFileSystemDialogService dialogService, I
     {
         OpenedFolderPathVisibility = false;
 
-        // TODO Multiple folders are not allowed!
+        // Only one folder can be used for now; selecting several is not supported yet (#83).
         var foldersSelected = dialogService.SelectFolder(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)).ToList();
 
         if (foldersSelected.Count == 0)

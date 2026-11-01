@@ -1,7 +1,7 @@
 namespace NexGrades.Domain.Services;
 
 /// <summary>
-/// Result of <see cref="YearCloseService.GetCloseReadinessAsync"/>: blocking issues that must be resolved
+/// Result of <see cref="YearCloseService.GetCloseReadinessAsync(int, CancellationToken)"/>: blocking issues that must be resolved
 /// before the year can close, and advisory warnings that are surfaced to the teacher but never block the
 /// close.
 /// </summary>

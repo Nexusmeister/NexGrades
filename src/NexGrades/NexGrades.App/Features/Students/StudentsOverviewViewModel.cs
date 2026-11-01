@@ -11,8 +11,6 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Students;
 
-public sealed record StudentRow(int Id, string FirstName, string LastName, string ClassName);
-
 public partial class StudentsOverviewViewModel(
     INavigationService navigation,
     IDbContextFactory<AppDbContext> dbContextFactory,

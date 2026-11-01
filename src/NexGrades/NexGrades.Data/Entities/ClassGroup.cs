@@ -1,11 +1,5 @@
 namespace NexGrades.Data.Entities;
 
-public enum ClassGroupStatus
-{
-    Active,
-    Ended,
-}
-
 /// <summary>
 /// The persistent cohort. Survives renames across school years; carries no grades itself —
 /// grades attach to the yearly <see cref="ClassInstance"/>.

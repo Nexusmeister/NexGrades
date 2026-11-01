@@ -36,7 +36,7 @@ namespace NexGrades.Domain.Auditing;
 /// normally commit the primary write's own implicit transaction before <c>SavedChanges</c> even runs, so this
 /// interceptor owns an ambient transaction spanning both phases whenever one isn't already open: if
 /// <c>SavingChanges</c>/<c>SavingChangesAsync</c> finds a write that will require auditing and
-/// <see cref="DbContext.Database"/>'s <see cref="DatabaseFacade.CurrentTransaction"/> is <see langword="null"/>,
+/// <see cref="DbContext.Database"/>'s <see cref="Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade.CurrentTransaction"/> is <see langword="null"/>,
 /// it begins one and remembers that it owns it. <c>SavedChanges</c>/<c>SavedChangesAsync</c> then commits and
 /// disposes that transaction only after the nested audit-row save succeeds, and rolls it back on any failure
 /// in either phase. If the caller already had its own transaction open (as <see cref="Services.EnrollmentService"/>
@@ -53,7 +53,7 @@ namespace NexGrades.Domain.Auditing;
 /// </remarks>
 public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore reasonStore) : SaveChangesInterceptor
 {
-    private readonly ConditionalWeakTable<DbContext, ContextState> _stateByContext = new();
+    private readonly ConditionalWeakTable<DbContext, ContextState> _stateByContext = [];
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -240,9 +240,8 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
     }
 
     private static List<EntityEntry> RelevantEntries(DbContext context) =>
-        context.ChangeTracker.Entries()
-            .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
-            .ToList();
+        [.. context.ChangeTracker.Entries()
+            .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)];
 
     /// <summary>
     /// Checks the closed/unlocked state for one changed entry and either returns a pending audit record to
@@ -299,10 +298,9 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
     }
 
     private static List<PendingPropertyChange> ModifiedPropertyChanges(EntityEntry entry) =>
-        entry.Properties
+        [.. entry.Properties
             .Where(p => p.IsModified && !p.Metadata.IsPrimaryKey())
-            .Select(p => new PendingPropertyChange(p.Metadata.Name, FormatValue(p.OriginalValue), FormatValue(p.CurrentValue)))
-            .ToList();
+            .Select(p => new PendingPropertyChange(p.Metadata.Name, FormatValue(p.OriginalValue), FormatValue(p.CurrentValue)))];
 
     private static string FormatCreatedSummary(EntityEntry entry) =>
         string.Join(

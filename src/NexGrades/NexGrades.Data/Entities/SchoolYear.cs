@@ -1,12 +1,5 @@
 namespace NexGrades.Data.Entities;
 
-public enum SchoolYearStatus
-{
-    Planned,
-    Active,
-    Closed,
-}
-
 /// <summary>
 /// The root scoping concept for the whole model. At most one year is <see cref="SchoolYearStatus.Active"/>
 /// at a time; <see cref="SchoolYearStatus.Closed"/> is what makes the data it scopes read-only.
