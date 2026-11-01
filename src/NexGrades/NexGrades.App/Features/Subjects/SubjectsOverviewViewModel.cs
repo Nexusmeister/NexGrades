@@ -17,8 +17,8 @@ public partial class SubjectsOverviewViewModel(INavigationService navigation, ID
     [ObservableProperty]
     private ObservableCollection<SubjectRow> _subjects = [];
 
-    [RelayCommand]
     /// <summary>Opens the form for a new subject.</summary>
+    [RelayCommand]
     public void AddSubject()
     {
         navigation.NavigateWithHierarchy(typeof(SubjectDetailPage));

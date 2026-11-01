@@ -51,8 +51,10 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
 ```
 
 - **Zero warnings:** the build must produce no warnings. GitHub Actions sets `CI=true`, which makes
-  `Directory.Build.props` set `TreatWarningsAsErrors`, so any warning fails CI. Local builds stay non-fatal;
-  reproduce the CI check with `dotnet build NexGrades.slnx -warnaserror`.
+  `Directory.Build.props` set `TreatWarningsAsErrors`, and the workflow also passes `-warnaserror` explicitly to
+  `dotnet build` and `dotnet test`, so any warning fails CI. CI also runs `dotnet format NexGrades.slnx
+  --verify-no-changes`, so unformatted code fails too. Local builds stay non-fatal; reproduce the CI checks with
+  `dotnet build NexGrades.slnx -warnaserror` and `dotnet format NexGrades.slnx --verify-no-changes`.
 - In `Development`, the App reads its connection string from `ConnectionStrings:sqlite`, which the Aspire
   AppHost supplies. Running `NexGrades.App` on its own in Development needs that value from user secrets.
   Outside Development the database defaults to `%LOCALAPPDATA%\NexGrades\app.db` (see `IAppDataPaths`;

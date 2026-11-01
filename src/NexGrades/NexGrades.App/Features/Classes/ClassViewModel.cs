@@ -35,9 +35,9 @@ public partial class ClassViewModel(
     [ObservableProperty] private ObservableCollection<ClassStudentRow> _leftStudents = [];
 
     /// <summary>True when the roster has no students, neither active nor left.</summary>
-    public bool HasNoStudents =>ActiveStudents.Count == 0 && LeftStudents.Count == 0;
+    public bool HasNoStudents => ActiveStudents.Count == 0 && LeftStudents.Count == 0;
     /// <summary>True when at least one student has left the class.</summary>
-    public bool HasLeftStudents =>LeftStudents.Count > 0;
+    public bool HasLeftStudents => LeftStudents.Count > 0;
 
     partial void OnActiveStudentsChanged(ObservableCollection<ClassStudentRow> value) => OnPropertyChanged(nameof(HasNoStudents));
 

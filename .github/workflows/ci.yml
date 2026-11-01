@@ -54,3 +54,6 @@ jobs:
       # included) so every project is analyzed, and fail on any warning.
       - name: Build
         run: dotnet build NexGrades.slnx --no-restore -warnaserror
+      # Formatting follows .editorconfig; CI fails on any file dotnet format would change.
+      - name: Verify formatting
+        run: dotnet format NexGrades.slnx --verify-no-changes --no-restore

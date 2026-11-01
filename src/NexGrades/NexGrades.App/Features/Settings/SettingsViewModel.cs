@@ -21,11 +21,11 @@ public partial class SettingsViewModel(IFileSystemDialogService dialogService, I
     [ObservableProperty]
     private string _openedFolderPath = string.Empty;
 
-    [RelayCommand]
     /// <summary>
     /// Opens the folder picker and shows the chosen path. Cancelling, or selecting nothing, hides the path and shows
     /// a caution message instead.
     /// </summary>
+    [RelayCommand]
     public void OnOpenFolder()
     {
         OpenedFolderPathVisibility = false;
