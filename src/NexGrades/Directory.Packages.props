@@ -3,6 +3,8 @@
     <!-- Enable central package management, https://learn.microsoft.com/en-us/nuget/consume-packages/Central-Package-Management -->
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
+    <!-- Lets the transitive pins below (PackageVersion without a PackageReference) take effect. -->
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.1.2" />
@@ -12,6 +14,10 @@
     <!-- Pinned above the version Microsoft.EntityFrameworkCore.Sqlite pulls in transitively to resolve the
          NU1903 high-severity advisory (CVE-2025-6965). Do not downgrade or remove this pin. -->
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
+    <!-- MessagePack 2.5.192 comes in transitively through the Aspire AppHost SDK and has advisories fixed in
+         2.5.303 (NU1902/NU1903, e.g. GHSA-hv8m-jj95-wg3x, GHSA-qhrr-8q5h-9q3h). Stays on 2.5.x, the line Aspire was
+         built against. Remove once Aspire ships a patched version. -->
+    <PackageVersion Include="MessagePack" Version="2.5.307" />
     <!-- OpenTelemetry 1.15.0 has known moderate advisories (NU1902); 1.20.1 is the current stable release. -->
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />

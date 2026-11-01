@@ -48,7 +48,7 @@ dotnet_diagnostic.IDE0005.severity = warning
 
 # --- Namespaces and types --------------------------------------------------------------------
 csharp_style_namespace_declarations = file_scoped:warning
-csharp_style_prefer_primary_constructors = true:suggestion
+csharp_style_prefer_primary_constructors = true:warning
 
 # --- this. and predefined types --------------------------------------------------------------
 dotnet_style_qualification_for_field = false:warning
@@ -77,7 +77,7 @@ csharp_style_expression_bodied_operators = when_on_single_line:silent
 csharp_style_expression_bodied_properties = when_on_single_line:suggestion
 csharp_style_expression_bodied_indexers = when_on_single_line:suggestion
 csharp_style_expression_bodied_accessors = when_on_single_line:suggestion
-csharp_style_expression_bodied_lambdas = true:suggestion
+csharp_style_expression_bodied_lambdas = true:warning
 csharp_style_expression_bodied_local_functions = false:silent
 
 # --- Pattern matching and null checks --------------------------------------------------------
@@ -95,7 +95,7 @@ csharp_style_throw_expression = true:suggestion
 csharp_style_conditional_delegate_call = true:warning
 
 # --- Collections and object creation ---------------------------------------------------------
-dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
+dotnet_style_prefer_collection_expression = when_types_loosely_match:warning
 dotnet_style_collection_initializer = true:warning
 dotnet_style_object_initializer = true:warning
 csharp_style_implicit_object_creation_when_type_is_apparent = true:warning
@@ -104,7 +104,7 @@ csharp_style_prefer_index_operator = true:suggestion
 
 # --- Other language preferences --------------------------------------------------------------
 csharp_prefer_braces = true:warning
-csharp_prefer_simple_using_statement = true:suggestion
+csharp_prefer_simple_using_statement = true:warning
 csharp_prefer_simple_default_expression = true:warning
 csharp_style_inlined_variable_declaration = true:warning
 csharp_style_deconstructed_variable_declaration = true:suggestion
@@ -177,8 +177,8 @@ csharp_preserve_single_line_blocks = true
 # --- Static analysis -------------------------------------------------------------------------
 # Analyzers (see Directory.Build.props): the built-in .NET analyzers (CA, AnalysisMode=Recommended),
 # Roslynator (RCS), Meziantou (MA) and Microsoft.VisualStudio.Threading (VSTHRD, async rules only).
-# Findings the code does not comply with yet stay at `suggestion` and are listed on the zero-warnings
-# issue (#66); rules that do not fit this codebase are `none`, each with its reason.
+# Every rule is either `warning` (the build fails on CI, see Directory.Build.props) or `none` with its
+# reason; the zero-warnings issue (#66) retired the `suggestion` backlog.
 
 # Async naming: methods returning Task end in `Async`. [RelayCommand] strips the suffix again, so
 # command names are unaffected.
@@ -199,11 +199,19 @@ dotnet_diagnostic.MA0049.severity = none
 # must say what was violated (see AGENTS.md).
 dotnet_diagnostic.RCS1194.severity = none
 
-# Genuine findings that need more than a local fix; deferred to the zero-warnings issue (#66).
-dotnet_diagnostic.MA0048.severity = suggestion
-dotnet_diagnostic.MA0051.severity = suggestion
-dotnet_diagnostic.MA0026.severity = suggestion
-dotnet_diagnostic.CA1859.severity = suggestion
+# Genuine findings, fixed in the code as part of the zero-warnings issue (#66).
+dotnet_diagnostic.MA0048.severity = warning
+dotnet_diagnostic.MA0051.severity = warning
+dotnet_diagnostic.MA0026.severity = warning
+dotnet_diagnostic.CA1859.severity = warning
+
+# Style rules whose option lines above are not enough to raise them to warning.
+dotnet_diagnostic.IDE0305.severity = warning
+dotnet_diagnostic.IDE0028.severity = warning
+dotnet_diagnostic.IDE0290.severity = warning
+dotnet_diagnostic.IDE0063.severity = warning
+dotnet_diagnostic.IDE0053.severity = warning
+dotnet_diagnostic.IDE0130.severity = warning
 
 # --- Naming ----------------------------------------------------------------------------------
 # Symbol groups
@@ -295,7 +303,11 @@ dotnet_diagnostic.MA0244.severity = none
 # Assertions compare strings with the default (ordinal) comparer on purpose.
 dotnet_diagnostic.MA0002.severity = none
 
-# EF Core generates these files; never hand-edit migrations (see AGENTS.md).
+# EF Core generates these files (migrations, their Designer files and the model snapshot); never
+# hand-edit them (see AGENTS.md). All analyzer and IDE rules are off for them. They are written with a
+# UTF-8 BOM, so the charset must say so or `dotnet format` would strip it.
 [**/Migrations/*.cs]
 generated_code = true
+dotnet_analyzer_diagnostic.severity = none
+charset = utf-8-bom
 csharp_style_namespace_declarations = block_scoped:none
