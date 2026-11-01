@@ -23,7 +23,8 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
 - the base branch (default `dev`)
 - constraints: dependencies on other issues, "runs alone", files to avoid
 - decisions the lead has already made; these are binding
-- the commit attribution lines and the PR footer lines (always passed; use them verbatim)
+- the commit attribution lines and the PR footer lines (always passed; use them verbatim). If either
+  is missing, stop with `BLOCKED` before the first commit; never invent them.
 - optionally model overrides
 
 ## Tooling facts
@@ -64,8 +65,9 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    `dotnet test`, `dotnet format NexGrades.slnx --verify-no-changes`. Send failures to the agent that owns
    the failing files (`csharp-coder` may run the formatter). Compare warnings with `dev` and note any new
    ones.
-7. **Commit and push.** The lead always passes the commit attribution lines and the PR footer lines in the
-   brief. Commit with a short imperative subject and the commit attribution lines, verbatim. Push with
+7. **Commit and push.** The lead passes the commit attribution lines and the PR footer lines in the
+   brief. If either set is missing, stop with `BLOCKED` before the first commit instead of inventing
+   them. Commit with a short imperative subject and the commit attribution lines, verbatim. Push with
    `git push -u origin <branch>`. Never push to `dev`, never force-push. To take in a newer `dev`, run
    `git merge origin/dev`; do not rebase.
 8. **Pull request.** Open it against the base with `mcp__github__create_pull_request`. The body has
@@ -73,8 +75,10 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    when the change needs one, and the PR footer lines the lead passed.
 9. **CI.** Poll the check runs for the head SHA. Foreground `sleep` is blocked in this harness; wait for CI
    with a Bash command run in the background (`run_in_background`) that polls, or simply re-check the check
-   runs between other steps, rather than busy-looping. On failure, read the logs you can reach, send the fix to the owning agent, commit and
-   push. After 3 CI fix rounds, stop with `BLOCKED`.
+   runs between other steps, rather than busy-looping. If the check runs for the head SHA have not all
+   completed after about 30 minutes of waiting, stop with `BLOCKED: CI timeout` and name the pending
+   checks. On failure, read the logs you can reach, send the fix to the owning agent, commit and push.
+   After 3 CI fix rounds, stop with `BLOCKED`.
 10. **Review: `reviewer`.** Review the PR head SHA with `git diff origin/<base>...<sha>`, and tell the
     reviewer to review exactly that SHA. Send blockers and majors to the owning agent, then re-verify,
     push and review again. Majors are resolved like blockers. A review round counts toward the limit when
@@ -106,6 +110,7 @@ brief.
   this rule is what holds when it runs as a subagent.
 - Never edit files yourself. Never merge. Never push to `dev`. Never force-push. Never delete branches or
   worktrees of other issues.
+- Never invent commit attribution or PR footer lines. If the brief lacks them, stop with `BLOCKED`.
 - No pupil data (names, grades, note text) in telemetry, logs, committed test fixtures that look like real
   data, or issue and PR text.
 - Don't work around a denied permission or a blocked action. Report `BLOCKED` with the exact denial.
