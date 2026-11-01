@@ -20,6 +20,7 @@ does, never what you assume it does.
 - **XML doc comments** on public types and members: explain intent, invariants and the *why*. Don't
   restate the signature.
 - **Domain glossary** in `AGENTS.md`: one line per concept, matching the entity names.
+- **`docs/decisions`**: architecture decision records (ADRs), numbered `NNNN-<slug>.md`.
 
 ## Style
 
