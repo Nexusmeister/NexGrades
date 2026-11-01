@@ -4,6 +4,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              Startup="OnStartup"
              Exit="OnExit"
+             DispatcherUnhandledException="OnDispatcherUnhandledException"
              xmlns:local="clr-namespace:NexGrades.App">
     <Application.Resources>
         <ResourceDictionary>

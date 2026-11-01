@@ -41,6 +41,24 @@ public sealed class AppDataStorageTests : IDisposable
     }
 
     [Fact]
+    public void LogDirectory_IsLogsFolderInsideDataDirectory()
+    {
+        var paths = new AppDataPaths(Path.Combine(_root, "data"));
+
+        Assert.Equal(Path.Combine(paths.DataDirectory, "logs"), paths.LogDirectory);
+    }
+
+    [Fact]
+    public void EnsureCreated_DoesNotCreateLogDirectory_WhenCalled()
+    {
+        var paths = new AppDataPaths(Path.Combine(_root, "data"));
+
+        paths.EnsureCreated();
+
+        Assert.False(Directory.Exists(paths.LogDirectory));
+    }
+
+    [Fact]
     public void EnsureCreated_CreatesDirectory_WhenMissing_AndIsIdempotent()
     {
         var paths = new AppDataPaths(Path.Combine(_root, "data"));

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.Data;
 using NexGrades.Data.Diagnostics;
 using NexGrades.Data.Entities;
@@ -420,7 +421,7 @@ public class TelemetryTests
     {
         using var capture = new TelemetryCapture();
         using var db = new SqliteTestDatabase();
-        var service = new DatabaseMigrationService(db.CreateContextFactory());
+        var service = new DatabaseMigrationService(db.CreateContextFactory(), NullLogger<DatabaseMigrationService>.Instance);
 
         await service.RunAsync();
 

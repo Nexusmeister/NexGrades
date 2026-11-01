@@ -64,13 +64,16 @@ for data to leave the process, so it is designed with the same care as the datab
 - The allow-list and the no-pupil-data rule are conventions checked in review. No code enforces them: the tag
   set is not validated at run time. The log pipeline drops exception messages, but not structured log arguments
   or the message template: never put record content or ids into either.
+- The local file log (0003) is a separate sink with its own rules. It keeps framework exception messages, which
+  this record does not allow in telemetry. The telemetry rules here are unchanged.
 - The startup span (`App.Startup`) and the migration span (`DatabaseMigrationService.Run`) are captured only
   because `App.xaml.cs` calls `InitializeTelemetry()` before the migration. Moving that call later drops them.
 
 ## Revisit when
 
-- Logging is added (#51). Log calls must then follow the rules above. Exceptions in log calls are already
-  reduced to their type name for export, but a local log sink may want more.
+- Logging is added (#51). Partly addressed by 0003 (#79), which adds the local file log. The startup error dialog
+  stays with #51. Log calls must follow the rules above. Exceptions in log calls are reduced to their type name for
+  export; the local file keeps framework exception messages and redacts Domain ones (0003).
 - A shipped build needs telemetry, such as crash or usage reports. That needs its own consent decision. The
   developer switch is not one.
 - Telemetry is exported by default to a service outside the teacher's device.
