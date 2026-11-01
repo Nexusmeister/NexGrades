@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Features.Classes;
+using NexGrades.App.Features.Export;
 using NexGrades.App.Features.Home;
 using NexGrades.App.Features.Settings;
 using NexGrades.App.Features.Students;
@@ -15,6 +16,7 @@ using NexGrades.Common.Storage;
 using NexGrades.Data;
 using NexGrades.Data.Services;
 using NexGrades.Domain.Auditing;
+using NexGrades.Domain.Export;
 using NexGrades.Domain.Services;
 using NexGrades.Domain.Time;
 using Wpf.Ui;
@@ -63,12 +65,16 @@ public static class HostBuilderExtensions
         services.AddTransient<YearCloseService>();
         services.AddTransient<UnlockService>();
         services.AddTransient<NoteService>();
+        services.AddTransient<SubjectOverviewExportService>();
+        services.AddTransient<SubjectOverviewExcelWriter>();
+        services.AddTransient<SubjectOverviewExporter>();
 
         // Configuration
         //_ = services.Configure<AppConfig>(context.Configuration.GetSection(nameof(AppConfig)));
 
         services.AddSingleton<IUserService, UserService>();
         services.AddTransient<IFileSystemDialogService, WindowsFileSystemDialogService>();
+        services.AddSingleton<IFileSaveDialogService, WindowsFileSaveDialogService>();
         services.AddSingleton<ISnackbarService, SnackbarService>();
         services.AddSingleton<IContentDialogService, ContentDialogService>();
         return services;

@@ -1,9 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
+using NexGrades.App.Features.Export;
+using NexGrades.App.Infrastructure;
 using NexGrades.Common;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
@@ -20,11 +23,15 @@ namespace NexGrades.App.Features.Classes;
 /// <param name="snackbar">Reports the outcome of a save.</param>
 /// <param name="dbContextFactory">Creates the short-lived contexts for loading and saving.</param>
 /// <param name="editRequest">Carries the id of the class to edit from the overview.</param>
+/// <param name="exporter">Writes the class overview of a subject to an Excel file.</param>
+/// <param name="fileSaveDialog">Asks where to save the export.</param>
 public partial class ClassViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
     IDbContextFactory<AppDbContext> dbContextFactory,
-    ClassEditRequest editRequest) : ViewModel
+    ClassEditRequest editRequest,
+    SubjectOverviewExporter exporter,
+    IFileSaveDialogService fileSaveDialog) : ViewModel
 {
     private int? _editingClassInstanceId;
 
@@ -33,6 +40,22 @@ public partial class ClassViewModel(
     [ObservableProperty] private bool _isEditing;
     [ObservableProperty] private ObservableCollection<ClassStudentRow> _activeStudents = [];
     [ObservableProperty] private ObservableCollection<ClassStudentRow> _leftStudents = [];
+    [ObservableProperty] private ObservableCollection<SubjectInstanceRow> _subjects = [];
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ExportSubjectOverviewCommand))]
+    private bool _isExporting;
+
+    /// <summary>True when the class has at least one subject to export.</summary>
+    public bool HasSubjects => Subjects.Count > 0;
+    /// <summary>True when no subject is taught to the class.</summary>
+    public bool HasNoSubjects => Subjects.Count == 0;
+
+    partial void OnSubjectsChanged(ObservableCollection<SubjectInstanceRow> value)
+    {
+        OnPropertyChanged(nameof(HasSubjects));
+        OnPropertyChanged(nameof(HasNoSubjects));
+    }
 
     /// <summary>True when the roster has no students, neither active nor left.</summary>
     public bool HasNoStudents => ActiveStudents.Count == 0 && LeftStudents.Count == 0;
@@ -55,6 +78,7 @@ public partial class ClassViewModel(
 
         ActiveStudents = [];
         LeftStudents = [];
+        Subjects = [];
         IsEditing = false;
         Name = string.Empty;
         Title = "AddClass";
@@ -95,6 +119,40 @@ public partial class ClassViewModel(
             .Select(e => ToRow(e.FirstName, e.LastName, e.StudentId, e.JoinedOn, null)).ToObservableCollection();
         LeftStudents = enrollments.Where(e => e.LeftOn is not null)
             .Select(e => ToRow(e.FirstName, e.LastName, e.StudentId, e.JoinedOn, e.LeftOn)).ToObservableCollection();
+
+        Subjects = (await db.SubjectInstances.AsNoTracking()
+            .Where(si => si.ClassInstanceId == id)
+            .OrderBy(si => si.Subject.Name)
+            .Select(si => new SubjectInstanceRow(si.Id, si.Subject.Name))
+            .ToListAsync()).ToObservableCollection();
+    }
+
+    private bool CanExportSubjectOverview() => !IsExporting;
+
+    /// <summary>Asks for a file and exports the class overview of one subject to it as an Excel workbook.</summary>
+    [RelayCommand(CanExecute = nameof(CanExportSubjectOverview))]
+    private async Task ExportSubjectOverviewAsync(SubjectInstanceRow row, CancellationToken cancellationToken = default)
+    {
+        IsExporting = true;
+        try
+        {
+            var path = fileSaveDialog.SelectSaveFile(await exporter.SuggestFileNameAsync(row.SubjectInstanceId, cancellationToken));
+            if (path is null)
+            {
+                return;
+            }
+
+            await exporter.ExportAsync(row.SubjectInstanceId, path, cancellationToken);
+            snackbar.Show("Success", string.Format(CultureInfo.CurrentCulture, "Exported {0}.", Path.GetFileName(path)), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            snackbar.Show("Error", "The export could not be saved. Check that the file is not open and that you may write to the folder.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+        }
+        finally
+        {
+            IsExporting = false;
+        }
     }
 
     [RelayCommand]
