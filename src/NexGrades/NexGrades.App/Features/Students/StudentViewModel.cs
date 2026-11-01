@@ -55,6 +55,9 @@ public partial class StudentViewModel(
     private int? _editingStudentId;
     private string? _editingNoteCategory;
     private bool _suppressNoteReload;
+
+    /// <summary>Set while a lock-state refresh re-selects the current year, so the editor keeps its text.</summary>
+    private bool _keepEditorOnYearChange;
     private string _loadedFirstName = string.Empty;
     private string _loadedLastName = string.Empty;
     private string _editingNoteOriginalText = string.Empty;
@@ -291,7 +294,12 @@ public partial class StudentViewModel(
         StartEditNoteCommand.NotifyCanExecuteChanged();
         ArchiveNoteCommand.NotifyCanExecuteChanged();
         RestoreNoteCommand.NotifyCanExecuteChanged();
-        CancelEditNote();
+
+        // Re-selecting the same year after a lock-state refresh must not throw away what the user typed.
+        if (!_keepEditorOnYearChange)
+        {
+            CancelEditNote();
+        }
 
         if (!_suppressNoteReload)
         {
@@ -558,10 +566,23 @@ public partial class StudentViewModel(
 
             // The year was locked while the page was open (e.g. its unlock expired): refresh the lock state so
             // the page turns read-only instead of offering edits that will fail again.
+            // The editor text is kept so the user can copy it or save it once the year is unlocked again.
             if (_editingStudentId is { } studentId)
             {
-                await LoadNoteYearsAsync(studentId, SelectedNoteYear?.Id);
-                await ReloadNotesAsync();
+                _keepEditorOnYearChange = true;
+                try
+                {
+                    await LoadNoteYearsAsync(studentId, SelectedNoteYear?.Id);
+                    await ReloadNotesAsync();
+                }
+                catch (Exception)
+                {
+                    snackbar.Show("Error", "The school year state could not be refreshed.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+                }
+                finally
+                {
+                    _keepEditorOnYearChange = false;
+                }
             }
 
             return false;

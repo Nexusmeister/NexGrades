@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
@@ -525,14 +526,24 @@ public class NoteServiceTests
 
         Assert.Equal(Now, (await LoadNoteAsync(env, noteId)).ArchivedOn);
         var afterArchive = await NoteAuditEntriesAsync(env);
-        Assert.NotEmpty(afterArchive);
+        var archiveEntry = Assert.Single(afterArchive);
+        Assert.Equal("ArchivedOn", archiveEntry.Field);
+        Assert.Null(archiveEntry.OldValue);
+        Assert.Equal(Now.ToString("O", CultureInfo.InvariantCulture), archiveEntry.NewValue);
+        Assert.Equal(noteId, archiveEntry.EntityId);
+        Assert.Equal("Tidy up", archiveEntry.Reason);
 
         await env.Service.RestoreNoteAsync(noteId);
 
         Assert.Null((await LoadNoteAsync(env, noteId)).ArchivedOn);
         var afterRestore = await NoteAuditEntriesAsync(env);
-        Assert.True(afterRestore.Count > afterArchive.Count);
+        Assert.Equal(2, afterRestore.Count);
         Assert.All(afterRestore, a => Assert.Equal("Tidy up", a.Reason));
+        var restoreEntry = Assert.Single(afterRestore, a => a.Id != archiveEntry.Id);
+        Assert.Equal("ArchivedOn", restoreEntry.Field);
+        Assert.Equal(Now.ToString("O", CultureInfo.InvariantCulture), restoreEntry.OldValue);
+        Assert.Null(restoreEntry.NewValue);
+        Assert.Equal(noteId, restoreEntry.EntityId);
     }
 
     // ---------- GetNotesForStudentAsync ----------
