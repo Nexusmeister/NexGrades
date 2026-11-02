@@ -22,6 +22,7 @@ public class PageLifetimeTests
         "ClassesOverviewPage",
         "StudentsOverviewPage",
         "SubjectsOverviewPage",
+        "SchoolYearPage",
         "SettingsPage",
     };
 

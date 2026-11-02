@@ -7,6 +7,7 @@ using NexGrades.App.Core;
 using NexGrades.App.Features.Classes;
 using NexGrades.App.Features.Export;
 using NexGrades.App.Features.Home;
+using NexGrades.App.Features.SchoolYears;
 using NexGrades.App.Features.Settings;
 using NexGrades.App.Features.Students;
 using NexGrades.App.Features.Subjects;
@@ -151,12 +152,13 @@ public static class HostBuilderExtensions
             .AddTransient<StudentPage>()
             .AddTransient<SubjectDetailPage>()
             .AddTransient<ClassPage>()
+            .AddSingleton<SchoolYearPage>()
             .AddSingleton<SettingsPage>();
     }
 
     private static IServiceCollection AddViewModels(this IServiceCollection services)
     {
-        // Lifetime rule: overview roots (Home, Classes, Students, Subjects, Settings) are singletons; add/edit/detail
+        // Lifetime rule: overview roots (Home, Classes, Students, Subjects, School year, Settings) are singletons; add/edit/detail
         // pairs are transient so every visit starts fresh. Parameters travel through PageNavigator.
         return services
             .AddSingleton<PageNavigator>()
@@ -164,6 +166,7 @@ public static class HostBuilderExtensions
             .AddSingleton<ClassesOverviewViewModel>()
             .AddSingleton<StudentsOverviewViewModel>()
             .AddSingleton<SubjectsOverviewViewModel>()
+            .AddSingleton<SchoolYearViewModel>()
             .AddSingleton<SettingsViewModel>()
             .AddTransient<SubjectDetailViewModel>()
             .AddTransient<StudentViewModel>()
