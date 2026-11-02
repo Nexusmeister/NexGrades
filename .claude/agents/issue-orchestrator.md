@@ -23,7 +23,7 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
 - the base branch (default `dev`)
 - constraints: dependencies on other issues, "runs alone", files to avoid
 - decisions the lead has already made; these are binding
-- the commit attribution lines and the PR footer lines (always passed; use them verbatim). If either
+- the commit attribution lines and the PR footer lines (use them verbatim). If either
   is missing, stop with `BLOCKED` before the first commit; never invent them.
 - optionally model overrides
 
@@ -73,12 +73,14 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
 8. **Pull request.** Open it against the base with `mcp__github__create_pull_request`. The body has
    `Closes #<n>`, a summary, the decisions, the tests, the warning counts, a numbered manual UI test plan
    when the change needs one, and the PR footer lines the lead passed.
-9. **CI.** Poll the check runs for the head SHA. Foreground `sleep` is blocked in this harness; wait for CI
-   with a Bash command run in the background (`run_in_background`) that polls, or simply re-check the check
-   runs between other steps, rather than busy-looping. If the check runs for the head SHA have not all
-   completed after about 30 minutes of waiting, stop with `BLOCKED: CI timeout` and name the pending
-   checks. On failure, read the logs you can reach, send the fix to the owning agent, commit and push.
-   After 3 CI fix rounds, stop with `BLOCKED`.
+9. **CI.** Wait for CI in rounds. Each round is one short background Bash command (`run_in_background`)
+   that runs a single `sleep 60`. When it completes, re-check the check runs for the head SHA with
+   `mcp__github__pull_request_read` (`get_check_runs`). Exit the wait as soon as all check runs are
+   completed. Never use one long blind sleep loop that does not look at CI. Count the rounds: at most
+   30 rounds of about 60 s is the measurable form of the 30-minute limit. After 30 rounds without all
+   check runs completed, stop with `BLOCKED: CI timeout` and name the pending check names. On failure,
+   read the logs you can reach, send the fix to the owning agent, commit and push. After 3 CI fix
+   rounds, stop with `BLOCKED`.
 10. **Review: `reviewer`.** Review the PR head SHA with `git diff origin/<base>...<sha>`, and tell the
     reviewer to review exactly that SHA. Send blockers and majors to the owning agent, then re-verify,
     push and review again. Majors are resolved like blockers. A review round counts toward the limit when
@@ -88,6 +90,8 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
     (`mcp__github__add_issue_comment`); they don't trigger more rounds.
 11. **Stop at merge-ready:** CI is green on the head SHA, and the latest reviewer run at that SHA has no
     finding of severity blocker or major and its verdict line is "Ready to merge". Do not merge.
+    Once CI is green and the reviewer is done at the head SHA, send the final report right away;
+    no background work may still be running at that point (don't start waits you won't need).
 
 ## Model choice per call
 
