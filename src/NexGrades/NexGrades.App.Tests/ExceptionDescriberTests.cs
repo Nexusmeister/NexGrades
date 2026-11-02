@@ -99,4 +99,15 @@ public class ExceptionDescriberTests
     [Fact]
     public void Describe_Throws_ForNull() =>
         Assert.Throws<ArgumentNullException>(() => ExceptionDescriber.Describe(null!));
+
+    [Fact]
+    public void Describe_RedactsMessage_ForExceptionThrownByRealDomainCode()
+    {
+        var exception = Assert.Throws<InvariantViolationException>(() => NexGrades.Domain.Grading.GradingScale.TokenForValue(2.5m));
+
+        var text = ExceptionDescriber.Describe(exception);
+
+        Assert.Contains(ExceptionDescriber.RedactedMessage, text, StringComparison.Ordinal);
+        Assert.DoesNotContain("2.5", text, StringComparison.Ordinal);
+    }
 }

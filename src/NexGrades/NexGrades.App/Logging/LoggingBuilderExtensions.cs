@@ -14,7 +14,8 @@ public static class LoggingBuilderExtensions
     /// Replaces the default logging providers with the rolling log file (and the debugger output in Development).
     /// The default Console and EventLog providers are removed on purpose: they would write exception messages,
     /// including those of Domain exceptions that are redacted in the file. Levels come from the <c>Logging</c>
-    /// section of the app settings.
+    /// section of the app settings. In Development the Debug provider writes the full, unredacted exception to the
+    /// debugger output only; it never reaches the log file.
     /// </summary>
     /// <remarks>
     /// Call this before <c>AddServiceDefaults</c>: it clears all providers, which would also remove the
@@ -28,8 +29,7 @@ public static class LoggingBuilderExtensions
 
         _ = builder.Logging.ClearProviders();
 
-        var options = FileLoggingOptions.FromConfiguration(builder.Configuration);
-        var logger = FileLogging.TryCreate(paths ?? AppDataPaths.CreateDefault(), options);
+        var logger = FileLogging.TryCreate(builder.Configuration, paths);
         if (logger is not null)
         {
             // Crash handlers flush through Log.CloseAndFlush, so the same instance must be the global one.
@@ -51,6 +51,11 @@ public static class LoggingBuilderExtensions
                 }
             });
         }
+
+        // Lines that name local paths stay in the file; the OpenTelemetry provider (matched by its alias, which
+        // AddServiceDefaults adds later) must not export them.
+        _ = builder.Services.Configure<LoggerFilterOptions>(filterOptions =>
+            filterOptions.Rules.Add(new LoggerFilterRule("OpenTelemetry", StartupDiagnostics.LocalOnlyCategory, LogLevel.None, null)));
 
         if (builder.Environment.IsDevelopment())
         {

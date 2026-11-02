@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 
 namespace NexGrades.App.Logging;
@@ -17,7 +18,10 @@ public sealed record FileLoggingOptions(int RetainedFileCount = 14, int MaxFileS
     public FileLoggingOptions Normalize() =>
         new(Math.Max(1, RetainedFileCount), Math.Max(1, MaxFileSizeMegabytes));
 
-    /// <summary>Reads the options from <see cref="SectionName"/>; missing values keep their defaults.</summary>
+    /// <summary>
+    /// Reads the options from <see cref="SectionName"/>; missing values keep their defaults, and so do unparseable
+    /// ones (the binder would throw on them, and a bad log setting must not stop the app from starting).
+    /// </summary>
     /// <param name="configuration">The app configuration.</param>
     public static FileLoggingOptions FromConfiguration(IConfiguration configuration)
     {
@@ -25,7 +29,10 @@ public sealed record FileLoggingOptions(int RetainedFileCount = 14, int MaxFileS
         var section = configuration.GetSection(SectionName);
         var defaults = new FileLoggingOptions();
         return new FileLoggingOptions(
-            section.GetValue("RetainedFileCount", defaults.RetainedFileCount),
-            section.GetValue("MaxFileSizeMegabytes", defaults.MaxFileSizeMegabytes)).Normalize();
+            ParseOrDefault(section["RetainedFileCount"], defaults.RetainedFileCount),
+            ParseOrDefault(section["MaxFileSizeMegabytes"], defaults.MaxFileSizeMegabytes)).Normalize();
     }
+
+    private static int ParseOrDefault(string? raw, int fallback) =>
+        int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value) ? value : fallback;
 }

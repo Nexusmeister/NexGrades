@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-11-01
-- Issue: #79
+- Issue: #79; amended by #93
 
 ## Context
 
@@ -32,8 +32,10 @@ the telemetry rules (0002), with one exception that is decided below.
   overrides the levels in Development. MEL applies these filters before any provider, so they apply to the file
   and to OpenTelemetry alike (see Consequences).
 - **File limits come from `Logging:File`**: `RetainedFileCount` (14) and `MaxFileSizeMegabytes` (3), read by
-  `FileLoggingOptions`. Values below 1 are raised to 1, so a bad setting cannot disable rolling. The folder is
-  capped at about 42 MB (14 × 3 MB). Retention counts files, not days, and size rollovers count as files.
+  `FileLoggingOptions.FromConfiguration`. A value that is missing, blank, not a number or too large for an `int`
+  falls back to its default, and a value below 1 is raised to 1, so a bad setting neither stops startup nor
+  disables rolling. The folder is capped at about 42 MB (14 × 3 MB). Retention counts files, not days, and size
+  rollovers count as files.
 - **Location:** `IAppDataPaths.LogDirectory`, which is `%LOCALAPPDATA%\NexGrades\logs\`. The folder is used in every
   environment, including Development, and is not moved by the `sqlite` override. `FileLogging.TryCreate` creates it;
   `IAppDataPaths.EnsureCreated` does not.
@@ -46,34 +48,57 @@ the telemetry rules (0002), with one exception that is decided below.
 - **Setup order.** `AddAppLogging` calls `ClearProviders` first. That removes the default Console and EventLog
   providers, which would write exception messages without the redaction below. It must run before
   `AddServiceDefaults`, which adds the OpenTelemetry provider; clearing after it would remove that provider. The
-  Debug provider is added in Development only. No other code adds a logging provider.
+  Debug provider is added in Development only. Apart from the OpenTelemetry provider (0002), no other code adds a
+  logging provider.
 - **Exception messages in the file (decision).** `ExceptionDescriber` replaces the message of an exception whose
   type is in a `NexGrades.Domain*` namespace with `[message redacted]`. An `AggregateException` is redacted when
   any of its inner exceptions, at any depth, is. The type name, the stack trace and the inner exception chain are
   kept. Messages of framework and third-party exceptions are kept as they are.
   Why: Domain messages name record ids and values, because AGENTS requires `InvariantViolationException` messages to
-  name the offending ids and values. The Domain types that exist today are `InvariantViolationException` and its
-  subclass `ClosedYearException`. Framework messages rarely contain record content, and they are needed for diagnosis.
+  name the offending ids and values. Redaction keys on the exception's type namespace, not on where it was thrown;
+  a check by stack origin was rejected as fragile. So Domain code reports rule violations and bad input with
+  `InvariantViolationException` (or a subclass), never with a `System` exception whose message embeds a value,
+  because a `System` exception is not redacted (AGENTS, Domain services). The Domain exception types that exist
+  today are `InvariantViolationException` and its subclass `ClosedYearException`. The two `InvalidOperationException`
+  throws in `ClosedYearAuditInterceptor` are the exception to the rule: their messages are constant or name only a
+  type. Framework messages rarely contain record content, and they are needed for diagnosis.
 - **Residual risk, accepted.** Framework messages and file paths can contain the Windows user name. The log and
   database paths are written at startup, so every log file contains the user name. Some framework messages may
   include SQL text or values. This is accepted because the file stays on the device and is never exported.
+- **Debugger output in Development, accepted.** The Debug provider (`AddDebug`, Development only) writes the full
+  exception text, Domain messages included, to the debugger output. It is not written to the log file and not
+  exported. This is accepted residual risk for a developer machine. Revisit it if Debug output is ever enabled
+  outside Development.
 - **OpenTelemetry redaction is unchanged.** `ExceptionRedactionLogProcessor` and the other settings from 0002 are
   not changed. The processor runs inside the OpenTelemetry provider, so every record that provider receives passes
   through it before export. The file has its own formatter and does its own redaction, so neither rule depends on
   the other.
-- **Crash handlers** (`App.InstallCrashHandlers`, installed as soon as the file logger exists):
+- **Crash handlers** (`App.InstallCrashHandlers`, called right after `AddAppLogging`, and writing through the
+  Serilog logger that `AddAppLogging` sets up):
   - `DispatcherUnhandledException` is logged at Error. `Handled` stays false, so the crash behaviour is unchanged.
   - `AppDomain.UnhandledException` is logged at Critical. When the runtime is terminating, the log is flushed
     (`Log.CloseAndFlush`) before the process ends.
+  - An exception that the dispatcher handler already logged is not written in full a second time. The dispatcher
+    handler keeps a weak reference to it (`UnhandledExceptionLogger`), and the AppDomain handler then writes a short
+    Critical line, `Previously logged unhandled UI exception; terminating`, without the exception. This matches by
+    reference only: if WPF wraps the exception on its way to the AppDomain handler, the wrapped exception is logged
+    in full again.
   - `TaskScheduler.UnobservedTaskException` is logged at Error and marked observed, so the task does not end the process.
   - A failure to create the host is logged at Critical, and the exception is rethrown.
   If the file logger could not be created, these handlers write nothing.
-- **An unusable folder is tolerated.** If the folder cannot be created or the file cannot be opened,
-  `FileLogging.TryCreate` returns `null` and the app runs without a file log. Only the exception type is written to
-  the debugger output, because the message can contain paths.
+- **Logging setup is tolerated as a whole.** `FileLogging.TryCreate(IConfiguration, ...)` guards everything that can
+  fail: resolving the log folder, reading `Logging:File`, creating the folder and opening the file. If any of it
+  fails, it returns `null` and the app runs without a file log. Only the exception type is written to the debugger
+  output, because the message can contain paths. Logging never stops startup.
 - **Startup and shutdown lines.** Once the host is built, startup writes the NexGrades version, OS, .NET runtime and
   environment, then the database file (the data source only, never the full connection string) and the log folder.
   Shutdown writes `NexGrades is shutting down`, and after the host has stopped, `NexGrades stopped`.
+- **Local paths stay out of telemetry.** The database and log folder line is logged under the category
+  `NexGrades.Local.Startup` (`StartupDiagnostics.LocalOnlyCategory`). The default paths contain the Windows user name.
+  Structured arguments are exported as attributes, so `AddAppLogging` sets that category to `None` for the
+  OpenTelemetry provider.
+  The file log keeps the line. A path, or any value that carries the user name, is never logged under any other
+  category.
 - **Not part of this decision.**
   - The startup error dialog (the `MessageBox` in `App.OnStartup`) stays with #51. A startup failure is now logged
     at Critical before the dialog is shown.
@@ -101,3 +126,5 @@ the telemetry rules (0002), with one exception that is decided below.
   `ExceptionDescriber`, and record the change here.
 - Framework messages turn out to carry record content in practice. Then redact all messages in the file, not only
   the Domain ones.
+- Debug output is ever enabled outside Development. Then the debugger output needs the same redaction as the file,
+  or the Debug provider needs to be removed from that environment.

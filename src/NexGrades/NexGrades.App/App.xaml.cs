@@ -87,6 +87,7 @@ public partial class App : Application
     {
         StartupDiagnostics.LogStartup(
             Logger,
+            _host.Services.GetRequiredService<ILoggerFactory>(),
             _host.Services.GetRequiredService<IHostEnvironment>(),
             _host.Services.GetRequiredService<DatabaseLocation>(),
             _host.Services.GetRequiredService<IAppDataPaths>());

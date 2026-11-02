@@ -336,4 +336,101 @@ public class FileLoggingTests
 
         Assert.Contains("framework says no", text, StringComparison.Ordinal);
     }
+
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("")]
+    [InlineData("99999999999")]
+    [InlineData("1.5")]
+    public void FromConfiguration_UsesDefaults_ForUnparseableValue(string raw)
+    {
+        var options = FileLoggingOptions.FromConfiguration(Config(("Logging:File:RetainedFileCount", raw), ("Logging:File:MaxFileSizeMegabytes", raw)));
+
+        Assert.Equal(new FileLoggingOptions(), options);
+    }
+
+    [Fact]
+    public void FromConfiguration_KeepsRetainedCountDefault_WhenOnlyMaxSizeIsSet()
+    {
+        var options = FileLoggingOptions.FromConfiguration(Config(("Logging:File:MaxFileSizeMegabytes", "5")));
+
+        Assert.Equal(new FileLoggingOptions(14, 5), options);
+    }
+
+    [Fact]
+    public void FromConfiguration_KeepsMaxSizeDefault_WhenOnlyRetainedCountIsUnparseable()
+    {
+        var options = FileLoggingOptions.FromConfiguration(Config(("Logging:File:RetainedFileCount", "abc"), ("Logging:File:MaxFileSizeMegabytes", "5")));
+
+        Assert.Equal(new FileLoggingOptions(14, 5), options);
+    }
+
+    private sealed class ThrowingConfiguration : IConfiguration
+    {
+        public string? this[string key]
+        {
+            get => throw new InvalidOperationException("config");
+            set => throw new InvalidOperationException("config");
+        }
+
+        public IEnumerable<IConfigurationSection> GetChildren() => throw new InvalidOperationException("config");
+
+        public Microsoft.Extensions.Primitives.IChangeToken GetReloadToken() => throw new InvalidOperationException("config");
+
+        public IConfigurationSection GetSection(string key) => throw new InvalidOperationException("config");
+    }
+
+    internal sealed class ThrowingPaths : IAppDataPaths
+    {
+        public string DataDirectory => throw new InvalidOperationException("paths");
+
+        public string DatabaseFilePath => throw new InvalidOperationException("paths");
+
+        public string LogDirectory => throw new InvalidOperationException("paths");
+
+        public void EnsureCreated()
+        {
+        }
+    }
+
+    [Fact]
+    public void TryCreate_ReturnsNullAndReportsFailure_WhenConfigurationThrows()
+    {
+        using var folder = new TempFolder();
+        Exception? reported = null;
+
+        var logger = FileLogging.TryCreate(new ThrowingConfiguration(), new AppDataPaths(folder.Path), ex => reported = ex);
+
+        Assert.Null(logger);
+        Assert.IsType<InvalidOperationException>(reported);
+    }
+
+    [Fact]
+    public void TryCreate_ReturnsNullAndReportsFailure_WhenPathsThrow()
+    {
+        Exception? reported = null;
+
+        var logger = FileLogging.TryCreate(Config(), new ThrowingPaths(), ex => reported = ex);
+
+        Assert.Null(logger);
+        Assert.IsType<InvalidOperationException>(reported);
+    }
+
+    [Fact]
+    public void TryCreate_ReturnsLoggerAndDoesNotReport_ForValidConfigurationAndPaths()
+    {
+        using var folder = new TempFolder();
+        var paths = new AppDataPaths(folder.Path);
+        Exception? reported = null;
+
+        using var logger = FileLogging.TryCreate(Config(), paths, ex => reported = ex);
+
+        Assert.NotNull(logger);
+        Assert.Null(reported);
+        Assert.True(Directory.Exists(paths.LogDirectory));
+    }
+
+    [Fact]
+    public void TryCreate_Throws_ForNullConfiguration() =>
+        Assert.Throws<ArgumentNullException>(() => FileLogging.TryCreate((IConfiguration)null!, null));
 }

@@ -38,6 +38,12 @@ public class GradingScaleTests
         Assert.Null(exception);
     }
 
+    [Fact]
+    public void TokenForValue_Throws_ForIllegalValue()
+    {
+        Assert.Throws<InvariantViolationException>(() => GradingScale.TokenForValue(2.5m));
+    }
+
     [Theory]
     [InlineData("1", 1.0)]
     [InlineData("2-", 2.3)]
@@ -50,7 +56,7 @@ public class GradingScaleTests
     [Fact]
     public void ValueForToken_Throws_ForUnknownToken()
     {
-        Assert.Throws<ArgumentException>(() => GradingScale.ValueForToken("7"));
+        Assert.Throws<InvariantViolationException>(() => GradingScale.ValueForToken("7"));
     }
 
     [Theory]
