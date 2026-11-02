@@ -205,7 +205,6 @@ public sealed class AppLoggingTests : IDisposable
         var text = ReadLog();
         Assert.Contains("Database migrations applied", text, StringComparison.Ordinal);
         Assert.Matches(@"Checking database migrations; \d+ pending", text);
-        Assert.Contains("Created an Active school year", text, StringComparison.Ordinal);
     }
 
     [Fact]

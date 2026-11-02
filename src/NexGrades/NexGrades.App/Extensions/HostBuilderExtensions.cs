@@ -65,6 +65,7 @@ public static class HostBuilderExtensions
         services.AddTransient<RolloverService>();
         services.AddTransient<YearCloseService>();
         services.AddTransient<UnlockService>();
+        services.AddTransient<SchoolYearService>();
         services.AddTransient<NoteService>();
         services.AddTransient<ClassService>();
         services.AddTransient<StudentService>();
