@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-31
-- Issue: #74
+- Issue: #74; amended by #93
 
 ## Context
 
@@ -66,6 +66,11 @@ for data to leave the process, so it is designed with the same care as the datab
   or the message template: never put record content or ids into either.
 - The local file log (0003) is a separate sink with its own rules. It keeps framework exception messages, which
   this record does not allow in telemetry. The telemetry rules here are unchanged.
+- Local paths are the one exception to the structured-argument rule, and it is enforced in code. The database file
+  and log folder are logged under `NexGrades.Local.Startup`, and `AddAppLogging` sets that category to `None` for the
+  OpenTelemetry provider, so those arguments are never exported. Never log a path or a value that carries the Windows
+  user name on a normal category. A new category that must carry such values needs its own filter rule and a note
+  here.
 - The startup span (`App.Startup`) and the migration span (`DatabaseMigrationService.Run`) are captured only
   because `App.xaml.cs` calls `InitializeTelemetry()` before the migration. Moving that call later drops them.
 

@@ -29,9 +29,22 @@ public class StartupDiagnosticsTests
         var logger = new CapturingLogger<StartupDiagnosticsTests>();
         var paths = new AppDataPaths(Path.Combine(Path.GetTempPath(), "nexgrades-startup-test"));
 
-        StartupDiagnostics.LogStartup(logger, new FakeEnvironment(environment), new DatabaseLocation(connectionString, IsOverride: false), paths);
+        StartupDiagnostics.LogStartup(logger, new SingleLoggerFactory(logger), new FakeEnvironment(environment), new DatabaseLocation(connectionString, IsOverride: false), paths);
 
         return logger;
+    }
+
+    private sealed class SingleLoggerFactory(ILogger logger) : ILoggerFactory
+    {
+        public void AddProvider(ILoggerProvider provider)
+        {
+        }
+
+        public ILogger CreateLogger(string categoryName) => logger;
+
+        public void Dispose()
+        {
+        }
     }
 
     [Fact]
@@ -97,10 +110,13 @@ public class StartupDiagnosticsTests
         var environment = new FakeEnvironment("x");
         var location = new DatabaseLocation("Data Source=a", IsOverride: false);
 
-        _ = Assert.Throws<ArgumentNullException>(() => StartupDiagnostics.LogStartup(null!, environment, location, paths));
-        _ = Assert.Throws<ArgumentNullException>(() => StartupDiagnostics.LogStartup(logger, null!, location, paths));
-        _ = Assert.Throws<ArgumentNullException>(() => StartupDiagnostics.LogStartup(logger, environment, null!, paths));
-        _ = Assert.Throws<ArgumentNullException>(() => StartupDiagnostics.LogStartup(logger, environment, location, null!));
+        var factory = new SingleLoggerFactory(logger);
+
+        _ = Assert.Throws<ArgumentNullException>(() => StartupDiagnostics.LogStartup(null!, factory, environment, location, paths));
+        _ = Assert.Throws<ArgumentNullException>(() => StartupDiagnostics.LogStartup(logger, null!, environment, location, paths));
+        _ = Assert.Throws<ArgumentNullException>(() => StartupDiagnostics.LogStartup(logger, factory, null!, location, paths));
+        _ = Assert.Throws<ArgumentNullException>(() => StartupDiagnostics.LogStartup(logger, factory, environment, null!, paths));
+        _ = Assert.Throws<ArgumentNullException>(() => StartupDiagnostics.LogStartup(logger, factory, environment, location, null!));
     }
 
     [Fact]
@@ -113,5 +129,42 @@ public class StartupDiagnosticsTests
 
         Assert.Equal(["NexGrades is shutting down", "NexGrades stopped"], logger.Entries.Select(e => e.Message));
         Assert.All(logger.Entries, e => Assert.Equal(LogLevel.Information, e.Level));
+    }
+
+    private sealed class CategoryLoggerFactory : ILoggerFactory
+    {
+        public Dictionary<string, CapturingLogger<object>> Loggers { get; } = new(StringComparer.Ordinal);
+
+        public void AddProvider(ILoggerProvider provider)
+        {
+        }
+
+        public ILogger CreateLogger(string categoryName)
+        {
+            var logger = new CapturingLogger<object>();
+            Loggers[categoryName] = logger;
+            return logger;
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    [Fact]
+    public void LogStartup_WritesPathsLineToLocalOnlyCategory_AndNotTheOtherLine()
+    {
+        var logger = new CapturingLogger<StartupDiagnosticsTests>();
+        var factory = new CategoryLoggerFactory();
+        var paths = new AppDataPaths(Path.Combine(Path.GetTempPath(), "nexgrades-startup-test"));
+
+        StartupDiagnostics.LogStartup(logger, factory, new FakeEnvironment("Production"), new DatabaseLocation("Data Source=C:\\data\\app.db", IsOverride: false), paths);
+
+        var local = Assert.Single(factory.Loggers[StartupDiagnostics.LocalOnlyCategory].Entries);
+        Assert.StartsWith("Database file ", local.Message, StringComparison.Ordinal);
+        var other = Assert.Single(logger.Entries);
+        Assert.StartsWith("NexGrades ", other.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Database file", other.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("log folder", other.Message, StringComparison.Ordinal);
     }
 }

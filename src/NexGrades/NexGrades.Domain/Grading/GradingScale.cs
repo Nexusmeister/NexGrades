@@ -56,13 +56,13 @@ public static class GradingScale
     public static decimal ValueForToken(string token) =>
         TokenToValueMap.TryGetValue(token, out var value)
             ? value
-            : throw new ArgumentException($"'{token}' is not a legal grade token.", nameof(token));
+            : throw new InvariantViolationException($"'{token}' is not a legal grade token.");
 
     /// <summary>Converts a numeric grade value to its display token (e.g. "2-"). Throws for an illegal value.</summary>
     public static string TokenForValue(decimal value) =>
         ValueToTokenMap.TryGetValue(value, out var token)
             ? token
-            : throw new ArgumentException($"{value} is not a legal grade value.", nameof(value));
+            : throw new InvariantViolationException($"{value} is not a legal grade value.");
 
     /// <summary>Non-throwing variant of <see cref="ValueForToken"/>.</summary>
     public static bool TryGetValueForToken(string token, out decimal value) => TokenToValueMap.TryGetValue(token, out value);

@@ -29,7 +29,7 @@ public sealed class UnlockService(IDbContextFactory<AppDbContext> contextFactory
         {
             if (string.IsNullOrWhiteSpace(reason))
             {
-                throw new ArgumentException("A reason is required to unlock a closed school year.", nameof(reason));
+                throw new InvariantViolationException("A reason is required to unlock a closed school year.");
             }
 
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
@@ -44,7 +44,7 @@ public sealed class UnlockService(IDbContextFactory<AppDbContext> contextFactory
 
             if (until <= clock.Now)
             {
-                throw new ArgumentOutOfRangeException(nameof(until), until, "Unlock expiry must be in the future.");
+                throw new InvariantViolationException($"Unlock expiry {until:O} must be in the future.");
             }
 
             schoolYear.UnlockedUntil = until;

@@ -14,14 +14,22 @@ namespace NexGrades.App.Logging;
 /// </summary>
 public static partial class StartupDiagnostics
 {
+    /// <summary>
+    /// The logger category of lines that name local file paths. The OpenTelemetry provider is filtered to drop this
+    /// category (see <c>AddAppLogging</c>), so those lines reach the log file but are never exported.
+    /// </summary>
+    public const string LocalOnlyCategory = "NexGrades.Local.Startup";
+
     /// <summary>Logs version, operating system, .NET runtime, environment, database file and log folder.</summary>
-    /// <param name="logger">The logger to write to.</param>
+    /// <param name="logger">The logger for the version and environment line.</param>
+    /// <param name="loggerFactory">Creates the <see cref="LocalOnlyCategory"/> logger for the line with local paths.</param>
     /// <param name="environment">The host environment.</param>
     /// <param name="location">Where the database lives.</param>
     /// <param name="paths">The per-user folders.</param>
-    public static void LogStartup(ILogger logger, IHostEnvironment environment, DatabaseLocation location, IAppDataPaths paths)
+    public static void LogStartup(ILogger logger, ILoggerFactory loggerFactory, IHostEnvironment environment, DatabaseLocation location, IAppDataPaths paths)
     {
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(loggerFactory);
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(location);
         ArgumentNullException.ThrowIfNull(paths);
@@ -34,7 +42,8 @@ public static partial class StartupDiagnostics
         var logDirectory = paths.LogDirectory;
 
         LogStarting(logger, version, operatingSystem, framework, environmentName);
-        LogLocations(logger, databasePath, logDirectory);
+        var localLogger = loggerFactory.CreateLogger(LocalOnlyCategory);
+        LogLocations(localLogger, databasePath, logDirectory);
     }
 
     /// <summary>Logs that the app has begun to shut down.</summary>

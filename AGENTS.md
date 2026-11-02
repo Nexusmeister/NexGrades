@@ -63,7 +63,8 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
 - Log files go to `%LOCALAPPDATA%\NexGrades\logs\` (`IAppDataPaths.LogDirectory`) in every environment, and the
   database override does not move them. One file per day, `nexgrades-yyyyMMdd.log`, rolls to `nexgrades-yyyyMMdd_001.log`
   when it reaches `Logging:File:MaxFileSizeMegabytes` (3 by default), and `Logging:File:RetainedFileCount` (14 by
-  default) files are kept. `Logging:LogLevel` and `Logging:File` in `NexGrades.App/appsettings.json` configure this,
+  default) files are kept. An unparseable value in `Logging:File` falls back to its default.
+  `Logging:LogLevel` and `Logging:File` in `NexGrades.App/appsettings.json` configure this,
   and `appsettings.Development.json` overrides the levels only. The AppHost's own `appsettings*.json`
   configure the AppHost, not the App. See `docs/decisions/0003-application-logging.md`.
 - To see logs, metrics and traces live, run the AppHost command above and open the Aspire dashboard at the URL it
@@ -154,7 +155,13 @@ particular:
   packages to sources, so a new feed needs a `packageSourceMapping` entry.
 - **Domain services:** `sealed` classes with primary constructors, async methods taking a
   `CancellationToken cancellationToken = default`. Violated business rules throw
-  `InvariantViolationException` with a message that names the offending ids/values.
+  `InvariantViolationException` with a message that names the offending ids/values. Bad input is reported the
+  same way, including a grade token or value that is not on the scale. Never throw `ArgumentException` or
+  `ArgumentOutOfRangeException` with a value in the message from Domain code: the file log redacts a Domain
+  exception's message by its type namespace (`NexGrades.Domain*`), and a `System` exception is not redacted. Null
+  checks (`ArgumentNullException.ThrowIfNull`) are fine, because their messages name only the parameter. Two
+  `InvalidOperationException` throws in `ClosedYearAuditInterceptor` are the exception: their messages are constant
+  or contain a type name only. See `docs/decisions/0003-application-logging.md`.
 - **DbContext lifetime: one short-lived context per operation.** Pages and view models are resolved from
   the root DI provider and no scope exists around them, so nothing may depend on `AppDbContext` directly
   (it is registered as scoped). Inject `IDbContextFactory<AppDbContext>` instead, in view models and Domain
@@ -168,8 +175,10 @@ particular:
   `[LoggerMessage]` source-generated methods (CA1848 flags direct calls), with a fixed message template. Templates
   and arguments are logged as they are, so never put pupil data, record ids, school-year labels or exception text
   (such as `ex.Message`) into them. Pass the exception as the exception argument; the file log redacts Domain
-  exception messages (see `docs/decisions/0003-application-logging.md`). Add logging providers only in
-  `AddAppLogging`.
+  exception messages (see `docs/decisions/0003-application-logging.md`). A path, or any value that carries the
+  Windows user name, is logged only under the `NexGrades.Local.Startup` category
+  (`StartupDiagnostics.LocalOnlyCategory`), which the OpenTelemetry provider does not export. Add logging providers
+  only in `AddAppLogging`; the one exception is the OpenTelemetry provider, which `AddServiceDefaults` adds (see 0002).
 - **EF Core:** configure entities in `NexGrades.Data/EntityMapConfigs/<Entity>Configuration.cs`, not with
   attributes. Use `AsNoTracking()` for read-only queries. Never hand-edit generated migration files or the
   model snapshot — add a new migration instead.

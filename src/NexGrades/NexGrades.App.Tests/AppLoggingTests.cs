@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Extensions;
 using NexGrades.App.Features.Classes;
+using NexGrades.App.Infrastructure;
 using NexGrades.App.Logging;
 using NexGrades.Common.Storage;
 using NexGrades.Data.Diagnostics;
@@ -225,5 +226,86 @@ public sealed class AppLoggingTests : IDisposable
         Assert.NotNull(host.Services.GetRequiredService<ILogger<DatabaseMigrationService>>());
         Assert.NotNull(host.Services.GetRequiredService<ILogger<UnhandledExceptionLogger>>());
         Assert.NotNull(host.Services.GetRequiredService<DatabaseMigrationService>());
+    }
+
+    [Fact]
+    public void AddAppLogging_DoesNotThrowAndHostStillLogs_WhenPathsThrow()
+    {
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { EnvironmentName = Environments.Production, ContentRootPath = AppContext.BaseDirectory });
+
+        var exception = Record.Exception(() => builder.AddAppLogging(new FileLoggingTests.ThrowingPaths()));
+
+        Assert.Null(exception);
+        using var host = builder.Build();
+        host.Services.GetRequiredService<ILogger<AppLoggingTests>>().LogError("still works");
+        Assert.DoesNotContain(host.Services.GetServices<ILoggerProvider>(), p => p.GetType().FullName!.Contains("Serilog", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AddAppLogging_StillWritesLogFileWithDefaults_WhenRetainedFileCountIsNotANumber()
+    {
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { EnvironmentName = Environments.Production, ContentRootPath = AppContext.BaseDirectory });
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["Logging:File:RetainedFileCount"] = "abc" });
+
+        var exception = Record.Exception(() => builder.AddAppLogging(Paths));
+
+        Assert.Null(exception);
+        using (var host = builder.Build())
+        {
+            host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("NexGrades.Domain.Thing").LogWarning("ZZ-BAD-SETTING");
+        }
+
+        Assert.Contains("ZZ-BAD-SETTING", ReadLog(), StringComparison.Ordinal);
+    }
+
+    private sealed class RecordingLogger(string category, List<(string Category, string Message)> messages) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            ArgumentNullException.ThrowIfNull(formatter);
+            messages.Add((category, formatter(state, exception)));
+        }
+    }
+
+    [ProviderAlias("OpenTelemetry")]
+    private sealed class FakeOpenTelemetryProvider : ILoggerProvider
+    {
+        public List<(string Category, string Message)> Messages { get; } = [];
+
+        public ILogger CreateLogger(string categoryName) => new RecordingLogger(categoryName, Messages);
+
+        public void Dispose()
+        {
+        }
+    }
+
+    [Fact]
+    public void LogStartup_KeepsPathsLineOutOfOpenTelemetryProvider_ButWritesItToTheFile()
+    {
+        var builder = CreateBuilder(Environments.Production);
+        var telemetry = new FakeOpenTelemetryProvider();
+        _ = builder.Logging.AddProvider(telemetry);
+        var databasePath = Path.Combine(_folder.Path, "ZZ-pupils.db");
+        using (var host = builder.Build())
+        {
+            var factory = host.Services.GetRequiredService<ILoggerFactory>();
+            StartupDiagnostics.LogStartup(
+                factory.CreateLogger("NexGrades.App"),
+                factory,
+                host.Services.GetRequiredService<IHostEnvironment>(),
+                new DatabaseLocation($"Data Source={databasePath}", IsOverride: false),
+                Paths);
+        }
+
+        Assert.Contains(telemetry.Messages, m => m.Message.StartsWith("NexGrades ", StringComparison.Ordinal));
+        Assert.DoesNotContain(telemetry.Messages, m => m.Message.Contains("ZZ-pupils.db", StringComparison.Ordinal) || m.Message.Contains(_folder.Path, StringComparison.Ordinal));
+        var text = ReadLog();
+        Assert.Contains("ZZ-pupils.db", text, StringComparison.Ordinal);
+        Assert.Contains("log folder", text, StringComparison.Ordinal);
     }
 }

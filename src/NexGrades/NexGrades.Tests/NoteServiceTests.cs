@@ -674,7 +674,7 @@ public class NoteServiceTests
         using var env = new Env();
         var seed = await SeedAsync(env);
 
-        await Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<InvariantViolationException>(
             () => env.Service.GetNotesForStudentAsync(
                 seed.StudentId, from: new DateTime(2026, 3, 1), to: new DateTime(2026, 2, 1)));
     }

@@ -166,8 +166,9 @@ public sealed class NoteService(IDbContextFactory<AppDbContext> contextFactory, 
     /// <param name="to">Exclusive upper bound on the creation time, or <see langword="null"/> for no bound.</param>
     /// <param name="includeArchived">Whether archived notes are returned as well.</param>
     /// <param name="cancellationToken">Cancels the operation.</param>
-    /// <exception cref="InvariantViolationException">The student does not exist.</exception>
-    /// <exception cref="ArgumentException"><paramref name="from"/> is later than <paramref name="to"/>.</exception>
+    /// <exception cref="InvariantViolationException">
+    /// The student does not exist, or <paramref name="from"/> is later than <paramref name="to"/>.
+    /// </exception>
     public Task<IReadOnlyList<NoteDto>> GetNotesForStudentAsync(
         int studentId,
         int? schoolYearId = null,
@@ -179,7 +180,7 @@ public sealed class NoteService(IDbContextFactory<AppDbContext> contextFactory, 
         {
             if (from is { } start && to is { } end && start > end)
             {
-                throw new ArgumentException($"'from' ({start:O}) must not be later than 'to' ({end:O}).", nameof(from));
+                throw new InvariantViolationException($"'from' ({start:O}) must not be later than 'to' ({end:O}).");
             }
 
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
