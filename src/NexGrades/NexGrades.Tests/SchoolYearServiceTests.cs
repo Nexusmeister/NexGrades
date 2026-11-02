@@ -376,6 +376,20 @@ public class SchoolYearServiceTests
         await AssertYearCountAsync(db, 1);
     }
 
+    [Theory]
+    [InlineData("2016-08-01", "2017-07-31")]
+    [InlineData("2026-07-31", "2027-07-31")]
+    public async Task CreateNextYearAsync_Throws_WhenStartIsNotAfterPreviousYearEnd(string start, string end)
+    {
+        using var db = new SqliteTestDatabase();
+        var id = await SeedActiveYearAsync(db);
+        var draft = new SchoolYearDraft("2026/27", DateTime.Parse(start, System.Globalization.CultureInfo.InvariantCulture), DateTime.Parse(end, System.Globalization.CultureInfo.InvariantCulture));
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db, Aug2025).CreateNextYearAsync(id, draft));
+
+        await AssertYearCountAsync(db, 1);
+    }
+
     [Fact]
     public async Task CreateNextYearAsync_Succeeds_WhenStartingTheDayAfterTheOldYearEnds()
     {

@@ -232,7 +232,7 @@ localized later without a rewrite:
 ## Testing
 
 - Tests live in `NexGrades.Tests` and cover Domain and Data. There are no UI tests; `NexGrades.App.Tests`
-  only checks that the App's DI graph resolves, so it picks up new pages and services automatically.
+  only checks that the App's DI graph resolves, so it picks up new pages and services automatically. It also holds pure App-side unit tests, such as UI text formatting.
 - Use `SqliteTestDatabase` (a real, migrated SQLite file — never the EF in-memory provider) and
   `FixedClock` for anything time-dependent. Both are in `TestSupport.cs`. Construct Domain services with
   `db.CreateContextFactory()`, and assert through a fresh `db.CreateContext()`: the context that seeded the

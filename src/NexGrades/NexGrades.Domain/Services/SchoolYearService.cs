@@ -111,7 +111,8 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
     /// </summary>
     /// <exception cref="InvariantViolationException">
     /// The previous year is missing or not Active, a Planned successor already exists, the label is empty or in
-    /// use, the dates are not a valid range, or the range overlaps an existing year.
+    /// use, the dates are not a valid range, the range does not start after the previous year ends, or the range
+    /// overlaps an existing year.
     /// </exception>
     public Task<SchoolYearSummary> CreateNextYearAsync(
         int previousSchoolYearId, SchoolYearDraft draft, CancellationToken cancellationToken = default)
@@ -135,10 +136,7 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
                     $"School year {previousSchoolYearId} is not Active (current status: {previous.Status}); only the Active year can get a next year.");
             }
 
-            if (draft.StartDate.Date >= draft.EndDate.Date)
-            {
-                throw new InvariantViolationException("The school year must start before it ends.");
-            }
+            EnsureDatesFollow(previous, draft);
 
             var existingYears = await context.SchoolYears.AsNoTracking().ToListAsync(cancellationToken);
 
@@ -173,6 +171,21 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
 
             return new SchoolYearSummary(schoolYear.Id, schoolYear.Label, schoolYear.StartDate, schoolYear.EndDate, schoolYear.Status);
         });
+    }
+
+    /// <summary>Requires a valid date range that starts after <paramref name="previous"/> has ended.</summary>
+    private static void EnsureDatesFollow(SchoolYear previous, SchoolYearDraft draft)
+    {
+        if (draft.StartDate.Date >= draft.EndDate.Date)
+        {
+            throw new InvariantViolationException("The school year must start before it ends.");
+        }
+
+        if (draft.StartDate.Date <= previous.EndDate.Date)
+        {
+            throw new InvariantViolationException(
+                $"The next school year must start after school year {previous.Id} ends.");
+        }
     }
 
     /// <summary>Formats a label such as "2025/26" from the calendar year in which the school year starts.</summary>

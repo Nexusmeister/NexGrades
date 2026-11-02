@@ -70,7 +70,8 @@
                         <ui:TextBlock Grid.Column="1"
                                       FontTypography="Caption"
                                       Appearance="Secondary"
-                                      Text="{Binding CarryOverText}"/>
+                                      Text="{Binding CarryOverText}"
+                                      Visibility="{Binding IsPending, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </Grid>
 
                     <!-- Pending: the teacher decides. -->
