@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.App.Core;
 using NexGrades.App.Extensions;
 using NexGrades.App.Features.Home;
@@ -85,7 +86,7 @@ public class PageLifetimeTests
     public void NavigateWithHierarchy_DeliversParameterOnce_ThenNullOnLaterVisit()
     {
         var received = new List<object?>();
-        var navigator = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received)));
+        var navigator = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received)), NullLogger<PageNavigator>.Instance);
         var parameter = new object();
 
         Assert.True(navigator.NavigateWithHierarchy<FakePage>(parameter));
@@ -100,8 +101,8 @@ public class PageLifetimeTests
     public void NavigateWithHierarchy_LeavesNoStaleParameter_WhenNavigationFails()
     {
         var received = new List<object?>();
-        var failing = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received), result: false));
-        var working = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received)));
+        var failing = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received), result: false), NullLogger<PageNavigator>.Instance);
+        var working = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received)), NullLogger<PageNavigator>.Instance);
 
         Assert.False(failing.NavigateWithHierarchy<FakePage>(new object()));
         Assert.True(working.NavigateWithHierarchy<FakePage>());
@@ -114,8 +115,8 @@ public class PageLifetimeTests
     public void NavigateWithHierarchy_LeavesNoStaleParameter_WhenNavigationThrows()
     {
         var received = new List<object?>();
-        var failing = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received), throws: true));
-        var working = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received)));
+        var failing = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received), throws: true), NullLogger<PageNavigator>.Instance);
+        var working = new PageNavigator(FakeNavigation.Create(() => new FakeViewModel(received)), NullLogger<PageNavigator>.Instance);
 
         _ = Assert.Throws<InvalidOperationException>(() => failing.NavigateWithHierarchy<FakePage>(new object()));
         Assert.True(working.NavigateWithHierarchy<FakePage>());
