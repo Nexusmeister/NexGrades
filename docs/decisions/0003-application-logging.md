@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-11-01
-- Issue: #79; amended by #93
+- Issue: #79; amended by #93 and #51
 
 ## Context
 
@@ -84,12 +84,18 @@ the telemetry rules (0002), with one exception that is decided below.
     reference only: if WPF wraps the exception on its way to the AppDomain handler, the wrapped exception is logged
     in full again.
   - `TaskScheduler.UnobservedTaskException` is logged at Error and marked observed, so the task does not end the process.
-  - A failure to create the host is logged at Critical, and the exception is rethrown.
   If the file logger could not be created, these handlers write nothing.
 - **Logging setup is tolerated as a whole.** `FileLogging.TryCreate(IConfiguration, ...)` guards everything that can
   fail: resolving the log folder, reading `Logging:File`, creating the folder and opening the file. If any of it
   fails, it returns `null` and the app runs without a file log. Only the exception type is written to the debugger
   output, because the message can contain paths. Logging never stops startup.
+- **Startup failures.** `App.OnStartup` runs every startup step inside one `try`, including host creation. Any
+  failure (host creation, configuration, the database path, migration or host start) is logged at Critical through
+  the host logger, or through the crash logger when the host logger is not available (for example, the host was
+  not built). `StartupFailureHandler` then shows
+  one message box and exits with code 1. The box names the log folder once logging setup has run; if the file logger
+  could not be created, that folder may not exist. The box never contains exception text, and the exception is not
+  rethrown.
 - **Startup and shutdown lines.** Once the host is built, startup writes the NexGrades version, OS, .NET runtime and
   environment, then the database file (the data source only, never the full connection string) and the log folder.
   Shutdown writes `NexGrades is shutting down`, and after the host has stopped, `NexGrades stopped`.
@@ -100,8 +106,6 @@ the telemetry rules (0002), with one exception that is decided below.
   The file log keeps the line. A path, or any value that carries the user name, is never logged under any other
   category.
 - **Not part of this decision.**
-  - The startup error dialog (the `MessageBox` in `App.OnStartup`) stays with #51. A startup failure is now logged
-    at Critical before the dialog is shown.
   - "Open log folder" in Settings is deferred to a follow-up. There is no log viewer and no export.
 
 ## Consequences

@@ -26,9 +26,8 @@ public partial class App : Application
     private static UnhandledExceptionLogger? _crashLogger;
     private static SerilogLoggerFactory? _crashLoggerFactory;
 
-    private static readonly IHost _host = CreateHost();
-
-    private static ILogger Logger => _host.Services.GetRequiredService<ILogger<App>>();
+    // Created in OnStartup, inside its try, so a failure while building it is reported like any other startup failure.
+    private static IHost? _host;
 
     private static IHost CreateHost()
     {
@@ -42,24 +41,14 @@ public partial class App : Application
         _ = host.AddAppLogging();
         InstallCrashHandlers();
 
-        try
-        {
-            // OpenTelemetry logs, metrics and traces. Exported only when OTEL_EXPORTER_OTLP_ENDPOINT is set (Aspire).
-            _ = host.AddServiceDefaults(NexGradesTelemetry.Name);
+        // OpenTelemetry logs, metrics and traces. Exported only when OTEL_EXPORTER_OTLP_ENDPOINT is set (Aspire).
+        _ = host.AddServiceDefaults(NexGradesTelemetry.Name);
 
-            host.Services.AddGradeServices()
-                .AddFrontendServices();
-            host.AddDatabase();
+        host.Services.AddGradeServices()
+            .AddFrontendServices();
+        host.AddDatabase();
 
-            return host.Build();
-        }
-        catch (Exception ex)
-        {
-            // The host is not built, so the file logger is reached through the crash logger's factory.
-            var logger = _crashLoggerFactory!.CreateLogger<App>();
-            LogHostCreationFailed(logger, ex);
-            throw;
-        }
+        return host.Build();
     }
 
     /// <summary>
@@ -81,39 +70,45 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Occurs when the application is loading.
+    /// Occurs when the application is loading. One try covers every startup step, including creating the host, so
+    /// a failure at any point is logged, shown to the user once and ends the process with a non-zero exit code.
     /// </summary>
     [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "WPF event handler; all failures are caught below.")]
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Any startup failure, whatever its type, must end in the error dialog and a non-zero exit instead of an unhandled exception.")]
     private async void OnStartup(object sender, StartupEventArgs e)
     {
-        StartupDiagnostics.LogStartup(
-            Logger,
-            _host.Services.GetRequiredService<ILoggerFactory>(),
-            _host.Services.GetRequiredService<IHostEnvironment>(),
-            _host.Services.GetRequiredService<DatabaseLocation>(),
-            _host.Services.GetRequiredService<IAppDataPaths>());
-
-        InitializeTelemetrySafely();
-
-        using var startup = NexGradesTelemetry.ActivitySource.StartActivity("App.Startup");
+        Activity? startup = null;
         try
         {
-            var location = _host.Services.GetRequiredService<DatabaseLocation>();
+            var host = _host = CreateHost();
+
+            StartupDiagnostics.LogStartup(
+                host.Services.GetRequiredService<ILogger<App>>(),
+                host.Services.GetRequiredService<ILoggerFactory>(),
+                host.Services.GetRequiredService<IHostEnvironment>(),
+                host.Services.GetRequiredService<DatabaseLocation>(),
+                host.Services.GetRequiredService<IAppDataPaths>());
+
+            InitializeTelemetrySafely(host);
+
+            startup = NexGradesTelemetry.ActivitySource.StartActivity("App.Startup");
+
+            var location = host.Services.GetRequiredService<DatabaseLocation>();
             if (!location.IsOverride)
             {
                 // Must happen before any connection opens the database file.
-                var paths = _host.Services.GetRequiredService<IAppDataPaths>();
+                var paths = host.Services.GetRequiredService<IAppDataPaths>();
                 paths.EnsureCreated();
-                _host.Services.GetRequiredService<LegacyDatabaseRelocator>()
+                host.Services.GetRequiredService<LegacyDatabaseRelocator>()
                     .Relocate([AppContext.BaseDirectory, Environment.CurrentDirectory], paths.DatabaseFilePath);
             }
 
-            await using var scope = _host.Services.CreateAsyncScope();
+            await using var scope = host.Services.CreateAsyncScope();
             var mig = scope.ServiceProvider.GetRequiredService<DatabaseMigrationService>();
             await mig.RunAsync(CancellationToken.None);
             await scope.ServiceProvider.GetRequiredService<SchoolYearService>().EnsureActiveYearAsync(CancellationToken.None);
 
-            await _host.StartAsync();
+            await host.StartAsync();
 
             // The window is shown by ApplicationHostService.StartAsync, so this is the time to a usable UI.
             _ = startup?.SetTag(NexGradesTelemetry.OutcomeTag, NexGradesTelemetry.Outcomes.Success);
@@ -121,14 +116,35 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            NexGradesTelemetry.MarkFailed(startup, ex);
-            _ = startup?.SetTag(NexGradesTelemetry.OutcomeTag, NexGradesTelemetry.Outcomes.Error);
-            RecordStartupDuration(NexGradesTelemetry.Outcomes.Error);
-            LogStartupFailed(Logger, ex);
-            // Do not fail silently with no window.
-            MessageBox.Show("NexGrades could not start. Check that its data folder is writable.", "NexGrades", MessageBoxButton.OK, MessageBoxImage.Error);
-            Shutdown(1);
+            if (_host is not null)
+            {
+                NexGradesTelemetry.MarkFailed(startup, ex);
+                _ = startup?.SetTag(NexGradesTelemetry.OutcomeTag, NexGradesTelemetry.Outcomes.Error);
+                RecordStartupDuration(NexGradesTelemetry.Outcomes.Error);
+            }
+
+            var host = _host;
+            new StartupFailureHandler(new MessageBoxStartupErrorDialog(), ExitWithCode).Handle(
+                ex,
+                () => host?.Services.GetService<ILogger<App>>(),
+                () => _crashLoggerFactory?.CreateLogger<App>(),
+                // The folder only exists to the user once the file logger was created.
+                _crashLoggerFactory is null ? null : AppDataPaths.CreateDefault().LogDirectory);
         }
+        finally
+        {
+            startup?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Ends the application with <paramref name="exitCode"/>. <see cref="Environment.ExitCode"/> is set as well,
+    /// because the generated <c>Main</c> discards the value <c>Run</c> returns.
+    /// </summary>
+    private void ExitWithCode(int exitCode)
+    {
+        Environment.ExitCode = exitCode;
+        Shutdown(exitCode);
     }
 
     /// <summary>
@@ -137,17 +153,17 @@ public partial class App : Application
     /// rejects its configuration), the app runs without it instead of failing to start. Only this call is guarded.
     /// </summary>
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Telemetry must never prevent the app from starting.")]
-    private static void InitializeTelemetrySafely()
+    private static void InitializeTelemetrySafely(IHost host)
     {
         try
         {
-            _ = _host.Services.InitializeTelemetry();
+            _ = host.Services.InitializeTelemetry();
         }
         catch (Exception ex)
         {
             // Only the type is logged: the exception message could carry configuration values.
             var exceptionType = ex.GetType().Name;
-            LogTelemetryDisabled(Logger, exceptionType);
+            LogTelemetryDisabled(host.Services.GetRequiredService<ILogger<App>>(), exceptionType);
         }
     }
 
@@ -167,11 +183,19 @@ public partial class App : Application
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "A failed host shutdown is logged; the process is exiting and there is nothing else to do with it.")]
     private async void OnExit(object sender, ExitEventArgs e)
     {
-        var logger = Logger;
+        var host = _host;
+        if (host is null)
+        {
+            // The start failed before the host existed; only the file log, if any, needs closing.
+            FileLogging.Flush();
+            return;
+        }
+
+        var logger = host.Services.GetRequiredService<ILogger<App>>();
         StartupDiagnostics.LogShuttingDown(logger);
         try
         {
-            await _host.StopAsync();
+            await host.StopAsync();
         }
         catch (Exception ex)
         {
@@ -179,7 +203,7 @@ public partial class App : Application
         }
 
         StartupDiagnostics.LogShutdown(logger);
-        _host.Dispose();
+        host.Dispose();
     }
 
     /// <summary>
@@ -188,12 +212,6 @@ public partial class App : Application
     /// </summary>
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e) =>
         _crashLogger?.OnDispatcherException(e.Exception);
-
-    [LoggerMessage(Level = LogLevel.Critical, Message = "The application host could not be created")]
-    private static partial void LogHostCreationFailed(ILogger logger, Exception exception);
-
-    [LoggerMessage(Level = LogLevel.Critical, Message = "NexGrades could not start")]
-    private static partial void LogStartupFailed(ILogger logger, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Telemetry is disabled: {ExceptionType}")]
     private static partial void LogTelemetryDisabled(ILogger logger, string exceptionType);
