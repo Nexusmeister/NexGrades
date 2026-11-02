@@ -55,6 +55,47 @@ protected override async Task OnNavigatedToAsync(object? parameter)
 }
 ```
 
+An edit page with unsaved input also overrides `CanLeaveAsync`. The shell calls it before sidebar navigation or
+the back button leaves the page, and cancels the navigation when it returns `false`. The default allows leaving, so
+pages without unsaved input need no override. Keep the discard prompt in the view model. Before the page leaves
+by itself (after a successful save), set an allow-leave flag so the guard does not ask a second time. Reset it in
+`OnNavigatedToAsync`. `StudentViewModel` is the reference:
+
+```csharp
+private bool _allowLeave;
+
+protected override async Task OnNavigatedToAsync(object? parameter)
+{
+    _allowLeave = false;
+    // ... as above
+}
+
+public override async Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default)
+{
+    if (_allowLeave || !HasUnsavedChanges)
+    {
+        return true;
+    }
+
+    return await ConfirmDiscardAsync(
+        "You have unsaved changes on this page. Leave the page and discard them?", cancellationToken);
+}
+
+// Goes back without the guard asking again; re-arms the guard if going back fails.
+private void LeaveWithoutPrompt()
+{
+    _allowLeave = true;
+    if (!navigation.GoBack())
+    {
+        _allowLeave = false;
+    }
+}
+```
+
+Save and Cancel call `LeaveWithoutPrompt()` instead of `navigation.GoBack()` directly. `HasUnsavedChanges` and
+`ConfirmDiscardAsync` are the page's own members, and `ConfirmDiscardAsync` shows the discard dialog through
+`IContentDialogService`.
+
 **`<Name>Page.xaml.cs`**
 
 ```csharp

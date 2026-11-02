@@ -204,6 +204,9 @@ particular:
   model share a lifetime, that the navigation roots in its `_rootPages` set are singletons, and that every other page
   is transient. `HomePage` is in that set but is asserted by type, because it does not implement `INavigableView`.
   A new overview page must be added to `_rootPages`, or the test fails.
+  A view model with unsaved input overrides `CanLeaveAsync` (default: allow) to ask before the user leaves by sidebar
+  or back button; the shell and `PageNavigator` await it and cancel the navigation on `false`. A view model that
+  leaves by itself after saving sets its own allow-leave flag first, so it does not prompt twice.
 - **XAML:** use WPF-UI controls (`ui:Button`, `ui:TextBox`, `ui:TextBlock`, `ui:SymbolIcon`, …) and theme
   resources (`DynamicResource`) rather than hard-coded colors, so light and dark themes keep working.
 - **Comments:** XML doc comments on public types and members, explaining intent and the *why*. Avoid

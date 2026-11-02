@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
+using NexGrades.App.Core;
 using NexGrades.Data.Diagnostics;
 using Wpf.Ui;
 using Wpf.Ui.Abstractions;
@@ -13,6 +14,7 @@ namespace NexGrades.App.Shell;
 /// </summary>
 public partial class MainWindow : INavigationWindow
 {
+    private readonly PageNavigator _pageNavigator;
     private long _navigationStart;
 
     /// <summary>The view model of the window, which is also the window's <c>DataContext</c>.</summary>
@@ -26,9 +28,11 @@ public partial class MainWindow : INavigationWindow
     /// <param name="navigationService">Receives this window's navigation control.</param>
     /// <param name="snackbarService">Receives this window's snackbar presenter.</param>
     /// <param name="contentDialogService">Receives this window's content dialog host.</param>
-    public MainWindow(MainWindowViewModel viewModel, INavigationService navigationService, ISnackbarService snackbarService, IContentDialogService contentDialogService)
+    /// <param name="pageNavigator">Guards leaving a page that holds unsaved input.</param>
+    public MainWindow(MainWindowViewModel viewModel, INavigationService navigationService, ISnackbarService snackbarService, IContentDialogService contentDialogService, PageNavigator pageNavigator)
     {
         ViewModel = viewModel;
+        _pageNavigator = pageNavigator;
         DataContext = this;
 
         SystemThemeWatcher.Watch(this);
@@ -41,12 +45,21 @@ public partial class MainWindow : INavigationWindow
         navigationService.SetNavigationControl(RootNavigation);
 
         // Measures how long it takes to resolve and show a page, not how long its view model needs to load data.
-        RootNavigation.Navigating += (_, _) => _navigationStart = Stopwatch.GetTimestamp();
+        RootNavigation.Guard = pageNavigator;
+        RootNavigation.Navigating += (_, args) =>
+        {
+            _navigationStart = Stopwatch.GetTimestamp();
+
+            // A cancelled navigation is re-issued by the navigator if the user agrees to leave.
+            args.Cancel = pageNavigator.ShouldCancelNavigating(() => navigationService.Navigate(args.Page as Type ?? args.Page.GetType()));
+        };
         RootNavigation.Navigated += OnNavigated;
     }
 
     private void OnNavigated(NavigationView sender, NavigatedEventArgs args)
     {
+        _pageNavigator.SetCurrent((args.Page as FrameworkElement)?.DataContext as ViewModel);
+
         if (_navigationStart == 0)
         {
             return;

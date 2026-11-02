@@ -38,7 +38,7 @@
             Title="NexGrades" 
             Grid.Row="0"/>
 
-        <ui:NavigationView 
+        <shell:GuardedNavigationView
             x:Name="RootNavigation" 
             Grid.Row="1">
             <ui:NavigationView.AutoSuggestBox>
@@ -84,7 +84,7 @@
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
             </ui:NavigationView.FooterMenuItems>
-        </ui:NavigationView>
+        </shell:GuardedNavigationView>
 
         <!-- Host for content dialogs; spans both rows so the dialog overlay also covers the title bar. -->
         <ui:ContentDialogHost x:Name="RootContentDialog" Grid.Row="0" Grid.RowSpan="2" />

@@ -9,12 +9,16 @@ namespace NexGrades.App.Core;
 /// A view model that needs a value from the page that opened it (for example the id to edit) overrides
 /// <see cref="OnNavigatedToAsync(object?)"/> and receives what <see cref="PageNavigator"/> passed.
 /// </summary>
-/// <remarks>
-/// A <c>CanLeaveAsync</c> hook that lets a view model veto leaving its page is reserved here; it does not
-/// exist yet.
-/// </remarks>
 public abstract partial class ViewModel : ObservableObject, INavigationAware
 {
+    /// <summary>
+    /// Asked before the user leaves the page, by sidebar navigation or the back button. A page that holds
+    /// unsaved input overrides it to ask for confirmation. The default always allows leaving.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the check.</param>
+    /// <returns><see langword="true"/> when the page may be left; <see langword="false"/> to stay.</returns>
+    public virtual Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
+
     /// <inheritdoc />
     public async Task OnNavigatedToAsync()
     {

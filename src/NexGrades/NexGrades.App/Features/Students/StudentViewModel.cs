@@ -39,6 +39,8 @@ public partial class StudentViewModel(
 
     /// <summary>Set while a lock-state refresh re-selects the current year, so the editor keeps its text.</summary>
     private bool _keepEditorOnYearChange;
+    // Set just before the page leaves by itself, so the leave guard does not ask a second time.
+    private bool _allowLeave;
     private string _loadedFirstName = string.Empty;
     private string _loadedLastName = string.Empty;
     private string _editingNoteOriginalText = string.Empty;
@@ -207,6 +209,7 @@ public partial class StudentViewModel(
     /// </summary>
     protected override async Task OnNavigatedToAsync(object? parameter)
     {
+        _allowLeave = false;
         _editingStudentId = parameter as int?;
 
         await using var db = await dbContextFactory.CreateDbContextAsync();
@@ -332,7 +335,7 @@ public partial class StudentViewModel(
         }
 
         snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-        navigation.GoBack();
+        LeaveWithoutPrompt();
     }
 
     /// <summary>Saves the name change of the student being edited, then leaves the page.</summary>
@@ -358,7 +361,7 @@ public partial class StudentViewModel(
         }
 
         snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-        navigation.GoBack();
+        LeaveWithoutPrompt();
     }
 
     /// <summary>Goes back without saving, asking first when the page holds unsaved input.</summary>
@@ -372,7 +375,32 @@ public partial class StudentViewModel(
             return;
         }
 
-        navigation.GoBack();
+        LeaveWithoutPrompt();
+    }
+
+    /// <summary>
+    /// Asks before sidebar navigation or the back button leaves the page with unsaved input. Skipped once the page
+    /// itself decided to leave (after saving, or after its own confirmation).
+    /// </summary>
+    public override async Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default)
+    {
+        if (_allowLeave || !HasUnsavedChanges)
+        {
+            return true;
+        }
+
+        return await ConfirmDiscardAsync(
+            "You have unsaved changes on this page. Leave the page and discard them?", cancellationToken);
+    }
+
+    /// <summary>Goes back without the leave guard asking a second time; re-arms the guard if going back fails.</summary>
+    private void LeaveWithoutPrompt()
+    {
+        _allowLeave = true;
+        if (!navigation.GoBack())
+        {
+            _allowLeave = false;
+        }
     }
 
     /// <summary>Asks whether unsaved input may be discarded; true when the user agrees.</summary>

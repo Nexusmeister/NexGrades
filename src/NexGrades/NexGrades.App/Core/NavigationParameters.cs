@@ -20,4 +20,8 @@ internal static class NavigationParameters
     /// <summary>Returns and removes the parameter stored for <paramref name="viewModelType"/>, or <see langword="null"/>.</summary>
     /// <param name="viewModelType">The view model that receives the parameter.</param>
     internal static object? Take(Type viewModelType) => _entries.TryRemove(viewModelType, out var parameter) ? parameter : null;
+
+    /// <summary>Removes the parameter stored for <paramref name="viewModelType"/> without returning it; does nothing when none is stored.</summary>
+    /// <param name="viewModelType">The view model whose unclaimed parameter is dropped.</param>
+    internal static void Discard(Type viewModelType) => _ = _entries.TryRemove(viewModelType, out _);
 }
