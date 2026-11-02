@@ -93,8 +93,9 @@ the telemetry rules (0002), with one exception that is decided below.
   failure (host creation, configuration, the database path, migration or host start) is logged at Critical through
   the host logger, or through the crash logger when the host logger is not available (for example, the host was
   not built). `StartupFailureHandler` then shows
-  one message box and exits with code 1. The box names the log folder once logging setup has run; if the file logger
-  could not be created, that folder may not exist. The box never contains exception text, and the exception is not
+  one message box and exits with code 1. The box names the log folder only when the file logger was actually created; otherwise it
+  omits the folder. Resolving the folder and recording the failure in telemetry are guarded, so the box and the
+  exit always happen. The box never contains exception text, and the exception is not
   rethrown.
 - **Startup and shutdown lines.** Once the host is built, startup writes the NexGrades version, OS, .NET runtime and
   environment, then the database file (the data source only, never the full connection string) and the log folder.

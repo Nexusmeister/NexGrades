@@ -98,4 +98,10 @@ public static class FileLogging
     /// Does nothing when file logging is not active.
     /// </summary>
     public static void Flush() => Log.CloseAndFlush();
+
+    /// <summary>
+    /// Whether a file logger was created and installed as the global logger. Serilog's default is a silent logger
+    /// of another type, so this is false when the log folder could not be used.
+    /// </summary>
+    public static bool IsActive => Log.Logger is Logger;
 }

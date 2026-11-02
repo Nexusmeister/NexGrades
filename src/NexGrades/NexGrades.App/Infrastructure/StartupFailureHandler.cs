@@ -42,18 +42,33 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
     /// available; may return <see langword="null"/>.
     /// </param>
     /// <param name="logDirectory">
-    /// The log folder to mention in the dialog, or <see langword="null"/> when it is not known at this point.
+    /// Resolves the log folder to mention in the dialog. It returns <see langword="null"/> when no file log exists,
+    /// and a throwing resolver is treated the same way, so the dialog then omits the folder.
+    /// </param>
+    /// <param name="markFailed">
+    /// Optional telemetry bookkeeping for the failure. It runs guarded: whatever it throws is ignored.
     /// </param>
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "The failure path must always reach the dialog and the exit, whatever the logger, the resolvers or the dialog throw.")]
     public void Handle(
         Exception exception,
         Func<ILogger?> primaryLogger,
         Func<ILogger?> fallbackLogger,
-        string? logDirectory)
+        Func<string?> logDirectory,
+        Action<Exception>? markFailed = null)
     {
         ArgumentNullException.ThrowIfNull(exception);
         ArgumentNullException.ThrowIfNull(primaryLogger);
         ArgumentNullException.ThrowIfNull(fallbackLogger);
+        ArgumentNullException.ThrowIfNull(logDirectory);
+
+        try
+        {
+            markFailed?.Invoke(exception);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Recording the startup failure in telemetry failed: {ex.GetType().Name}");
+        }
 
         try
         {
@@ -75,7 +90,7 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
 
         try
         {
-            dialog.Show(BuildMessage(logDirectory));
+            dialog.Show(BuildMessage(ResolveDirectory(logDirectory)));
         }
         catch (Exception ex)
         {
@@ -91,6 +106,19 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
         string.IsNullOrWhiteSpace(logDirectory)
             ? MessageWithoutLogFolder
             : string.Format(CultureInfo.CurrentCulture, _withLogFolder, logDirectory);
+
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "A folder that cannot be resolved is the same as no known folder; the dialog then omits it.")]
+    private static string? ResolveDirectory(Func<string?> resolver)
+    {
+        try
+        {
+            return resolver();
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "A logger that cannot be resolved is the same as no logger; the next one is tried.")]
     private static ILogger? Resolve(Func<ILogger?> resolver)

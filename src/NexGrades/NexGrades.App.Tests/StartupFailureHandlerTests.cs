@@ -16,7 +16,7 @@ public sealed class StartupFailureHandlerTests
         var primary = new CapturingLogger<object>();
         var fallback = new CapturingLogger<object>();
 
-        harness.Handler.Handle(_failure, () => primary, () => fallback, "logs");
+        harness.Handler.Handle(_failure, () => primary, () => fallback, () => "logs");
 
         var entry = Assert.Single(primary.Entries);
         Assert.Equal(LogLevel.Critical, entry.Level);
@@ -30,7 +30,7 @@ public sealed class StartupFailureHandlerTests
         var harness = new Harness();
         var fallback = new CapturingLogger<object>();
 
-        harness.Handler.Handle(_failure, () => null, () => fallback, "logs");
+        harness.Handler.Handle(_failure, () => null, () => fallback, () => "logs");
 
         var entry = Assert.Single(fallback.Entries);
         Assert.Equal(LogLevel.Critical, entry.Level);
@@ -43,7 +43,7 @@ public sealed class StartupFailureHandlerTests
         var harness = new Harness();
         var fallback = new CapturingLogger<object>();
 
-        harness.Handler.Handle(_failure, () => throw new InvalidOperationException("no host"), () => fallback, "logs");
+        harness.Handler.Handle(_failure, () => throw new InvalidOperationException("no host"), () => fallback, () => "logs");
 
         Assert.Single(fallback.Entries);
         Assert.Equal([StartupFailureHandler.FailureExitCode], harness.ExitCodes);
@@ -54,7 +54,7 @@ public sealed class StartupFailureHandlerTests
     {
         var harness = new Harness();
 
-        var ex = Record.Exception(() => harness.Handler.Handle(_failure, () => null, () => null, "logs"));
+        var ex = Record.Exception(() => harness.Handler.Handle(_failure, () => null, () => null, () => "logs"));
 
         Assert.Null(ex);
         Assert.Single(harness.Dialog.Messages);
@@ -66,7 +66,7 @@ public sealed class StartupFailureHandlerTests
     {
         var harness = new Harness();
 
-        harness.Handler.Handle(_failure, () => new CapturingLogger<object>(), () => null, "logs");
+        harness.Handler.Handle(_failure, () => new CapturingLogger<object>(), () => null, () => "logs");
 
         Assert.Single(harness.Dialog.Messages);
     }
@@ -76,7 +76,7 @@ public sealed class StartupFailureHandlerTests
     {
         var harness = new Harness();
 
-        harness.Handler.Handle(_failure, () => new CapturingLogger<object>(), () => null, "logs");
+        harness.Handler.Handle(_failure, () => new CapturingLogger<object>(), () => null, () => "logs");
 
         Assert.Equal([1], harness.ExitCodes);
     }
@@ -86,7 +86,7 @@ public sealed class StartupFailureHandlerTests
     {
         var harness = new Harness { Dialog = { Throw = true } };
 
-        var ex = Record.Exception(() => harness.Handler.Handle(_failure, () => null, () => null, "logs"));
+        var ex = Record.Exception(() => harness.Handler.Handle(_failure, () => null, () => null, () => "logs"));
 
         Assert.Null(ex);
         Assert.Equal([1], harness.ExitCodes);
@@ -97,7 +97,7 @@ public sealed class StartupFailureHandlerTests
     {
         var harness = new Harness();
 
-        var ex = Record.Exception(() => harness.Handler.Handle(_failure, () => new ThrowingLogger(), () => null, "logs"));
+        var ex = Record.Exception(() => harness.Handler.Handle(_failure, () => new ThrowingLogger(), () => null, () => "logs"));
 
         Assert.Null(ex);
         Assert.Single(harness.Dialog.Messages);
@@ -109,7 +109,7 @@ public sealed class StartupFailureHandlerTests
     {
         var harness = new Harness();
 
-        harness.Handler.Handle(_failure, () => new CapturingLogger<object>(), () => null, "/var/logs/nexgrades");
+        harness.Handler.Handle(_failure, () => new CapturingLogger<object>(), () => null, () => "/var/logs/nexgrades");
 
         var message = Assert.Single(harness.Dialog.Messages);
         Assert.Contains("/var/logs/nexgrades", message, StringComparison.Ordinal);
@@ -124,11 +124,60 @@ public sealed class StartupFailureHandlerTests
     {
         var harness = new Harness();
 
-        harness.Handler.Handle(_failure, () => null, () => null, logDirectory);
+        harness.Handler.Handle(_failure, () => null, () => null, () => logDirectory);
 
         var message = Assert.Single(harness.Dialog.Messages);
         Assert.Equal(StartupFailureHandler.MessageWithoutLogFolder, message);
         Assert.DoesNotContain(SecretText, message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Handle_ShowsDialogWithoutFolderAndExits_WhenLogDirectoryResolverThrows()
+    {
+        var harness = new Harness();
+
+        var ex = Record.Exception(() => harness.Handler.Handle(
+            _failure,
+            () => null,
+            () => null,
+            () => throw new InvalidOperationException("no paths")));
+
+        Assert.Null(ex);
+        Assert.Equal([StartupFailureHandler.MessageWithoutLogFolder], harness.Dialog.Messages);
+        Assert.Equal([1], harness.ExitCodes);
+    }
+
+    [Fact]
+    public void Handle_ShowsDialogAndExits_WhenPrimaryThrowsAndFallbackIsNull()
+    {
+        var harness = new Harness();
+
+        var ex = Record.Exception(() => harness.Handler.Handle(
+            _failure,
+            () => throw new InvalidOperationException("no host"),
+            () => null,
+            () => "logs"));
+
+        Assert.Null(ex);
+        Assert.Single(harness.Dialog.Messages);
+        Assert.Equal([1], harness.ExitCodes);
+    }
+
+    [Fact]
+    public void Handle_ShowsDialogAndExits_WhenMarkFailedThrows()
+    {
+        var harness = new Harness();
+
+        var ex = Record.Exception(() => harness.Handler.Handle(
+            _failure,
+            () => null,
+            () => null,
+            () => "logs",
+            _ => throw new InvalidOperationException("telemetry failed")));
+
+        Assert.Null(ex);
+        Assert.Single(harness.Dialog.Messages);
+        Assert.Equal([1], harness.ExitCodes);
     }
 
     private sealed class Harness

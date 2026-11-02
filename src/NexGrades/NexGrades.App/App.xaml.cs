@@ -116,25 +116,38 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            if (_host is not null)
-            {
-                NexGradesTelemetry.MarkFailed(startup, ex);
-                _ = startup?.SetTag(NexGradesTelemetry.OutcomeTag, NexGradesTelemetry.Outcomes.Error);
-                RecordStartupDuration(NexGradesTelemetry.Outcomes.Error);
-            }
-
-            var host = _host;
-            new StartupFailureHandler(new MessageBoxStartupErrorDialog(), ExitWithCode).Handle(
-                ex,
-                () => host?.Services.GetService<ILogger<App>>(),
-                () => _crashLoggerFactory?.CreateLogger<App>(),
-                // The folder only exists to the user once the file logger was created.
-                _crashLoggerFactory is null ? null : AppDataPaths.CreateDefault().LogDirectory);
+            ReportStartupFailure(ex, startup);
         }
         finally
         {
             startup?.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Hands a startup failure to <see cref="StartupFailureHandler"/>. Everything that can throw (telemetry, the log
+    /// folder) is passed as a delegate so the handler runs it guarded and always reaches the dialog and the exit.
+    /// </summary>
+    private void ReportStartupFailure(Exception exception, Activity? startup)
+    {
+        var host = _host;
+        new StartupFailureHandler(new MessageBoxStartupErrorDialog(), ExitWithCode).Handle(
+            exception,
+            () => host?.Services.GetService<ILogger<App>>(),
+            () => _crashLoggerFactory?.CreateLogger<App>(),
+            // Only mention the folder when the file logger was actually created.
+            () => FileLogging.IsActive ? AppDataPaths.CreateDefault().LogDirectory : null,
+            failure =>
+            {
+                if (host is null)
+                {
+                    return;
+                }
+
+                NexGradesTelemetry.MarkFailed(startup, failure);
+                _ = startup?.SetTag(NexGradesTelemetry.OutcomeTag, NexGradesTelemetry.Outcomes.Error);
+                RecordStartupDuration(NexGradesTelemetry.Outcomes.Error);
+            });
     }
 
     /// <summary>
