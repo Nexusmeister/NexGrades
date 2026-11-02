@@ -69,8 +69,8 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
 - To see logs, metrics and traces live, run the AppHost command above and open the Aspire dashboard at the URL it
   prints. Running `NexGrades.App` on its own exports nothing unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. See
   `docs/decisions/0002-telemetry-and-privacy.md`.
-- Pending migrations are applied at startup by `DatabaseMigrationService`, which also bootstraps an Active
-  school year if none exists.
+- Pending migrations are applied at startup by `DatabaseMigrationService`. Then `SchoolYearService.EnsureActiveYearAsync`
+  bootstraps an Active school year if none exists. `App.xaml.cs` calls both, in that order.
 - The App is a GUI and cannot be meaningfully exercised headless. Verify changes with a build of
   `NexGrades.App` plus `dotnet test`; say so explicitly when a change also needs a manual UI check.
 
@@ -111,7 +111,7 @@ they record *why* the model is shaped the way it is.
 - **Closed years are locked.** Writes to a Closed year throw `ClosedYearException` unless the year is
   unlocked, and every allowed write produces `AuditEntry` rows. Go through `UnlockService` for unlocking.
 - **Averages use the snapshotted `GradeBucket.Weight`**, never the live `BucketTemplate.Weight`.
-- **Business rules live in `NexGrades.Domain`** (services such as `GradeService`, `EnrollmentService`,
+- **Business rules live in `NexGrades.Domain`** (services such as `GradeService`, `EnrollmentService`, `SchoolYearService`,
   `RolloverService`, `YearCloseService`). New rules go there, with tests, not into view models.
 - **No pupil data in logs or telemetry.** Logs, metrics and traces never carry names, grades, notes, record ids or
   other record content, in a message, tag or metric dimension. Tag keys come only from `NexGradesTelemetry`. See

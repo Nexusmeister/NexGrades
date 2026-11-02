@@ -11,6 +11,7 @@ using NexGrades.App.Logging;
 using NexGrades.Common.Storage;
 using NexGrades.Data.Diagnostics;
 using NexGrades.Data.Services;
+using NexGrades.Domain.Services;
 using NexGrades.ServiceDefaults;
 using Serilog.Extensions.Logging;
 
@@ -109,6 +110,7 @@ public partial class App : Application
             await using var scope = _host.Services.CreateAsyncScope();
             var mig = scope.ServiceProvider.GetRequiredService<DatabaseMigrationService>();
             await mig.RunAsync(CancellationToken.None);
+            await scope.ServiceProvider.GetRequiredService<SchoolYearService>().EnsureActiveYearAsync(CancellationToken.None);
 
             await _host.StartAsync();
 

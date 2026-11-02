@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NexGrades.Data;
-using NexGrades.Data.Entities;
 using NexGrades.Data.Services;
 
 namespace NexGrades.Tests;
@@ -64,7 +63,7 @@ public class DatabaseMigrationServiceLoggingTests
     }
 
     [Fact]
-    public async Task RunAsync_LogsMigrationAndBootstrapLines_OnFreshDatabase()
+    public async Task RunAsync_LogsMigrationLines_OnFreshDatabase()
     {
         using var database = new UnmigratedDatabase();
         var logger = new CapturingLogger<DatabaseMigrationService>();
@@ -73,7 +72,6 @@ public class DatabaseMigrationServiceLoggingTests
 
         Assert.Contains(logger.Entries, e => e.Level == LogLevel.Information && e.Message.StartsWith("Checking database migrations; ", StringComparison.Ordinal) && !e.Message.Contains("; 0 pending", StringComparison.Ordinal));
         Assert.Contains(logger.Entries, e => e.Level == LogLevel.Information && e.Message == "Database migrations applied");
-        Assert.Contains(logger.Entries, e => e.Level == LogLevel.Information && e.Message == "Created an Active school year");
         Assert.DoesNotContain(logger.Entries, e => e.Level >= LogLevel.Warning);
     }
 
@@ -91,36 +89,16 @@ public class DatabaseMigrationServiceLoggingTests
     }
 
     [Fact]
-    public async Task RunAsync_DoesNotLogBootstrapLine_WhenAnActiveYearExists()
+    public async Task RunAsync_CreatesNoSchoolYear()
     {
         using var db = new SqliteTestDatabase();
-        await using (var seed = db.CreateContext())
-        {
-            seed.SchoolYears.Add(new SchoolYear { Label = "ZZ-LABEL", StartDate = new DateTime(2000, 8, 1), EndDate = new DateTime(2001, 7, 31), Status = SchoolYearStatus.Active });
-            await seed.SaveChangesAsync();
-        }
-
         var logger = new CapturingLogger<DatabaseMigrationService>();
 
         await new DatabaseMigrationService(db.CreateContextFactory(), logger).RunAsync();
 
+        await using var verify = db.CreateContext();
+        Assert.Empty(await verify.SchoolYears.ToListAsync());
         Assert.DoesNotContain(logger.Entries, e => e.Message == "Created an Active school year");
-        await using var verify = db.CreateContext();
-        Assert.Equal(1, await verify.SchoolYears.CountAsync());
-    }
-
-    [Fact]
-    public async Task RunAsync_LogsNoSchoolYearLabel_InAnyMessage()
-    {
-        using var db = new SqliteTestDatabase();
-        var logger = new CapturingLogger<DatabaseMigrationService>();
-
-        await new DatabaseMigrationService(db.CreateContextFactory(), logger).RunAsync();
-
-        await using var verify = db.CreateContext();
-        var label = (await verify.SchoolYears.SingleAsync()).Label;
-        Assert.NotEmpty(logger.Entries);
-        Assert.All(logger.Entries, e => Assert.DoesNotContain(label, e.Message, StringComparison.Ordinal));
     }
 
     [Fact]
