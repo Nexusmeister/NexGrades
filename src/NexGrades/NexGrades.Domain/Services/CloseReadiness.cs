@@ -6,8 +6,8 @@ namespace NexGrades.Domain.Services;
 /// close.
 /// </summary>
 /// <param name="BlockingIssues">Problems that must be fixed before the year can close.</param>
-/// <param name="Warnings">Advisory messages. They never block the close.</param>
-public sealed record CloseReadiness(IReadOnlyList<string> BlockingIssues, IReadOnlyList<string> Warnings)
+/// <param name="Warnings">Advisory findings. They never block the close.</param>
+public sealed record CloseReadiness(IReadOnlyList<CloseReadinessIssue> BlockingIssues, IReadOnlyList<CloseReadinessIssue> Warnings)
 {
     /// <summary>Whether <see cref="YearCloseService.CloseSchoolYearAsync"/> would succeed right now.</summary>
     public bool CanClose => BlockingIssues.Count == 0;

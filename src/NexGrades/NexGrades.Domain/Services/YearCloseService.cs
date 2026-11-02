@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
 using NexGrades.Domain.Exceptions;
@@ -8,12 +9,15 @@ namespace NexGrades.Domain.Services;
 
 /// <summary>
 /// Implements the year close workflow: reports readiness (blocking issues and advisory warnings), then, once
-/// nothing blocks it, flips the year to <see cref="SchoolYearStatus.Closed"/>.
+/// nothing blocks it, flips the year to <see cref="SchoolYearStatus.Closed"/>. Closing the Active year goes
+/// through <see cref="CloseAndActivateNextYearAsync"/>, which activates the next year in the same transaction,
+/// so the app never ends up with no Active year.
 /// </summary>
 /// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
 /// <param name="clock">Source of "now", used for the closing timestamp and for active enrollments.</param>
+/// <param name="logger">Receives a content-free line when the active year changes.</param>
 /// <remarks>Opens a short-lived context per call; see <see cref="EnrollmentService"/> for why.</remarks>
-public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFactory, IClock clock)
+public sealed partial class YearCloseService(IDbContextFactory<AppDbContext> contextFactory, IClock clock, ILogger<YearCloseService> logger)
 {
     /// <summary>
     /// Reports what would prevent <paramref name="schoolYearId"/> from closing right now (blocking), and
@@ -27,7 +31,7 @@ public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFact
         });
 
     /// <summary>
-    /// Readiness check on a caller-supplied context, so <see cref="CloseSchoolYearAsync"/> checks and closes
+    /// Readiness check on a caller-supplied context, so the close operations check and close
     /// within the same unit of work.
     /// </summary>
     private async Task<CloseReadiness> GetCloseReadinessAsync(
@@ -47,16 +51,15 @@ public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFact
             .Include(ci => ci.SubjectInstances).ThenInclude(si => si.SubjectParticipations)
             .ToListAsync(cancellationToken);
 
-        var blockingIssues = new List<string>();
-        var warnings = new List<string>();
+        var blockingIssues = new List<CloseReadinessIssue>();
+        var warnings = new List<CloseReadinessIssue>();
 
         foreach (var classInstance in classInstances)
         {
             if (classInstance.Status == ClassInstanceStatus.Active)
             {
-                blockingIssues.Add(
-                    $"Class instance '{classInstance.Name}' (Id={classInstance.Id}) is still Active; " +
-                    "it must be rolled forward or archived before the year can close.");
+                blockingIssues.Add(new CloseReadinessIssue(
+                    CloseReadinessIssueKind.ClassStillActive, classInstance.Id, classInstance.Name));
             }
 
             var activeStudentIds = classInstance.Enrollments
@@ -67,7 +70,24 @@ public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFact
             AddSubjectInstanceWarnings(classInstance, activeStudentIds, warnings);
         }
 
-        return new CloseReadiness(blockingIssues, warnings);
+        var studentIds = warnings.Where(w => w.StudentId is not null).Select(w => w.StudentId!.Value).Distinct().ToList();
+        var students = await context.Students.AsNoTracking()
+            .Where(s => studentIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, cancellationToken);
+
+        var namedWarnings = warnings
+            .Select(w => w.StudentId is { } id && students.TryGetValue(id, out var student)
+                ? w with { StudentFirstName = student.FirstName, StudentLastName = student.LastName }
+                : w)
+            .OrderBy(w => w.ClassName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(w => w.SubjectName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(w => w.StudentLastName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(w => w.StudentFirstName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return new CloseReadiness(
+            [.. blockingIssues.OrderBy(i => i.ClassName, StringComparer.OrdinalIgnoreCase)],
+            namedWarnings);
     }
 
     /// <summary>
@@ -75,22 +95,26 @@ public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFact
     /// and participating students without a grade.
     /// </summary>
     private static void AddSubjectInstanceWarnings(
-        ClassInstance classInstance, HashSet<int> activeStudentIds, List<string> warnings)
+        ClassInstance classInstance, HashSet<int> activeStudentIds, List<CloseReadinessIssue> warnings)
     {
         foreach (var subjectInstance in classInstance.SubjectInstances)
         {
+            var subjectName = subjectInstance.Subject.Name;
+
             var totalGradeCount = subjectInstance.GradeBuckets.Sum(gb => gb.Grades.Count);
             if (totalGradeCount == 0)
             {
-                warnings.Add(
-                    $"Subject '{subjectInstance.Subject.Name}' in class '{classInstance.Name}' has no grades recorded in any bucket.");
+                warnings.Add(new CloseReadinessIssue(
+                    CloseReadinessIssueKind.SubjectWithoutGrades, classInstance.Id, classInstance.Name,
+                    subjectInstance.Id, subjectName));
             }
 
             var weightSum = subjectInstance.GradeBuckets.Sum(gb => gb.Weight);
             if (weightSum != 100m)
             {
-                warnings.Add(
-                    $"Subject '{subjectInstance.Subject.Name}' in class '{classInstance.Name}' has bucket weights totalling {weightSum}, not 100.");
+                warnings.Add(new CloseReadinessIssue(
+                    CloseReadinessIssueKind.BucketWeightsNotHundred, classInstance.Id, classInstance.Name,
+                    subjectInstance.Id, subjectName, WeightTotal: weightSum));
             }
 
             var exemptStudentIds = subjectInstance.SubjectParticipations
@@ -111,8 +135,9 @@ public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFact
                     .Any(gb => gb.Grades.Any(g => g.StudentId == studentId));
                 if (!hasGrade)
                 {
-                    warnings.Add(
-                        $"Student {studentId} participates in subject '{subjectInstance.Subject.Name}' in class '{classInstance.Name}' but has no grades recorded.");
+                    warnings.Add(new CloseReadinessIssue(
+                        CloseReadinessIssueKind.StudentWithoutGrade, classInstance.Id, classInstance.Name,
+                        subjectInstance.Id, subjectName, studentId));
                 }
             }
         }
@@ -123,22 +148,96 @@ public sealed class YearCloseService(IDbContextFactory<AppDbContext> contextFact
     /// <see cref="SchoolYearStatus.Closed"/> and <see cref="SchoolYear.ClosedOn"/> to now, but only once
     /// every blocking issue from <see cref="GetCloseReadinessAsync(int, CancellationToken)"/> has been resolved.
     /// </summary>
-    /// <exception cref="InvariantViolationException">Blocking issues remain; they are listed in the message.</exception>
+    /// <exception cref="InvariantViolationException">
+    /// The year is Active (use <see cref="CloseAndActivateNextYearAsync"/>), or blocking issues remain; their
+    /// class ids are listed in the message.
+    /// </exception>
     public Task CloseSchoolYearAsync(int schoolYearId, CancellationToken cancellationToken = default) =>
         DomainOperation.RunAsync("YearCloseService.CloseSchoolYear", async () =>
         {
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
             var readiness = await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);
-            if (!readiness.CanClose)
+            var schoolYear = await context.SchoolYears.FirstAsync(sy => sy.Id == schoolYearId, cancellationToken);
+            if (schoolYear.Status == SchoolYearStatus.Active)
             {
                 throw new InvariantViolationException(
-                    $"Cannot close school year {schoolYearId}: " + string.Join(" ", readiness.BlockingIssues));
+                    $"School year {schoolYearId} is Active; close it with {nameof(CloseAndActivateNextYearAsync)} so that the next year becomes Active.");
             }
 
-            var schoolYear = await context.SchoolYears.FirstAsync(sy => sy.Id == schoolYearId, cancellationToken);
+            EnsureCanClose(schoolYearId, readiness);
+
             schoolYear.Status = SchoolYearStatus.Closed;
             schoolYear.ClosedOn = clock.Now;
 
             await context.SaveChangesAsync(cancellationToken);
         });
+
+    /// <summary>
+    /// Closes the Active <paramref name="schoolYearId"/> and activates the Planned <paramref name="nextSchoolYearId"/>
+    /// in one transaction, so a failure leaves both years unchanged and there is never a moment without an Active
+    /// year.
+    /// </summary>
+    /// <exception cref="InvariantViolationException">
+    /// Either year is missing, the years are the same, the first is not Active, the second is not Planned or does
+    /// not start after the first, or blocking issues remain (their class ids are listed in the message).
+    /// </exception>
+    public Task CloseAndActivateNextYearAsync(int schoolYearId, int nextSchoolYearId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("YearCloseService.CloseAndActivateNextYear", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+
+            if (schoolYearId == nextSchoolYearId)
+            {
+                throw new InvariantViolationException($"School year {schoolYearId} cannot be its own next year.");
+            }
+
+            var old = await context.SchoolYears.FirstOrDefaultAsync(sy => sy.Id == schoolYearId, cancellationToken)
+                ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
+            var next = await context.SchoolYears.FirstOrDefaultAsync(sy => sy.Id == nextSchoolYearId, cancellationToken)
+                ?? throw new InvariantViolationException($"School year {nextSchoolYearId} does not exist.");
+
+            if (old.Status != SchoolYearStatus.Active)
+            {
+                throw new InvariantViolationException(
+                    $"School year {schoolYearId} is not Active (current status: {old.Status}).");
+            }
+
+            if (next.Status != SchoolYearStatus.Planned)
+            {
+                throw new InvariantViolationException(
+                    $"School year {nextSchoolYearId} is not Planned (current status: {next.Status}).");
+            }
+
+            if (next.StartDate <= old.StartDate)
+            {
+                throw new InvariantViolationException(
+                    $"School year {nextSchoolYearId} does not start after school year {schoolYearId}.");
+            }
+
+            var readiness = await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);
+            EnsureCanClose(schoolYearId, readiness);
+
+            old.Status = SchoolYearStatus.Closed;
+            old.ClosedOn = clock.Now;
+            next.Status = SchoolYearStatus.Active;
+
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            LogYearClosedAndNextActivated();
+        });
+
+    /// <summary>Throws when blocking issues remain. The message carries class ids only, never names.</summary>
+    private static void EnsureCanClose(int schoolYearId, CloseReadiness readiness)
+    {
+        if (!readiness.CanClose)
+        {
+            throw new InvariantViolationException(
+                $"Cannot close school year {schoolYearId}: classes still Active: " +
+                string.Join(", ", readiness.BlockingIssues.Select(i => i.ClassInstanceId)) + ".");
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Closed the active school year and activated the next one")]
+    private partial void LogYearClosedAndNextActivated();
 }

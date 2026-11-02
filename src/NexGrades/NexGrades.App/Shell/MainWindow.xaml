@@ -6,6 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:classes="clr-namespace:NexGrades.App.Features.Classes"
         xmlns:pages="clr-namespace:NexGrades.App.Features.Home"
+        xmlns:schoolYears="clr-namespace:NexGrades.App.Features.SchoolYears"
         xmlns:settings="clr-namespace:NexGrades.App.Features.Settings"
         xmlns:students="clr-namespace:NexGrades.App.Features.Students"
         xmlns:subjects="clr-namespace:NexGrades.App.Features.Subjects"
@@ -74,6 +75,11 @@
                 <ui:NavigationViewItem Content="Subjects" TargetPageType="{x:Type subjects:SubjectsOverviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Glasses24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="School year" TargetPageType="{x:Type schoolYears:SchoolYearPage}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="CalendarLtr24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>

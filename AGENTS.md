@@ -82,6 +82,12 @@ they record *why* the model is shaped the way it is.
 
 - **SchoolYear** — the root scope (e.g. "2025/26", August–July). Status `Planned` → `Active` → `Closed`.
   At most one year is Active. A Closed year is read-only unless temporarily unlocked (`UnlockedUntil`).
+  `SchoolYearService.CreateNextYearAsync` creates the Planned successor of the Active year; only one Planned
+  successor may exist at a time. `YearCloseService.CloseAndActivateNextYearAsync` closes the Active year and
+  activates the next one in a single transaction. It is the only way to switch years: `CloseSchoolYearAsync`
+  refuses an Active year. `RolloverService.GetClassRolloverStatesAsync` lets a partly finished rollover resume
+  from database state alone. Close readiness is reported as structured `CloseReadinessIssue` values, never as
+  English sentences; the UI words them.
 - **ClassGroup** — the persistent cohort across years. Carries no grades.
 - **ClassInstance** — one cohort in one school year (e.g. "5A"); where teaching happens. A rename between
   years (5A → 6A) is a new row, never an update of a historic one.
@@ -189,7 +195,7 @@ particular:
 - **Feature folders:** each screen lives in `NexGrades.App/Features/<Area>/` as `<Name>Page.xaml` (+ code
   behind) and `<Name>ViewModel.cs`. Register every new page, view model and service in
   `NexGrades.App/Extensions/HostBuilderExtensions.cs`.
-- **Page lifetimes and navigation:** navigation-root overview pages (Home, Classes, Students, Subjects, Settings)
+- **Page lifetimes and navigation:** navigation-root overview pages (Home, Classes, Students, Subjects, School year, Settings)
   and their view models are singletons. Add, edit and detail pages and their view models are transient. Always
   register a page and its view model with the same lifetime. To pass a parameter (such as an id) to another page,
   call `PageNavigator.NavigateWithHierarchy<TPage>(parameter)` (`NexGrades.App/Core/PageNavigator.cs`) from the
