@@ -72,6 +72,9 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
   `docs/decisions/0002-telemetry-and-privacy.md`.
 - Pending migrations are applied at startup by `DatabaseMigrationService`. Then `SchoolYearService.EnsureActiveYearAsync`
   bootstraps an Active school year if none exists. `App.xaml.cs` calls both, in that order.
+- A startup failure at any step (host creation, configuration, database path, migration, host start) is logged at
+  Critical, shown once in a message box, and ends the process with exit code 1 (`StartupFailureHandler`, called from
+  `App.OnStartup`). See `docs/decisions/0003-application-logging.md`.
 - The App is a GUI and cannot be meaningfully exercised headless. Verify changes with a build of
   `NexGrades.App` plus `dotnet test`; say so explicitly when a change also needs a manual UI check.
 
