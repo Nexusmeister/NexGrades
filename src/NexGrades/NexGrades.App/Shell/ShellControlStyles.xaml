@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                    xmlns:shell="clr-namespace:NexGrades.App.Shell">
+    <ResourceDictionary.MergedDictionaries>
+        <ui:ControlsDictionary />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- WPF-UI styles are implicit and keyed by the exact type, so the subclass needs its own entry or it gets no template. -->
+    <Style TargetType="{x:Type shell:GuardedNavigationView}"
+           BasedOn="{StaticResource {x:Type ui:NavigationView}}" />
+</ResourceDictionary>
