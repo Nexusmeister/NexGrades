@@ -41,7 +41,7 @@ public sealed class AssessmentService(IDbContextFactory<AppDbContext> contextFac
                 .Select(b => new { b.Id, b.SubjectInstance.ClassInstance.SchoolYear })
                 .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new InvariantViolationException($"Grade bucket {gradeBucketId} does not exist.");
-            EnsureDateInYear(date, bucket.SchoolYear);
+            SchoolYearDateRule.EnsureDateInYear(date, bucket.SchoolYear);
 
             var assessment = new Assessment { GradeBucketId = gradeBucketId, Title = normalizedTitle, Date = date };
             context.Assessments.Add(assessment);
@@ -76,7 +76,7 @@ public sealed class AssessmentService(IDbContextFactory<AppDbContext> contextFac
             }
 
             var subjectInstance = assessment.GradeBucket.SubjectInstance;
-            EnsureDateInYear(date, subjectInstance.ClassInstance.SchoolYear);
+            SchoolYearDateRule.EnsureDateInYear(date, subjectInstance.ClassInstance.SchoolYear);
 
             if (date != assessment.Date)
             {
@@ -137,16 +137,6 @@ public sealed class AssessmentService(IDbContextFactory<AppDbContext> contextFac
             .FirstOrDefaultAsync(a => a.Id == assessmentId, cancellationToken)
         ?? throw new InvariantViolationException($"Assessment {assessmentId} does not exist.");
 
-    private static void EnsureDateInYear(DateOnly date, SchoolYear schoolYear)
-    {
-        var asDateTime = date.ToDateTime(TimeOnly.MinValue);
-        if (asDateTime < schoolYear.StartDate.Date || asDateTime > schoolYear.EndDate.Date)
-        {
-            throw new InvariantViolationException(
-                $"{date:O} is outside school year {schoolYear.Id} ({DateOnly.FromDateTime(schoolYear.StartDate):O} to {DateOnly.FromDateTime(schoolYear.EndDate):O}).");
-        }
-    }
-
     /// <summary>
     /// Moves the active grades that carry the assessment's old date to <paramref name="newDate"/>, after
     /// checking that every affected student is still gradable on it. Throws before changing anything.
@@ -172,10 +162,9 @@ public sealed class AssessmentService(IDbContextFactory<AppDbContext> contextFac
             .ToListAsync(cancellationToken))
             .ToHashSet();
 
-        var newDateTime = newDate.ToDateTime(TimeOnly.MinValue);
         var blocked = studentIds
             .Where(id => exemptIds.Contains(id)
-                || !enrollments.Any(e => e.StudentId == id && EnrollmentActivity.IsActive(e, newDateTime)))
+                || !enrollments.Any(e => e.StudentId == id && EnrollmentActivity.IsActiveOn(e.JoinedOn, e.LeftOn, newDate)))
             .Distinct()
             .Order()
             .ToList();

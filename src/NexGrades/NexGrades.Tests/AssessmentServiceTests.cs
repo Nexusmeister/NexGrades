@@ -311,6 +311,36 @@ public class AssessmentServiceTests
     }
 
     [Fact]
+    public async Task EditAssessmentAsync_Succeeds_WhenTheNewDateIsTheJoinDay_AndJoinedOnHasATimeOfDay()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", joinedOn: new DateTime(2025, 9, 10, 9, 15, 0));
+        var id = await seed.AddAssessmentAsync("Test one", Day);
+        var gradeId = await seed.AddGradeAsync(student, 2.0m, Day, id);
+
+        await CreateService(db).EditAssessmentAsync(id, "Test one", new DateOnly(2025, 9, 10));
+
+        Assert.Equal(new DateOnly(2025, 9, 10), (await LoadGradeAsync(db, gradeId)).RecordedOn);
+    }
+
+    [Fact]
+    public async Task EditAssessmentAsync_Throws_WhenTheNewDateIsTheLeaveDay_AndLeftOnHasATimeOfDay()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", leftOn: new DateTime(2025, 9, 20, 14, 30, 0));
+        var id = await seed.AddAssessmentAsync("Test one", Day);
+        var gradeId = await seed.AddGradeAsync(student, 2.0m, Day, id);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db).EditAssessmentAsync(id, "Test one", new DateOnly(2025, 9, 20)));
+
+        Assert.Equal(Day, (await LoadAsync(db, id)).Date);
+        Assert.Equal(Day, (await LoadGradeAsync(db, gradeId)).RecordedOn);
+    }
+
+    [Fact]
     public async Task EditAssessmentAsync_Throws_WhenTheNewDateIsTheStudentsLeaveDate()
     {
         using var db = new SqliteTestDatabase();

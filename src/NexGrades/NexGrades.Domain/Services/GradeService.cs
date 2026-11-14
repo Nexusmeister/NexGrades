@@ -29,8 +29,8 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
     /// </summary>
     /// <exception cref="InvariantViolationException">
     /// The grade value is not on the legal grading scale, the bucket does not exist, the student was not
-    /// enrolled in the owning class instance at the time of <paramref name="recordedOn"/>, or the student is
-    /// exempt from the owning subject instance.
+    /// enrolled in the owning class instance at the time of <paramref name="recordedOn"/>, the student is
+    /// exempt from the owning subject instance, or <paramref name="recordedOn"/> is outside the school year.
     /// </exception>
     public Task<Grade> RecordGradeAsync(
         int gradeBucketId,
@@ -47,11 +47,12 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
 
             var bucket = await context.GradeBuckets
-                .Include(b => b.SubjectInstance)
+                .Include(b => b.SubjectInstance).ThenInclude(si => si.ClassInstance).ThenInclude(ci => ci.SchoolYear)
                 .FirstOrDefaultAsync(b => b.Id == gradeBucketId, cancellationToken)
                 ?? throw new InvariantViolationException($"Grade bucket {gradeBucketId} does not exist.");
 
             await EnsureGradableAsync(context, bucket, studentId, recordedOn, cancellationToken);
+            SchoolYearDateRule.EnsureDateInYear(recordedOn, bucket.SubjectInstance.ClassInstance.SchoolYear);
 
             var grade = new Grade
             {
@@ -122,7 +123,8 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
     /// </summary>
     /// <exception cref="InvariantViolationException">
     /// The grade does not exist, is voided or belongs to a voided assessment, the value is not on the grading
-    /// scale, the student was not enrolled or is exempt on <paramref name="recordedOn"/>, or a label or
+    /// scale, the student was not enrolled or is exempt on <paramref name="recordedOn"/>, the date is outside
+    /// the school year, or a label or
     /// comment is too long.
     /// </exception>
     /// <exception cref="ClosedYearException">The year is closed and not unlocked.</exception>
@@ -153,6 +155,7 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
             }
 
             await EnsureGradableAsync(context, grade.GradeBucket, grade.StudentId, recordedOn, cancellationToken);
+            SchoolYearDateRule.EnsureDateInYear(recordedOn, grade.GradeBucket.SubjectInstance.ClassInstance.SchoolYear);
 
             grade.Value = value;
             grade.RecordedOn = recordedOn;
@@ -228,8 +231,7 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
         // of that date) does not satisfy it, even if some enrollment row for that class instance exists.
         var enrollment = await context.Enrollments
             .FirstOrDefaultAsync(e => e.StudentId == studentId && e.ClassInstanceId == classInstanceId, cancellationToken);
-        var dateAsDateTime = date.ToDateTime(TimeOnly.MinValue);
-        if (enrollment is null || !EnrollmentActivity.IsActive(enrollment, dateAsDateTime))
+        if (enrollment is null || !EnrollmentActivity.IsActiveOn(enrollment.JoinedOn, enrollment.LeftOn, date))
         {
             throw new InvariantViolationException(
                 $"Student {studentId} was not enrolled in class instance {classInstanceId} (which owns grade bucket {bucket.Id}) " +
@@ -252,7 +254,7 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
 
     private static async Task<Grade> LoadGradeAsync(AppDbContext context, int gradeId, CancellationToken cancellationToken) =>
         await context.Grades
-            .Include(g => g.GradeBucket).ThenInclude(b => b.SubjectInstance)
+            .Include(g => g.GradeBucket).ThenInclude(b => b.SubjectInstance).ThenInclude(si => si.ClassInstance).ThenInclude(ci => ci.SchoolYear)
             .Include(g => g.Assessment)
             .FirstOrDefaultAsync(g => g.Id == gradeId, cancellationToken)
         ?? throw new InvariantViolationException($"Grade {gradeId} does not exist.");

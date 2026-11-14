@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.Data.Entities;
 using NexGrades.Domain.Exceptions;
@@ -201,6 +202,139 @@ public class GradeServiceAssessmentTests
                 assessmentId, student, 2.0m, new string('x', GradeService.MaxCommentLength + 1)));
 
         Assert.Equal(0, await CountGradesAsync(db));
+    }
+
+    // Enrollment day rule and school year dates
+
+    [Fact]
+    public async Task RecordGradeAsync_Succeeds_OnTheJoinDay_WhenJoinedOnHasATimeOfDay()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", joinedOn: new DateTime(2025, 9, 15, 9, 15, 0));
+
+        var grade = await CreateService(db).RecordGradeAsync(seed.BucketId, student, 2.0m, Day);
+
+        Assert.Equal(Day, (await LoadGradeAsync(db, grade.Id)).RecordedOn);
+    }
+
+    [Fact]
+    public async Task RecordGradeAsync_Throws_TheDayBeforeTheJoinDay_WhenJoinedOnHasATimeOfDay()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", joinedOn: new DateTime(2025, 9, 15, 9, 15, 0));
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db).RecordGradeAsync(seed.BucketId, student, 2.0m, Day.AddDays(-1)));
+
+        Assert.Equal(0, await CountGradesAsync(db));
+    }
+
+    [Fact]
+    public async Task RecordAssessmentGradeAsync_Succeeds_OnTheJoinDay_WhenJoinedOnHasATimeOfDay()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", joinedOn: new DateTime(2025, 9, 15, 9, 15, 0));
+        var assessmentId = await seed.AddAssessmentAsync("Test one", Day);
+
+        var grade = await CreateService(db).RecordAssessmentGradeAsync(assessmentId, student, 2.0m);
+
+        Assert.Equal(Day, (await LoadGradeAsync(db, grade.Id)).RecordedOn);
+    }
+
+    [Fact]
+    public async Task UpdateGradeAsync_Succeeds_ForNewDateOnTheJoinDay_WhenJoinedOnHasATimeOfDay()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", joinedOn: new DateTime(2025, 9, 10, 9, 15, 0));
+        var gradeId = await seed.AddGradeAsync(student, 2.0m, Day);
+
+        await CreateService(db).UpdateGradeAsync(gradeId, 2.0m, new DateOnly(2025, 9, 10));
+
+        Assert.Equal(new DateOnly(2025, 9, 10), (await LoadGradeAsync(db, gradeId)).RecordedOn);
+    }
+
+    [Fact]
+    public async Task UpdateGradeAsync_Throws_ForNewDateOnTheLeaveDay_WhenLeftOnHasATimeOfDay()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", leftOn: new DateTime(2025, 9, 20, 14, 30, 0));
+        var gradeId = await seed.AddGradeAsync(student, 2.0m, Day);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db).UpdateGradeAsync(gradeId, 2.0m, new DateOnly(2025, 9, 20)));
+
+        Assert.Equal(Day, (await LoadGradeAsync(db, gradeId)).RecordedOn);
+    }
+
+    [Theory]
+    [InlineData("2025-08-01")]
+    [InlineData("2026-07-31")]
+    public async Task RecordGradeAsync_Succeeds_OnTheFirstAndLastDayOfTheYear(string date)
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        var day = DateOnly.Parse(date, CultureInfo.InvariantCulture);
+
+        var grade = await CreateService(db).RecordGradeAsync(seed.BucketId, student, 2.0m, day);
+
+        Assert.Equal(day, (await LoadGradeAsync(db, grade.Id)).RecordedOn);
+    }
+
+    [Theory]
+    [InlineData("2025-07-31")]
+    [InlineData("2026-08-01")]
+    public async Task RecordGradeAsync_Throws_ForDateOutsideTheYear(string date)
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", joinedOn: new DateTime(2025, 1, 1));
+        var day = DateOnly.Parse(date, CultureInfo.InvariantCulture);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db).RecordGradeAsync(seed.BucketId, student, 2.0m, day));
+
+        Assert.Equal(0, await CountGradesAsync(db));
+    }
+
+    [Theory]
+    [InlineData("2025-08-01")]
+    [InlineData("2026-07-31")]
+    public async Task UpdateGradeAsync_Succeeds_OnTheFirstAndLastDayOfTheYear(string date)
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        var gradeId = await seed.AddGradeAsync(student, 2.0m, Day);
+        var day = DateOnly.Parse(date, CultureInfo.InvariantCulture);
+
+        await CreateService(db).UpdateGradeAsync(gradeId, 2.0m, day);
+
+        Assert.Equal(day, (await LoadGradeAsync(db, gradeId)).RecordedOn);
+    }
+
+    [Theory]
+    [InlineData("2025-07-31")]
+    [InlineData("2026-08-01")]
+    public async Task UpdateGradeAsync_Throws_ForDateOutsideTheYear(string date)
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", joinedOn: new DateTime(2025, 1, 1));
+        var gradeId = await seed.AddGradeAsync(student, 2.0m, Day);
+        var day = DateOnly.Parse(date, CultureInfo.InvariantCulture);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db).UpdateGradeAsync(gradeId, 3.0m, day));
+
+        var stored = await LoadGradeAsync(db, gradeId);
+        Assert.Equal(Day, stored.RecordedOn);
+        Assert.Equal(2.0m, stored.Value);
     }
 
     // UpdateGradeAsync

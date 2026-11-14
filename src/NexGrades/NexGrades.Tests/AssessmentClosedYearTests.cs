@@ -174,6 +174,7 @@ public class AssessmentClosedYearTests
         await CreateAssessmentService(c).EditAssessmentAsync(c.AssessmentId, "Renamed", new DateOnly(2025, 9, 22));
 
         await AssertAuditedAsync(c, nameof(Assessment));
+        await AssertAuditedAsync(c, nameof(Grade));
         await using var verify = c.Db.CreateContext();
         Assert.Equal("Renamed", (await verify.Assessments.SingleAsync()).Title);
         Assert.Equal(new DateOnly(2025, 9, 22), (await verify.Grades.SingleAsync()).RecordedOn);
@@ -282,6 +283,19 @@ public class AssessmentClosedYearTests
         await AssertAuditedAsync(c, nameof(Grade));
         await using var verify = c.Db.CreateContext();
         Assert.Equal(3.0m, (await verify.Grades.SingleAsync()).Value);
+    }
+
+    [Fact]
+    public async Task RecordAssessmentGradeAsync_WritesAGradeAuditEntry_InAnUnlockedYear()
+    {
+        var c = await SeedClosedAsync(unlocked: true);
+        using var _ = c.Db;
+
+        await CreateGradeService(c).RecordAssessmentGradeAsync(c.AssessmentId, c.OtherStudentId, 3.0m);
+
+        await AssertAuditedAsync(c, nameof(Grade));
+        await using var verify = c.Db.CreateContext();
+        Assert.Equal(2, await verify.Grades.CountAsync());
     }
 
     [Fact]

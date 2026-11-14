@@ -22,4 +22,12 @@ internal static class EnrollmentActivity
     /// <summary>Same rule for callers that hold only the enrollment's dates, such as a projected read model.</summary>
     public static bool IsActive(DateTime joinedOn, DateTime? leftOn, DateTime asOf) =>
         joinedOn <= asOf && (leftOn is null || asOf < leftOn);
+
+    /// <summary>
+    /// Day-based variant for grades and assessments, which carry a date without a time. Enrollment dates may
+    /// include a time of day (a student added at 09:15 is on the roll for that whole day), so only their date
+    /// part counts. The leave date is exclusive: the student is not active on the day they left.
+    /// </summary>
+    public static bool IsActiveOn(DateTime joinedOn, DateTime? leftOn, DateOnly date) =>
+        DateOnly.FromDateTime(joinedOn) <= date && (leftOn is null || date < DateOnly.FromDateTime(leftOn.Value));
 }

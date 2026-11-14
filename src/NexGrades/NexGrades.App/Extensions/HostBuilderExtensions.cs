@@ -7,6 +7,7 @@ using NexGrades.App.Core;
 using NexGrades.App.Core.YearLock;
 using NexGrades.App.Features.Classes;
 using NexGrades.App.Features.Export;
+using NexGrades.App.Features.Grades;
 using NexGrades.App.Features.Home;
 using NexGrades.App.Features.SchoolYears;
 using NexGrades.App.Features.Settings;
@@ -158,6 +159,7 @@ public static class HostBuilderExtensions
             .AddTransient<StudentPage>()
             .AddTransient<SubjectDetailPage>()
             .AddTransient<ClassPage>()
+            .AddTransient<GradeSheetPage>()
             .AddSingleton<SchoolYearPage>()
             .AddSingleton<SettingsPage>();
     }
@@ -176,6 +178,7 @@ public static class HostBuilderExtensions
             .AddSingleton<SettingsViewModel>()
             .AddTransient<SubjectDetailViewModel>()
             .AddTransient<StudentViewModel>()
-            .AddTransient<ClassViewModel>();
+            .AddTransient<ClassViewModel>()
+            .AddTransient<GradeSheetViewModel>();
     }
 }

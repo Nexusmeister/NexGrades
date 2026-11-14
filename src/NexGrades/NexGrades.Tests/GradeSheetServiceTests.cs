@@ -131,6 +131,38 @@ public class GradeSheetServiceTests
     }
 
     [Fact]
+    public async Task GetGradeSheetAsync_MarksTheCellEditable_OnTheJoinDay_WhenJoinedOnHasATimeOfDay()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", joinedOn: new DateTime(2025, 9, 10, 9, 15, 0));
+        var beforeJoin = await seed.AddAssessmentAsync("Before join", new DateOnly(2025, 9, 9));
+        var onJoin = await seed.AddAssessmentAsync("On join", new DateOnly(2025, 9, 10));
+
+        var sheet = await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId);
+
+        var states = Student(sheet, student).Cells.ToDictionary(c => c.AssessmentId, c => c.State);
+        Assert.Equal(GradeSheetCellState.NotEnrolled, states[beforeJoin]);
+        Assert.Equal(GradeSheetCellState.Editable, states[onJoin]);
+    }
+
+    [Fact]
+    public async Task GetGradeSheetAsync_MarksTheCellNotEnrolled_OnTheLeaveDay_WhenLeftOnHasATimeOfDay()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha", leftOn: new DateTime(2025, 10, 1, 14, 30, 0));
+        var dayBefore = await seed.AddAssessmentAsync("Day before", new DateOnly(2025, 9, 30));
+        var onLeave = await seed.AddAssessmentAsync("On leave", new DateOnly(2025, 10, 1));
+
+        var sheet = await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId);
+
+        var states = Student(sheet, student).Cells.ToDictionary(c => c.AssessmentId, c => c.State);
+        Assert.Equal(GradeSheetCellState.Editable, states[dayBefore]);
+        Assert.Equal(GradeSheetCellState.NotEnrolled, states[onLeave]);
+    }
+
+    [Fact]
     public async Task GetGradeSheetAsync_ReturnsOneCellPerAssessment_InColumnOrder()
     {
         using var db = new SqliteTestDatabase();

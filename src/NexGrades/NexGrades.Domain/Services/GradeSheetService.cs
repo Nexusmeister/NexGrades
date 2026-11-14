@@ -101,7 +101,7 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
             {
                 var state = isExempt
                     ? GradeSheetCellState.Exempt
-                    : EnrollmentActivity.IsActive(enrollment.JoinedOn, enrollment.LeftOn, column.Date.ToDateTime(TimeOnly.MinValue))
+                    : EnrollmentActivity.IsActiveOn(enrollment.JoinedOn, enrollment.LeftOn, column.Date)
                         ? GradeSheetCellState.Editable
                         : GradeSheetCellState.NotEnrolled;
 
