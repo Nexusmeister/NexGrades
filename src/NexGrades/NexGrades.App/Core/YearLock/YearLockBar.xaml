@@ -1,0 +1,41 @@
+<UserControl x:Class="NexGrades.App.Core.YearLock.YearLockBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:yearLock="clr-namespace:NexGrades.App.Core.YearLock"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance yearLock:YearLockViewModel, IsDesignTimeCreatable=False}">
+
+    <!-- A closed InfoBar takes no space, so the control collapses when the year is neither locked nor unlocked. -->
+    <StackPanel>
+        <ui:InfoBar IsClosable="False"
+                    Severity="Warning"
+                    Title="Closed school year"
+                    Message="{Binding LockedMessage}"
+                    IsOpen="{Binding IsLocked, Mode=OneWay}">
+            <ui:InfoBar.Content>
+                <ui:Button Content="Unlock year…"
+                           Icon="{ui:SymbolIcon LockOpen24}"
+                           ToolTip="Unlock this school year temporarily to make corrections"
+                           AutomationProperties.Name="Unlock this school year"
+                           Command="{Binding UnlockCommand}"/>
+            </ui:InfoBar.Content>
+        </ui:InfoBar>
+
+        <ui:InfoBar IsClosable="False"
+                    Severity="Informational"
+                    Title="Closed school year, unlocked"
+                    Message="{Binding UnlockedMessage}"
+                    IsOpen="{Binding IsUnlocked, Mode=OneWay}">
+            <ui:InfoBar.Content>
+                <ui:Button Content="Lock again"
+                           Icon="{ui:SymbolIcon LockClosed24}"
+                           ToolTip="Make this school year read-only again now"
+                           AutomationProperties.Name="Lock this school year again"
+                           Command="{Binding RelockCommand}"/>
+            </ui:InfoBar.Content>
+        </ui:InfoBar>
+    </StackPanel>
+</UserControl>

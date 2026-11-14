@@ -14,6 +14,13 @@ public static class SchoolYearLock
     /// as unlocked only while <see cref="SchoolYear.UnlockedUntil"/> is strictly later than <paramref name="now"/>.
     /// </summary>
     public static bool IsWritable(SchoolYear schoolYear, DateTime now) =>
-        schoolYear.Status != SchoolYearStatus.Closed
-        || (schoolYear.UnlockedUntil is { } until && until > now);
+        IsWritable(schoolYear.Status, schoolYear.UnlockedUntil, now);
+
+    /// <summary>
+    /// Same rule as <see cref="IsWritable(SchoolYear, DateTime)"/> for callers that hold only the lock fields,
+    /// such as <see cref="Services.SchoolYearLockState"/>.
+    /// </summary>
+    public static bool IsWritable(SchoolYearStatus status, DateTime? unlockedUntil, DateTime now) =>
+        status != SchoolYearStatus.Closed
+        || (unlockedUntil is { } until && until > now);
 }

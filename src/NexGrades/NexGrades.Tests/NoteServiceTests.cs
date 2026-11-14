@@ -16,14 +16,21 @@ public class NoteServiceTests
     {
         public SqliteTestDatabase Db { get; }
         public FixedClock Clock { get; }
-        public UnlockReasonStore Reasons { get; } = new();
         public NoteService Service { get; }
 
         public Env()
         {
             Clock = new FixedClock(Now);
-            Db = new SqliteTestDatabase(new ClosedYearAuditInterceptor(Clock, Reasons));
+            Db = new SqliteTestDatabase(new ClosedYearAuditInterceptor(Clock));
             Service = new NoteService(Db.CreateContextFactory(), Clock);
+        }
+
+        /// <summary>Stores the unlock reason on the school year, as <c>UnlockService</c> does.</summary>
+        public void SetReason(int yearId, string reason)
+        {
+            using var context = Db.CreateContext();
+            context.SchoolYears.Single(y => y.Id == yearId).UnlockReason = reason;
+            context.SaveChanges();
         }
 
         /// <summary>A context without the interceptor, so seeding is allowed in any year state.</summary>
@@ -292,7 +299,7 @@ public class NoteServiceTests
     {
         using var env = new Env();
         var seed = await SeedAsync(env, SchoolYearStatus.Closed, FutureUnlock);
-        env.Reasons.SetReason(seed.YearId, "Late note");
+        env.SetReason(seed.YearId, "Late note");
 
         var dto = await env.Service.AddNoteAsync(seed.StudentId, seed.YearId, "text");
 
@@ -332,7 +339,7 @@ public class NoteServiceTests
         using var env = new Env();
         var seed = await SeedAsync(env, SchoolYearStatus.Closed, FutureUnlock);
         var noteId = await SeedNoteAsync(env, seed, "same", category: "Cat");
-        env.Reasons.SetReason(seed.YearId, "No-op");
+        env.SetReason(seed.YearId, "No-op");
 
         var dto = await env.Service.EditNoteAsync(noteId, " same ", "Cat");
 
@@ -397,7 +404,7 @@ public class NoteServiceTests
         using var env = new Env();
         var seed = await SeedAsync(env, SchoolYearStatus.Closed, FutureUnlock);
         var noteId = await SeedNoteAsync(env, seed, "old");
-        env.Reasons.SetReason(seed.YearId, "Fix typo");
+        env.SetReason(seed.YearId, "Fix typo");
 
         await env.Service.EditNoteAsync(noteId, "new");
 
@@ -520,7 +527,7 @@ public class NoteServiceTests
         using var env = new Env();
         var seed = await SeedAsync(env, SchoolYearStatus.Closed, FutureUnlock);
         var noteId = await SeedNoteAsync(env, seed);
-        env.Reasons.SetReason(seed.YearId, "Tidy up");
+        env.SetReason(seed.YearId, "Tidy up");
 
         await env.Service.ArchiveNoteAsync(noteId);
 

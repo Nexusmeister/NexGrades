@@ -15,7 +15,6 @@ namespace NexGrades.Domain.Auditing;
 /// is explicitly unlocked, and every such write produces an <see cref="AuditEntry"/>".
 /// </summary>
 /// <param name="clock">Source of "now" for the locked-year check and for <c>AuditEntry.ChangedOn</c>.</param>
-/// <param name="reasonStore">Supplies the unlock reason that is written to each audit entry.</param>
 /// <remarks>
 /// <para>
 /// <b>Two-phase design.</b> <c>SavingChanges</c>/<c>SavingChangesAsync</c> run before the underlying
@@ -53,7 +52,7 @@ namespace NexGrades.Domain.Auditing;
 /// silently allowing history to disappear.
 /// </para>
 /// </remarks>
-public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore reasonStore) : SaveChangesInterceptor
+public sealed class ClosedYearAuditInterceptor(IClock clock) : SaveChangesInterceptor
 {
     private readonly ConditionalWeakTable<DbContext, ContextState> _stateByContext = [];
 
@@ -296,7 +295,7 @@ public sealed class ClosedYearAuditInterceptor(IClock clock, IUnlockReasonStore 
                 $"cannot write to {entry.Metadata.ClrType.Name} (state: {entry.State}).");
         }
 
-        var reason = reasonStore.GetReason(schoolYear.Id);
+        var reason = schoolYear.UnlockReason;
         var changes = entry.State == EntityState.Added
             ? [new PendingPropertyChange("<created>", null, FormatCreatedSummary(entry))]
             : ModifiedPropertyChanges(entry);

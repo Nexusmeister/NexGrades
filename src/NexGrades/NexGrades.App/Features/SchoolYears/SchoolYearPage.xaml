@@ -5,6 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:core="clr-namespace:NexGrades.App.Core"
+      xmlns:yearLock="clr-namespace:NexGrades.App.Core.YearLock"
       xmlns:schoolYears="clr-namespace:NexGrades.App.Features.SchoolYears"
       d:DataContext="{d:DesignInstance schoolYears:SchoolYearPage, IsDesignTimeCreatable=False}"
       mc:Ignorable="d"
@@ -134,6 +135,58 @@
                 </StackPanel>
             </Border>
         </DataTemplate>
+
+        <!-- One closed school year: label, close date, state and the button that changes it. -->
+        <DataTemplate x:Key="ClosedYearRowTemplate" DataType="{x:Type yearLock:YearLockViewModel}">
+            <Grid Margin="0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="80"/>
+                    <ColumnDefinition Width="*" MinWidth="100"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ui:TextBlock Grid.Column="0"
+                              VerticalAlignment="Center"
+                              FontTypography="BodyStrong"
+                              Text="{Binding Label}"/>
+                <ui:TextBlock Grid.Column="1"
+                              VerticalAlignment="Center"
+                              FontTypography="Body"
+                              Text="{Binding ClosedOnMessage}"/>
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,12,0">
+                    <ui:SymbolIcon Symbol="LockClosed24"
+                                   Margin="0,0,8,0"
+                                   Visibility="{Binding IsLocked, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <ui:TextBlock FontTypography="Body"
+                                  Text="Locked"
+                                  Visibility="{Binding IsLocked, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <ui:SymbolIcon Symbol="LockOpen24"
+                                   Margin="0,0,8,0"
+                                   Visibility="{Binding IsUnlocked, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <ui:TextBlock FontTypography="Body"
+                                  TextWrapping="Wrap"
+                                  Text="{Binding UnlockedMessage}"
+                                  Visibility="{Binding IsUnlocked, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+                <Grid Grid.Column="3">
+                    <ui:Button Content="Unlock year…"
+                               Icon="{ui:SymbolIcon LockOpen24}"
+                               ToolTip="Unlock this school year temporarily to make corrections"
+                               AutomationProperties.Name="Unlock this school year"
+                               Command="{Binding UnlockCommand}"
+                               Visibility="{Binding IsLocked, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <ui:Button Content="Lock again"
+                               Icon="{ui:SymbolIcon LockClosed24}"
+                               ToolTip="Make this school year read-only again now"
+                               AutomationProperties.Name="Lock this school year again"
+                               Command="{Binding RelockCommand}"
+                               Visibility="{Binding IsUnlocked, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
     </Page.Resources>
 
     <Grid Margin="24">
@@ -202,8 +255,9 @@
                                  AutomationProperties.Name="Loading"
                                  Visibility="{Binding ViewModel.IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                <!-- Overview -->
-                <ui:Card Visibility="{Binding ViewModel.IsOverviewStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <!-- Overview: the active year, then the closed years -->
+                <StackPanel Visibility="{Binding ViewModel.IsOverviewStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ui:Card>
                     <StackPanel>
                         <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Text="Active school year"/>
                         <ui:TextBlock FontTypography="Subtitle" Margin="0,4,0,0" Text="{Binding ViewModel.ActiveYearLabel}"/>
@@ -220,6 +274,24 @@
                                     Visibility="{Binding ViewModel.IsBeforeEndDate, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </StackPanel>
                 </ui:Card>
+
+                <!-- Closed school years: unlock or lock again. -->
+                <ui:Card Margin="0,12,0,0">
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Subtitle" Text="Closed school years"/>
+                        <ui:TextBlock Margin="0,8,0,0"
+                                      Appearance="Secondary"
+                                      TextWrapping="Wrap"
+                                      Text="No school year has been closed yet."
+                                      Visibility="{Binding ViewModel.ClosedYears.HasClosedYears, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        <ItemsControl Margin="0,8,0,0"
+                                      AutomationProperties.Name="Closed school years"
+                                      ItemsSource="{Binding ViewModel.ClosedYears.Years}"
+                                      ItemTemplate="{StaticResource ClosedYearRowTemplate}"
+                                      KeyboardNavigation.TabNavigation="Continue"/>
+                    </StackPanel>
+                </ui:Card>
+                </StackPanel>
 
                 <!-- Next year -->
                 <ui:Card Visibility="{Binding ViewModel.IsNextYearStep, Converter={StaticResource BooleanToVisibilityConverter}}">

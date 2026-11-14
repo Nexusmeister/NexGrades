@@ -6,6 +6,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:students="clr-namespace:NexGrades.App.Features.Students"
       xmlns:core="clr-namespace:NexGrades.App.Core"
+      xmlns:yearLock="clr-namespace:NexGrades.App.Core.YearLock"
       xmlns:services="clr-namespace:NexGrades.Domain.Services;assembly=NexGrades.Domain"
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="900"
@@ -123,25 +124,14 @@
                     </StackPanel>
 
                     <!-- Year state -->
-                    <StackPanel Grid.Row="1">
-                        <ui:InfoBar Margin="0,12,0,0"
-                                    IsClosable="False"
-                                    Severity="Warning"
-                                    Title="Closed school year"
-                                    Message="This school year is closed. Its notes are read-only."
-                                    IsOpen="{Binding ViewModel.IsSelectedYearLocked, Mode=OneWay}"/>
-                        <ui:InfoBar Margin="0,12,0,0"
-                                    IsClosable="False"
-                                    Severity="Informational"
-                                    Title="Closed school year, unlocked"
-                                    Message="{Binding ViewModel.UnlockedUntilMessage}"
-                                    IsOpen="{Binding ViewModel.IsSelectedYearUnlocked, Mode=OneWay}"/>
-                    </StackPanel>
+                    <yearLock:YearLockBar Grid.Row="1"
+                                          Margin="0,4,0,0"
+                                          DataContext="{Binding ViewModel.YearLock}"/>
 
                     <!-- Editor -->
                     <StackPanel Grid.Row="2"
                                 Margin="0,12,0,0"
-                                Visibility="{Binding ViewModel.IsSelectedYearWritable, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                Visibility="{Binding ViewModel.ShowNoteEditor, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="{Binding ViewModel.NoteEditorLabel}"/>
                         <ui:TextBox MinHeight="72"
                                     MaxHeight="120"
@@ -153,7 +143,8 @@
                                     PlaceholderText="Write a note about this student"
                                     Text="{Binding ViewModel.NoteText, UpdateSourceTrigger=PropertyChanged}"/>
                         <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
-                            <ui:Button Content="Add note"
+                            <ui:Button Margin="0,0,8,0"
+                                       Content="Add note"
                                        Appearance="Primary"
                                        Icon="{ui:SymbolIcon Add24}"
                                        Command="{Binding ViewModel.AddNoteCommand}"
@@ -166,8 +157,9 @@
                                        Visibility="{Binding ViewModel.IsEditingNote, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <ui:Button Content="Cancel"
                                        Icon="{ui:SymbolIcon Dismiss24}"
+                                       ToolTip="Discard the text and stop editing"
                                        Command="{Binding ViewModel.CancelEditNoteCommand}"
-                                       Visibility="{Binding ViewModel.IsEditingNote, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                       Visibility="{Binding ViewModel.CanDiscardNoteInput, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                         </StackPanel>
                     </StackPanel>
 

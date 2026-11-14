@@ -290,6 +290,10 @@ namespace NexGrades.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("UnlockReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("UnlockedUntil")
                         .HasColumnType("TEXT");
 

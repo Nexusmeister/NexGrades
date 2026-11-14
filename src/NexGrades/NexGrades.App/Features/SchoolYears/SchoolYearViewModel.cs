@@ -30,6 +30,7 @@ namespace NexGrades.App.Features.SchoolYears;
 /// <param name="schoolYearService">Finds the active and the next year and creates the next one.</param>
 /// <param name="rolloverService">Reports the state of each class and rolls forward or archives it.</param>
 /// <param name="yearCloseService">Reports readiness and closes the year.</param>
+/// <param name="closedYears">The "Closed school years" section, reloaded on each visit and after a close.</param>
 public sealed partial class SchoolYearViewModel(
     PageNavigator navigator,
     INavigationService navigation,
@@ -38,8 +39,12 @@ public sealed partial class SchoolYearViewModel(
     IClock clock,
     SchoolYearService schoolYearService,
     RolloverService rolloverService,
-    YearCloseService yearCloseService) : ViewModel
+    YearCloseService yearCloseService,
+    ClosedYearsViewModel closedYears) : ViewModel
 {
+    /// <summary>The closed school years with their unlock controls.</summary>
+    public ClosedYearsViewModel ClosedYears { get; } = closedYears;
+
     private SchoolYearSummary? _activeYear;
     private SchoolYearSummary? _nextYear;
 
@@ -146,6 +151,7 @@ public sealed partial class SchoolYearViewModel(
         }
 
         await ReloadAsync();
+        await ClosedYears.ReloadAsync();
     }
 
     private void ResetFlow()
@@ -520,6 +526,7 @@ public sealed partial class SchoolYearViewModel(
             CultureInfo.CurrentCulture, "{0} is closed. {1} is now the active school year.", active.Label, next.Label);
         CurrentStep = EndYearStep.Result;
         ShowSuccess("The school year has been closed.");
+        await ClosedYears.ReloadAsync();
     }
 
     private bool CanGoBack() => !IsBusy && CurrentStep is not (EndYearStep.Overview or EndYearStep.Result);

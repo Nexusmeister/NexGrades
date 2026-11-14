@@ -30,6 +30,13 @@ public class SchoolYear
     /// </summary>
     public DateTime? UnlockedUntil { get; set; }
 
+    /// <summary>
+    /// Why the year was unlocked, set together with <see cref="UnlockedUntil"/> by <c>UnlockService</c>. It is written
+    /// to every <see cref="AuditEntry"/> produced while the year is unlocked, and it is stored here rather than in
+    /// memory so it survives an app restart. Re-locking clears it; the next unlock replaces it.
+    /// </summary>
+    public string? UnlockReason { get; set; }
+
     /// <summary>The cohorts first formed in this school year.</summary>
     public ICollection<ClassGroup> FoundedClassGroups { get; set; } = [];
 

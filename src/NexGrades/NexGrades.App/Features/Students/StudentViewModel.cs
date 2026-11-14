@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
+using NexGrades.App.Core.YearLock;
 using NexGrades.Common;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
@@ -25,20 +26,20 @@ namespace NexGrades.App.Features.Students;
 /// <param name="studentService">Creates a new student in the chosen class and renames an existing one.</param>
 /// <param name="noteService">Lists, adds, edits, archives and restores notes.</param>
 /// <param name="contentDialogService">Shows the confirmations for discarding input and for archiving notes.</param>
+/// <param name="yearLockFactory">Creates the lock state of the selected school year, which gates note writes.</param>
 public partial class StudentViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
     IDbContextFactory<AppDbContext> dbContextFactory,
     StudentService studentService,
     NoteService noteService,
-    IContentDialogService contentDialogService) : ViewModel
+    IContentDialogService contentDialogService,
+    YearLockViewModelFactory yearLockFactory) : ViewModel
 {
     private int? _editingStudentId;
     private string? _editingNoteCategory;
     private bool _suppressNoteReload;
 
-    /// <summary>Set while a lock-state refresh re-selects the current year, so the editor keeps its text.</summary>
-    private bool _keepEditorOnYearChange;
     // Set just before the page leaves by itself, so the leave guard does not ask a second time.
     private bool _allowLeave;
     private string _loadedFirstName = string.Empty;
@@ -78,26 +79,26 @@ public partial class StudentViewModel(
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSelectedYearWritable))]
-    [NotifyPropertyChangedFor(nameof(IsSelectedYearLocked))]
-    [NotifyPropertyChangedFor(nameof(IsSelectedYearUnlocked))]
-    [NotifyPropertyChangedFor(nameof(UnlockedUntilMessage))]
     [NotifyPropertyChangedFor(nameof(EmptyNotesMessage))]
+    [NotifyPropertyChangedFor(nameof(ShowNoteEditor))]
     private NoteYearOption? _selectedNoteYear;
 
     [ObservableProperty] private bool _showArchivedNotes;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanChangeNoteYear))]
+    [NotifyPropertyChangedFor(nameof(CanChangeNoteYear), nameof(ShowNoteEditor), nameof(CanDiscardNoteInput))]
     [NotifyCanExecuteChangedFor(nameof(AddNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartEditNoteCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CancelEditNoteCommand))]
     private string _noteText = string.Empty;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsEditingNote), nameof(NoteEditorLabel), nameof(CanChangeNoteYear))]
+    [NotifyPropertyChangedFor(nameof(IsEditingNote), nameof(NoteEditorLabel), nameof(CanChangeNoteYear), nameof(ShowNoteEditor), nameof(CanDiscardNoteInput))]
     [NotifyCanExecuteChangedFor(nameof(AddNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartEditNoteCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CancelEditNoteCommand))]
     private int? _editingNoteId;
 
     [ObservableProperty]
@@ -185,23 +186,24 @@ public partial class StudentViewModel(
     /// <summary>True when the list has nothing to show for the current year and archive filter.</summary>
     public bool HasNoNotes => Notes.Count == 0;
 
+    /// <summary>
+    /// The lock state of the selected school year. Notes can be written only while it is writable; the page shows
+    /// its unlock and lock-again controls.
+    /// </summary>
+    public YearLockViewModel YearLock { get; } = yearLockFactory.Create();
+
     /// <summary>Whether notes may be added or changed in the selected year right now.</summary>
-    public bool IsSelectedYearWritable => SelectedNoteYear?.IsWritable ?? false;
+    public bool IsSelectedYearWritable => SelectedNoteYear is not null && YearLock.IsWritable;
 
-    /// <summary>The selected year is closed and not unlocked: notes are read-only.</summary>
-    public bool IsSelectedYearLocked => SelectedNoteYear is { IsClosed: true, IsWritable: false };
+    /// <summary>
+    /// True when the note editor is shown: the selected year is writable, or the editor still holds input the
+    /// user typed before the year turned read-only (an unlock that expired), which must stay visible so it can be
+    /// copied or discarded.
+    /// </summary>
+    public bool ShowNoteEditor => IsSelectedYearWritable || HasPendingNoteInput;
 
-    /// <summary>The selected year is closed but temporarily unlocked: changes are audited.</summary>
-    public bool IsSelectedYearUnlocked => SelectedNoteYear is { IsClosed: true, IsWritable: true };
-
-    /// <summary>Explains an unlocked closed year to the user; empty when the year is not in that state.</summary>
-    public string UnlockedUntilMessage =>
-        SelectedNoteYear is { IsClosed: true, IsWritable: true, UnlockedUntil: { } until }
-            ? string.Format(
-                CultureInfo.CurrentCulture,
-                "This school year is closed but unlocked until {0}. Changes are recorded in the audit log.",
-                until.ToString("g", CultureInfo.CurrentCulture))
-            : string.Empty;
+    /// <summary>True when the editor holds a note being written or edited that can be thrown away.</summary>
+    public bool CanDiscardNoteInput => IsEditingNote || HasPendingNoteInput;
 
     /// <summary>
     /// Loads the class choices and, when an existing student is being edited (the student id arrives as
@@ -211,6 +213,10 @@ public partial class StudentViewModel(
     {
         _allowLeave = false;
         _editingStudentId = parameter as int?;
+
+        // Subscribed here rather than in a constructor; removing first keeps repeated visits from stacking handlers.
+        YearLock.WritabilityChanged -= OnYearLockWritabilityChanged;
+        YearLock.WritabilityChanged += OnYearLockWritabilityChanged;
 
         await using var db = await dbContextFactory.CreateDbContextAsync();
 
@@ -244,28 +250,26 @@ public partial class StudentViewModel(
         Title = "Edit student";
         IsExistingStudent = true;
 
-        await LoadNoteYearsAsync(studentId, keepYearId: null);
+        await LoadNoteYearsAsync(studentId);
         await ReloadNotesAsync();
     }
 
     /// <summary>
-    /// Loads the years the student can have notes in, with their current lock state. Selects
-    /// <paramref name="keepYearId"/> if given and still present, otherwise the Active year, otherwise the newest.
-    /// Does not reload the notes list itself.
+    /// Loads the years the student can have notes in and selects the Active year, otherwise the newest. The lock
+    /// state of the selected year is read by <see cref="YearLock"/>. Does not reload the notes list itself.
     /// </summary>
-    private async Task LoadNoteYearsAsync(int studentId, int? keepYearId)
+    private async Task LoadNoteYearsAsync(int studentId)
     {
         var years = await noteService.GetNoteYearsForStudentAsync(studentId);
         var options = years
-            .Select(y => new NoteYearOption(
-                y.SchoolYearId, y.Label, y.IsWritable, y.Status == SchoolYearStatus.Closed, y.UnlockedUntil))
+            .Select(y => new NoteYearOption(y.SchoolYearId, y.Label))
             .ToList();
 
         _suppressNoteReload = true;
         try
         {
             NoteYears = options.ToObservableCollection();
-            var preferredId = keepYearId ?? years.FirstOrDefault(y => y.Status == SchoolYearStatus.Active)?.SchoolYearId;
+            var preferredId = years.FirstOrDefault(y => y.Status == SchoolYearStatus.Active)?.SchoolYearId;
             SelectedNoteYear = options.FirstOrDefault(o => o.Id == preferredId) ?? options.FirstOrDefault();
         }
         finally
@@ -282,16 +286,27 @@ public partial class StudentViewModel(
         ArchiveNoteCommand.NotifyCanExecuteChanged();
         RestoreNoteCommand.NotifyCanExecuteChanged();
 
-        // Re-selecting the same year after a lock-state refresh must not throw away what the user typed.
-        if (!_keepEditorOnYearChange)
-        {
-            CancelEditNote();
-        }
+        // The year can only change while the editor holds no input (see CanChangeNoteYear), so this resets it.
+        CancelEditNote();
+        _ = YearLock.ShowAsync(value?.Id);
 
         if (!_suppressNoteReload)
         {
             _ = ReloadNotesAsync();
         }
+    }
+
+    /// <summary>Re-evaluates everything that depends on whether the selected year is writable.</summary>
+    private void OnYearLockWritabilityChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(IsSelectedYearWritable));
+        OnPropertyChanged(nameof(EmptyNotesMessage));
+        OnPropertyChanged(nameof(ShowNoteEditor));
+        AddNoteCommand.NotifyCanExecuteChanged();
+        SaveNoteCommand.NotifyCanExecuteChanged();
+        StartEditNoteCommand.NotifyCanExecuteChanged();
+        ArchiveNoteCommand.NotifyCanExecuteChanged();
+        RestoreNoteCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnShowArchivedNotesChanged(bool value)
@@ -492,7 +507,8 @@ public partial class StudentViewModel(
         }
     }
 
-    [RelayCommand]
+    /// <summary>Throws away what the editor holds, whether a new note or an edit of an existing one.</summary>
+    [RelayCommand(CanExecute = nameof(CanDiscardNoteInput))]
     private void CancelEditNote()
     {
         EditingNoteId = null;
@@ -571,26 +587,10 @@ public partial class StudentViewModel(
         {
             snackbar.Show("Error", closedYearMessage, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
 
-            // The year was locked while the page was open (e.g. its unlock expired): refresh the lock state so
-            // the page turns read-only instead of offering edits that will fail again.
-            // The editor text is kept so the user can copy it or save it once the year is unlocked again.
-            if (_editingStudentId is { } studentId)
-            {
-                _keepEditorOnYearChange = true;
-                try
-                {
-                    await LoadNoteYearsAsync(studentId, SelectedNoteYear?.Id);
-                    await ReloadNotesAsync();
-                }
-                catch (Exception)
-                {
-                    snackbar.Show("Error", "The school year state could not be refreshed.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
-                }
-                finally
-                {
-                    _keepEditorOnYearChange = false;
-                }
-            }
+            // The year was locked while the page was open (e.g. its unlock expired): refresh the lock state so the
+            // page turns read-only instead of offering edits that will fail again. The editor text stays, so the
+            // user can copy it or save it once the year is unlocked again.
+            await YearLock.RefreshAsync();
 
             return false;
         }

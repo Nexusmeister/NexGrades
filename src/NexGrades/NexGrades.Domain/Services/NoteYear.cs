@@ -10,7 +10,7 @@ namespace NexGrades.Domain.Services;
 /// <param name="Status">The lifecycle status of the school year.</param>
 /// <param name="UnlockedUntil">When a temporary unlock of a closed year ends, if there is one.</param>
 /// <param name="IsWritable">
-/// False for a closed year that is not unlocked; see <see cref="Auditing.SchoolYearLock.IsWritable"/>.
+/// False for a closed year that is not unlocked; see <see cref="Auditing.SchoolYearLock.IsWritable(SchoolYear, DateTime)"/>.
 /// </param>
 public sealed record NoteYear(
     int SchoolYearId,
