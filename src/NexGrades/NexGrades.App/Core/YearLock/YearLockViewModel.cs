@@ -2,6 +2,8 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Services;
 using NexGrades.Domain.Time;
@@ -27,6 +29,7 @@ public sealed partial class YearLockViewModel : ObservableObject
     private readonly IUnlockYearDialogService _dialog;
     private readonly ISnackbarService _snackbar;
     private readonly IClock _clock;
+    private readonly ILogger<YearLockViewModel> _logger;
 
     private int? _schoolYearId;
     private SchoolYearLockState? _state;
@@ -38,17 +41,20 @@ public sealed partial class YearLockViewModel : ObservableObject
     /// <param name="snackbar">Reports the outcome of unlocking and re-locking.</param>
     /// <param name="clock">Source of "now" for deciding whether the year is writable.</param>
     /// <param name="initialState">The year's state when it is already known; <see langword="null"/> for none yet.</param>
+    /// <param name="logger">Logs an unexpected failure without any pupil data; <see langword="null"/> logs nothing.</param>
     internal YearLockViewModel(
         SchoolYearLockMonitor monitor,
         IUnlockYearDialogService dialog,
         ISnackbarService snackbar,
         IClock clock,
-        SchoolYearLockState? initialState = null)
+        SchoolYearLockState? initialState = null,
+        ILogger<YearLockViewModel>? logger = null)
     {
         _monitor = monitor;
         _dialog = dialog;
         _snackbar = snackbar;
         _clock = clock;
+        _logger = logger ?? NullLogger<YearLockViewModel>.Instance;
 
         _schoolYearId = initialState?.SchoolYearId;
         _state = initialState;
@@ -174,6 +180,13 @@ public sealed partial class YearLockViewModel : ObservableObject
             ShowError("The school year could not be unlocked. Try again.");
             return;
         }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The monitor reads the state again after unlocking; that read can fail although the unlock went through.
+            LogLockChangeFailed(ex);
+            ShowError("The school year could not be unlocked, or its state could not be read afterwards. Check the school year and try again.");
+            return;
+        }
 
         ShowSuccess(string.Format(
             CultureInfo.CurrentCulture,
@@ -199,6 +212,13 @@ public sealed partial class YearLockViewModel : ObservableObject
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
             ShowError("The school year could not be locked again. Try again.");
+            return;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The monitor reads the state again after locking; that read can fail although the lock went through.
+            LogLockChangeFailed(ex);
+            ShowError("The school year could not be locked again, or its state could not be read afterwards. Check the school year and try again.");
             return;
         }
 
@@ -248,4 +268,7 @@ public sealed partial class YearLockViewModel : ObservableObject
 
     private void ShowError(string message) =>
         _snackbar.Show("Error", message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Changing the lock state of a school year failed unexpectedly.")]
+    private partial void LogLockChangeFailed(Exception exception);
 }

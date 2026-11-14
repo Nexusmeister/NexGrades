@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using NexGrades.Domain.Services;
 using NexGrades.Domain.Time;
 using Wpf.Ui;
@@ -12,15 +13,20 @@ namespace NexGrades.App.Core.YearLock;
 /// <param name="dialog">Asks for the unlock reason and duration.</param>
 /// <param name="snackbar">Reports outcomes.</param>
 /// <param name="clock">Source of "now".</param>
+/// <param name="logger">Logs unexpected failures of the created view models.</param>
 public sealed class YearLockViewModelFactory(
-    SchoolYearLockMonitor monitor, IUnlockYearDialogService dialog, ISnackbarService snackbar, IClock clock)
+    SchoolYearLockMonitor monitor,
+    IUnlockYearDialogService dialog,
+    ISnackbarService snackbar,
+    IClock clock,
+    ILogger<YearLockViewModel> logger)
 {
     /// <summary>Creates a view model that follows no year yet; call <see cref="YearLockViewModel.ShowAsync"/>.</summary>
     /// <returns>The new view model.</returns>
-    public YearLockViewModel Create() => new(monitor, dialog, snackbar, clock);
+    public YearLockViewModel Create() => new(monitor, dialog, snackbar, clock, null, logger);
 
     /// <summary>Creates a view model for a year whose state is already known, for example one row of a list.</summary>
     /// <param name="initialState">The year's current lock state.</param>
     /// <returns>The new view model.</returns>
-    public YearLockViewModel Create(SchoolYearLockState initialState) => new(monitor, dialog, snackbar, clock, initialState);
+    public YearLockViewModel Create(SchoolYearLockState initialState) => new(monitor, dialog, snackbar, clock, initialState, logger);
 }
