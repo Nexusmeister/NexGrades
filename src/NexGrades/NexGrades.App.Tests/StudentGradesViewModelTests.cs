@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.App.Core.YearLock;
 using NexGrades.App.Features.Students;
@@ -15,14 +16,20 @@ public class StudentGradesViewModelTests
 
     private sealed record Ids(int YearId, int StudentId, int BucketId);
 
-    private static async Task<Ids> SeedAsync(LockTestEnvironment env, decimal? existingGrade = null)
+    private static async Task<Ids> SeedAsync(
+        LockTestEnvironment env,
+        decimal? existingGrade = null,
+        DateTime? yearStart = null,
+        DateTime? yearEnd = null,
+        DateTime? joinedOn = null,
+        DateTime? leftOn = null)
     {
         await using var context = new AppDbContext(env.Options);
         var year = new SchoolYear
         {
             Label = "2025/26",
-            StartDate = new DateTime(2025, 8, 1),
-            EndDate = new DateTime(2026, 7, 31),
+            StartDate = yearStart ?? new DateTime(2025, 8, 1),
+            EndDate = yearEnd ?? new DateTime(2026, 7, 31),
             Status = SchoolYearStatus.Active,
         };
         var group = new ClassGroup { CohortLabel = "Test cohort", FoundedInSchoolYear = year };
@@ -31,7 +38,13 @@ public class StudentGradesViewModelTests
         var subjectInstance = new SubjectInstance { ClassInstance = classInstance, Subject = subject };
         var bucket = new GradeBucket { SubjectInstance = subjectInstance, Name = "Written", Weight = 100m, SortOrder = 1 };
         var student = new Student { FirstName = "Test", LastName = "Alpha" };
-        var enrollment = new Enrollment { Student = student, ClassInstance = classInstance, JoinedOn = new DateTime(2025, 8, 1) };
+        var enrollment = new Enrollment
+        {
+            Student = student,
+            ClassInstance = classInstance,
+            JoinedOn = joinedOn ?? yearStart ?? new DateTime(2025, 8, 1),
+            LeftOn = leftOn,
+        };
         context.AddRange(year, group, classInstance, subject, subjectInstance, bucket, student, enrollment);
         if (existingGrade is { } value)
         {
@@ -206,6 +219,119 @@ public class StudentGradesViewModelTests
         viewModel.GradeText = "2";
 
         Assert.False(viewModel.HasPendingInput);
+    });
+
+    [Fact]
+    public Task BeginAddGrade_DefaultsToTheLastActiveDay_WhenTheStudentLeftBeforeTodayAsync() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(new DateTime(2026, 3, 1, 10, 0, 0));
+        var ids = await SeedAsync(env, leftOn: new DateTime(2026, 1, 31));
+        var (viewModel, _) = await CreateAsync(env, ids);
+
+        viewModel.BeginAddGradeCommand.Execute(viewModel.Subjects[0].Buckets[0]);
+
+        // The leave day itself is not active, so the day before is the latest valid default.
+        Assert.Equal(new DateTime(2026, 1, 30), viewModel.GradeDate);
+    });
+
+    [Fact]
+    public Task BeginAddGrade_DefaultsToTheLastDayOfTheYear_WhenTodayIsAfterAPastYearAsync() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var ids = await SeedAsync(env, yearStart: new DateTime(2023, 8, 1), yearEnd: new DateTime(2024, 7, 31));
+        var (viewModel, _) = await CreateAsync(env, ids);
+
+        viewModel.BeginAddGradeCommand.Execute(viewModel.Subjects[0].Buckets[0]);
+
+        Assert.Equal(new DateTime(2024, 7, 31), viewModel.GradeDate);
+    });
+
+    [Fact]
+    public Task BeginAddGrade_DefaultsToTheFirstDayOfTheYear_WhenTodayIsBeforeTheYearAsync() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(new DateTime(2025, 6, 1, 10, 0, 0));
+        var ids = await SeedAsync(env);
+        var (viewModel, _) = await CreateAsync(env, ids);
+
+        viewModel.BeginAddGradeCommand.Execute(viewModel.Subjects[0].Buckets[0]);
+
+        Assert.Equal(new DateTime(2025, 8, 1), viewModel.GradeDate);
+    });
+
+    [Fact]
+    public Task BeginAddGrade_OffersOnlyAssessmentsWithinTheEnrollmentAsync() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var ids = await SeedAsync(env, joinedOn: new DateTime(2025, 9, 1), leftOn: new DateTime(2026, 1, 31));
+        int inside;
+        await using (var context = new AppDbContext(env.Options))
+        {
+            var before = new Assessment { GradeBucketId = ids.BucketId, Title = "Before", Date = new DateOnly(2025, 8, 20) };
+            var during = new Assessment { GradeBucketId = ids.BucketId, Title = "During", Date = new DateOnly(2025, 9, 15) };
+            var onLeaveDay = new Assessment { GradeBucketId = ids.BucketId, Title = "Leave day", Date = new DateOnly(2026, 1, 31) };
+            context.AddRange(before, during, onLeaveDay);
+            await context.SaveChangesAsync();
+            inside = during.Id;
+        }
+
+        var (viewModel, _) = await CreateAsync(env, ids);
+
+        viewModel.BeginAddGradeCommand.Execute(viewModel.Subjects[0].Buckets[0]);
+
+        Assert.Equal([null, inside], [.. viewModel.AssessmentChoices.Select(c => c.Id)]);
+    });
+
+    [Fact]
+    public Task VoidGradeCommand_ReportsAChangeInTheMeantimeAndReloads_WhenTheGradeIsAlreadyVoidedAsync() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var ids = await SeedAsync(env, existingGrade: 2.0m);
+        var (viewModel, _) = await CreateAsync(env, ids);
+        var row = viewModel.Subjects[0].Buckets[0].Grades[0];
+        await using (var context = new AppDbContext(env.Options))
+        {
+            (await context.Grades.SingleAsync()).VoidedOn = Now;
+            await context.SaveChangesAsync();
+        }
+
+        await viewModel.VoidGradeCommand.ExecuteAsync(row);
+
+        Assert.Equal("This grade changed in the meantime, the list was refreshed.", env.FakeSnackbar.Messages[^1]);
+        Assert.Empty(viewModel.Subjects[0].Buckets[0].Grades);
+    });
+
+    [Fact]
+    public Task RestoreGradeCommand_ShowsTheRestoreFailureMessage_WhenTheAssessmentWasVoidedAsync() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var ids = await SeedAsync(env);
+        await using (var context = new AppDbContext(env.Options))
+        {
+            var assessment = new Assessment { GradeBucketId = ids.BucketId, Title = "Test", Date = Day, VoidedOn = Now };
+            context.Add(new Grade
+            {
+                GradeBucketId = ids.BucketId,
+                StudentId = ids.StudentId,
+                Assessment = assessment,
+                Value = 2.0m,
+                RecordedOn = Day,
+                VoidedOn = Now,
+            });
+            await context.SaveChangesAsync();
+        }
+
+        var (viewModel, _) = await CreateAsync(env, ids);
+        viewModel.ShowVoidedGrades = true;
+        await LockTestEnvironment.WaitUntilAsync(() => viewModel.Subjects[0].Buckets[0].Grades.Count == 1);
+        var row = viewModel.Subjects[0].Buckets[0].Grades[0];
+        Assert.True(row.CanRestore);
+
+        await viewModel.RestoreGradeCommand.ExecuteAsync(row);
+
+        Assert.Equal(
+            "The grade could not be restored. Its assessment may have been voided or graded again.",
+            env.FakeSnackbar.Messages[^1]);
+        Assert.Single(viewModel.Subjects[0].Buckets[0].Grades);
     });
 
     [Fact]

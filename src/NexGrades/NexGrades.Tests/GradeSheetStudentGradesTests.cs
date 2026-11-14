@@ -281,6 +281,8 @@ public class GradeSheetStudentGradesTests
         Assert.Null(overview.JoinedOn);
         Assert.Null(overview.LeftOn);
         Assert.Equal("2025/26", overview.SchoolYearLabel);
+        Assert.Equal(new DateOnly(2025, 8, 1), overview.SchoolYearStart);
+        Assert.Equal(new DateOnly(2026, 7, 31), overview.SchoolYearEnd);
     }
 
     [Fact]
@@ -295,6 +297,8 @@ public class GradeSheetStudentGradesTests
 
         Assert.Equal(new DateOnly(2025, 9, 10), overview.JoinedOn);
         Assert.Equal(new DateOnly(2026, 1, 31), overview.LeftOn);
+        Assert.Equal(new DateOnly(2025, 8, 1), overview.SchoolYearStart);
+        Assert.Equal(new DateOnly(2026, 7, 31), overview.SchoolYearEnd);
     }
 
     [Fact]

@@ -105,11 +105,13 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
                 throw new InvariantViolationException($"Student {studentId} does not exist.");
             }
 
-            var yearLabel = await context.SchoolYears.AsNoTracking()
+            var year = await context.SchoolYears.AsNoTracking()
                 .Where(y => y.Id == schoolYearId)
-                .Select(y => y.Label)
+                .Select(y => new { y.Label, y.StartDate, y.EndDate })
                 .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
+            var yearStart = DateOnly.FromDateTime(year.StartDate);
+            var yearEnd = DateOnly.FromDateTime(year.EndDate);
 
             // A student has at most one enrollment per school year.
             var enrollment = await context.Enrollments.AsNoTracking()
@@ -118,7 +120,7 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
                 .FirstOrDefaultAsync(cancellationToken);
             if (enrollment is null)
             {
-                return new StudentGradeOverview(studentId, schoolYearId, yearLabel, null, null, []);
+                return new StudentGradeOverview(studentId, schoolYearId, year.Label, null, null, yearStart, yearEnd, []);
             }
 
             var data = await LoadStudentClassDataAsync(context, studentId, enrollment.ClassInstanceId, includeVoided, cancellationToken);
@@ -132,9 +134,11 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
             return new StudentGradeOverview(
                 studentId,
                 schoolYearId,
-                yearLabel,
+                year.Label,
                 DateOnly.FromDateTime(enrollment.JoinedOn),
                 enrollment.LeftOn is { } left ? DateOnly.FromDateTime(left) : null,
+                yearStart,
+                yearEnd,
                 subjects);
         });
 

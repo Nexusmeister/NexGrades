@@ -23,6 +23,20 @@ public class FakeSnackbar : DispatchProxy
         }
     }
 
+    private readonly List<string> _messages = [];
+
+    /// <summary>The messages passed to <c>Show</c>, in call order.</summary>
+    public IReadOnlyList<string> Messages
+    {
+        get
+        {
+            lock (_messages)
+            {
+                return [.. _messages];
+            }
+        }
+    }
+
     public static (ISnackbarService Service, FakeSnackbar Fake) Create()
     {
         var proxy = Create<ISnackbarService, FakeSnackbar>();
@@ -41,6 +55,11 @@ public class FakeSnackbar : DispatchProxy
             lock (_titles)
             {
                 _titles.Add(title);
+            }
+
+            lock (_messages)
+            {
+                _messages.Add(args.Length > 1 && args[1] is string message ? message : string.Empty);
             }
         }
 

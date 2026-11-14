@@ -45,6 +45,8 @@ public sealed partial class StudentGradesViewModel(
     private int? _schoolYearId;
     private DateOnly? _joinedOn;
     private DateOnly? _leftOn;
+    private DateOnly? _yearStart;
+    private DateOnly? _yearEnd;
     private int _loadVersion;
     private bool _loadFailed;
 
@@ -330,7 +332,7 @@ public sealed partial class StudentGradesViewModel(
             .ToHashSet();
         var choices = new List<AssessmentChoice> { new(null, NoAssessmentText, null) };
         choices.AddRange(bucket.Assessments
-            .Where(a => !alreadyGraded.Contains(a.Id))
+            .Where(a => !alreadyGraded.Contains(a.Id) && IsWithinEnrollment(a.Date))
             .Select(a => new AssessmentChoice(
                 a.Id,
                 string.Format(culture, "{0} ({1:d})", a.Title, a.Date.ToDateTime(TimeOnly.MinValue)),
@@ -342,6 +344,10 @@ public sealed partial class StudentGradesViewModel(
         SelectedAssessment = choices[0];
         IsEditorOpen = true;
     }
+
+    /// <summary>True when the student was active in the class on <paramref name="date"/> (the leave day is exclusive).</summary>
+    private bool IsWithinEnrollment(DateOnly date) =>
+        (_joinedOn is not { } joined || date >= joined) && (_leftOn is not { } left || date < left);
 
     private bool CanBeginEditGrade(StudentGradeRow? grade) =>
         IsWritable && !IsBusy && !HasPendingInput && grade is { CanEdit: true };
@@ -402,7 +408,7 @@ public sealed partial class StudentGradesViewModel(
             "Grade has been saved.",
             "The grade could not be saved. Check the grade and the date and try again.",
             "The grade could not be saved because the school year is closed.",
-            reloadOnRejected: false);
+            isStaleAfterReload: null);
 
         if (succeeded)
         {
@@ -428,7 +434,7 @@ public sealed partial class StudentGradesViewModel(
             "Grade has been voided.",
             "The grade could not be voided.",
             "The grade could not be voided because the school year is closed.",
-            reloadOnRejected: true);
+            () => FindGrade(grade.Id) is not { IsVoided: false });
 
         if (succeeded)
         {
@@ -454,7 +460,7 @@ public sealed partial class StudentGradesViewModel(
             "Grade has been restored.",
             "The grade could not be restored. Its assessment may have been voided or graded again.",
             "The grade could not be restored because the school year is closed.",
-            reloadOnRejected: true);
+            () => FindGrade(grade.Id) is not { CanRestore: true });
 
         if (succeeded)
         {
@@ -465,11 +471,17 @@ public sealed partial class StudentGradesViewModel(
 
     /// <summary>
     /// Runs one write and reports the outcome with fixed text. Exception messages are diagnostic and are never
-    /// shown. On a closed year the lock state is refreshed and the editor input kept. A rejected void or restore
-    /// means the grade changed elsewhere, so the list is reloaded instead of reporting a failure of the user.
+    /// shown. On a closed year the lock state is refreshed and the editor input kept. When
+    /// <paramref name="isStaleAfterReload"/> is given, a rejected write reloads the list and then asks it whether
+    /// the grade really changed elsewhere (stale row); only then is the "changed in the meantime" text shown,
+    /// otherwise the operation's own failure message.
     /// </summary>
     private async Task<bool> RunWriteAsync(
-        Func<Task> operation, string successMessage, string failureMessage, string closedYearMessage, bool reloadOnRejected)
+        Func<Task> operation,
+        string successMessage,
+        string failureMessage,
+        string closedYearMessage,
+        Func<bool>? isStaleAfterReload = null)
     {
         IsBusy = true;
         try
@@ -492,12 +504,15 @@ public sealed partial class StudentGradesViewModel(
 
             return false;
         }
-        catch (InvariantViolationException ex) when (reloadOnRejected)
+        catch (InvariantViolationException ex) when (isStaleAfterReload is not null)
         {
             LogWriteRejected(ex);
-            ShowError("This grade changed in the meantime, the list was refreshed.");
+
+            // Look at the real state before blaming a concurrent change: other rejections (an assessment that was
+            // voided or graded again) are the operation's own failure.
             IsBusy = false;
             await ReloadAsync();
+            ShowError(isStaleAfterReload() ? StaleGradeMessage : failureMessage);
             return false;
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
@@ -518,6 +533,12 @@ public sealed partial class StudentGradesViewModel(
         }
     }
 
+    private const string StaleGradeMessage = "This grade changed in the meantime, the list was refreshed.";
+
+    /// <summary>The row of a grade in the current list, or null when it is not listed (for example a voided one that is hidden).</summary>
+    private StudentGradeRow? FindGrade(int gradeId) =>
+        Subjects.SelectMany(s => s.Buckets).SelectMany(b => b.Grades).FirstOrDefault(g => g.Id == gradeId);
+
     private async Task ReloadAsync()
     {
         var version = ++_loadVersion;
@@ -527,6 +548,8 @@ public sealed partial class StudentGradesViewModel(
             _loadFailed = false;
             _joinedOn = null;
             _leftOn = null;
+            _yearStart = null;
+            _yearEnd = null;
             Subjects = [];
             OnPropertyChanged(nameof(EmptyMessage));
             return;
@@ -563,6 +586,8 @@ public sealed partial class StudentGradesViewModel(
             _loadFailed = false;
             _joinedOn = overview.JoinedOn;
             _leftOn = overview.LeftOn;
+            _yearStart = overview.SchoolYearStart;
+            _yearEnd = overview.SchoolYearEnd;
             Subjects = overview.Subjects.Select(s => new StudentSubjectRow(s)).ToObservableCollection();
             OnPropertyChanged(nameof(EmptyMessage));
             NotifyCommands();
@@ -576,18 +601,35 @@ public sealed partial class StudentGradesViewModel(
         }
     }
 
-    /// <summary>Today, held within the student's time in the class so the default date is usually valid.</summary>
+    /// <summary>
+    /// Today, held within the days the student was active in the class and the school year, so the default
+    /// date is usually valid. The day the student left is not active (exclusive), so the last valid day is the
+    /// one before it.
+    /// </summary>
     private DateTime DefaultDate()
     {
         var today = DateOnly.FromDateTime(clock.Now);
-        if (_leftOn is { } left && today > left)
+
+        var earliest = _joinedOn;
+        if (_yearStart is { } start && (earliest is null || start > earliest))
         {
-            today = left;
+            earliest = start;
         }
 
-        if (_joinedOn is { } joined && today < joined)
+        var latest = _yearEnd;
+        if (_leftOn is { } left && (latest is null || left.AddDays(-1) < latest))
         {
-            today = joined;
+            latest = left.AddDays(-1);
+        }
+
+        if (latest is { } max && today > max)
+        {
+            today = max;
+        }
+
+        if (earliest is { } min && today < min)
+        {
+            today = min;
         }
 
         return today.ToDateTime(TimeOnly.MinValue);
