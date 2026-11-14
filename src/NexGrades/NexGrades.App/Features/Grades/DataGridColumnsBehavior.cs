@@ -169,6 +169,23 @@ public static class DataGridColumnsBehavior
         }
     }
 
+    // A cell that failed to save must be saved again when the user commits it unchanged; a changed text saves
+    // through the binding, so only the unchanged case is handled here.
+    private static void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
+    {
+        if (e.EditAction == DataGridEditAction.Commit
+            && e.EditingElement is TextBox editor
+            && e.Column.GetValue(_sheetColumnProperty) is GradeSheetColumn { IsEditable: true } column
+            && e.Row.Item is GradeSheetRow row
+            && column.CellIndex >= 0
+            && column.CellIndex < row.Cells.Count
+            && row.Cells[column.CellIndex] is { } cell
+            && string.Equals(editor.Text, cell.Text, StringComparison.Ordinal))
+        {
+            cell.RetrySaveIfFailed();
+        }
+    }
+
     private static void OnCurrentCellChanged(DataGrid grid)
     {
         var current = grid.CurrentCell;
@@ -194,6 +211,7 @@ public static class DataGridColumnsBehavior
         {
             columns.CollectionChanged += OnCollectionChanged;
             grid.BeginningEdit += OnBeginningEdit;
+            grid.CellEditEnding += OnCellEditEnding;
             grid.CurrentCellChanged += OnCurrentCell;
         }
 
@@ -201,6 +219,7 @@ public static class DataGridColumnsBehavior
         {
             columns.CollectionChanged -= OnCollectionChanged;
             grid.BeginningEdit -= OnBeginningEdit;
+            grid.CellEditEnding -= OnCellEditEnding;
             grid.CurrentCellChanged -= OnCurrentCell;
         }
 

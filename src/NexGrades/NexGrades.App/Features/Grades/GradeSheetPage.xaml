@@ -380,6 +380,12 @@
                                            ToolTip="Discard the changes and show the saved details"
                                            Command="{Binding ViewModel.DiscardDetailCommand}"/>
                             </StackPanel>
+                            <ui:Button Margin="0,8,0,0"
+                                       Content="Void grade"
+                                       Icon="{ui:SymbolIcon DismissCircle24}"
+                                       ToolTip="Void this grade. It stops counting in the averages and can be restored later."
+                                       AutomationProperties.Name="Void grade"
+                                       Command="{Binding ViewModel.VoidGradeCommand}"/>
                         </StackPanel>
                     </ui:Card>
 
@@ -511,7 +517,8 @@
                                                            ToolTip="Edit this assessment's title and date"
                                                            AutomationProperties.Name="Edit assessment"
                                                            Command="{Binding DataContext.ViewModel.BeginEditAssessmentCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                           CommandParameter="{Binding}"/>
+                                                           CommandParameter="{Binding}"
+                                                           Visibility="{Binding IsVoided, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                                 <ui:Button Icon="{ui:SymbolIcon DismissCircle24}"
                                                            ToolTip="Void this assessment. It can be restored later."
                                                            AutomationProperties.Name="Void assessment"

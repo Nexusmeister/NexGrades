@@ -103,6 +103,12 @@ public sealed partial class GradeCellViewModel : ObservableObject
         _ => string.Empty,
     };
 
+    /// <summary>True while a save of this cell runs; the owner serializes saves per cell with it.</summary>
+    internal bool IsSaving { get; set; }
+
+    /// <summary>True when the text was committed again while a save ran; the owner saves the latest text afterwards.</summary>
+    internal bool SaveQueued { get; set; }
+
     /// <summary>The token of the saved active grade, or empty when there is none.</summary>
     internal string SavedToken => HasActiveGrade ? Grade!.Token : string.Empty;
 
@@ -132,6 +138,18 @@ public sealed partial class GradeCellViewModel : ObservableObject
         OnPropertyChanged(nameof(IsEditable));
         OnPropertyChanged(nameof(VisualState));
         OnPropertyChanged(nameof(Description));
+    }
+
+    /// <summary>
+    /// Saves the cell again when an edit ends without a changed text, but only if the last save failed or the text
+    /// was not a legal token. Without this, leaving such a cell untouched could never retry it.
+    /// </summary>
+    internal void RetrySaveIfFailed()
+    {
+        if (HasError)
+        {
+            _textCommitted(this);
+        }
     }
 
     /// <summary>Replaces the text (for example with the canonical token) without triggering a save.</summary>

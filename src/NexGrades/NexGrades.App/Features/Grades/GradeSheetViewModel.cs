@@ -44,6 +44,7 @@ public sealed partial class GradeSheetViewModel(
 
     private int? _subjectInstanceId;
     private int _loadVersion;
+    private int _busyCount;
     private bool _suppressVoidedReload;
     private IReadOnlyList<GradeSheetBucket> _sheetBuckets = [];
 
@@ -98,7 +99,7 @@ public sealed partial class GradeSheetViewModel(
     [ObservableProperty]
     private string _title = string.Empty;
 
-    /// <summary>True while a command that changes assessments or details runs.</summary>
+    /// <summary>True while any write (command or cell save) runs; several can overlap, so it is counted.</summary>
     [ObservableProperty]
     private bool _isBusy;
 
@@ -263,6 +264,41 @@ public sealed partial class GradeSheetViewModel(
     [RelayCommand]
     private void DiscardDetail() => RefreshDetail();
 
+    /// <summary>Voids the grade of the selected cell, so the detail panel can offer it next to the cell's own "clear to void".</summary>
+    [RelayCommand(CanExecute = nameof(CanVoidGrade))]
+    private async Task VoidGradeAsync(CancellationToken cancellationToken = default)
+    {
+        if (SelectedCell is not { HasActiveGrade: true, Grade: { } grade } cell)
+        {
+            return;
+        }
+
+        var voided = await RunAsync(
+            async () =>
+            {
+                await gradeService.VoidGradeAsync(grade.Id, cancellationToken);
+                if (!ShowVoidedGrades)
+                {
+                    cell.ApplyGrade(null);
+                    FindRow(cell)?.RecomputeAverages();
+                }
+            },
+            "The grade could not be voided.",
+            "The grade could not be voided because the school year is closed.");
+
+        if (voided)
+        {
+            RefreshDetail();
+            ShowSuccess("The grade has been voided.");
+
+            // With "show voided" on, the voided grade stays in its cell, so the sheet reloads to show it.
+            if (ShowVoidedGrades)
+            {
+                await LoadAsync();
+            }
+        }
+    }
+
     /// <summary>
     /// Restores a voided grade. Without a parameter it acts on the selected cell, so the detail panel can offer it.
     /// </summary>
@@ -318,10 +354,10 @@ public sealed partial class GradeSheetViewModel(
 
     /// <summary>Opens the edit form for an assessment column, prefilled with its title and date.</summary>
     /// <param name="column">The assessment column.</param>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanBeginEditAssessment))]
     private void BeginEditAssessment(GradeSheetColumn? column)
     {
-        if (column is not { AssessmentId: not null })
+        if (column is not { AssessmentId: not null, IsVoided: false })
         {
             return;
         }
@@ -346,7 +382,7 @@ public sealed partial class GradeSheetViewModel(
 
         var saved = await RunAsync(
             () => assessmentService.EditAssessmentAsync(id, EditAssessmentTitle, DateOnly.FromDateTime(date), cancellationToken),
-            "The assessment could not be changed. Enter a title and a date within the school year, and check that every graded student was enrolled and not exempt on the new date.",
+            "The assessment could not be changed. Enter a title and a date within the school year, check that every graded student was enrolled and not exempt on the new date, and that the assessment is not voided.",
             "The assessment could not be changed because the school year is closed.");
 
         if (saved)
@@ -417,6 +453,11 @@ public sealed partial class GradeSheetViewModel(
     private bool CanSaveDetail() =>
         IsWritable && !IsBusy && IsDetailDirty && DetailDate is not null && SelectedCell is { HasError: false };
 
+    private bool CanBeginEditAssessment(GradeSheetColumn? column) =>
+        IsWritable && column is { AssessmentId: not null, IsVoided: false };
+
+    private bool CanVoidGrade() => IsWritable && !IsBusy && SelectedCell is { HasActiveGrade: true };
+
     private bool CanRestoreGrade(GradeCellViewModel? cell) =>
         IsWritable && !IsBusy && (cell ?? SelectedCell) is { IsVoidedGrade: true };
 
@@ -480,6 +521,7 @@ public sealed partial class GradeSheetViewModel(
         OnPropertyChanged(nameof(HasDetail));
         OnDetailEdited();
         RestoreGradeCommand.NotifyCanExecuteChanged();
+        VoidGradeCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>Re-evaluates everything that depends on whether the sheet's year is writable; typed text stays.</summary>
@@ -500,6 +542,8 @@ public sealed partial class GradeSheetViewModel(
     {
         SaveDetailCommand.NotifyCanExecuteChanged();
         RestoreGradeCommand.NotifyCanExecuteChanged();
+        VoidGradeCommand.NotifyCanExecuteChanged();
+        BeginEditAssessmentCommand.NotifyCanExecuteChanged();
         AddAssessmentCommand.NotifyCanExecuteChanged();
         SaveAssessmentEditCommand.NotifyCanExecuteChanged();
         VoidAssessmentCommand.NotifyCanExecuteChanged();
@@ -613,7 +657,46 @@ public sealed partial class GradeSheetViewModel(
         NewAssessmentBucket = sheet.Buckets.FirstOrDefault(b => NewAssessmentBucket is null || b.Id == NewAssessmentBucket.Id);
     }
 
-    private void OnCellTextCommitted(GradeCellViewModel cell) => _ = SaveCellAsync(cell);
+    private void OnCellTextCommitted(GradeCellViewModel cell) => _ = SaveCellSerializedAsync(cell);
+
+    /// <summary>
+    /// Saves one cell at a time. A commit that arrives while a save of the same cell runs is queued, and the
+    /// latest text is saved after the running call completes, so quick re-entry neither records a grade twice nor
+    /// shows a stale value. Runs fire-and-forget, so nothing escapes it: an unexpected failure is logged, reported
+    /// with a generic message and marked on the cell.
+    /// </summary>
+    private async Task SaveCellSerializedAsync(GradeCellViewModel cell)
+    {
+        if (cell.IsSaving)
+        {
+            cell.SaveQueued = true;
+            return;
+        }
+
+        cell.IsSaving = true;
+        try
+        {
+            do
+            {
+                cell.SaveQueued = false;
+                try
+                {
+                    await SaveCellAsync(cell);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    LogCellSaveFailed(ex);
+                    cell.HasError = true;
+                    ShowError("The grade could not be saved because of an unexpected problem.");
+                }
+            }
+            while (cell.SaveQueued);
+        }
+        finally
+        {
+            cell.IsSaving = false;
+        }
+    }
 
     /// <summary>
     /// Saves one cell after its edit ended. Empty to empty records nothing; a new token records a grade, a
@@ -698,7 +781,6 @@ public sealed partial class GradeSheetViewModel(
         var saved = await RunAsync(write, failureMessage, closedYearMessage);
         if (!saved)
         {
-            // Reloading after a closed-year refusal already replaced the cell; marking it then is harmless.
             cell.HasError = true;
             return;
         }
@@ -722,12 +804,14 @@ public sealed partial class GradeSheetViewModel(
 
     /// <summary>
     /// Runs one write and reports a failure with fixed, translatable text; exception messages are diagnostic and
-    /// never shown. A refusal because the year is closed refreshes the lock state and reloads the sheet, so the
-    /// page turns read-only instead of offering edits that fail again. <see cref="ClosedYearException"/> derives
-    /// from <see cref="InvariantViolationException"/>, so it is caught first.
+    /// never shown. A refusal because the year is closed only refreshes the lock state, so the page turns read-only
+    /// instead of offering edits that fail again; the typed text stays and nothing is reloaded.
+    /// <see cref="ClosedYearException"/> derives from <see cref="InvariantViolationException"/>, so it is caught
+    /// first.
     /// </summary>
     private async Task<bool> RunAsync(Func<Task> operation, string failureMessage, string closedYearMessage)
     {
+        _busyCount++;
         IsBusy = true;
         try
         {
@@ -739,7 +823,6 @@ public sealed partial class GradeSheetViewModel(
             LogWriteRefused(ex);
             ShowError(closedYearMessage);
             await YearLock.RefreshAsync();
-            await LoadAsync();
             return false;
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
@@ -750,7 +833,8 @@ public sealed partial class GradeSheetViewModel(
         }
         finally
         {
-            IsBusy = false;
+            _busyCount--;
+            IsBusy = _busyCount > 0;
         }
     }
 
@@ -791,6 +875,9 @@ public sealed partial class GradeSheetViewModel(
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Loading the grade sheet failed.")]
     private partial void LogLoadFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Saving a grade cell failed unexpectedly.")]
+    private partial void LogCellSaveFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "A grade sheet change was refused because the school year is closed.")]
     private partial void LogWriteRefused(Exception exception);

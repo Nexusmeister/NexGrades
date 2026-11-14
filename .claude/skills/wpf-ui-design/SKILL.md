@@ -52,8 +52,9 @@ Secondary text uses `Appearance="Secondary"`.
 - Overview grids: `ui:DataGrid` with `AutoGenerateColumns="False"`, `IsReadOnly="True"`,
   `SelectionMode="Single"` and explicit column headers in real text. Double-click or Enter on a row
   opens its detail page.
-- Use `ui:NumberBox` for numeric input like weights. Grades are typed as tokens ("2-", "1+") and validated with `GradingScale.TryParseToken`
-  not picked from the 16 legal values (`GradingScale.LegalValues`) and not typed as decimals.
+- Use `ui:NumberBox` for numeric input like weights. Grades are typed as tokens ("2-", "1+") and
+  validated with `GradingScale.TryParseToken`; they are not picked from `GradingScale.LegalValues` and not
+  typed as decimals.
 
 ## Destructive actions: there are none
 
