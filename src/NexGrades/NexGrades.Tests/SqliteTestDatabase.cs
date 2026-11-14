@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using NexGrades.Data;
@@ -8,6 +7,12 @@ namespace NexGrades.Tests;
 /// <summary>
 /// A real SQLite database file (migrated, on disk, not in-memory), so tests exercise the actual provider
 /// (decimal-as-TEXT mapping, string-enum conversions, unique indexes, transactions) rather than a fake.
+/// <para>
+/// Pooling is off so each context releases its file handle on dispose and <see cref="Dispose"/> can delete the file
+/// without <c>SqliteConnection.ClearAllPools</c>. That call is process-wide: run from one test's teardown it closes
+/// native handles that another, parallel test is just opening, which surfaced as intermittent
+/// <c>ObjectDisposedException: SQLitePCL.sqlite3</c> failures.
+/// </para>
 /// </summary>
 internal sealed class SqliteTestDatabase : IDisposable
 {
@@ -19,7 +24,7 @@ internal sealed class SqliteTestDatabase : IDisposable
     {
         DbPath = Path.Combine(Path.GetTempPath(), $"nexgrades-test-{Guid.NewGuid():N}.db");
 
-        var builder = new DbContextOptionsBuilder<AppDbContext>().UseSqlite($"Data Source={DbPath}");
+        var builder = new DbContextOptionsBuilder<AppDbContext>().UseSqlite($"Data Source={DbPath};Pooling=False");
         if (interceptors.Length > 0)
         {
             builder.AddInterceptors(interceptors);
@@ -47,7 +52,6 @@ internal sealed class SqliteTestDatabase : IDisposable
 
     public void Dispose()
     {
-        SqliteConnection.ClearAllPools();
         try
         {
             File.Delete(DbPath);
