@@ -1,5 +1,4 @@
 using System.IO;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.App.Core.YearLock;
@@ -23,7 +22,7 @@ internal sealed class LockTestEnvironment : IDisposable
     public LockTestEnvironment(DateTime now)
     {
         Clock = new TestClock(now);
-        Options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite($"Data Source={_dbPath}").Options;
+        Options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite($"Data Source={_dbPath};Pooling=False").Options;
         using (var context = new AppDbContext(Options))
         {
             context.Database.Migrate();
@@ -127,7 +126,6 @@ internal sealed class LockTestEnvironment : IDisposable
 
     public void Dispose()
     {
-        SqliteConnection.ClearAllPools();
         try
         {
             File.Delete(_dbPath);
