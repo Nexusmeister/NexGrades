@@ -66,15 +66,16 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    the failing files (`csharp-coder` may run the formatter). Compare warnings with `dev` and note any new
    ones.
 7. **Smoke start** for every PR that touches `NexGrades.App`. The orchestrator runs it, never the owner. It tests
-   the worktree HEAD that will be pushed, built in step 6, in PowerShell 5.1.
+   the working tree that will be committed in step 8, built in step 6, in PowerShell 5.1.
    - Create a fresh, empty temp folder for this run under the session scratchpad or `$env:TEMP`. Set
      `$env:DOTNET_ENVIRONMENT='Development'` and `$env:ConnectionStrings__sqlite="Data Source=<temp folder>\smoke.db"`.
      The connection string keeps the run off the real `%LOCALAPPDATA%` database, which must never be used.
-   - `$start = Get-Date`.
+   - `$start = [DateTimeOffset]::Now`.
    - `$p = Start-Process "<worktree>\src\NexGrades\NexGrades.App\bin\Debug\net10.0-windows\NexGrades.App.exe" -PassThru -WorkingDirectory "<temp folder>"`,
      then wait about 20 s. The working directory keeps the run out of the build folder.
    - Read all of today's `%LOCALAPPDATA%\NexGrades\logs\nexgrades-<yyyyMMdd>*.log` files. The folder is shared with
-     the owner's session, and files roll over to `_001`. Judge only lines whose timestamp is at or after `$start`,
+     the owner's session, and files roll over to `_001`. Parse each line's timestamp as a `DateTimeOffset` (the
+     format is `yyyy-MM-dd HH:mm:ss.fff zzz`, with a UTC offset). Judge only lines at or after `$start`,
      and look for this run's `NexGrades <version> starting on` line.
    - Pass: the process is still alive, and this run's log lines contain the "starting on" line and no `[ERR]` or
      `[FTL]`. A failed start shows a modal message box and exits with code 1 only after the box is closed, so the
@@ -83,17 +84,18 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    - Stop with `Stop-Process -Id $p.Id -Force`. Never kill by image name, because the owner may have the app open.
      Then delete the temp folder, including `smoke.db` and any `-journal`, `-wal` or `-shm` files.
    - A failed smoke start is a blocker. Send it to the owning agent like a failed build. If later commits change App
-     code (CI or review fixes), repeat the smoke start at the new HEAD before reporting. Record the result (pass,
-     fail or not applicable) for the PR body and the final report. It does not replace the manual UI test plan; it
-     only shows that the app starts.
+     code (CI or review fixes), rebuild (step 6), then repeat the smoke start before reporting. Record the result
+     (pass, fail or not applicable) for the PR body and the final report. It does not replace the manual UI test
+     plan; it only shows that the app starts.
 8. **Commit and push.** The lead passes the commit attribution lines and the PR footer lines in the
    brief. If either set is missing, stop with `BLOCKED` before the first commit instead of inventing
    them. Commit with a short imperative subject and the commit attribution lines, verbatim. Push with
    `git push -u origin <branch>`. Never push to `dev`, never force-push. To take in a newer `dev`, run
    `git merge origin/dev`; do not rebase.
 9. **Pull request.** Open it against the base with `mcp__github__create_pull_request`. The body has
-   `Closes #<n>`, a summary, the decisions, the tests, the warning counts, the smoke start result (App-touching PRs), a numbered manual UI test plan
-   when the change needs one, and the PR footer lines the lead passed.
+   `Closes #<n>`, a summary, the decisions, the tests, the warning counts, the smoke start result (App-touching
+   PRs), a numbered manual UI test plan when the change needs one, and the
+   PR footer lines the lead passed.
 10. **CI.** Wait for CI in rounds. Each round is one short background Bash command (`run_in_background`)
    that runs a single `sleep 60`. When it completes, re-check the check runs for the head SHA with
    `mcp__github__pull_request_read` (`get_check_runs`). Exit the wait only when at least one check run
@@ -111,7 +113,8 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
     non-blocking findings that are out of scope become follow-up issues (`mcp__github__issue_write`),
     linked in the PR body (`mcp__github__update_pull_request`) or in a PR comment
     (`mcp__github__add_issue_comment`); they don't trigger more rounds.
-12. **Stop at merge-ready:** CI is green on the head SHA, the smoke start passed at that SHA (App-touching PRs), and the latest reviewer run at that SHA has no
+12. **Stop at merge-ready:** CI is green on the head SHA, the smoke start passed at that SHA
+    (App-touching PRs), and the latest reviewer run at that SHA has no
     finding of severity blocker or major and its verdict line is "Ready to merge". Do not merge.
     Once CI is green and the reviewer is done at the head SHA, send the final report right away;
     no background work may still be running at that point (don't start waits you won't need).
