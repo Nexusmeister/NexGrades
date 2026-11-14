@@ -39,13 +39,12 @@ public class DatabaseMigrationServiceLoggingTests
 
         public UnmigratedDatabase()
         {
-            var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite($"Data Source={_path}").Options;
+            var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(SqliteTestDatabase.ConnectionStringFor(_path)).Options;
             Factory = new OptionsFactory(options);
         }
 
         public void Dispose()
         {
-            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
             try
             {
                 File.Delete(_path);

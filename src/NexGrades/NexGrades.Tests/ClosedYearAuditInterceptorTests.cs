@@ -87,7 +87,7 @@ public class ClosedYearAuditInterceptorTests
 
         // A restart: only the database file survives, so the reason must come from the database.
         var restartedOptions = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlite($"Data Source={db.DbPath}")
+            .UseSqlite(db.ConnectionString)
             .AddInterceptors(new ClosedYearAuditInterceptor(clock))
             .Options;
         await using (var context = new AppDbContext(restartedOptions))
