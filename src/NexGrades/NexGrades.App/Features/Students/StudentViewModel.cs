@@ -26,7 +26,8 @@ namespace NexGrades.App.Features.Students;
 /// <param name="studentService">Creates a new student in the chosen class and renames an existing one.</param>
 /// <param name="noteService">Lists, adds, edits, archives and restores notes.</param>
 /// <param name="contentDialogService">Shows the confirmations for discarding input and for archiving notes.</param>
-/// <param name="yearLockFactory">Creates the lock state of the selected school year, which gates note writes.</param>
+/// <param name="yearLockFactory">Creates the lock state of the selected school year, which gates note and grade writes.</param>
+/// <param name="grades">The grades tab; shares the year picker and the year lock with the notes tab.</param>
 public partial class StudentViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
@@ -34,7 +35,8 @@ public partial class StudentViewModel(
     StudentService studentService,
     NoteService noteService,
     IContentDialogService contentDialogService,
-    YearLockViewModelFactory yearLockFactory) : ViewModel
+    YearLockViewModelFactory yearLockFactory,
+    StudentGradesViewModel grades) : ViewModel
 {
     private int? _editingStudentId;
     private string? _editingNoteCategory;
@@ -162,7 +164,8 @@ public partial class StudentViewModel(
         FirstName != _loadedFirstName
         || LastName != _loadedLastName
         || (!IsExistingStudent && SelectedClass is not null)
-        || HasPendingNoteInput;
+        || HasPendingNoteInput
+        || Grades.HasPendingInput;
 
     /// <summary>
     /// True while the note editor holds input that isn't saved: a new note being written, or an edited note
@@ -172,10 +175,13 @@ public partial class StudentViewModel(
         IsEditingNote ? NoteText != _editingNoteOriginalText : !string.IsNullOrWhiteSpace(NoteText);
 
     /// <summary>
-    /// The school year can be switched only while the note editor holds no unsaved input, because switching
-    /// resets the editor.
+    /// The school year can be switched only while neither the note editor nor the grade editor holds unsaved
+    /// input, because switching resets them. The picker is shared by the notes and the grades tab.
     /// </summary>
-    public bool CanChangeNoteYear => !HasPendingNoteInput;
+    public bool CanChangeNoteYear => !HasPendingNoteInput && !Grades.HasPendingInput;
+
+    /// <summary>The grades tab: the student's grades per subject and bucket, with its editor.</summary>
+    public StudentGradesViewModel Grades { get; } = grades;
 
     /// <summary>Label of the note editor, which serves both adding and editing.</summary>
     public string NoteEditorLabel => IsEditingNote ? "Edit note" : "New note";
@@ -218,6 +224,11 @@ public partial class StudentViewModel(
         YearLock.WritabilityChanged -= OnYearLockWritabilityChanged;
         YearLock.WritabilityChanged += OnYearLockWritabilityChanged;
 
+        // The grades tab shares the year lock; it has no lock of its own. Its pending input blocks the year picker.
+        Grades.Attach(YearLock);
+        Grades.PropertyChanged -= OnGradesPropertyChanged;
+        Grades.PropertyChanged += OnGradesPropertyChanged;
+
         await using var db = await dbContextFactory.CreateDbContextAsync();
 
         // Only classes of the currently Active school year can be assigned — enrolling into a Planned or
@@ -252,6 +263,21 @@ public partial class StudentViewModel(
 
         await LoadNoteYearsAsync(studentId);
         await ReloadNotesAsync();
+        await ReloadGradesAsync();
+    }
+
+    /// <summary>Loads the grades of the selected year; with no student or year, the grades tab shows its empty state.</summary>
+    private Task ReloadGradesAsync() =>
+        _editingStudentId is { } studentId
+            ? Grades.LoadAsync(studentId, SelectedNoteYear?.Id)
+            : Task.CompletedTask;
+
+    private void OnGradesPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(StudentGradesViewModel.HasPendingInput))
+        {
+            OnPropertyChanged(nameof(CanChangeNoteYear));
+        }
     }
 
     /// <summary>
@@ -286,13 +312,15 @@ public partial class StudentViewModel(
         ArchiveNoteCommand.NotifyCanExecuteChanged();
         RestoreNoteCommand.NotifyCanExecuteChanged();
 
-        // The year can only change while the editor holds no input (see CanChangeNoteYear), so this resets it.
+        // The year can only change while the editors hold no input (see CanChangeNoteYear), so this resets them.
         CancelEditNote();
+        Grades.CancelInput();
         _ = YearLock.ShowAsync(value?.Id);
 
         if (!_suppressNoteReload)
         {
             _ = ReloadNotesAsync();
+            _ = ReloadGradesAsync();
         }
     }
 
@@ -307,6 +335,7 @@ public partial class StudentViewModel(
         StartEditNoteCommand.NotifyCanExecuteChanged();
         ArchiveNoteCommand.NotifyCanExecuteChanged();
         RestoreNoteCommand.NotifyCanExecuteChanged();
+        Grades.OnWritabilityChanged();
     }
 
     partial void OnShowArchivedNotesChanged(bool value)
@@ -356,10 +385,14 @@ public partial class StudentViewModel(
     /// <summary>Saves the name change of the student being edited, then leaves the page.</summary>
     private async Task SaveEditedStudentAsync(int editId, CancellationToken cancellationToken)
     {
-        if (HasPendingNoteInput
-            && !await ConfirmDiscardAsync(
-                "The note you are writing has not been saved. Save the student and discard the note?",
-                cancellationToken))
+        var pendingMessage = (HasPendingNoteInput, Grades.HasPendingInput) switch
+        {
+            (true, true) => "The note and the grade you are entering have not been saved. Save the student and discard them?",
+            (true, false) => "The note you are writing has not been saved. Save the student and discard the note?",
+            (false, true) => "The grade you are entering has not been saved. Save the student and discard the grade?",
+            _ => null,
+        };
+        if (pendingMessage is not null && !await ConfirmDiscardAsync(pendingMessage, cancellationToken))
         {
             return;
         }

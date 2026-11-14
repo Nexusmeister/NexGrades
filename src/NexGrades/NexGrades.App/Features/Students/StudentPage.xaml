@@ -17,6 +17,54 @@
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <core:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+
+        <!-- Header filters that belong to one tab only. -->
+        <Style x:Key="GradesTabOnly" TargetType="Grid">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SelectedIndex, ElementName=DetailTabs}" Value="0">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="NotesTabOnly" TargetType="Grid">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SelectedIndex, ElementName=DetailTabs}" Value="1">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- The date is fixed when a grade belongs to an assessment. -->
+        <Style x:Key="DateLockedWhenReadOnly" TargetType="Grid">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ViewModel.Grades.IsDateReadOnly}" Value="True">
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- A voided grade stays readable but recedes; the caption says why, so dimming is not the only signal. -->
+        <Style x:Key="DimWhenVoided" TargetType="StackPanel">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsVoided}" Value="True">
+                    <Setter Property="Opacity" Value="0.6"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Takes no room when the text is empty. -->
+        <Style x:Key="OptionalText" TargetType="ui:TextBlock" BasedOn="{DynamicResource {x:Type ui:TextBlock}}">
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </Trigger>
+                <Trigger Property="Text" Value="{x:Null}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Page.Resources>
 
     <Grid Margin="24">
@@ -97,142 +145,400 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Header: title, school year, archive filter -->
-                    <StackPanel Grid.Row="0">
-                        <ui:TextBlock FontTypography="Subtitle" Text="Notes"/>
-                        <WrapPanel Margin="0,8,0,0">
-                            <StackPanel Margin="0,0,16,8">
-                                <ui:TextBlock Margin="0,0,0,4" FontTypography="Caption" Text="School year"/>
-                                <!-- Locked while the editor holds unsaved input, because switching resets it. -->
-                                <ComboBox MinWidth="160"
-                                          AutomationProperties.Name="School year"
-                                          IsEnabled="{Binding ViewModel.CanChangeNoteYear}"
-                                          ItemsSource="{Binding ViewModel.NoteYears}"
-                                          SelectedItem="{Binding ViewModel.SelectedNoteYear}"
-                                          DisplayMemberPath="Label"/>
-                            </StackPanel>
-                            <ui:ToggleSwitch Margin="0,0,0,8"
-                                             VerticalAlignment="Bottom"
-                                             Content="Show archived notes"
+                    <!-- Shared header: school year, plus the filter that belongs to the selected tab -->
+                    <WrapPanel Grid.Row="0">
+                        <StackPanel Margin="0,0,16,8">
+                            <ui:TextBlock Margin="0,0,0,4" FontTypography="Caption" Text="School year"/>
+                            <!-- Locked while an editor holds unsaved input, because switching resets it. -->
+                            <ComboBox MinWidth="160"
+                                      AutomationProperties.Name="School year"
+                                      IsEnabled="{Binding ViewModel.CanChangeNoteYear}"
+                                      ItemsSource="{Binding ViewModel.NoteYears}"
+                                      SelectedItem="{Binding ViewModel.SelectedNoteYear}"
+                                      DisplayMemberPath="Label"/>
+                        </StackPanel>
+                        <Grid Margin="0,0,0,8" VerticalAlignment="Bottom" Style="{StaticResource GradesTabOnly}">
+                            <ui:ToggleSwitch Content="Show voided grades"
+                                             ToolTip="Also list voided grades so they can be restored"
+                                             IsChecked="{Binding ViewModel.Grades.ShowVoidedGrades}"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,8" VerticalAlignment="Bottom" Style="{StaticResource NotesTabOnly}">
+                            <ui:ToggleSwitch Content="Show archived notes"
                                              IsChecked="{Binding ViewModel.ShowArchivedNotes}"/>
-                        </WrapPanel>
-                    </StackPanel>
+                        </Grid>
+                    </WrapPanel>
 
                     <!-- Year state -->
                     <yearLock:YearLockBar Grid.Row="1"
                                           Margin="0,4,0,0"
                                           DataContext="{Binding ViewModel.YearLock}"/>
 
-                    <!-- Editor -->
-                    <StackPanel Grid.Row="2"
-                                Margin="0,12,0,0"
-                                Visibility="{Binding ViewModel.ShowNoteEditor, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="{Binding ViewModel.NoteEditorLabel}"/>
-                        <ui:TextBox MinHeight="72"
-                                    MaxHeight="120"
-                                    AcceptsReturn="True"
-                                    TextWrapping="Wrap"
-                                    MaxLength="{x:Static services:NoteService.MaxTextLength}"
-                                    VerticalScrollBarVisibility="Auto"
-                                    AutomationProperties.Name="{Binding ViewModel.NoteEditorLabel}"
-                                    PlaceholderText="Write a note about this student"
-                                    Text="{Binding ViewModel.NoteText, UpdateSourceTrigger=PropertyChanged}"/>
-                        <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
-                            <ui:Button Margin="0,0,8,0"
-                                       Content="Add note"
-                                       Appearance="Primary"
-                                       Icon="{ui:SymbolIcon Add24}"
-                                       Command="{Binding ViewModel.AddNoteCommand}"
-                                       Visibility="{Binding ViewModel.IsEditingNote, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                            <ui:Button Margin="0,0,8,0"
-                                       Content="Save note"
-                                       Appearance="Primary"
-                                       Icon="{ui:SymbolIcon Save24}"
-                                       Command="{Binding ViewModel.SaveNoteCommand}"
-                                       Visibility="{Binding ViewModel.IsEditingNote, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <ui:Button Content="Cancel"
-                                       Icon="{ui:SymbolIcon Dismiss24}"
-                                       ToolTip="Discard the text and stop editing"
-                                       Command="{Binding ViewModel.CancelEditNoteCommand}"
-                                       Visibility="{Binding ViewModel.CanDiscardNoteInput, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        </StackPanel>
-                    </StackPanel>
+                    <TabControl x:Name="DetailTabs" Grid.Row="2" Margin="0,12,0,0">
+                        <!-- Grades tab -->
+                        <TabItem Header="Grades" AutomationProperties.Name="Grades">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="0,12,8,0">
+                                    <!-- Editor: one inline panel for add and edit -->
+                                    <ui:Card Margin="0,0,0,12"
+                                             HorizontalAlignment="Stretch"
+                                             Visibility="{Binding ViewModel.Grades.ShowEditor, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <StackPanel MaxWidth="480" HorizontalAlignment="Left">
+                                            <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.Grades.EditorTitle}"/>
+                                            <ui:TextBlock Margin="0,4,0,0"
+                                                          FontTypography="Caption"
+                                                          Appearance="Secondary"
+                                                          Text="{Binding ViewModel.Grades.EditorBucketName}"/>
 
-                    <!-- Empty state -->
-                    <ui:TextBlock Grid.Row="3"
-                                  Margin="0,16,0,0"
-                                  Appearance="Secondary"
-                                  TextWrapping="Wrap"
-                                  Text="{Binding ViewModel.EmptyNotesMessage}"
-                                  Visibility="{Binding ViewModel.HasNoNotes, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            <StackPanel Margin="0,12,0,0"
+                                                        Visibility="{Binding ViewModel.Grades.ShowAssessmentPicker, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Assessment"/>
+                                                <ComboBox HorizontalAlignment="Stretch"
+                                                          AutomationProperties.Name="Assessment"
+                                                          ItemsSource="{Binding ViewModel.Grades.AssessmentChoices}"
+                                                          SelectedItem="{Binding ViewModel.Grades.SelectedAssessment}"
+                                                          DisplayMemberPath="DisplayText"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,12,0,0"
+                                                        Visibility="{Binding ViewModel.Grades.ShowEditingAssessment, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Assessment"/>
+                                                <ui:TextBlock TextWrapping="Wrap"
+                                                              AutomationProperties.Name="Assessment"
+                                                              Text="{Binding ViewModel.Grades.EditingAssessmentTitle}"/>
+                                            </StackPanel>
 
-                    <!-- Notes list -->
-                    <ListView Grid.Row="4"
-                              Margin="0,12,0,0"
-                              AutomationProperties.Name="Notes"
-                              ItemsSource="{Binding ViewModel.Notes}"
-                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                              VirtualizingPanel.IsVirtualizing="True"
-                              VirtualizingPanel.VirtualizationMode="Recycling"
-                              ScrollViewer.CanContentScroll="True"
-                              HorizontalContentAlignment="Stretch">
-                        <ListView.ItemTemplate>
-                            <DataTemplate DataType="{x:Type students:NoteRow}">
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
+                                            <ui:TextBlock Margin="0,12,0,4" FontTypography="BodyStrong" Text="Grade"/>
+                                            <ui:TextBox AutomationProperties.Name="Grade"
+                                                        PlaceholderText="For example 2-"
+                                                        Text="{Binding ViewModel.Grades.GradeText, UpdateSourceTrigger=PropertyChanged}"/>
 
-                                    <StackPanel Grid.Column="0">
-                                        <ui:TextBlock FontTypography="Body"
-                                                      TextWrapping="Wrap"
-                                                      Text="{Binding Text}"/>
-                                        <ui:TextBlock FontTypography="Caption"
-                                                      Appearance="Secondary"
-                                                      Text="{Binding CreatedOnDisplay}"/>
-                                        <ui:TextBlock FontTypography="Caption"
-                                                      Appearance="Secondary"
-                                                      Text="{Binding EditedOnDisplay}"/>
-                                        <ui:TextBlock FontTypography="Caption"
-                                                      Appearance="Secondary"
-                                                      Text="{Binding ArchivedOnDisplay}"/>
+                                            <ui:TextBlock Margin="0,12,0,4" FontTypography="BodyStrong" Text="Date"/>
+                                            <!-- Fixed to the date of the chosen assessment. -->
+                                            <Grid HorizontalAlignment="Left" Style="{StaticResource DateLockedWhenReadOnly}">
+                                                <DatePicker MinWidth="160"
+                                                            AutomationProperties.Name="Date"
+                                                            SelectedDate="{Binding ViewModel.Grades.GradeDate}"/>
+                                            </Grid>
+
+                                            <StackPanel Margin="0,12,0,0"
+                                                        Visibility="{Binding ViewModel.Grades.ShowLabelField, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Label"/>
+                                                <ui:TextBox AutomationProperties.Name="Label"
+                                                            PlaceholderText="Optional, for example Oral quiz"
+                                                            Text="{Binding ViewModel.Grades.GradeLabel, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+
+                                            <ui:TextBlock Margin="0,12,0,4" FontTypography="BodyStrong" Text="Comment"/>
+                                            <ui:TextBox MinHeight="72"
+                                                        MaxHeight="120"
+                                                        AcceptsReturn="True"
+                                                        TextWrapping="Wrap"
+                                                        VerticalScrollBarVisibility="Auto"
+                                                        AutomationProperties.Name="Comment"
+                                                        PlaceholderText="Optional"
+                                                        Text="{Binding ViewModel.Grades.GradeComment, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                            <!-- Why Save is disabled -->
+                                            <ui:TextBlock Margin="0,8,0,0"
+                                                          FontTypography="Caption"
+                                                          Appearance="Secondary"
+                                                          TextWrapping="Wrap"
+                                                          Text="{Binding ViewModel.Grades.GradeValidationMessage}"
+                                                          Visibility="{Binding ViewModel.Grades.HasGradeValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                            <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                                                <ui:Button Margin="0,0,8,0"
+                                                           Content="Save grade"
+                                                           Appearance="Primary"
+                                                           Icon="{ui:SymbolIcon Save24}"
+                                                           Command="{Binding ViewModel.Grades.SaveGradeCommand}"/>
+                                                <ui:Button Content="Cancel"
+                                                           Icon="{ui:SymbolIcon Dismiss24}"
+                                                           ToolTip="Discard the input and close the editor"
+                                                           Command="{Binding ViewModel.Grades.CancelGradeCommand}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </ui:Card>
+
+                                    <!-- Loading -->
+                                    <ui:ProgressRing Margin="0,8"
+                                                     HorizontalAlignment="Left"
+                                                     IsIndeterminate="True"
+                                                     AutomationProperties.Name="Loading grades"
+                                                     Visibility="{Binding ViewModel.Grades.IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                    <!-- Empty state -->
+                                    <ui:TextBlock Margin="0,4,0,0"
+                                                  Appearance="Secondary"
+                                                  TextWrapping="Wrap"
+                                                  Text="{Binding ViewModel.Grades.EmptyMessage}"
+                                                  Visibility="{Binding ViewModel.Grades.HasNoSubjects, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                    <!-- Subjects -->
+                                    <ItemsControl AutomationProperties.Name="Grades by subject"
+                                                  IsTabStop="False"
+                                                  ItemsSource="{Binding ViewModel.Grades.Subjects}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type students:StudentSubjectRow}">
+                                                <StackPanel Margin="0,0,0,20">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <ui:TextBlock Grid.Column="0"
+                                                                      VerticalAlignment="Center"
+                                                                      FontTypography="Subtitle"
+                                                                      Text="{Binding SubjectName}"/>
+                                                        <ui:Badge Grid.Column="1"
+                                                                  Margin="8,0,0,0"
+                                                                  VerticalAlignment="Center"
+                                                                  Appearance="Caution"
+                                                                  Content="Exempt"
+                                                                  Visibility="{Binding IsExempt, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                        <ui:TextBlock Grid.Column="2"
+                                                                      Margin="12,0,0,0"
+                                                                      VerticalAlignment="Center"
+                                                                      HorizontalAlignment="Right"
+                                                                      FontTypography="BodyStrong"
+                                                                      Text="{Binding SubjectAverageText, StringFormat='Average: {0}'}"/>
+                                                    </Grid>
+
+                                                    <ItemsControl Margin="0,8,0,0"
+                                                                  IsTabStop="False"
+                                                                  ItemsSource="{Binding Buckets}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate DataType="{x:Type students:StudentBucketRow}">
+                                                                <StackPanel Margin="0,0,0,12">
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <WrapPanel Grid.Column="0" VerticalAlignment="Center">
+                                                                            <ui:TextBlock Margin="0,0,12,0"
+                                                                                          FontTypography="BodyStrong"
+                                                                                          Text="{Binding Name}"/>
+                                                                            <ui:TextBlock Margin="0,0,12,0"
+                                                                                          FontTypography="Caption"
+                                                                                          Appearance="Secondary"
+                                                                                          Text="{Binding WeightText}"/>
+                                                                            <ui:TextBlock FontTypography="Caption"
+                                                                                          Appearance="Secondary"
+                                                                                          Text="{Binding AverageText, StringFormat='Average: {0}'}"/>
+                                                                        </WrapPanel>
+                                                                        <ui:Button Grid.Column="1"
+                                                                                   Margin="8,0,0,0"
+                                                                                   Content="Add grade"
+                                                                                   Icon="{ui:SymbolIcon Add24}"
+                                                                                   ToolTip="Add a grade to this bucket"
+                                                                                   Command="{Binding DataContext.ViewModel.Grades.BeginAddGradeCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                                   CommandParameter="{Binding}"/>
+                                                                    </Grid>
+
+                                                                    <ui:TextBlock Margin="0,4,0,0"
+                                                                                  Appearance="Secondary"
+                                                                                  Text="No grades"
+                                                                                  Visibility="{Binding HasNoGrades, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                                                    <ItemsControl IsTabStop="False" ItemsSource="{Binding Grades}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate DataType="{x:Type students:StudentGradeRow}">
+                                                                                <Grid Margin="0,4">
+                                                                                    <Grid.ColumnDefinitions>
+                                                                                        <ColumnDefinition Width="*"/>
+                                                                                        <ColumnDefinition Width="Auto"/>
+                                                                                    </Grid.ColumnDefinitions>
+
+                                                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Style="{StaticResource DimWhenVoided}">
+                                                                                        <ui:TextBlock MinWidth="40"
+                                                                                                      VerticalAlignment="Top"
+                                                                                                      FontTypography="BodyStrong"
+                                                                                                      Text="{Binding Token}"/>
+                                                                                        <StackPanel Margin="8,0,0,0">
+                                                                                            <ui:TextBlock FontTypography="Body"
+                                                                                                          Text="{Binding DateText}"/>
+                                                                                            <ui:TextBlock FontTypography="Body"
+                                                                                                          TextWrapping="Wrap"
+                                                                                                          Style="{StaticResource OptionalText}"
+                                                                                                          Text="{Binding AssessmentTitle}"/>
+                                                                                            <ui:TextBlock FontTypography="Body"
+                                                                                                          TextWrapping="Wrap"
+                                                                                                          Style="{StaticResource OptionalText}"
+                                                                                                          Text="{Binding Label}"/>
+                                                                                            <ui:TextBlock FontTypography="Caption"
+                                                                                                          Appearance="Secondary"
+                                                                                                          TextWrapping="Wrap"
+                                                                                                          Style="{StaticResource OptionalText}"
+                                                                                                          Text="{Binding Comment}"/>
+                                                                                            <ui:TextBlock FontTypography="Caption"
+                                                                                                          TextWrapping="Wrap"
+                                                                                                          Style="{StaticResource OptionalText}"
+                                                                                                          Text="{Binding VoidedText}"/>
+                                                                                        </StackPanel>
+                                                                                    </StackPanel>
+
+                                                                                    <StackPanel Grid.Column="1"
+                                                                                                Margin="8,0,0,0"
+                                                                                                Orientation="Horizontal"
+                                                                                                VerticalAlignment="Top">
+                                                                                        <ui:Button Margin="0,0,4,0"
+                                                                                                   Icon="{ui:SymbolIcon Edit24}"
+                                                                                                   ToolTip="Edit grade"
+                                                                                                   AutomationProperties.Name="Edit grade"
+                                                                                                   Command="{Binding DataContext.ViewModel.Grades.BeginEditGradeCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                                                   CommandParameter="{Binding}"
+                                                                                                   Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                                                        <ui:Button Margin="0,0,4,0"
+                                                                                                   Icon="{ui:SymbolIcon Prohibited24}"
+                                                                                                   ToolTip="Void grade"
+                                                                                                   AutomationProperties.Name="Void grade"
+                                                                                                   Command="{Binding DataContext.ViewModel.Grades.VoidGradeCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                                                   CommandParameter="{Binding}"
+                                                                                                   Visibility="{Binding CanVoid, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                                                        <ui:Button Icon="{ui:SymbolIcon ArrowUndo24}"
+                                                                                                   ToolTip="Restore grade"
+                                                                                                   AutomationProperties.Name="Restore grade"
+                                                                                                   Command="{Binding DataContext.ViewModel.Grades.RestoreGradeCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                                                   CommandParameter="{Binding}"
+                                                                                                   Visibility="{Binding CanRestore, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                                                    </StackPanel>
+                                                                                </Grid>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- Notes tab -->
+                        <TabItem Header="Notes" AutomationProperties.Name="Notes">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                    <!-- Editor -->
+                                    <StackPanel Grid.Row="0"
+                                                Margin="0,12,0,0"
+                                                Visibility="{Binding ViewModel.ShowNoteEditor, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="{Binding ViewModel.NoteEditorLabel}"/>
+                                        <ui:TextBox MinHeight="72"
+                                                    MaxHeight="120"
+                                                    AcceptsReturn="True"
+                                                    TextWrapping="Wrap"
+                                                    MaxLength="{x:Static services:NoteService.MaxTextLength}"
+                                                    VerticalScrollBarVisibility="Auto"
+                                                    AutomationProperties.Name="{Binding ViewModel.NoteEditorLabel}"
+                                                    PlaceholderText="Write a note about this student"
+                                                    Text="{Binding ViewModel.NoteText, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                                            <ui:Button Margin="0,0,8,0"
+                                                       Content="Add note"
+                                                       Appearance="Primary"
+                                                       Icon="{ui:SymbolIcon Add24}"
+                                                       Command="{Binding ViewModel.AddNoteCommand}"
+                                                       Visibility="{Binding ViewModel.IsEditingNote, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                            <ui:Button Margin="0,0,8,0"
+                                                       Content="Save note"
+                                                       Appearance="Primary"
+                                                       Icon="{ui:SymbolIcon Save24}"
+                                                       Command="{Binding ViewModel.SaveNoteCommand}"
+                                                       Visibility="{Binding ViewModel.IsEditingNote, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            <ui:Button Content="Cancel"
+                                                       Icon="{ui:SymbolIcon Dismiss24}"
+                                                       ToolTip="Discard the text and stop editing"
+                                                       Command="{Binding ViewModel.CancelEditNoteCommand}"
+                                                       Visibility="{Binding ViewModel.CanDiscardNoteInput, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        </StackPanel>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="1"
-                                                Margin="8,0,0,0"
-                                                Orientation="Horizontal"
-                                                VerticalAlignment="Top"
-                                                Visibility="{Binding DataContext.ViewModel.IsSelectedYearWritable, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <ui:Button Margin="0,0,4,0"
-                                                   Icon="{ui:SymbolIcon Edit24}"
-                                                   ToolTip="Edit note"
-                                                   AutomationProperties.Name="Edit note"
-                                                   Command="{Binding DataContext.ViewModel.StartEditNoteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                   CommandParameter="{Binding}"
-                                                   Visibility="{Binding IsArchived, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                                        <ui:Button Icon="{ui:SymbolIcon Archive24}"
-                                                   ToolTip="Archive note"
-                                                   AutomationProperties.Name="Archive note"
-                                                   Command="{Binding DataContext.ViewModel.ArchiveNoteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                   CommandParameter="{Binding}"
-                                                   Visibility="{Binding IsArchived, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                                        <ui:Button Icon="{ui:SymbolIcon ArrowUndo24}"
-                                                   ToolTip="Restore note"
-                                                   AutomationProperties.Name="Restore note"
-                                                   Command="{Binding DataContext.ViewModel.RestoreNoteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                   CommandParameter="{Binding}"
-                                                   Visibility="{Binding IsArchived, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                    </StackPanel>
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                                    <!-- Empty state -->
+                                    <ui:TextBlock Grid.Row="1"
+                                                  Margin="0,16,0,0"
+                                                  Appearance="Secondary"
+                                                  TextWrapping="Wrap"
+                                                  Text="{Binding ViewModel.EmptyNotesMessage}"
+                                                  Visibility="{Binding ViewModel.HasNoNotes, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                    <!-- Notes list -->
+                                    <ListView Grid.Row="2"
+                                              Margin="0,12,0,0"
+                                              AutomationProperties.Name="Notes"
+                                              ItemsSource="{Binding ViewModel.Notes}"
+                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                              VirtualizingPanel.IsVirtualizing="True"
+                                              VirtualizingPanel.VirtualizationMode="Recycling"
+                                              ScrollViewer.CanContentScroll="True"
+                                              HorizontalContentAlignment="Stretch">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type students:NoteRow}">
+                                                <Grid Margin="0,4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel Grid.Column="0">
+                                                        <ui:TextBlock FontTypography="Body"
+                                                                      TextWrapping="Wrap"
+                                                                      Text="{Binding Text}"/>
+                                                        <ui:TextBlock FontTypography="Caption"
+                                                                      Appearance="Secondary"
+                                                                      Text="{Binding CreatedOnDisplay}"/>
+                                                        <ui:TextBlock FontTypography="Caption"
+                                                                      Appearance="Secondary"
+                                                                      Text="{Binding EditedOnDisplay}"/>
+                                                        <ui:TextBlock FontTypography="Caption"
+                                                                      Appearance="Secondary"
+                                                                      Text="{Binding ArchivedOnDisplay}"/>
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1"
+                                                                Margin="8,0,0,0"
+                                                                Orientation="Horizontal"
+                                                                VerticalAlignment="Top"
+                                                                Visibility="{Binding DataContext.ViewModel.IsSelectedYearWritable, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <ui:Button Margin="0,0,4,0"
+                                                                   Icon="{ui:SymbolIcon Edit24}"
+                                                                   ToolTip="Edit note"
+                                                                   AutomationProperties.Name="Edit note"
+                                                                   Command="{Binding DataContext.ViewModel.StartEditNoteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                   CommandParameter="{Binding}"
+                                                                   Visibility="{Binding IsArchived, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                                        <ui:Button Icon="{ui:SymbolIcon Archive24}"
+                                                                   ToolTip="Archive note"
+                                                                   AutomationProperties.Name="Archive note"
+                                                                   Command="{Binding DataContext.ViewModel.ArchiveNoteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                   CommandParameter="{Binding}"
+                                                                   Visibility="{Binding IsArchived, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                                        <ui:Button Icon="{ui:SymbolIcon ArrowUndo24}"
+                                                                   ToolTip="Restore note"
+                                                                   AutomationProperties.Name="Restore note"
+                                                                   Command="{Binding DataContext.ViewModel.RestoreNoteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                   CommandParameter="{Binding}"
+                                                                   Visibility="{Binding IsArchived, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
                 </Grid>
             </ui:Card>
         </Grid>

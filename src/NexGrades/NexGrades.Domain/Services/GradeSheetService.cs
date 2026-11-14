@@ -81,6 +81,181 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
                 students);
         });
 
+    /// <summary>
+    /// Builds the grades of one student in one school year, per subject of the student's class and per bucket,
+    /// with bucket and weighted subject averages. Read-only, so it also works on closed years. A student who is
+    /// not enrolled in the year has no subjects. An exempt student's grades are listed but have no averages.
+    /// </summary>
+    /// <param name="studentId">The student.</param>
+    /// <param name="schoolYearId">The school year to show.</param>
+    /// <param name="includeVoided">
+    /// Also return voided grades, flagged as voided, so they can be restored. They never count toward an
+    /// average. When false, voided grades are neither returned nor counted.
+    /// </param>
+    /// <param name="cancellationToken">Cancels the load.</param>
+    /// <exception cref="InvariantViolationException">The student or the school year does not exist.</exception>
+    public Task<StudentGradeOverview> GetStudentGradesAsync(
+        int studentId, int schoolYearId, bool includeVoided = false, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("GradeSheetService.GetStudentGrades", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+
+            if (!await context.Students.AsNoTracking().AnyAsync(s => s.Id == studentId, cancellationToken))
+            {
+                throw new InvariantViolationException($"Student {studentId} does not exist.");
+            }
+
+            var year = await context.SchoolYears.AsNoTracking()
+                .Where(y => y.Id == schoolYearId)
+                .Select(y => new { y.Label, y.StartDate, y.EndDate })
+                .FirstOrDefaultAsync(cancellationToken)
+                ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
+            var yearStart = DateOnly.FromDateTime(year.StartDate);
+            var yearEnd = DateOnly.FromDateTime(year.EndDate);
+
+            // A student has at most one enrollment per school year.
+            var enrollment = await context.Enrollments.AsNoTracking()
+                .Where(e => e.StudentId == studentId && e.ClassInstance.SchoolYearId == schoolYearId)
+                .Select(e => new { e.ClassInstanceId, e.JoinedOn, e.LeftOn })
+                .FirstOrDefaultAsync(cancellationToken);
+            if (enrollment is null)
+            {
+                return new StudentGradeOverview(studentId, schoolYearId, year.Label, null, null, yearStart, yearEnd, []);
+            }
+
+            var data = await LoadStudentClassDataAsync(context, studentId, enrollment.ClassInstanceId, includeVoided, cancellationToken);
+
+            var subjects = data.SubjectInstances
+                .Select(si => BuildSubject(si, data))
+                .OrderBy(s => s.SubjectName, StringComparer.CurrentCulture)
+                .ThenBy(s => s.SubjectInstanceId)
+                .ToList();
+
+            return new StudentGradeOverview(
+                studentId,
+                schoolYearId,
+                year.Label,
+                DateOnly.FromDateTime(enrollment.JoinedOn),
+                enrollment.LeftOn is { } left ? DateOnly.FromDateTime(left) : null,
+                yearStart,
+                yearEnd,
+                subjects);
+        });
+
+    private static async Task<StudentClassData> LoadStudentClassDataAsync(
+        AppDbContext context, int studentId, int classInstanceId, bool includeVoided, CancellationToken cancellationToken)
+    {
+        var subjectInstances = await context.SubjectInstances.AsNoTracking()
+            .Where(si => si.ClassInstanceId == classInstanceId)
+            .Select(si => new SubjectInstanceRow(si.Id, si.Subject.Name))
+            .ToListAsync(cancellationToken);
+
+        var buckets = await context.GradeBuckets.AsNoTracking()
+            .Where(b => b.SubjectInstance.ClassInstanceId == classInstanceId)
+            .Select(b => new StudentBucketRow(b.SubjectInstanceId, new SubjectGradeData.BucketRow(b.Id, b.Name, b.Weight, b.SortOrder)))
+            .ToListAsync(cancellationToken);
+
+        var assessments = await context.Assessments.AsNoTracking()
+            .Where(a => a.GradeBucket.SubjectInstance.ClassInstanceId == classInstanceId && a.VoidedOn == null)
+            .Select(a => new GradeSheetAssessmentRow(a.GradeBucketId, new GradeSheetAssessment(a.Id, a.Title, a.Date, null)))
+            .ToListAsync(cancellationToken);
+
+        var exemptIds = (await context.SubjectParticipations.AsNoTracking()
+            .Where(p => p.StudentId == studentId
+                && p.SubjectInstance.ClassInstanceId == classInstanceId
+                && p.Mode == Data.Entities.ParticipationMode.Exempt)
+            .Select(p => p.SubjectInstanceId)
+            .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        var gradeQuery = context.Grades.AsNoTracking()
+            .Where(g => g.StudentId == studentId && g.GradeBucket.SubjectInstance.ClassInstanceId == classInstanceId);
+        if (!includeVoided)
+        {
+            gradeQuery = gradeQuery.Where(SubjectGradeData.CountingGrade);
+        }
+
+        var grades = await gradeQuery
+            .Select(g => new SubjectGradeData.GradeRow(
+                g.Id,
+                g.StudentId,
+                g.GradeBucketId,
+                g.AssessmentId,
+                g.Value,
+                g.RecordedOn,
+                g.Label,
+                g.Comment,
+                g.VoidedOn,
+                g.Assessment == null ? null : g.Assessment.VoidedOn))
+            .ToListAsync(cancellationToken);
+
+        // Titles of every assessment the student has a grade in, voided ones included.
+        var assessmentTitles = await context.Assessments.AsNoTracking()
+            .Where(a => a.GradeBucket.SubjectInstance.ClassInstanceId == classInstanceId
+                && a.Grades.Any(g => g.StudentId == studentId))
+            .Select(a => new { a.Id, a.Title })
+            .ToDictionaryAsync(a => a.Id, a => a.Title, cancellationToken);
+
+        return new StudentClassData(subjectInstances, buckets, assessments, exemptIds, grades, assessmentTitles);
+    }
+
+    private static StudentSubjectGrades BuildSubject(SubjectInstanceRow subject, StudentClassData data)
+    {
+        var isExempt = data.ExemptSubjectInstanceIds.Contains(subject.Id);
+        var sheetBuckets = data.Buckets
+            .Where(b => b.SubjectInstanceId == subject.Id)
+            .Select(b => b.Bucket)
+            .OrderBy(b => b.SortOrder).ThenBy(b => b.Id)
+            .Select(b => new GradeSheetBucket(
+                b.Id,
+                b.Name,
+                b.Weight,
+                b.SortOrder,
+                [.. data.Assessments.Where(a => a.GradeBucketId == b.Id)
+                    .Select(a => a.Assessment)
+                    .OrderBy(a => a.Date).ThenBy(a => a.Id)]))
+            .ToList();
+        var bucketIds = sheetBuckets.Select(b => b.Id).ToHashSet();
+        var subjectGrades = data.Grades.Where(g => bucketIds.Contains(g.GradeBucketId)).ToList();
+
+        // Exempt wins over grades from before the exemption: listed, but no averages.
+        var averages = isExempt
+            ? new GradeSheetStudentAverages(sheetBuckets.ToDictionary(b => b.Id, _ => (decimal?)null), null)
+            : GradeSheetAverages.Compute(
+                sheetBuckets,
+                subjectGrades.Select(g => new GradeSheetGrade(
+                    g.Id, g.GradeBucketId, g.Value, TokenFor(g.Value), g.RecordedOn, g.Label, g.Comment, g.EffectiveVoidedOn)));
+
+        var bucketResults = sheetBuckets
+            .Select(b => new StudentBucketGrades(
+                b.Id,
+                b.Name,
+                b.Weight,
+                b.Assessments,
+                averages.BucketAverages[b.Id],
+                [.. subjectGrades
+                    .Where(g => g.GradeBucketId == b.Id)
+                    .OrderBy(g => g.RecordedOn).ThenBy(g => g.Id)
+                    .Select(g => ToEntry(g, data.AssessmentTitles))]))
+            .ToList();
+
+        return new StudentSubjectGrades(subject.Id, subject.Name, isExempt, bucketResults, averages.SubjectAverage);
+    }
+
+    private static StudentGradeEntry ToEntry(SubjectGradeData.GradeRow g, Dictionary<int, string> assessmentTitles) =>
+        new(
+            g.Id,
+            g.GradeBucketId,
+            g.AssessmentId,
+            g.AssessmentId is { } assessmentId ? assessmentTitles.GetValueOrDefault(assessmentId) : null,
+            g.Value,
+            TokenFor(g.Value),
+            g.RecordedOn,
+            g.Label,
+            g.Comment,
+            g.VoidedOn,
+            g.AssessmentVoidedOn is not null);
+
     private static IEnumerable<SubjectGradeData.EnrollmentRow> Sort(IEnumerable<SubjectGradeData.EnrollmentRow> enrollments) =>
         enrollments
             .OrderBy(e => e.LastName, StringComparer.CurrentCulture)
@@ -145,14 +320,29 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
             g.Id,
             g.GradeBucketId,
             g.Value,
-            // Legacy data may hold values outside the scale; show them rather than failing the sheet.
-            GradingScale.TryGetTokenForValue(g.Value, out var token) && token is not null
-                ? token
-                : g.Value.ToString(CultureInfo.InvariantCulture),
+            TokenFor(g.Value),
             g.RecordedOn,
             g.Label,
             g.Comment,
             g.EffectiveVoidedOn);
 
+    // Legacy data may hold values outside the scale; show them rather than failing the view.
+    private static string TokenFor(decimal value) =>
+        GradingScale.TryGetTokenForValue(value, out var token) && token is not null
+            ? token
+            : value.ToString(CultureInfo.InvariantCulture);
+
     private sealed record GradeSheetAssessmentRow(int GradeBucketId, GradeSheetAssessment Assessment);
+
+    private sealed record SubjectInstanceRow(int Id, string Name);
+
+    private sealed record StudentBucketRow(int SubjectInstanceId, SubjectGradeData.BucketRow Bucket);
+
+    private sealed record StudentClassData(
+        List<SubjectInstanceRow> SubjectInstances,
+        List<StudentBucketRow> Buckets,
+        List<GradeSheetAssessmentRow> Assessments,
+        HashSet<int> ExemptSubjectInstanceIds,
+        List<SubjectGradeData.GradeRow> Grades,
+        Dictionary<int, string> AssessmentTitles);
 }

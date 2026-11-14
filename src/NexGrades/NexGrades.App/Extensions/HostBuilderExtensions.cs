@@ -178,6 +178,7 @@ public static class HostBuilderExtensions
             .AddSingleton<SettingsViewModel>()
             .AddTransient<SubjectDetailViewModel>()
             .AddTransient<StudentViewModel>()
+            .AddTransient<StudentGradesViewModel>()
             .AddTransient<ClassViewModel>()
             .AddTransient<GradeSheetViewModel>();
     }
