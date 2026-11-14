@@ -30,8 +30,10 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
     /// <exception cref="InvariantViolationException">
     /// The grade value is not on the legal grading scale, the bucket does not exist, the student was not
     /// enrolled in the owning class instance at the time of <paramref name="recordedOn"/>, the student is
-    /// exempt from the owning subject instance, or <paramref name="recordedOn"/> is outside the school year.
+    /// exempt from the owning subject instance, <paramref name="recordedOn"/> is outside the school year, or a
+    /// label or comment is too long. Label and comment are trimmed and stored as null when empty.
     /// </exception>
+    /// <exception cref="ClosedYearException">The year is closed and not unlocked.</exception>
     public Task<Grade> RecordGradeAsync(
         int gradeBucketId,
         int studentId,
@@ -43,6 +45,8 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
         DomainOperation.RunAsync("GradeService.RecordGrade", async () =>
         {
             GradingScale.Validate(value);
+            var normalizedLabel = NormalizeOptional(label, "A grade label", MaxLabelLength);
+            var normalizedComment = NormalizeOptional(comment, "A grade comment", MaxCommentLength);
 
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
 
@@ -60,8 +64,8 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
                 StudentId = studentId,
                 Value = value,
                 RecordedOn = recordedOn,
-                Label = label,
-                Comment = comment,
+                Label = normalizedLabel,
+                Comment = normalizedComment,
             };
             context.Grades.Add(grade);
             await context.SaveChangesAsync(cancellationToken);

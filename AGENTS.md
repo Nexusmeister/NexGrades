@@ -111,7 +111,9 @@ they record *why* the model is shaped the way it is.
   assessment; otherwise the grade's bucket is always the assessment's bucket. It is "removed" by voiding (`VoidedOn`),
   which can be undone. A grade counts only while neither it nor its assessment is voided: voided grades and grades of
   voided assessments are excluded from averages, the class overview export and close readiness. Managed through
-  `GradeService`.
+  `GradeService`. The student page's Grades tab reads a student's grades for one school year through
+  `GradeSheetService.GetStudentGradesAsync` (an exempt subject lists its grades without averages) and corrects them
+  through `GradeService`, so the same rules apply as on the grade sheet.
 - **SubjectParticipation** — per-student override of the default "enrolled ⇒ participates" rule
   (elective, exemption, religion/ethics split). Rows exist only for deviations.
 - **Note** — free-text note on a student within a school year, managed through `NoteService`. A note

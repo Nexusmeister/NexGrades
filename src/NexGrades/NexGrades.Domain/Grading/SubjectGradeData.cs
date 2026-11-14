@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
@@ -30,6 +31,13 @@ internal sealed class SubjectGradeData
 
     /// <summary>The grades of the subject instance, without voided ones unless they were asked for.</summary>
     public required IReadOnlyList<GradeRow> Grades { get; init; }
+
+    /// <summary>
+    /// The one definition of "this grade counts": neither the grade nor its assessment is voided. Shared with the
+    /// per-student grade list, so the two views cannot drift apart.
+    /// </summary>
+    public static Expression<Func<Grade, bool>> CountingGrade { get; } =
+        g => g.VoidedOn == null && (g.Assessment == null || g.Assessment.VoidedOn == null);
 
     /// <summary>Loads the data on <paramref name="context"/> with no tracking.</summary>
     /// <exception cref="InvariantViolationException">The subject instance does not exist.</exception>
@@ -86,7 +94,7 @@ internal sealed class SubjectGradeData
             .Where(g => g.GradeBucket.SubjectInstanceId == subjectInstanceId);
         if (!includeVoided)
         {
-            gradeQuery = gradeQuery.Where(g => g.VoidedOn == null && (g.Assessment == null || g.Assessment.VoidedOn == null));
+            gradeQuery = gradeQuery.Where(CountingGrade);
         }
 
         return gradeQuery
