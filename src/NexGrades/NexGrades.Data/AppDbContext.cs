@@ -53,6 +53,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// <summary>The individual grades.</summary>
     public DbSet<Grade> Grades => Set<Grade>();
 
+    /// <summary>The teacher's final grade overrides. Holds rows only where an override was set.</summary>
+    public DbSet<FinalGrade> FinalGrades => Set<FinalGrade>();
+
     /// <summary>The free-text notes about students.</summary>
     public DbSet<Note> Notes => Set<Note>();
 
@@ -78,6 +81,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration(new SubjectParticipationConfiguration());
         modelBuilder.ApplyConfiguration(new AssessmentConfiguration());
         modelBuilder.ApplyConfiguration(new GradeConfiguration());
+        modelBuilder.ApplyConfiguration(new FinalGradeConfiguration());
         modelBuilder.ApplyConfiguration(new NoteConfiguration());
         modelBuilder.ApplyConfiguration(new AuditEntryConfiguration());
     }

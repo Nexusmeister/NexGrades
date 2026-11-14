@@ -1,4 +1,5 @@
 using System.Globalization;
+using NexGrades.Domain.Grading;
 
 namespace NexGrades.App.Features.Grades;
 
@@ -10,10 +11,13 @@ public static class GradeAverageFormatter
 
     /// <summary>
     /// Formats <paramref name="average"/> with two decimals in the current culture, for example <c>2,35</c> for
-    /// German. An empty bucket or subject has no average and shows <see cref="Missing"/>, never zero.
+    /// German. The value is rounded by <see cref="AverageCalculator.RoundForDisplay"/>, the same rounding the final
+    /// grade proposal uses. An empty bucket or subject has no average and shows <see cref="Missing"/>, never zero.
     /// </summary>
     /// <param name="average">The average, or <see langword="null"/> when there is none.</param>
     /// <returns>The text to display.</returns>
     public static string Format(decimal? average) =>
-        average is { } value ? value.ToString("0.00", CultureInfo.CurrentCulture) : Missing;
+        average is { } value
+            ? AverageCalculator.RoundForDisplay(value).ToString("0.00", CultureInfo.CurrentCulture)
+            : Missing;
 }

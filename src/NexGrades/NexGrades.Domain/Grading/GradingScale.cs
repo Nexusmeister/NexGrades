@@ -89,4 +89,65 @@ public static class GradingScale
 
     /// <summary>Non-throwing variant of <see cref="TokenForValue"/>.</summary>
     public static bool TryGetTokenForValue(decimal value, out string? token) => ValueToTokenMap.TryGetValue(value, out token);
+
+    /// <summary>
+    /// The six legal final (certificate) grades, 1 to 6, best first. A final grade is a whole grade: it has no
+    /// tendency, so "2-" is not a final grade.
+    /// </summary>
+    public static IReadOnlyList<decimal> FinalGradeValues { get; } = [1m, 2m, 3m, 4m, 5m, 6m];
+
+    /// <summary>Whether <paramref name="value"/> is a whole grade from 1 to 6, the only legal final grades.</summary>
+    public static bool IsLegalFinalGrade(decimal value) =>
+        value is >= 1m and <= 6m && value == decimal.Truncate(value);
+
+    /// <summary>
+    /// Throws <see cref="InvariantViolationException"/> if <paramref name="value"/> is not one of the legal final
+    /// grades in <see cref="FinalGradeValues"/>.
+    /// </summary>
+    public static void ValidateFinalGrade(decimal value)
+    {
+        if (!IsLegalFinalGrade(value))
+        {
+            throw new InvariantViolationException(
+                $"{value} is not a legal final grade. Legal final grades are: {string.Join(", ", FinalGradeValues)}.");
+        }
+    }
+
+    /// <summary>
+    /// Parses typed input such as "3" or " 3 " into a final grade. The input is parsed as a grade token first
+    /// (see <see cref="TryParseToken"/>), and is accepted only when it is a whole grade, so "2-" is rejected.
+    /// </summary>
+    /// <param name="input">The raw typed text.</param>
+    /// <param name="value">The final grade when parsing succeeds, otherwise 0.</param>
+    /// <returns><see langword="true"/> when <paramref name="input"/> is a legal final grade.</returns>
+    public static bool TryParseFinalGradeToken(string? input, out decimal value)
+    {
+        if (TryParseToken(input, out value) && IsLegalFinalGrade(value))
+        {
+            return true;
+        }
+
+        value = 0m;
+        return false;
+    }
+
+    /// <summary>
+    /// Proposes the final grade for a subject average: the average as displayed (rounded by
+    /// <see cref="AverageCalculator.RoundForDisplay"/>), rounded to a whole grade with .5 going to the worse
+    /// grade (2.50 gives 3, 2.49 gives 2), and kept within 1 to 6. Rounding the displayed value, not the raw
+    /// one, keeps the proposal consistent with the number the teacher sees.
+    /// </summary>
+    /// <param name="subjectAverage">The weighted subject average, or <see langword="null"/> when there is none.</param>
+    /// <returns>The proposed final grade, or <see langword="null"/> when there is no average.</returns>
+    public static decimal? ProposeFinalGrade(decimal? subjectAverage)
+    {
+        if (subjectAverage is not { } average)
+        {
+            return null;
+        }
+
+        // Averages are positive and a higher value is worse, so a midpoint rounded away from zero goes to the worse grade.
+        var whole = Math.Round(AverageCalculator.RoundForDisplay(average), 0, MidpointRounding.AwayFromZero);
+        return Math.Clamp(whole, FinalGradeValues[0], FinalGradeValues[^1]);
+    }
 }

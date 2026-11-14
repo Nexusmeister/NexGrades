@@ -10,7 +10,8 @@ namespace NexGrades.Domain.Services;
 
 /// <summary>
 /// Builds the grade sheet of one subject instance: a row per student, a column per assessment grouped by
-/// bucket, and the live bucket and subject averages. Read-only, so it also works on closed years.
+/// bucket, the live bucket and subject averages, and each student's final grade override. Read-only, so it also
+/// works on closed years.
 /// </summary>
 /// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
 /// <param name="clock">Source of "now", used to tell whether the year can currently be written to.</param>
@@ -18,7 +19,7 @@ namespace NexGrades.Domain.Services;
 /// Averages come from <see cref="GradeSheetAverages"/> with the snapshotted bucket weights. Every student of
 /// the class is shown, including those who left, so grades from before they left can still be entered; a cell
 /// on a date when the student was not enrolled is <see cref="GradeSheetCellState.NotEnrolled"/>. Exempt wins:
-/// an exempt student has only <see cref="GradeSheetCellState.Exempt"/> cells and no averages.
+/// an exempt student has only <see cref="GradeSheetCellState.Exempt"/> cells, no averages and no final grade.
 /// </remarks>
 public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFactory, IClock clock)
 {
@@ -61,10 +62,21 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
                 .ToList();
             var columns = buckets.SelectMany(b => b.Assessments).ToList();
 
+            var finalGradeOverrides = await context.FinalGrades.AsNoTracking()
+                .Where(f => f.SubjectInstanceId == subjectInstanceId && f.OverrideValue != null)
+                .Select(f => new { f.StudentId, f.OverrideValue })
+                .ToDictionaryAsync(f => f.StudentId, f => f.OverrideValue, cancellationToken);
+
             var gradesByStudent = data.Grades.ToLookup(g => g.StudentId);
             var students = Sort(data.Enrollments.Where(e => e.LeftOn is null))
                 .Concat(Sort(data.Enrollments.Where(e => e.LeftOn is not null)))
-                .Select(e => BuildStudent(e, data.ExemptStudentIds.Contains(e.StudentId), buckets, columns, [.. gradesByStudent[e.StudentId]]))
+                .Select(e => BuildStudent(
+                    e,
+                    data.ExemptStudentIds.Contains(e.StudentId),
+                    buckets,
+                    columns,
+                    [.. gradesByStudent[e.StudentId]],
+                    finalGradeOverrides.GetValueOrDefault(e.StudentId)))
                 .ToList();
 
             var isClosed = data.Header.SchoolYearStatus == Data.Entities.SchoolYearStatus.Closed;
@@ -267,7 +279,8 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
         bool isExempt,
         List<GradeSheetBucket> buckets,
         List<GradeSheetAssessment> columns,
-        List<SubjectGradeData.GradeRow> studentGrades)
+        List<SubjectGradeData.GradeRow> studentGrades,
+        decimal? finalGradeOverride)
     {
         var grades = studentGrades.Select(ToGrade).ToList();
 
@@ -312,7 +325,8 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
             cells,
             unassigned,
             averages.BucketAverages,
-            averages.SubjectAverage);
+            averages.SubjectAverage,
+            isExempt ? null : finalGradeOverride);
     }
 
     private static GradeSheetGrade ToGrade(SubjectGradeData.GradeRow g) =>

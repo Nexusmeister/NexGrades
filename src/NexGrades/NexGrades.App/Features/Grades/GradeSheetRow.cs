@@ -19,8 +19,13 @@ public sealed partial class GradeSheetRow : ObservableObject
     /// <param name="buckets">The sheet's buckets, in column order.</param>
     /// <param name="isWritable">Whether the school year accepts writes right now.</param>
     /// <param name="textCommitted">Called when a cell's text is committed; the owner saves it.</param>
+    /// <param name="finalGradeCommitted">Called when the final grade cell's text is committed; the owner saves it.</param>
     public GradeSheetRow(
-        GradeSheetStudent student, IReadOnlyList<GradeSheetBucket> buckets, bool isWritable, Action<GradeCellViewModel> textCommitted)
+        GradeSheetStudent student,
+        IReadOnlyList<GradeSheetBucket> buckets,
+        bool isWritable,
+        Action<GradeCellViewModel> textCommitted,
+        Action<FinalGradeCellViewModel> finalGradeCommitted)
     {
         ArgumentNullException.ThrowIfNull(student);
         ArgumentNullException.ThrowIfNull(buckets);
@@ -43,6 +48,8 @@ public sealed partial class GradeSheetRow : ObservableObject
         Cells = [.. student.Cells.Select(c => new GradeCellViewModel(
             student.StudentId, c, assessments[c.AssessmentId].VoidedOn is not null, isWritable, textCommitted))];
         Buckets = [.. buckets.Select(_ => new GradeSheetBucketCell())];
+        FinalGrade = new FinalGradeCellViewModel(
+            student.StudentId, student.IsExempt, student.FinalGradeOverride, student.ProposedFinalGrade, isWritable, finalGradeCommitted);
 
         for (var i = 0; i < buckets.Count; i++)
         {
@@ -76,6 +83,13 @@ public sealed partial class GradeSheetRow : ObservableObject
     /// <summary>The per-bucket values, in bucket order.</summary>
     public IReadOnlyList<GradeSheetBucketCell> Buckets { get; }
 
+    /// <summary>The final grade cell: the teacher's override of the proposal.</summary>
+    public FinalGradeCellViewModel FinalGrade { get; }
+
+    /// <summary>The proposed final grade as a whole grade; an en dash when there is none.</summary>
+    [ObservableProperty]
+    private string _proposalText = GradeAverageFormatter.Missing;
+
     /// <summary>The subject average formatted for display; an en dash when there is none.</summary>
     [ObservableProperty]
     private string _subjectAverageText = GradeAverageFormatter.Missing;
@@ -91,6 +105,8 @@ public sealed partial class GradeSheetRow : ObservableObject
             }
 
             SubjectAverageText = GradeAverageFormatter.Missing;
+            ProposalText = GradeAverageFormatter.Missing;
+            FinalGrade.SetProposal(null);
             return;
         }
 
@@ -102,6 +118,10 @@ public sealed partial class GradeSheetRow : ObservableObject
         }
 
         SubjectAverageText = GradeAverageFormatter.Format(averages.SubjectAverage);
+
+        var proposal = GradingScale.ProposeFinalGrade(averages.SubjectAverage);
+        ProposalText = proposal is null ? GradeAverageFormatter.Missing : FinalGradeCellViewModel.FormatGrade(proposal);
+        FinalGrade.SetProposal(proposal);
     }
 
     /// <summary>Applies the year's writability to every cell, keeping typed text.</summary>
@@ -112,6 +132,23 @@ public sealed partial class GradeSheetRow : ObservableObject
         {
             cell.SetWritable(isWritable);
         }
+
+        FinalGrade.SetWritable(isWritable);
+    }
+
+    /// <summary>Gets the editable cell of this row behind <paramref name="column"/>.</summary>
+    /// <param name="column">The grid column.</param>
+    /// <returns>The assessment cell or the final grade cell, or null for a column that is not editable.</returns>
+    internal IGradeSheetEditableCell? EditableCell(GradeSheetColumn column)
+    {
+        ArgumentNullException.ThrowIfNull(column);
+
+        return column.Kind switch
+        {
+            GradeSheetColumnKind.FinalGrade => FinalGrade,
+            GradeSheetColumnKind.Assessment when column.CellIndex >= 0 && column.CellIndex < Cells.Count => Cells[column.CellIndex],
+            _ => null,
+        };
     }
 
     private string FormatOtherGrades(int bucketId, CultureInfo culture) =>

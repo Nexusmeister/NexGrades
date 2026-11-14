@@ -6,7 +6,7 @@ namespace NexGrades.App.Features.Grades;
 /// <summary>
 /// Turns a <see cref="GradeSheet"/> into the column list of the grid. Pure, so it is unit tested without WPF.
 /// The order is: student, then per bucket its assessments, an "other grades" column only when some student has a
-/// grade in the bucket that belongs to no assessment, and the bucket average; the subject average comes last.
+/// grade in the bucket that belongs to no assessment, and the bucket average; the subject average, the proposed final grade and the editable final grade come last.
 /// </summary>
 public static class GradeSheetColumnBuilder
 {
@@ -68,6 +68,8 @@ public static class GradeSheetColumnBuilder
         }
 
         columns.Add(new GradeSheetColumn { Kind = GradeSheetColumnKind.SubjectAverage, Header = "Average" });
+        columns.Add(new GradeSheetColumn { Kind = GradeSheetColumnKind.ProposedFinalGrade, Header = "Proposal" });
+        columns.Add(new GradeSheetColumn { Kind = GradeSheetColumnKind.FinalGrade, Header = "Final grade" });
         return columns;
     }
 }

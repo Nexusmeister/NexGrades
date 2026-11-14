@@ -8,6 +8,21 @@ namespace NexGrades.Domain.Grading;
 public static class AverageCalculator
 {
     /// <summary>
+    /// The number of decimals an average is shown with. The proposed final grade is derived from the average
+    /// rounded to this many decimals, so the teacher can check the proposal against the number on screen.
+    /// </summary>
+    public const int DisplayDecimals = 2;
+
+    /// <summary>
+    /// Rounds <paramref name="average"/> to <see cref="DisplayDecimals"/> decimals, with a midpoint rounded away
+    /// from zero (2.345 becomes 2.35). This is the value the UI shows and the one the final grade proposal uses.
+    /// </summary>
+    /// <param name="average">The unrounded average.</param>
+    /// <returns>The average as it is displayed.</returns>
+    public static decimal RoundForDisplay(decimal average) =>
+        Math.Round(average, DisplayDecimals, MidpointRounding.AwayFromZero);
+
+    /// <summary>
     /// A bucket's snapshotted weight together with that student's average within it (or <see langword="null"/>
     /// if the student has no grades in that bucket).
     /// </summary>

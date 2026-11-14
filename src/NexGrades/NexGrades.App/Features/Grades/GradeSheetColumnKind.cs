@@ -17,4 +17,10 @@ public enum GradeSheetColumnKind
 
     /// <summary>The live subject average.</summary>
     SubjectAverage,
+
+    /// <summary>The read-only final grade proposed from the subject average.</summary>
+    ProposedFinalGrade,
+
+    /// <summary>The editable final grade: the teacher's override, empty when the proposal is used.</summary>
+    FinalGrade,
 }

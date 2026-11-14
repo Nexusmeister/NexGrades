@@ -5,4 +5,11 @@ namespace NexGrades.Domain.Grading;
 /// <param name="SubjectAverage">The weighted subject average, or null when no bucket has counting grades.</param>
 public sealed record GradeSheetStudentAverages(
     IReadOnlyDictionary<int, decimal?> BucketAverages,
-    decimal? SubjectAverage);
+    decimal? SubjectAverage)
+{
+    /// <summary>
+    /// The final grade proposed from <see cref="SubjectAverage"/> (see <see cref="GradingScale.ProposeFinalGrade"/>),
+    /// or null when there is no subject average. Recomputed from the averages, so it follows live edits.
+    /// </summary>
+    public decimal? ProposedFinalGrade => GradingScale.ProposeFinalGrade(SubjectAverage);
+}

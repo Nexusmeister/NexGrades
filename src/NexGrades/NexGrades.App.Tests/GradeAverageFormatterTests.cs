@@ -62,6 +62,12 @@ public class GradeAverageFormatterTests
         Assert.Equal("2.35", FormatIn("en-US", 2.345m));
     }
 
+    [Fact]
+    public void Format_RoundsHalfUp_ForTwoFourNineFive()
+    {
+        Assert.Equal("2.50", FormatIn("en-US", 2.495m));
+    }
+
     private static string FormatIn(string cultureName, decimal? average)
     {
         var original = CultureInfo.CurrentCulture;

@@ -114,6 +114,7 @@ they record *why* the model is shaped the way it is.
   `GradeService`. The student page's Grades tab reads a student's grades for one school year through
   `GradeSheetService.GetStudentGradesAsync` (an exempt subject lists its grades without averages) and corrects them
   through `GradeService`, so the same rules apply as on the grade sheet.
+- **FinalGrade** — the teacher's override of a student's whole-grade final grade in one **SubjectInstance**; at most one row per subject instance and student. Only `OverrideValue` is stored. The proposal is derived from the subject average and never stored (see Grading scale). The row is created on the first override, and clearing sets `OverrideValue` to null instead of deleting it. An exempt student has no proposal and no override on the grade sheet, even if a row exists from before the exemption. Managed through `GradeService.SetFinalGradeOverrideAsync` and `ClearFinalGradeOverrideAsync`.
 - **SubjectParticipation** — per-student override of the default "enrolled ⇒ participates" rule
   (elective, exemption, religion/ethics split). Rows exist only for deviations.
 - **Note** — free-text note on a student within a school year, managed through `NoteService`. A note
@@ -127,7 +128,7 @@ they record *why* the model is shaped the way it is.
 - **Nothing is ever deleted.** Entities change status instead. `ClosedYearAuditInterceptor` rejects every
   `Deleted` entry.
 - **The school year is derived by traversal** (e.g. Grade → GradeBucket → SubjectInstance → ClassInstance →
-  SchoolYear, and Assessment → GradeBucket → SubjectInstance → ClassInstance → SchoolYear). Do not add denormalized
+  SchoolYear, and Assessment → GradeBucket → SubjectInstance → ClassInstance → SchoolYear, and FinalGrade → SubjectInstance → ClassInstance → SchoolYear). Do not add denormalized
   `SchoolYearId` columns; only SchoolYear, ClassInstance and Note carry one.
 - **Closed years are locked.** Writes to a Closed year throw `ClosedYearException` unless the year is
   unlocked, and every allowed write produces `AuditEntry` rows. Go through `UnlockService` for unlocking.
@@ -148,6 +149,9 @@ without touching callers.
 
 - Always use `decimal` for grades, weights and averages — never `double`/`float`.
 - An empty bucket or subject has **no** average (`null`), not zero (`AverageCalculator`).
+- The proposed final grade (`GradingScale.ProposeFinalGrade`) is the subject average rounded to 2 decimals
+  (`AverageCalculator.RoundForDisplay`), then rounded to a whole grade from 1 to 6, with .5 going to the worse grade
+  (2.50 gives 3, 2.49 gives 2). It is `null` when there is no average. It is derived, never stored.
 
 ## Coding conventions
 
@@ -259,7 +263,7 @@ localized later without a rewrite:
 - Tests live in `NexGrades.Tests` and cover Domain and Data. There are no UI tests; `NexGrades.App.Tests`
   only checks that the App's DI graph resolves, so it picks up new pages and services automatically. It also holds pure App-side unit tests, such as UI text formatting.
 - Use `SqliteTestDatabase` (a real, migrated SQLite file — never the EF in-memory provider) and
-  `FixedClock` for anything time-dependent. Both are in `TestSupport.cs`. Construct Domain services with
+  `FixedClock` for anything time-dependent. They are in `SqliteTestDatabase.cs` and `FixedClock.cs` (`NexGrades.Tests/`); `GradeSheetSeed.cs` builds grade sheet data. Construct Domain services with
   `db.CreateContextFactory()`, and assert through a fresh `db.CreateContext()`: the context that seeded the
   data still tracks the old values.
 - Name tests `Method_Outcome_Condition`, e.g. `RecordGradeAsync_Throws_ForIllegalGradeValue`.

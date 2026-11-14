@@ -44,7 +44,7 @@ public sealed class GradeSheetColumn
 
     /// <summary>
     /// The binding path, relative to a <see cref="GradeSheetRow"/>, of the text this column shows. Editable only
-    /// for assessment columns.
+    /// for assessment and final grade columns.
     /// </summary>
     public string BindingPath => Kind switch
     {
@@ -52,6 +52,8 @@ public sealed class GradeSheetColumn
         GradeSheetColumnKind.Assessment => CellPath(nameof(GradeCellViewModel.Text)),
         GradeSheetColumnKind.OtherGrades => string.Create(CultureInfo.InvariantCulture, $"{nameof(GradeSheetRow.Buckets)}[{BucketIndex}].{nameof(GradeSheetBucketCell.OtherGradesText)}"),
         GradeSheetColumnKind.BucketAverage => string.Create(CultureInfo.InvariantCulture, $"{nameof(GradeSheetRow.Buckets)}[{BucketIndex}].{nameof(GradeSheetBucketCell.AverageText)}"),
+        GradeSheetColumnKind.ProposedFinalGrade => nameof(GradeSheetRow.ProposalText),
+        GradeSheetColumnKind.FinalGrade => string.Create(CultureInfo.InvariantCulture, $"{nameof(GradeSheetRow.FinalGrade)}.{nameof(FinalGradeCellViewModel.Text)}"),
         _ => nameof(GradeSheetRow.SubjectAverageText),
     };
 
@@ -64,6 +66,18 @@ public sealed class GradeSheetColumn
     public string CellPath(string propertyName) =>
         string.Create(CultureInfo.InvariantCulture, $"{nameof(GradeSheetRow.Cells)}[{CellIndex}].{propertyName}");
 
+    /// <summary>
+    /// The binding path, relative to a <see cref="GradeSheetRow"/>, of a property of this column's editable cell:
+    /// the assessment's <see cref="GradeCellViewModel"/>, or the row's <see cref="FinalGradeCellViewModel"/> for the
+    /// final grade column.
+    /// </summary>
+    /// <param name="propertyName">The cell property, for example <c>VisualState</c>.</param>
+    /// <returns>The path.</returns>
+    public string EditableCellPath(string propertyName) =>
+        Kind == GradeSheetColumnKind.FinalGrade
+            ? string.Create(CultureInfo.InvariantCulture, $"{nameof(GradeSheetRow.FinalGrade)}.{propertyName}")
+            : CellPath(propertyName);
+
     /// <summary>True when the user may type into the column's cells (subject to each cell's own state).</summary>
-    public bool IsEditable => Kind == GradeSheetColumnKind.Assessment;
+    public bool IsEditable => Kind is GradeSheetColumnKind.Assessment or GradeSheetColumnKind.FinalGrade;
 }

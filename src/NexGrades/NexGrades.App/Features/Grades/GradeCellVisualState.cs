@@ -20,4 +20,7 @@ public enum GradeCellVisualState
 
     /// <summary>The cell shows a voided grade that can be restored.</summary>
     Voided,
+
+    /// <summary>A final grade cell that holds a teacher override instead of the proposal.</summary>
+    Override,
 }

@@ -89,8 +89,96 @@ public class GradeSheetRowTests
         Assert.Equal(GradeAverageFormatter.Missing, row.SubjectAverageText);
     }
 
+    [Fact]
+    public void RecomputeAverages_SetsProposalText_FromSubjectAverage()
+    {
+        var student = CreateStudent([CreateCell(1, GradeSheetCellState.Editable, CreateGrade(10, 2m))]);
+        var row = CreateRow(student, [CreateBucket(10, 1m, CreateAssessment(1))]);
+
+        InEnUs(() => row.RecomputeAverages());
+
+        Assert.Equal("2", row.ProposalText);
+        Assert.Equal(2m, row.FinalGrade.Proposal);
+    }
+
+    [Fact]
+    public void RecomputeAverages_FollowsChangedGrade_ForProposalText()
+    {
+        var student = CreateStudent(
+            [CreateCell(1, GradeSheetCellState.Editable, CreateGrade(10, 2m)), CreateCell(2, GradeSheetCellState.Editable)]);
+        var row = CreateRow(student, [CreateBucket(10, 1m, CreateAssessment(1), CreateAssessment(2))]);
+
+        row.Cells[1].ApplyGrade(CreateGrade(10, 5m));
+        InEnUs(() => row.RecomputeAverages());
+
+        Assert.Equal("4", row.ProposalText);
+    }
+
+    [Fact]
+    public void RecomputeAverages_ShowsEnDashForProposal_WithoutGrades()
+    {
+        var row = CreateRow(CreateStudent([]), [CreateBucket(10, 1m)]);
+
+        InEnUs(() => row.RecomputeAverages());
+
+        Assert.Equal(GradeAverageFormatter.Missing, row.ProposalText);
+        Assert.Null(row.FinalGrade.Proposal);
+    }
+
+    [Fact]
+    public void RecomputeAverages_ShowsEnDashForProposal_ForExemptRow()
+    {
+        var student = CreateStudent([CreateCell(1, GradeSheetCellState.Exempt, CreateGrade(10, 2m))], isExempt: true);
+        var row = CreateRow(student, [CreateBucket(10, 1m, CreateAssessment(1))]);
+
+        InEnUs(() => row.RecomputeAverages());
+
+        Assert.Equal(GradeAverageFormatter.Missing, row.ProposalText);
+        Assert.False(row.FinalGrade.IsEditable);
+    }
+
+    [Fact]
+    public void FinalGrade_HasOverrideVisualState_WhenStudentHasOverride()
+    {
+        var student = CreateStudent([]) with { FinalGradeOverride = 3m };
+        var row = CreateRow(student, [CreateBucket(10, 1m)]);
+
+        Assert.Equal(GradeCellVisualState.Override, row.FinalGrade.VisualState);
+        Assert.Equal("3", row.FinalGrade.Text);
+    }
+
+    [Fact]
+    public void SetWritable_KeepsTypedFinalGradeText_WhenYearBecomesReadOnly()
+    {
+        var row = CreateRow(CreateStudent([]), [CreateBucket(10, 1m)]);
+        row.FinalGrade.SetTextWithoutCommit("3");
+
+        row.SetWritable(false);
+
+        Assert.Equal("3", row.FinalGrade.Text);
+        Assert.False(row.FinalGrade.IsEditable);
+    }
+
+    [Fact]
+    public void EditableCell_ReturnsFinalGradeCell_ForFinalGradeColumn()
+    {
+        var row = CreateRow(CreateStudent([]), [CreateBucket(10, 1m)]);
+        var column = new GradeSheetColumn { Kind = GradeSheetColumnKind.FinalGrade, Header = "Final grade" };
+
+        Assert.Same(row.FinalGrade, row.EditableCell(column));
+    }
+
+    [Fact]
+    public void EditableCell_ReturnsNull_ForNonEditableColumn()
+    {
+        var row = CreateRow(CreateStudent([]), [CreateBucket(10, 1m)]);
+        var column = new GradeSheetColumn { Kind = GradeSheetColumnKind.SubjectAverage, Header = "Average" };
+
+        Assert.Null(row.EditableCell(column));
+    }
+
     private static GradeSheetRow CreateRow(GradeSheetStudent student, IReadOnlyList<GradeSheetBucket> buckets) =>
-        InEnUs(() => new GradeSheetRow(student, buckets, isWritable: true, textCommitted: _ => { }));
+        InEnUs(() => new GradeSheetRow(student, buckets, isWritable: true, textCommitted: _ => { }, finalGradeCommitted: _ => { }));
 
     private static GradeSheetStudent CreateStudent(
         IReadOnlyList<GradeSheetCell> cells,
@@ -106,7 +194,8 @@ public class GradeSheetRowTests
             Cells: cells,
             UnassignedGrades: unassigned ?? [],
             BucketAverages: new Dictionary<int, decimal?>(),
-            SubjectAverage: null);
+            SubjectAverage: null,
+            FinalGradeOverride: null);
 
     private static GradeSheetCell CreateCell(int assessmentId, GradeSheetCellState state, GradeSheetGrade? grade = null) =>
         new(assessmentId, state, grade);

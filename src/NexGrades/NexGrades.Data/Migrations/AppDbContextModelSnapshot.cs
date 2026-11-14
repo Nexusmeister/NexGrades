@@ -192,6 +192,31 @@ namespace NexGrades.Data.Migrations
                     b.ToTable("Enrollments", (string)null);
                 });
 
+            modelBuilder.Entity("NexGrades.Data.Entities.FinalGrade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("OverrideValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SubjectInstanceId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("SubjectInstanceId", "StudentId")
+                        .IsUnique();
+
+                    b.ToTable("FinalGrades", (string)null);
+                });
+
             modelBuilder.Entity("NexGrades.Data.Entities.Grade", b =>
                 {
                     b.Property<int>("Id")
@@ -542,6 +567,25 @@ namespace NexGrades.Data.Migrations
                     b.Navigation("ClassInstance");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("NexGrades.Data.Entities.FinalGrade", b =>
+                {
+                    b.HasOne("NexGrades.Data.Entities.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NexGrades.Data.Entities.SubjectInstance", "SubjectInstance")
+                        .WithMany()
+                        .HasForeignKey("SubjectInstanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+
+                    b.Navigation("SubjectInstance");
                 });
 
             modelBuilder.Entity("NexGrades.Data.Entities.Grade", b =>

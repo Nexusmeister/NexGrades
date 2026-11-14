@@ -10,14 +10,14 @@ namespace NexGrades.App.Features.Grades;
 /// Attached behavior that gives a <see cref="DataGrid"/> bindable columns, which <c>DataGrid.Columns</c> is not.
 /// It rebuilds the columns from an <see cref="ObservableCollection{T}"/> of <see cref="GradeSheetColumn"/>
 /// whenever the collection is replaced or changes, freezes the first (student) column, binds each assessment
-/// column to its cell by index, cancels editing of cells that are not editable, and reports the grid's current
+/// column to its cell by index, cancels editing of cells that are not editable (assessment grade cells and the final grade cell), and reports the grid's current
 /// cell through <see cref="SelectedCellProperty"/>.
 /// </summary>
 /// <remarks>
 /// A page styles the result with resources found from the grid, so its own XAML owns the look in both themes.
 /// <see cref="GradeCellStyleKey"/> is an optional <c>DataGridCell</c> style the behavior extends for each grade
 /// column: it adds a <c>Tag</c> bound to the cell's <see cref="GradeCellViewModel.VisualState"/> and a tooltip
-/// bound to its <see cref="GradeCellViewModel.Description"/>, so the base style can react to the state with
+/// bound to its <see cref="GradeCellViewModel.Description"/> (the final grade column uses the row's <see cref="FinalGradeCellViewModel"/> the same way), so the base style can react to the state with
 /// triggers on <c>Tag</c>. <see cref="ReadOnlyCellStyleKey"/> styles the other columns and
 /// <see cref="HeaderTemplateKey"/> is a <c>DataTemplate</c> whose data is the <see cref="GradeSheetColumn"/>.
 /// Missing resources are skipped.
@@ -152,8 +152,8 @@ public static class DataGridColumnsBehavior
     private static Style CreateGradeCellStyle(Style? baseStyle, GradeSheetColumn column)
     {
         var style = new Style(typeof(DataGridCell), baseStyle);
-        style.Setters.Add(new Setter(FrameworkElement.TagProperty, new Binding(column.CellPath(nameof(GradeCellViewModel.VisualState)))));
-        style.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, new Binding(column.CellPath(nameof(GradeCellViewModel.Description)))));
+        style.Setters.Add(new Setter(FrameworkElement.TagProperty, new Binding(column.EditableCellPath(nameof(GradeCellViewModel.VisualState)))));
+        style.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, new Binding(column.EditableCellPath(nameof(GradeCellViewModel.Description)))));
         return style;
     }
 
@@ -161,9 +161,7 @@ public static class DataGridColumnsBehavior
     {
         if (e.Column.GetValue(_sheetColumnProperty) is not GradeSheetColumn { IsEditable: true } column
             || e.Row.Item is not GradeSheetRow row
-            || column.CellIndex < 0
-            || column.CellIndex >= row.Cells.Count
-            || !row.Cells[column.CellIndex].IsEditable)
+            || row.EditableCell(column) is not { IsEditable: true })
         {
             e.Cancel = true;
         }
@@ -177,9 +175,7 @@ public static class DataGridColumnsBehavior
             && e.EditingElement is TextBox editor
             && e.Column.GetValue(_sheetColumnProperty) is GradeSheetColumn { IsEditable: true } column
             && e.Row.Item is GradeSheetRow row
-            && column.CellIndex >= 0
-            && column.CellIndex < row.Cells.Count
-            && row.Cells[column.CellIndex] is { } cell
+            && row.EditableCell(column) is { } cell
             && string.Equals(editor.Text, cell.Text, StringComparison.Ordinal))
         {
             cell.RetrySaveIfFailed();
@@ -190,7 +186,7 @@ public static class DataGridColumnsBehavior
     {
         var current = grid.CurrentCell;
         GradeCellViewModel? cell = null;
-        if (current.Column?.GetValue(_sheetColumnProperty) is GradeSheetColumn { IsEditable: true } column
+        if (current.Column?.GetValue(_sheetColumnProperty) is GradeSheetColumn { Kind: GradeSheetColumnKind.Assessment } column
             && current.Item is GradeSheetRow row
             && column.CellIndex >= 0
             && column.CellIndex < row.Cells.Count)
