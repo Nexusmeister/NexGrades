@@ -8,7 +8,7 @@ namespace NexGrades.App.Features.Grades;
 /// an edit the owner is told, so each cell saves by itself. A typed value that is not on the scale, or that could
 /// not be saved, stays in the cell with <see cref="HasError"/> set instead of being thrown away.
 /// </summary>
-public sealed partial class GradeCellViewModel : ObservableObject
+public sealed partial class GradeCellViewModel : ObservableObject, IGradeSheetEditableCell
 {
     private readonly Action<GradeCellViewModel> _textCommitted;
     private bool _isWritable;
@@ -108,6 +108,14 @@ public sealed partial class GradeCellViewModel : ObservableObject
 
     /// <summary>True when the text was committed again while a save ran; the owner saves the latest text afterwards.</summary>
     internal bool SaveQueued { get; set; }
+
+    bool IGradeSheetEditableCell.IsSaving { get => IsSaving; set => IsSaving = value; }
+
+    bool IGradeSheetEditableCell.SaveQueued { get => SaveQueued; set => SaveQueued = value; }
+
+    bool IGradeSheetEditableCell.HasUnsavedText => HasUnsavedText;
+
+    void IGradeSheetEditableCell.RetrySaveIfFailed() => RetrySaveIfFailed();
 
     /// <summary>The token of the saved active grade, or empty when there is none.</summary>
     internal string SavedToken => HasActiveGrade ? Grade!.Token : string.Empty;

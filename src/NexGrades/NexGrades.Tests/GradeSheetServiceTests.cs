@@ -539,4 +539,129 @@ public class GradeSheetServiceTests
         Assert.True(sheet.IsWritable);
         Assert.False(sheet.IsClosed);
     }
+
+    // Final grade
+
+    private static async Task AddOverrideAsync(SqliteTestDatabase db, GradeSheetSeed seed, int studentId, decimal? value)
+    {
+        await using var context = db.CreateContext();
+        context.FinalGrades.Add(new FinalGrade { SubjectInstanceId = seed.SubjectInstanceId, StudentId = studentId, OverrideValue = value });
+        await context.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task GetGradeSheetAsync_ReturnsOverrideAndProposal_ForStudentWithBoth()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await seed.AddGradeAsync(student, 2.0m, Day);
+        await AddOverrideAsync(db, seed, student, 4m);
+
+        var row = Student(await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId), student);
+
+        Assert.Equal(4m, row.FinalGradeOverride);
+        Assert.Equal(2m, row.ProposedFinalGrade);
+        Assert.Equal(4m, row.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetGradeSheetAsync_ReturnsProposalAsFinalGrade_WithoutOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await seed.AddGradeAsync(student, 3.0m, Day);
+
+        var row = Student(await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId), student);
+
+        Assert.Null(row.FinalGradeOverride);
+        Assert.Equal(3m, row.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetGradeSheetAsync_ReturnsNullProposal_ForStudentWithoutGrades()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+
+        var row = Student(await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId), student);
+
+        Assert.Null(row.ProposedFinalGrade);
+        Assert.Null(row.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetGradeSheetAsync_IgnoresVoidedGrades_ForProposal()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await seed.AddGradeAsync(student, 2.0m, Day);
+        await seed.AddGradeAsync(student, 6.0m, Day, voidedOn: Now);
+
+        var row = Student(await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId, includeVoided: true), student);
+
+        Assert.Equal(2m, row.ProposedFinalGrade);
+    }
+
+    [Fact]
+    public async Task GetGradeSheetAsync_IgnoresGradesOfVoidedAssessments_ForProposal()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await seed.AddGradeAsync(student, 2.0m, Day);
+        var voidedAssessment = await seed.AddAssessmentAsync("Test one", Day, voidedOn: Now);
+        await seed.AddGradeAsync(student, 6.0m, Day, voidedAssessment);
+
+        var row = Student(await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId, includeVoided: true), student);
+
+        Assert.Equal(2m, row.ProposedFinalGrade);
+    }
+
+    [Fact]
+    public async Task GetGradeSheetAsync_ReturnsNoProposalAndNoOverride_ForExemptStudentWithStoredOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await seed.AddGradeAsync(student, 2.0m, Day);
+        await AddOverrideAsync(db, seed, student, 4m);
+        await seed.AddExemptionAsync(student);
+
+        var row = Student(await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId), student);
+
+        Assert.Null(row.ProposedFinalGrade);
+        Assert.Null(row.FinalGradeOverride);
+        Assert.Null(row.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetGradeSheetAsync_ReturnsNullOverride_ForClearedOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await AddOverrideAsync(db, seed, student, null);
+
+        var row = Student(await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId), student);
+
+        Assert.Null(row.FinalGradeOverride);
+    }
+
+    [Fact]
+    public async Task GetGradeSheetAsync_ReturnsOverride_ForClosedYear()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await AddOverrideAsync(db, seed, student, 5m);
+        await seed.SetYearStatusAsync(SchoolYearStatus.Closed);
+
+        var sheet = await CreateService(db).GetGradeSheetAsync(seed.SubjectInstanceId);
+
+        Assert.Equal(5m, Student(sheet, student).FinalGradeOverride);
+    }
 }

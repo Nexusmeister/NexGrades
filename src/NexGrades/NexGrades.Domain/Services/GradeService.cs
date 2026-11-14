@@ -9,7 +9,9 @@ namespace NexGrades.Domain.Services;
 
 /// <summary>
 /// Records grades after validating that the student must be enrolled in the class instance that owns the
-/// grade's bucket, and the student must be participating (not exempt) in that subject instance.
+/// grade's bucket, and the student must be participating (not exempt) in that subject instance. Also sets and
+/// clears the teacher's override of a student's final grade in a subject instance; the proposed final grade
+/// itself is never stored (see <see cref="GradingScale.ProposeFinalGrade"/>).
 /// </summary>
 /// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
 /// <param name="clock">Source of the timestamp that voiding a grade records.</param>
@@ -222,6 +224,91 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
         });
 
     /// <summary>
+    /// Sets the final grade of <paramref name="studentId"/> in <paramref name="subjectInstanceId"/> to
+    /// <paramref name="value"/>, overriding the proposal derived from the subject average. The proposal itself is
+    /// not stored and stays available next to the override. Setting the current override again changes nothing.
+    /// </summary>
+    /// <param name="subjectInstanceId">The subject instance the final grade is given in.</param>
+    /// <param name="studentId">The student.</param>
+    /// <param name="value">The final grade, a whole grade from 1 to 6.</param>
+    /// <param name="cancellationToken">Cancels the save.</param>
+    /// <returns>The stored final grade row.</returns>
+    /// <exception cref="InvariantViolationException">
+    /// The value is not a legal final grade, the subject instance does not exist, the student has no enrollment in
+    /// its class instance, or the student is exempt from the subject instance.
+    /// </exception>
+    /// <exception cref="ClosedYearException">The year is closed and not unlocked.</exception>
+    /// <remarks>
+    /// Enrollment is checked without a date: a final grade covers the whole year, so a student who has left the
+    /// class can still get one for the time they were in it.
+    /// </remarks>
+    public Task<FinalGrade> SetFinalGradeOverrideAsync(
+        int subjectInstanceId, int studentId, decimal value, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("GradeService.SetFinalGradeOverride", async () =>
+        {
+            GradingScale.ValidateFinalGrade(value);
+
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+
+            var classInstanceId = await context.SubjectInstances
+                .Where(si => si.Id == subjectInstanceId)
+                .Select(si => (int?)si.ClassInstanceId)
+                .FirstOrDefaultAsync(cancellationToken)
+                ?? throw new InvariantViolationException($"Subject instance {subjectInstanceId} does not exist.");
+
+            var isEnrolled = await context.Enrollments.AnyAsync(
+                e => e.StudentId == studentId && e.ClassInstanceId == classInstanceId, cancellationToken);
+            if (!isEnrolled)
+            {
+                throw new InvariantViolationException(
+                    $"Student {studentId} is not enrolled in class instance {classInstanceId} (which owns subject instance " +
+                    $"{subjectInstanceId}) and cannot receive a final grade there.");
+            }
+
+            await EnsureNotExemptAsync(context, subjectInstanceId, studentId, "a final grade", cancellationToken);
+
+            var finalGrade = await context.FinalGrades.FirstOrDefaultAsync(
+                f => f.SubjectInstanceId == subjectInstanceId && f.StudentId == studentId, cancellationToken);
+            if (finalGrade is null)
+            {
+                finalGrade = new FinalGrade { SubjectInstanceId = subjectInstanceId, StudentId = studentId };
+                context.FinalGrades.Add(finalGrade);
+            }
+
+            // An unchanged value leaves the entity unmodified, so no write and no audit entry happen.
+            finalGrade.OverrideValue = value;
+            await context.SaveChangesAsync(cancellationToken);
+
+            return finalGrade;
+        });
+
+    /// <summary>
+    /// Clears the final grade override of <paramref name="studentId"/> in <paramref name="subjectInstanceId"/>, so
+    /// the proposal applies again. The row is kept with no override, because nothing is ever deleted.
+    /// </summary>
+    /// <param name="subjectInstanceId">The subject instance the final grade is given in.</param>
+    /// <param name="studentId">The student.</param>
+    /// <param name="cancellationToken">Cancels the save.</param>
+    /// <exception cref="InvariantViolationException">The student has no final grade override in the subject instance.</exception>
+    /// <exception cref="ClosedYearException">The year is closed and not unlocked.</exception>
+    public Task ClearFinalGradeOverrideAsync(int subjectInstanceId, int studentId, CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("GradeService.ClearFinalGradeOverride", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+
+            var finalGrade = await context.FinalGrades.FirstOrDefaultAsync(
+                f => f.SubjectInstanceId == subjectInstanceId && f.StudentId == studentId, cancellationToken);
+            if (finalGrade?.OverrideValue is null)
+            {
+                throw new InvariantViolationException(
+                    $"Student {studentId} has no final grade override in subject instance {subjectInstanceId}.");
+            }
+
+            finalGrade.OverrideValue = null;
+            await context.SaveChangesAsync(cancellationToken);
+        });
+
+    /// <summary>
     /// Checks that the student was enrolled in the bucket's class instance on <paramref name="date"/> and is not
     /// exempt from the bucket's subject instance. <paramref name="bucket"/> must have its subject instance loaded.
     /// </summary>
@@ -242,17 +329,27 @@ public sealed class GradeService(IDbContextFactory<AppDbContext> contextFactory,
                 $"on {date:O}.");
         }
 
+        await EnsureNotExemptAsync(context, subjectInstanceId, studentId, "a grade", cancellationToken);
+    }
+
+    /// <summary>
+    /// Checks that the student is not exempt from the subject instance. The caller must already have confirmed
+    /// the enrollment. <paramref name="what"/> names what the student would receive, for the message.
+    /// </summary>
+    private static async Task EnsureNotExemptAsync(
+        AppDbContext context, int subjectInstanceId, int studentId, string what, CancellationToken cancellationToken)
+    {
         var participationMode = await context.SubjectParticipations
             .Where(p => p.SubjectInstanceId == subjectInstanceId && p.StudentId == studentId)
             .Select(p => (ParticipationMode?)p.Mode)
             .FirstOrDefaultAsync(cancellationToken);
 
         // Default is participation by class enrollment; a SubjectParticipation row exists only where the
-        // student deviates. Enrollment was already confirmed above, so "no override row" means participating.
+        // student deviates. Enrollment was already confirmed, so "no override row" means participating.
         if (participationMode == ParticipationMode.Exempt)
         {
             throw new InvariantViolationException(
-                $"Student {studentId} is exempt from subject instance {subjectInstanceId} and cannot receive a grade there.");
+                $"Student {studentId} is exempt from subject instance {subjectInstanceId} and cannot receive {what} there.");
         }
     }
 

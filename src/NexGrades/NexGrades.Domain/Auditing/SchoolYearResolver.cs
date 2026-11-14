@@ -12,6 +12,7 @@ namespace NexGrades.Domain.Auditing;
 /// <item><c>GradeBucket</c> → <c>SubjectInstance</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
 /// <item><c>SubjectInstance</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
 /// <item><c>SubjectParticipation</c> → <c>SubjectInstance</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
+/// <item><c>FinalGrade</c> → <c>SubjectInstance</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
 /// <item><c>Enrollment</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
 /// <item><c>Note</c> → <c>SchoolYearId</c> directly</item>
 /// <item><c>ClassInstance</c> → <c>SchoolYearId</c> directly</item>
@@ -36,6 +37,7 @@ internal static class SchoolYearResolver
         GradeBucket bucket => FromSubjectInstance(context, bucket.SubjectInstanceId),
         SubjectInstance subjectInstance => FromClassInstance(context, subjectInstance.ClassInstanceId),
         SubjectParticipation participation => FromSubjectInstance(context, participation.SubjectInstanceId),
+        FinalGrade finalGrade => FromSubjectInstance(context, finalGrade.SubjectInstanceId),
         Enrollment enrollment => FromClassInstance(context, enrollment.ClassInstanceId),
         _ => null,
     };
@@ -50,6 +52,7 @@ internal static class SchoolYearResolver
         GradeBucket bucket => FromSubjectInstanceAsync(context, bucket.SubjectInstanceId, cancellationToken),
         SubjectInstance subjectInstance => FromClassInstanceAsync(context, subjectInstance.ClassInstanceId, cancellationToken),
         SubjectParticipation participation => FromSubjectInstanceAsync(context, participation.SubjectInstanceId, cancellationToken),
+        FinalGrade finalGrade => FromSubjectInstanceAsync(context, finalGrade.SubjectInstanceId, cancellationToken),
         Enrollment enrollment => FromClassInstanceAsync(context, enrollment.ClassInstanceId, cancellationToken),
         _ => Task.FromResult<int?>(null),
     };

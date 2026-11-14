@@ -110,6 +110,33 @@ public class GradeSheetAveragesTests
     }
 
     [Fact]
+    public void ProposedFinalGrade_UsesSnapshottedWeights_ForSubjectAverage()
+    {
+        var result = GradeSheetAverages.Compute(
+            [Bucket(1, 50m), Bucket(2, 50m)],
+            [Grade(1, 1, 2.0m), Grade(2, 2, 3.0m)]);
+
+        Assert.Equal(2.5m, result.SubjectAverage);
+        Assert.Equal(3m, result.ProposedFinalGrade);
+    }
+
+    [Fact]
+    public void ProposedFinalGrade_IgnoresVoidedGrades()
+    {
+        var result = GradeSheetAverages.Compute(
+            [Bucket(1, 100m)],
+            [Grade(1, 1, 2.0m), Grade(2, 1, 6.0m, voidedOn: new DateTime(2025, 10, 1))]);
+
+        Assert.Equal(2m, result.ProposedFinalGrade);
+    }
+
+    [Fact]
+    public void ProposedFinalGrade_IsNull_ForNoGrades()
+    {
+        Assert.Null(GradeSheetAverages.Compute([Bucket(1, 100m)], []).ProposedFinalGrade);
+    }
+
+    [Fact]
     public void Compute_Throws_ForNullArguments()
     {
         Assert.Throws<ArgumentNullException>(() => GradeSheetAverages.Compute(null!, []));

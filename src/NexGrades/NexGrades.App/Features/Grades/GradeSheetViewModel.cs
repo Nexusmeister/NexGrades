@@ -172,7 +172,8 @@ public sealed partial class GradeSheetViewModel(
     public bool IsEditingAssessment => EditingAssessment is not null;
 
     /// <summary>True when a cell holds text that is not saved, or the detail panel has unsaved edits.</summary>
-    public bool HasUnsavedInput => IsDetailDirty || Rows.Any(r => r.Cells.Any(c => c.HasError || c.HasUnsavedText));
+    public bool HasUnsavedInput =>
+        IsDetailDirty || Rows.Any(r => r.Cells.Any(c => c.HasError || c.HasUnsavedText) || r.FinalGrade.HasError || r.FinalGrade.HasUnsavedText);
 
     /// <summary>
     /// Loads the sheet for the subject instance id passed as <paramref name="parameter"/>. Without a known id the
@@ -651,22 +652,24 @@ public sealed partial class GradeSheetViewModel(
         SelectedCell = null;
         Rows = [];
         Columns = [.. GradeSheetColumnBuilder.Build(sheet)];
-        Rows = [.. sheet.Students.Select(s => new GradeSheetRow(s, _sheetBuckets, sheet.IsWritable, OnCellTextCommitted))];
+        Rows = [.. sheet.Students.Select(s => new GradeSheetRow(s, _sheetBuckets, sheet.IsWritable, OnCellTextCommitted, OnFinalCellTextCommitted))];
         HasSheet = true;
 
         NewAssessmentBucket = sheet.Buckets.FirstOrDefault(b => NewAssessmentBucket is null || b.Id == NewAssessmentBucket.Id);
     }
 
-    private void OnCellTextCommitted(GradeCellViewModel cell) => _ = SaveCellSerializedAsync(cell);
+    private void OnCellTextCommitted(GradeCellViewModel cell) => _ = SaveSerializedAsync(cell, () => SaveCellAsync(cell));
+
+    private void OnFinalCellTextCommitted(FinalGradeCellViewModel cell) => _ = SaveSerializedAsync(cell, () => SaveFinalCellAsync(cell));
 
     /// <summary>
-    /// Saves one cell at a time. A commit that arrives while a save of the same cell runs is queued, and the
+    /// Saves one cell (assessment or final grade) at a time. A commit that arrives while a save of the same cell runs is queued, and the
     /// latest text is saved after the running call completes, so quick re-entry never records a grade twice. A
     /// finished save leaves newer text in the cell alone (see <see cref="GradeCellViewModel.ApplyGrade(GradeSheetGrade?, string?)"/>),
     /// so the queued pass compares it with the freshly saved grade. Runs fire-and-forget, so nothing escapes it: an unexpected failure is logged, reported
     /// with a generic message and marked on the cell.
     /// </summary>
-    private async Task SaveCellSerializedAsync(GradeCellViewModel cell)
+    private async Task SaveSerializedAsync(IGradeSheetEditableCell cell, Func<Task> save)
     {
         if (cell.IsSaving)
         {
@@ -682,7 +685,7 @@ public sealed partial class GradeSheetViewModel(
                 cell.SaveQueued = false;
                 try
                 {
-                    await SaveCellAsync(cell);
+                    await save();
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -749,6 +752,85 @@ public sealed partial class GradeSheetViewModel(
             successMessage: null,
             reloadAfter: () => false);
     }
+
+    /// <summary>
+    /// Saves the final grade cell after its edit ended. Empty clears a stored override (and only normalises when
+    /// there is none); a legal whole grade sets the override unless it equals the stored one; anything else is never
+    /// sent, and the cell keeps its text and the error mark. A closed year keeps the text and marks the error.
+    /// </summary>
+    private async Task SaveFinalCellAsync(FinalGradeCellViewModel cell)
+    {
+        if (_subjectInstanceId is not { } subjectInstanceId)
+        {
+            return;
+        }
+
+        var text = cell.Text.Trim();
+
+        if (text.Length == 0)
+        {
+            await ClearFinalCellAsync(subjectInstanceId, cell, text);
+            return;
+        }
+
+        if (!GradingScale.TryParseFinalGradeToken(text, out var value))
+        {
+            cell.HasError = true;
+            return;
+        }
+
+        if (cell.Override == value)
+        {
+            cell.SetTextWithoutCommit(FinalGradeCellViewModel.FormatGrade(value));
+            cell.HasError = false;
+            return;
+        }
+
+        var saved = await RunAsync(
+            async () =>
+            {
+                await gradeService.SetFinalGradeOverrideAsync(subjectInstanceId, cell.StudentId, value);
+                cell.ApplyOverride(value, text);
+            },
+            FinalGradeFailureMessage,
+            FinalGradeClosedYearMessage);
+        if (!saved)
+        {
+            cell.HasError = true;
+        }
+    }
+
+    private async Task ClearFinalCellAsync(int subjectInstanceId, FinalGradeCellViewModel cell, string text)
+    {
+        if (cell.Override is null)
+        {
+            cell.SetTextWithoutCommit(string.Empty);
+            cell.HasError = false;
+            return;
+        }
+
+        var cleared = await RunAsync(
+            async () =>
+            {
+                await gradeService.ClearFinalGradeOverrideAsync(subjectInstanceId, cell.StudentId);
+                cell.ApplyOverride(null, text);
+            },
+            FinalGradeFailureMessage,
+            FinalGradeClosedYearMessage);
+        if (cleared)
+        {
+            ShowSuccess("The override has been removed. The proposal is used again.");
+        }
+        else
+        {
+            cell.HasError = true;
+        }
+    }
+
+    private const string FinalGradeFailureMessage =
+        "The final grade could not be saved. Enter a whole grade from 1 to 6 for a student who is enrolled and not exempt.";
+
+    private const string FinalGradeClosedYearMessage = "The final grade could not be saved because the school year is closed.";
 
     /// <summary>
     /// Voids the grade of a cell the user emptied. With "show voided" on, the sheet reloads so the voided grade

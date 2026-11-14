@@ -14,7 +14,12 @@ public class GradeSheetColumnBuilderTests
         var columns = BuildIn("en-US", CreateSheet([], CreateStudent(1)));
 
         Assert.Equal(
-            [GradeSheetColumnKind.Student, GradeSheetColumnKind.SubjectAverage],
+            [
+                GradeSheetColumnKind.Student,
+                GradeSheetColumnKind.SubjectAverage,
+                GradeSheetColumnKind.ProposedFinalGrade,
+                GradeSheetColumnKind.FinalGrade,
+            ],
             columns.Select(c => c.Kind).ToList());
     }
 
@@ -48,6 +53,8 @@ public class GradeSheetColumnBuilderTests
                 GradeSheetColumnKind.Assessment,
                 GradeSheetColumnKind.BucketAverage,
                 GradeSheetColumnKind.SubjectAverage,
+                GradeSheetColumnKind.ProposedFinalGrade,
+                GradeSheetColumnKind.FinalGrade,
             ],
             kinds);
     }
@@ -60,7 +67,13 @@ public class GradeSheetColumnBuilderTests
         var kinds = BuildIn("en-US", sheet).Select(c => c.Kind).ToList();
 
         Assert.Equal(
-            [GradeSheetColumnKind.Student, GradeSheetColumnKind.BucketAverage, GradeSheetColumnKind.SubjectAverage],
+            [
+                GradeSheetColumnKind.Student,
+                GradeSheetColumnKind.BucketAverage,
+                GradeSheetColumnKind.SubjectAverage,
+                GradeSheetColumnKind.ProposedFinalGrade,
+                GradeSheetColumnKind.FinalGrade,
+            ],
             kinds);
     }
 
@@ -159,10 +172,38 @@ public class GradeSheetColumnBuilderTests
         var sheet = CreateSheet([CreateBucket(10, "Tests", 0)], CreateStudent(1));
 
         var columns = BuildIn("en-US", sheet);
-        var column = columns[columns.Count - 1];
+        var column = columns.Single(c => c.Kind == GradeSheetColumnKind.SubjectAverage);
 
-        Assert.Equal(GradeSheetColumnKind.SubjectAverage, column.Kind);
         Assert.Equal("Average", column.Header);
+    }
+
+    [Fact]
+    public void Build_AppendsFinalGradeColumns_AfterSubjectAverage()
+    {
+        var columns = BuildIn("en-US", CreateSheet([CreateBucket(10, "Tests", 0)], CreateStudent(1)));
+
+        Assert.Equal(GradeSheetColumnKind.ProposedFinalGrade, columns[^2].Kind);
+        Assert.Equal("Proposal", columns[^2].Header);
+        Assert.Equal(GradeSheetColumnKind.FinalGrade, columns[^1].Kind);
+        Assert.Equal("Final grade", columns[^1].Header);
+    }
+
+    [Fact]
+    public void Build_MakesFinalGradeColumnEditable_AndProposalColumnReadOnly()
+    {
+        var columns = BuildIn("en-US", CreateSheet([], CreateStudent(1)));
+
+        Assert.True(columns.Single(c => c.Kind == GradeSheetColumnKind.FinalGrade).IsEditable);
+        Assert.False(columns.Single(c => c.Kind == GradeSheetColumnKind.ProposedFinalGrade).IsEditable);
+    }
+
+    [Fact]
+    public void BindingPath_PointsAtFinalGradeText_ForFinalGradeColumn()
+    {
+        var columns = BuildIn("en-US", CreateSheet([], CreateStudent(1)));
+
+        Assert.Equal("FinalGrade.Text", columns.Single(c => c.Kind == GradeSheetColumnKind.FinalGrade).BindingPath);
+        Assert.Equal("ProposalText", columns.Single(c => c.Kind == GradeSheetColumnKind.ProposedFinalGrade).BindingPath);
     }
 
     [Fact]
@@ -193,6 +234,8 @@ public class GradeSheetColumnBuilderTests
                 GradeSheetColumnKind.OtherGrades,
                 GradeSheetColumnKind.BucketAverage,
                 GradeSheetColumnKind.SubjectAverage,
+                GradeSheetColumnKind.ProposedFinalGrade,
+                GradeSheetColumnKind.FinalGrade,
             ],
             kinds);
     }
@@ -310,7 +353,8 @@ public class GradeSheetColumnBuilderTests
             Cells: [],
             UnassignedGrades: unassignedGrades,
             BucketAverages: new Dictionary<int, decimal?>(),
-            SubjectAverage: null);
+            SubjectAverage: null,
+            FinalGradeOverride: null);
 
     private static GradeSheetGrade CreateUnassignedGrade(int bucketId) =>
         new(

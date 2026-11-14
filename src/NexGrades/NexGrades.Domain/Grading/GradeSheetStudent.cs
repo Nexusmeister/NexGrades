@@ -11,6 +11,7 @@ namespace NexGrades.Domain.Grading;
 /// <param name="UnassignedGrades">Grades with no assessment (single grades); their <see cref="GradeSheetGrade.GradeBucketId"/> tells the bucket.</param>
 /// <param name="BucketAverages">The average per bucket id; null for a bucket without grades.</param>
 /// <param name="SubjectAverage">The weighted subject average, or null when no bucket has grades.</param>
+/// <param name="FinalGradeOverride">The final grade the teacher set instead of the proposal, or null when there is none. Always null for an exempt student.</param>
 public sealed record GradeSheetStudent(
     int StudentId,
     string FirstName,
@@ -21,4 +22,15 @@ public sealed record GradeSheetStudent(
     IReadOnlyList<GradeSheetCell> Cells,
     IReadOnlyList<GradeSheetGrade> UnassignedGrades,
     IReadOnlyDictionary<int, decimal?> BucketAverages,
-    decimal? SubjectAverage);
+    decimal? SubjectAverage,
+    decimal? FinalGradeOverride)
+{
+    /// <summary>
+    /// The final grade proposed from <see cref="SubjectAverage"/>, or null when there is no subject average. It
+    /// stays available next to an override, so the teacher can see what the grades suggest.
+    /// </summary>
+    public decimal? ProposedFinalGrade => GradingScale.ProposeFinalGrade(SubjectAverage);
+
+    /// <summary>The final grade that applies: the override when one is set, otherwise the proposal.</summary>
+    public decimal? FinalGrade => FinalGradeOverride ?? ProposedFinalGrade;
+}

@@ -78,6 +78,12 @@
                                 <Setter TargetName="Mark" Property="Symbol" Value="ArrowUndo16"/>
                                 <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
                             </Trigger>
+                            <!-- A final grade the teacher typed over the proposal: bold text and a pin, not colour. -->
+                            <Trigger Property="Tag" Value="{x:Static grades:GradeCellVisualState.Override}">
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter TargetName="Mark" Property="Symbol" Value="Pin16"/>
+                                <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
                             <Trigger Property="Tag" Value="{x:Static grades:GradeCellVisualState.Error}">
                                 <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
                                 <Setter TargetName="Root" Property="BorderThickness" Value="2"/>
@@ -152,6 +158,22 @@
                 <ui:TextBlock FontTypography="Caption"
                               Appearance="Secondary"
                               Text="{Binding SubHeader}"/>
+                <ui:TextBlock FontTypography="Caption"
+                              Appearance="Secondary"
+                              TextWrapping="Wrap"
+                              MaxWidth="120"
+                              Text="Type 1–6 to override">
+                    <ui:TextBlock.Style>
+                        <Style TargetType="ui:TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Kind}" Value="{x:Static grades:GradeSheetColumnKind.FinalGrade}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:TextBlock.Style>
+                </ui:TextBlock>
                 <StackPanel Orientation="Horizontal">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
@@ -307,7 +329,7 @@
                          MinHeight="160"
                          HorizontalScrollBarVisibility="Auto"
                          VerticalScrollBarVisibility="Auto"
-                         AutomationProperties.Name="Grade sheet. Type a grade such as 2- into a cell, press Enter to save, Escape to cancel."
+                         AutomationProperties.Name="Grade sheet. Type a grade such as 2- into a cell, press Enter to save, Escape to cancel. The last columns show the proposed final grade and the final grade, which you can type over the proposal."
                          ItemsSource="{Binding ViewModel.Rows}"
                          grades:DataGridColumnsBehavior.Columns="{Binding ViewModel.Columns}"
                          grades:DataGridColumnsBehavior.SelectedCell="{Binding ViewModel.SelectedCell, Mode=OneWayToSource}"/>
