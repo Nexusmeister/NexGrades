@@ -21,7 +21,6 @@ public sealed class AppDataStorageTests : IDisposable
 
     public void Dispose()
     {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         try
         {
             Directory.Delete(_root, recursive: true);
@@ -212,13 +211,12 @@ public sealed class AppDataStorageTests : IDisposable
         var target = Db(Path.Combine(_root, "data"));
         using (var db = new SqliteTestDatabase())
         {
-            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
             File.Copy(db.DbPath, Db(legacy));
         }
 
         new LegacyDatabaseRelocator().Relocate([legacy], target);
 
-        var options = new DbContextOptionsBuilder<NexGrades.Data.AppDbContext>().UseSqlite($"Data Source={target}").Options;
+        var options = new DbContextOptionsBuilder<NexGrades.Data.AppDbContext>().UseSqlite(SqliteTestDatabase.ConnectionStringFor(target)).Options;
         await using var context = new NexGrades.Data.AppDbContext(options);
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
     }

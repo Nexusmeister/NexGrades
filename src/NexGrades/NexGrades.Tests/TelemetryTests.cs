@@ -111,7 +111,7 @@ public class TelemetryTests
         // A context without the interceptor, so seeding is allowed in any year state.
         await using var context = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
-                .UseSqlite($"Data Source={env.Db.DbPath}").Options);
+                .UseSqlite(env.Db.ConnectionString).Options);
         var year = new SchoolYear
         {
             Label = "2025/26",

@@ -18,13 +18,19 @@ internal sealed class SqliteTestDatabase : IDisposable
 {
     public string DbPath { get; }
 
+    /// <summary>The unpooled connection string, for contexts that need different interceptors than <see cref="Options"/>.</summary>
+    public string ConnectionString => ConnectionStringFor(DbPath);
+
     public DbContextOptions<AppDbContext> Options { get; }
+
+    /// <summary>An unpooled connection string for any database file, so no handle outlives its context.</summary>
+    public static string ConnectionStringFor(string path) => $"Data Source={path};Pooling=False";
 
     public SqliteTestDatabase(params IInterceptor[] interceptors)
     {
         DbPath = Path.Combine(Path.GetTempPath(), $"nexgrades-test-{Guid.NewGuid():N}.db");
 
-        var builder = new DbContextOptionsBuilder<AppDbContext>().UseSqlite($"Data Source={DbPath};Pooling=False");
+        var builder = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(ConnectionString);
         if (interceptors.Length > 0)
         {
             builder.AddInterceptors(interceptors);

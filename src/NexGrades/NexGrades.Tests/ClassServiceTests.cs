@@ -28,7 +28,7 @@ public class ClassServiceTests
 
         /// <summary>A context without any interceptor, so seeding is allowed in any year state.</summary>
         public AppDbContext SeedContext() =>
-            new(new DbContextOptionsBuilder<AppDbContext>().UseSqlite($"Data Source={Db.DbPath}").Options);
+            new(new DbContextOptionsBuilder<AppDbContext>().UseSqlite(Db.ConnectionString).Options);
 
         public void Dispose() => Db.Dispose();
     }

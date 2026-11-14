@@ -25,16 +25,25 @@ public class AssessmentClosedYearTests
     private static async Task<Closed> SeedClosedAsync(bool unlocked)
     {
         var db = new SqliteTestDatabase(new ClosedYearAuditInterceptor(Clock));
-        var seed = await GradeSheetSeed.CreateAsync(db);
-        var student = await seed.AddStudentAsync("Test", "Alpha");
-        var other = await seed.AddStudentAsync("Test", "Beta");
-        var assessmentId = await seed.AddAssessmentAsync("Test one", Day);
-        var gradeId = await seed.AddGradeAsync(student, 2.0m, Day, assessmentId);
-        await seed.SetYearStatusAsync(
-            SchoolYearStatus.Closed,
-            unlocked ? UnlockedUntil : null,
-            unlocked ? "Corrected a transcription error" : null);
-        return new Closed(db, seed, student, other, assessmentId, gradeId);
+        try
+        {
+            var seed = await GradeSheetSeed.CreateAsync(db);
+            var student = await seed.AddStudentAsync("Test", "Alpha");
+            var other = await seed.AddStudentAsync("Test", "Beta");
+            var assessmentId = await seed.AddAssessmentAsync("Test one", Day);
+            var gradeId = await seed.AddGradeAsync(student, 2.0m, Day, assessmentId);
+            await seed.SetYearStatusAsync(
+                SchoolYearStatus.Closed,
+                unlocked ? UnlockedUntil : null,
+                unlocked ? "Corrected a transcription error" : null);
+            return new Closed(db, seed, student, other, assessmentId, gradeId);
+        }
+        catch
+        {
+            // The caller owns the database only once seeding succeeded.
+            db.Dispose();
+            throw;
+        }
     }
 
     private static AssessmentService CreateAssessmentService(Closed c) => new(c.Db.CreateContextFactory(), Clock);
