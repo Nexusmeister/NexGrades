@@ -14,5 +14,6 @@ public class SchoolYearConfiguration : IEntityTypeConfiguration<SchoolYear>
 
         builder.Property(e => e.Label).IsRequired();
         builder.Property(e => e.Status).HasConversion<string>();
+        builder.Property(e => e.UnlockReason).HasMaxLength(500);
     }
 }

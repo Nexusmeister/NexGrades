@@ -89,13 +89,12 @@ public class TelemetryTests
     {
         public SqliteTestDatabase Db { get; }
         public FixedClock Clock { get; }
-        public UnlockReasonStore Reasons { get; } = new();
         public NoteService Service { get; }
 
         public Env()
         {
             Clock = new FixedClock(Now);
-            Db = new SqliteTestDatabase(new ClosedYearAuditInterceptor(Clock, Reasons));
+            Db = new SqliteTestDatabase(new ClosedYearAuditInterceptor(Clock));
             Service = new NoteService(Db.CreateContextFactory(), Clock);
         }
 

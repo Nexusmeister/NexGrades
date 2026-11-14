@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Core;
+using NexGrades.App.Core.YearLock;
 using NexGrades.App.Features.Classes;
 using NexGrades.App.Features.Export;
 using NexGrades.App.Features.Home;
@@ -53,12 +54,11 @@ public static class HostBuilderExtensions
         //_ = services.AddSingleton<ITaskBarService, TaskBarService>();
 
         // Domain: time, closed-year auditing, and the business services ported from the GradeTracker
-        // architecture spike. IClock/IUnlockReasonStore are singletons (see their remarks); the interceptor
+        // architecture spike. IClock is a singleton (see its remarks); the interceptor
         // is also a singleton — EF Core shares one interceptor instance across every DbContext it creates and
         // the interceptor itself is stateless per-context (state lives in a ConditionalWeakTable keyed by
         // DbContext instance).
         services.AddSingleton<IClock, SystemClock>();
-        services.AddSingleton<IUnlockReasonStore, UnlockReasonStore>();
         services.AddSingleton<ClosedYearAuditInterceptor>();
         services.AddTransient<EnrollmentService>();
         services.AddTransient<GradeService>();
@@ -83,6 +83,10 @@ public static class HostBuilderExtensions
         services.AddSingleton<IFileSaveDialogService, WindowsFileSaveDialogService>();
         services.AddSingleton<ISnackbarService, SnackbarService>();
         services.AddSingleton<IContentDialogService, ContentDialogService>();
+        services.AddSingleton<SchoolYearLockMonitor>();
+        services.AddSingleton<IUnlockYearDialogService, UnlockYearDialogService>();
+        services.AddSingleton<YearLockViewModelFactory>();
+        services.AddSingleton<ClosedYearsViewModel>();
         return services;
     }
 

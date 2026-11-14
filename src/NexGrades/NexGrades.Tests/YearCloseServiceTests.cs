@@ -426,7 +426,7 @@ public class YearCloseServiceTests
     public async Task CloseAndActivateNextYearAsync_LocksOldYear_AgainstLaterWrites()
     {
         var clock = new FixedClock(Now);
-        using var db = new SqliteTestDatabase(new ClosedYearAuditInterceptor(clock, new UnlockReasonStore()));
+        using var db = new SqliteTestDatabase(new ClosedYearAuditInterceptor(clock));
         var seeded = await SeedAsync(db);
         var service = new YearCloseService(db.CreateContextFactory(), clock, NullLogger<YearCloseService>.Instance);
         await service.CloseAndActivateNextYearAsync(seeded.OldYearId, seeded.NextYearId);

@@ -84,7 +84,9 @@ Read the XML doc comments on the entities in `NexGrades.Data/Entities/` before c
 they record *why* the model is shaped the way it is.
 
 - **SchoolYear** — the root scope (e.g. "2025/26", August–July). Status `Planned` → `Active` → `Closed`.
-  At most one year is Active. A Closed year is read-only unless temporarily unlocked (`UnlockedUntil`).
+  At most one year is Active. A Closed year is read-only unless temporarily unlocked: `UnlockedUntil` holds the
+  expiry and `UnlockReason` the reason. Both are stored on the row, so audit entries keep the reason after an app
+  restart; re-locking clears both. `UnlockService` unlocks, re-locks and reads the lock state.
   `SchoolYearService.CreateNextYearAsync` creates the Planned successor of the Active year; only one Planned
   successor may exist at a time. `YearCloseService.CloseAndActivateNextYearAsync` closes the Active year and
   activates the next one in a single transaction. It is the only way to switch years: `CloseSchoolYearAsync`
@@ -109,7 +111,7 @@ they record *why* the model is shaped the way it is.
   needs an enrollment of the student in that year and records its class. It is "removed" by archiving
   (`ArchivedOn`), which can be undone, and is locked like everything else in a closed year.
 - **Teacher** — in practice one row (the app owner, `IsCurrentUser`).
-- **AuditEntry** — written for every change to a closed-but-unlocked year.
+- **AuditEntry** — written for every change to a closed-but-unlocked year, carrying that year's `UnlockReason`.
 
 ### Invariants agents must not break
 
@@ -195,6 +197,13 @@ particular:
   (`_camelCase`) and `[RelayCommand]` methods. Open a short-lived context per operation with
   `await using var db = await dbContextFactory.CreateDbContextAsync(...)` (see the lifetime rule above).
   Report outcomes via `ISnackbarService`.
+- **Year-scoped editing pages:** a page that edits one school year uses the shared lock in
+  `NexGrades.App/Core/YearLock` and no lock logic of its own. Inject `YearLockViewModelFactory`, call `Create()`
+  for `YearLock`, call `ShowAsync(schoolYearId)` when the year changes, bind write commands to `IsWritable` and
+  re-check them on `WritabilityChanged`, and place `<yearLock:YearLockBar DataContext="{Binding ViewModel.YearLock}"/>`
+  on the page. A list of years creates one view model per row with `Create(state)`. `SchoolYearLockMonitor` owns the
+  state and the expiry timer, so do not add a timer to a page. A change of writability must not clear what the user
+  has typed. `StudentPage` is the reference.
 - **Feature folders:** each screen lives in `NexGrades.App/Features/<Area>/` as `<Name>Page.xaml` (+ code
   behind) and `<Name>ViewModel.cs`. Register every new page, view model and service in
   `NexGrades.App/Extensions/HostBuilderExtensions.cs`.

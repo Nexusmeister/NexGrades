@@ -19,7 +19,7 @@ public class StudentServiceTests
         public Env(bool failAfterEnrollmentSave = false)
         {
             var clock = new FixedClock(Now);
-            var audit = new ClosedYearAuditInterceptor(clock, new UnlockReasonStore());
+            var audit = new ClosedYearAuditInterceptor(clock);
             Db = failAfterEnrollmentSave
                 ? new SqliteTestDatabase(audit, new ThrowAfterSaveInterceptor<Enrollment>())
                 : new SqliteTestDatabase(audit);
