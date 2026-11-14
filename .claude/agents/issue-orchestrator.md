@@ -65,15 +65,29 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    `dotnet test`, `dotnet format NexGrades.slnx --verify-no-changes`. Send failures to the agent that owns
    the failing files (`csharp-coder` may run the formatter). Compare warnings with `dev` and note any new
    ones.
-7. **Commit and push.** The lead passes the commit attribution lines and the PR footer lines in the
+7. **Smoke start** for every PR that touches `NexGrades.App`. The orchestrator runs it at the head SHA, after
+   the build in step 6, in PowerShell 5.1. The owner never runs it.
+   - Set `$env:DOTNET_ENVIRONMENT='Development'` and `$env:ConnectionStrings__sqlite="Data Source=<temp folder>\smoke.db"`.
+     Never use the real `%LOCALAPPDATA%` database.
+   - Note the line count of today's `%LOCALAPPDATA%\NexGrades\logs\nexgrades-<yyyyMMdd>*.log` files (0 if none).
+   - `$p = Start-Process <worktree>\src\NexGrades\NexGrades.App\bin\Debug\net10.0-windows\NexGrades.App.exe -PassThru -WorkingDirectory <temp folder>`,
+     then wait about 20 s. The working directory keeps `LegacyDatabaseRelocator` away from any `app.db` next to the build.
+   - Pass: the process is still alive, and the new log lines contain the `NexGrades <version> starting on` line and
+     no `[ERR]` or `[FTL]`. A failed start shows a message box and keeps the process alive, so the log decides.
+   - Stop with `Stop-Process -Id $p.Id -Force`. Never kill by image name, because the owner may have the app open.
+     Delete the smoke database.
+   - A failed smoke start is a blocker. Send it to the owning agent like a failed build, then repeat the smoke start
+     at the new head SHA. Put the result (pass, fail or not applicable) in the PR body. It does not replace the
+     manual UI test plan; it only shows that the app starts.
+8. **Commit and push.** The lead passes the commit attribution lines and the PR footer lines in the
    brief. If either set is missing, stop with `BLOCKED` before the first commit instead of inventing
    them. Commit with a short imperative subject and the commit attribution lines, verbatim. Push with
    `git push -u origin <branch>`. Never push to `dev`, never force-push. To take in a newer `dev`, run
    `git merge origin/dev`; do not rebase.
-8. **Pull request.** Open it against the base with `mcp__github__create_pull_request`. The body has
+9. **Pull request.** Open it against the base with `mcp__github__create_pull_request`. The body has
    `Closes #<n>`, a summary, the decisions, the tests, the warning counts, a numbered manual UI test plan
    when the change needs one, and the PR footer lines the lead passed.
-9. **CI.** Wait for CI in rounds. Each round is one short background Bash command (`run_in_background`)
+10. **CI.** Wait for CI in rounds. Each round is one short background Bash command (`run_in_background`)
    that runs a single `sleep 60`. When it completes, re-check the check runs for the head SHA with
    `mcp__github__pull_request_read` (`get_check_runs`). Exit the wait only when at least one check run
    exists and every check run is completed. An empty list means CI has not started: the round still
@@ -83,14 +97,14 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    checks are still pending then, stop with `BLOCKED: CI timeout` and name the pending check names. On
    failure, read the logs you can reach, send the fix to the owning agent, commit and push. After 3 CI fix
    rounds, stop with `BLOCKED`.
-10. **Review: `reviewer`.** Review the PR head SHA with `git diff origin/<base>...<sha>`, and tell the
+11. **Review: `reviewer`.** Review the PR head SHA with `git diff origin/<base>...<sha>`, and tell the
     reviewer to review exactly that SHA. Send blockers and majors to the owning agent, then re-verify,
     push and review again. Majors are resolved like blockers. A review round counts toward the limit when
     it ends with blockers or majors remaining; after 2 such rounds, stop with `BLOCKED`. Minor or
     non-blocking findings that are out of scope become follow-up issues (`mcp__github__issue_write`),
     linked in the PR body (`mcp__github__update_pull_request`) or in a PR comment
     (`mcp__github__add_issue_comment`); they don't trigger more rounds.
-11. **Stop at merge-ready:** CI is green on the head SHA, and the latest reviewer run at that SHA has no
+12. **Stop at merge-ready:** CI is green on the head SHA, and the latest reviewer run at that SHA has no
     finding of severity blocker or major and its verdict line is "Ready to merge". Do not merge.
     Once CI is green and the reviewer is done at the head SHA, send the final report right away;
     no background work may still be running at that point (don't start waits you won't need).
@@ -117,6 +131,7 @@ brief.
 - Never edit files yourself. Never merge. Never push to `dev`. Never force-push. Never delete branches or
   worktrees of other issues.
 - Never invent commit attribution or PR footer lines. If the brief lacks them, stop with `BLOCKED`.
+- Never report MERGE-READY for an App-touching PR without a passing smoke start at the head SHA.
 - No pupil data (names, grades, note text) in telemetry, logs, committed test fixtures that look like real
   data, or issue and PR text.
 - Don't work around a denied permission or a blocked action. Report `BLOCKED` with the exact denial.
@@ -131,6 +146,7 @@ Then:
 - decisions you made
 - tests (counts)
 - CI result
+- smoke start result: pass, fail or not applicable (App-touching PRs)
 - reviewer verdict and the model used
 - follow-up issues filed
 - manual checks still needed
