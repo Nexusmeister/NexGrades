@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
 using NexGrades.App.Features.Export;
+using NexGrades.App.Features.Grades;
 using NexGrades.App.Infrastructure;
 using NexGrades.Common;
 using NexGrades.Data;
@@ -27,13 +28,15 @@ namespace NexGrades.App.Features.Classes;
 /// <param name="classService">Creates and renames the class.</param>
 /// <param name="exporter">Writes the class overview of a subject to an Excel file.</param>
 /// <param name="fileSaveDialog">Asks where to save the export.</param>
+/// <param name="pageNavigator">Opens the grade sheet of a subject.</param>
 public partial class ClassViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
     IDbContextFactory<AppDbContext> dbContextFactory,
     ClassService classService,
     SubjectOverviewExporter exporter,
-    IFileSaveDialogService fileSaveDialog) : ViewModel
+    IFileSaveDialogService fileSaveDialog,
+    PageNavigator pageNavigator) : ViewModel
 {
     private int? _editingClassInstanceId;
 
@@ -129,6 +132,16 @@ public partial class ClassViewModel(
             .OrderBy(si => si.Subject.Name)
             .Select(si => new SubjectInstanceRow(si.Id, si.Subject.Name))
             .ToListAsync()).ToObservableCollection();
+    }
+
+    /// <summary>Opens the grade sheet of one subject taught to the class.</summary>
+    /// <param name="row">The subject row.</param>
+    [RelayCommand]
+    private void OpenGrades(SubjectInstanceRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+
+        pageNavigator.NavigateWithHierarchy<GradeSheetPage>(row.SubjectInstanceId);
     }
 
     private bool CanExportSubjectOverview() => !IsExporting;

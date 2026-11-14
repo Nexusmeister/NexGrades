@@ -1,7 +1,6 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.Data;
-using NexGrades.Data.Entities;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Grading;
 using NexGrades.Domain.Services;
@@ -14,7 +13,7 @@ namespace NexGrades.Domain.Export;
 /// </summary>
 /// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
 /// <remarks>
-/// Averages come from <see cref="AverageCalculator"/> with the snapshotted <see cref="GradeBucket.Weight"/>.
+/// Averages come from <see cref="AverageCalculator"/> with the snapshotted <see cref="Data.Entities.GradeBucket.Weight"/>.
 /// Exempt students are omitted even if they have grades (exempt wins). Students who left the class appear
 /// only if they have grades in this subject.
 /// </remarks>
@@ -29,40 +28,12 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
         {
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
 
-            var header = await context.SubjectInstances.AsNoTracking()
-                .Where(si => si.Id == subjectInstanceId)
-                .Select(si => new
-                {
-                    SubjectName = si.Subject.Name,
-                    si.ClassInstanceId,
-                    ClassName = si.ClassInstance.Name,
-                    SchoolYearLabel = si.ClassInstance.SchoolYear.Label,
-                })
-                .FirstOrDefaultAsync(cancellationToken)
-                ?? throw new InvariantViolationException($"Subject instance {subjectInstanceId} does not exist.");
-
-            var buckets = (await context.GradeBuckets.AsNoTracking()
-                .Where(b => b.SubjectInstanceId == subjectInstanceId)
-                .Select(b => new BucketInfo(b.Id, b.Name, b.Weight, b.SortOrder))
-                .ToListAsync(cancellationToken))
-                .OrderBy(b => b.SortOrder).ThenBy(b => b.Id)
-                .ToList();
-
-            var enrollments = await context.Enrollments.AsNoTracking()
-                .Where(e => e.ClassInstanceId == header.ClassInstanceId)
-                .Select(e => new EnrollmentInfo(e.StudentId, e.Student.FirstName, e.Student.LastName, e.LeftOn))
-                .ToListAsync(cancellationToken);
-
-            var exemptIds = (await context.SubjectParticipations.AsNoTracking()
-                .Where(p => p.SubjectInstanceId == subjectInstanceId && p.Mode == ParticipationMode.Exempt)
-                .Select(p => p.StudentId)
-                .ToListAsync(cancellationToken))
-                .ToHashSet();
-
-            var grades = await context.Grades.AsNoTracking()
-                .Where(g => g.GradeBucket.SubjectInstanceId == subjectInstanceId)
-                .Select(g => new GradeInfo(g.StudentId, g.GradeBucketId, g.Value, g.RecordedOn, g.Id))
-                .ToListAsync(cancellationToken);
+            var data = await SubjectGradeData.LoadAsync(context, subjectInstanceId, includeVoided: false, cancellationToken);
+            var header = data.Header;
+            var buckets = data.Buckets;
+            var enrollments = data.Enrollments;
+            var exemptIds = data.ExemptStudentIds;
+            var grades = data.Grades;
 
             var gradesByStudent = grades.ToLookup(g => g.StudentId);
 
@@ -79,7 +50,7 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
             return new SubjectOverviewTable(header.SubjectName, header.ClassName, header.SchoolYearLabel, BuildColumns(buckets), rows);
         });
 
-    private static List<SubjectOverviewColumn> BuildColumns(List<BucketInfo> buckets)
+    private static List<SubjectOverviewColumn> BuildColumns(IReadOnlyList<SubjectGradeData.BucketRow> buckets)
     {
         var columns = new List<SubjectOverviewColumn> { new(SubjectOverviewColumnKind.Student, null) };
         foreach (var bucket in buckets)
@@ -92,13 +63,14 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
         return columns;
     }
 
-    private static IEnumerable<EnrollmentInfo> Sort(IEnumerable<EnrollmentInfo> enrollments) =>
+    private static IEnumerable<SubjectGradeData.EnrollmentRow> Sort(IEnumerable<SubjectGradeData.EnrollmentRow> enrollments) =>
         enrollments
             .OrderBy(e => e.LastName, StringComparer.CurrentCulture)
             .ThenBy(e => e.FirstName, StringComparer.CurrentCulture)
             .ThenBy(e => e.StudentId);
 
-    private static SubjectOverviewRow BuildRow(EnrollmentInfo student, List<BucketInfo> buckets, List<GradeInfo> studentGrades)
+    private static SubjectOverviewRow BuildRow(
+        SubjectGradeData.EnrollmentRow student, IReadOnlyList<SubjectGradeData.BucketRow> buckets, List<SubjectGradeData.GradeRow> studentGrades)
     {
         var cells = new List<SubjectOverviewCell>
         {
@@ -133,10 +105,4 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
         GradingScale.TryGetTokenForValue(value, out var token) && token is not null
             ? token
             : value.ToString(CultureInfo.InvariantCulture);
-
-    private sealed record BucketInfo(int Id, string Name, decimal Weight, int SortOrder);
-
-    private sealed record EnrollmentInfo(int StudentId, string FirstName, string LastName, DateTime? LeftOn);
-
-    private sealed record GradeInfo(int StudentId, int GradeBucketId, decimal Value, DateOnly RecordedOn, int Id);
 }

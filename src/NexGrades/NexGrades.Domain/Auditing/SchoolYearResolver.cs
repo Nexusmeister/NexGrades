@@ -8,6 +8,7 @@ namespace NexGrades.Domain.Auditing;
 /// traversal paths:
 /// <list type="bullet">
 /// <item><c>Grade</c> → <c>GradeBucket</c> → <c>SubjectInstance</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
+/// <item><c>Assessment</c> → <c>GradeBucket</c> → <c>SubjectInstance</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
 /// <item><c>GradeBucket</c> → <c>SubjectInstance</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
 /// <item><c>SubjectInstance</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
 /// <item><c>SubjectParticipation</c> → <c>SubjectInstance</c> → <c>ClassInstance</c> → <c>SchoolYear</c></item>
@@ -31,6 +32,7 @@ internal static class SchoolYearResolver
         Note note => note.SchoolYearId,
         ClassInstance classInstance => classInstance.SchoolYearId,
         Grade grade => FromGradeBucket(context, grade.GradeBucketId),
+        Assessment assessment => FromGradeBucket(context, assessment.GradeBucketId),
         GradeBucket bucket => FromSubjectInstance(context, bucket.SubjectInstanceId),
         SubjectInstance subjectInstance => FromClassInstance(context, subjectInstance.ClassInstanceId),
         SubjectParticipation participation => FromSubjectInstance(context, participation.SubjectInstanceId),
@@ -44,6 +46,7 @@ internal static class SchoolYearResolver
         Note note => Task.FromResult<int?>(note.SchoolYearId),
         ClassInstance classInstance => Task.FromResult<int?>(classInstance.SchoolYearId),
         Grade grade => FromGradeBucketAsync(context, grade.GradeBucketId, cancellationToken),
+        Assessment assessment => FromGradeBucketAsync(context, assessment.GradeBucketId, cancellationToken),
         GradeBucket bucket => FromSubjectInstanceAsync(context, bucket.SubjectInstanceId, cancellationToken),
         SubjectInstance subjectInstance => FromClassInstanceAsync(context, subjectInstance.ClassInstanceId, cancellationToken),
         SubjectParticipation participation => FromSubjectInstanceAsync(context, participation.SubjectInstanceId, cancellationToken),

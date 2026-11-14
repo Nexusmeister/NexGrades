@@ -104,7 +104,14 @@ they record *why* the model is shaped the way it is.
 - **GradeBucket** — a *snapshot* copied from the BucketTemplates when a SubjectInstance is created, then
   independently editable. Deliberately no FK back to the template, so editing a template never changes a
   past year's averages.
-- **Grade** — one numeric grade in a bucket for a student.
+- **Assessment** — one graded occasion in a **GradeBucket** (e.g. a class test) and one column of the grade sheet.
+  It has a title, a date and `VoidedOn`; its bucket never changes. It is "removed" by voiding, which can be undone,
+  like `Note.ArchivedOn`. Managed through `AssessmentService`.
+- **Grade** — one numeric grade in a bucket for a student. `AssessmentId` is null for a single grade with no
+  assessment; otherwise the grade's bucket is always the assessment's bucket. It is "removed" by voiding (`VoidedOn`),
+  which can be undone. A grade counts only while neither it nor its assessment is voided: voided grades and grades of
+  voided assessments are excluded from averages, the class overview export and close readiness. Managed through
+  `GradeService`.
 - **SubjectParticipation** — per-student override of the default "enrolled ⇒ participates" rule
   (elective, exemption, religion/ethics split). Rows exist only for deviations.
 - **Note** — free-text note on a student within a school year, managed through `NoteService`. A note
@@ -118,13 +125,14 @@ they record *why* the model is shaped the way it is.
 - **Nothing is ever deleted.** Entities change status instead. `ClosedYearAuditInterceptor` rejects every
   `Deleted` entry.
 - **The school year is derived by traversal** (e.g. Grade → GradeBucket → SubjectInstance → ClassInstance →
-  SchoolYear). Do not add denormalized `SchoolYearId` columns; only SchoolYear, ClassInstance and Note carry
-  one.
+  SchoolYear, and Assessment → GradeBucket → SubjectInstance → ClassInstance → SchoolYear). Do not add denormalized
+  `SchoolYearId` columns; only SchoolYear, ClassInstance and Note carry one.
 - **Closed years are locked.** Writes to a Closed year throw `ClosedYearException` unless the year is
   unlocked, and every allowed write produces `AuditEntry` rows. Go through `UnlockService` for unlocking.
 - **Averages use the snapshotted `GradeBucket.Weight`**, never the live `BucketTemplate.Weight`.
 - **Business rules live in `NexGrades.Domain`** (services such as `GradeService`, `EnrollmentService`, `SchoolYearService`,
-  `RolloverService`, `YearCloseService`). New rules go there, with tests, not into view models.
+  `RolloverService`, `YearCloseService`, `AssessmentService`, `GradeSheetService`). New rules go there, with tests,
+  not into view models.
 - **No pupil data in logs or telemetry.** Logs, metrics and traces never carry names, grades, notes, record ids or
   other record content, in a message, tag or metric dimension. Tag keys come only from `NexGradesTelemetry`. See
   `docs/decisions/0002-telemetry-and-privacy.md` and `docs/decisions/0003-application-logging.md`.

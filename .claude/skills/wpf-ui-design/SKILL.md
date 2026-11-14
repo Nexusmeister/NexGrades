@@ -52,8 +52,9 @@ Secondary text uses `Appearance="Secondary"`.
 - Overview grids: `ui:DataGrid` with `AutoGenerateColumns="False"`, `IsReadOnly="True"`,
   `SelectionMode="Single"` and explicit column headers in real text. Double-click or Enter on a row
   opens its detail page.
-- Use `ui:NumberBox` for numeric input like weights. Grades are picked from the 16 legal values
-  (`GradingScale.LegalValues`, shown as tokens), not typed as free numbers.
+- Use `ui:NumberBox` for numeric input like weights. Grades are typed as tokens ("2-", "1+") and
+  validated with `GradingScale.TryParseToken`; they are not picked from `GradingScale.LegalValues` and not
+  typed as decimals.
 
 ## Destructive actions: there are none
 
@@ -90,7 +91,7 @@ for confirmation in a dialog that says what happens and that it can be undone.
 
 - Show grades as tokens via `GradingScale.TokenForValue` ("2-"), never as raw decimals.
 - Show averages with two decimals in the current UI culture (`2.35` in English, `2,35` in German). Show
-  "—" when there is no average, never `0`.
+  "–" when there is no average, never `0`.
 - Lower is better on this scale. Don't use visuals that imply higher is better, such as bars that grow
   with the value.
 

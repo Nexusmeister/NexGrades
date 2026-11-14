@@ -15,6 +15,19 @@ public class GradeConfiguration : IEntityTypeConfiguration<Grade>
         // Decimal value maps to TEXT, not REAL, to avoid float drift in weighted averages.
         builder.Property(e => e.Value).HasColumnType("TEXT");
 
+        builder.Property(e => e.VoidedOn);
+
+        // Schema backstop for "one active grade per student per assessment". Partial, so a voided grade can sit
+        // next to its replacement and grades without an assessment are not constrained at all.
+        builder.HasIndex(e => new { e.AssessmentId, e.StudentId })
+            .IsUnique()
+            .HasFilter("\"AssessmentId\" IS NOT NULL AND \"VoidedOn\" IS NULL");
+
+        builder.HasOne(e => e.Assessment)
+            .WithMany(a => a.Grades)
+            .HasForeignKey(e => e.AssessmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(e => e.GradeBucket)
             .WithMany(gb => gb.Grades)
             .HasForeignKey(e => e.GradeBucketId)

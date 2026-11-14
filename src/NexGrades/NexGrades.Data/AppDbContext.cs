@@ -47,6 +47,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// <summary>Per-student overrides of subject participation. Holds rows only for deviations from the default.</summary>
     public DbSet<SubjectParticipation> SubjectParticipations => Set<SubjectParticipation>();
 
+    /// <summary>The assessments that group grades into grade sheet columns.</summary>
+    public DbSet<Assessment> Assessments => Set<Assessment>();
+
     /// <summary>The individual grades.</summary>
     public DbSet<Grade> Grades => Set<Grade>();
 
@@ -73,6 +76,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration(new SubjectInstanceConfiguration());
         modelBuilder.ApplyConfiguration(new GradeBucketConfiguration());
         modelBuilder.ApplyConfiguration(new SubjectParticipationConfiguration());
+        modelBuilder.ApplyConfiguration(new AssessmentConfiguration());
         modelBuilder.ApplyConfiguration(new GradeConfiguration());
         modelBuilder.ApplyConfiguration(new NoteConfiguration());
         modelBuilder.ApplyConfiguration(new AuditEntryConfiguration());

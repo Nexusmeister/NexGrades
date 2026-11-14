@@ -17,6 +17,32 @@ namespace NexGrades.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
 
+            modelBuilder.Entity("NexGrades.Data.Entities.Assessment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("GradeBucketId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("VoidedOn")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GradeBucketId", "Date");
+
+                    b.ToTable("Assessments", (string)null);
+                });
+
             modelBuilder.Entity("NexGrades.Data.Entities.AuditEntry", b =>
                 {
                     b.Property<int>("Id")
@@ -172,6 +198,9 @@ namespace NexGrades.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("AssessmentId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Comment")
                         .HasColumnType("TEXT");
 
@@ -190,11 +219,18 @@ namespace NexGrades.Data.Migrations
                     b.Property<decimal>("Value")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("VoidedOn")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("GradeBucketId");
 
                     b.HasIndex("StudentId");
+
+                    b.HasIndex("AssessmentId", "StudentId")
+                        .IsUnique()
+                        .HasFilter("\"AssessmentId\" IS NOT NULL AND \"VoidedOn\" IS NULL");
 
                     b.ToTable("Grades", (string)null);
                 });
@@ -430,6 +466,17 @@ namespace NexGrades.Data.Migrations
                     b.ToTable("Teachers", (string)null);
                 });
 
+            modelBuilder.Entity("NexGrades.Data.Entities.Assessment", b =>
+                {
+                    b.HasOne("NexGrades.Data.Entities.GradeBucket", "GradeBucket")
+                        .WithMany("Assessments")
+                        .HasForeignKey("GradeBucketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GradeBucket");
+                });
+
             modelBuilder.Entity("NexGrades.Data.Entities.BucketTemplate", b =>
                 {
                     b.HasOne("NexGrades.Data.Entities.Subject", "Subject")
@@ -499,6 +546,11 @@ namespace NexGrades.Data.Migrations
 
             modelBuilder.Entity("NexGrades.Data.Entities.Grade", b =>
                 {
+                    b.HasOne("NexGrades.Data.Entities.Assessment", "Assessment")
+                        .WithMany("Grades")
+                        .HasForeignKey("AssessmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("NexGrades.Data.Entities.GradeBucket", "GradeBucket")
                         .WithMany("Grades")
                         .HasForeignKey("GradeBucketId")
@@ -510,6 +562,8 @@ namespace NexGrades.Data.Migrations
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Assessment");
 
                     b.Navigation("GradeBucket");
 
@@ -598,6 +652,11 @@ namespace NexGrades.Data.Migrations
                     b.Navigation("SubjectInstance");
                 });
 
+            modelBuilder.Entity("NexGrades.Data.Entities.Assessment", b =>
+                {
+                    b.Navigation("Grades");
+                });
+
             modelBuilder.Entity("NexGrades.Data.Entities.ClassGroup", b =>
                 {
                     b.Navigation("ClassInstances");
@@ -614,6 +673,8 @@ namespace NexGrades.Data.Migrations
 
             modelBuilder.Entity("NexGrades.Data.Entities.GradeBucket", b =>
                 {
+                    b.Navigation("Assessments");
+
                     b.Navigation("Grades");
                 });
 

@@ -47,7 +47,7 @@ public sealed partial class YearCloseService(IDbContextFactory<AppDbContext> con
             .Where(ci => ci.SchoolYearId == schoolYearId)
             .Include(ci => ci.Enrollments)
             .Include(ci => ci.SubjectInstances).ThenInclude(si => si.Subject)
-            .Include(ci => ci.SubjectInstances).ThenInclude(si => si.GradeBuckets).ThenInclude(gb => gb.Grades)
+            .Include(ci => ci.SubjectInstances).ThenInclude(si => si.GradeBuckets).ThenInclude(gb => gb.Grades).ThenInclude(g => g.Assessment)
             .Include(ci => ci.SubjectInstances).ThenInclude(si => si.SubjectParticipations)
             .ToListAsync(cancellationToken);
 
@@ -90,6 +90,9 @@ public sealed partial class YearCloseService(IDbContextFactory<AppDbContext> con
             namedWarnings);
     }
 
+    /// <summary>A grade counts unless it, or the assessment it belongs to, is voided.</summary>
+    private static bool IsCounting(Grade grade) => grade.VoidedOn is null && grade.Assessment?.VoidedOn is null;
+
     /// <summary>
     /// Adds the advisory warnings for every subject of one class: no grades, bucket weights not totalling 100,
     /// and participating students without a grade.
@@ -101,7 +104,7 @@ public sealed partial class YearCloseService(IDbContextFactory<AppDbContext> con
         {
             var subjectName = subjectInstance.Subject.Name;
 
-            var totalGradeCount = subjectInstance.GradeBuckets.Sum(gb => gb.Grades.Count);
+            var totalGradeCount = subjectInstance.GradeBuckets.Sum(gb => gb.Grades.Count(IsCounting));
             if (totalGradeCount == 0)
             {
                 warnings.Add(new CloseReadinessIssue(
@@ -132,7 +135,7 @@ public sealed partial class YearCloseService(IDbContextFactory<AppDbContext> con
             foreach (var studentId in participatingStudentIds)
             {
                 var hasGrade = subjectInstance.GradeBuckets
-                    .Any(gb => gb.Grades.Any(g => g.StudentId == studentId));
+                    .Any(gb => gb.Grades.Any(g => g.StudentId == studentId && IsCounting(g)));
                 if (!hasGrade)
                 {
                     warnings.Add(new CloseReadinessIssue(
