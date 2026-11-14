@@ -125,13 +125,33 @@ public sealed partial class GradeCellViewModel : ObservableObject
         OnPropertyChanged(nameof(IsEditable));
     }
 
+    /// <summary>
+    /// True when the cell holds input that is not saved yet: a save runs or is queued, or the trimmed text differs
+    /// from the shown grade's token. The leave guard uses it so a value typed during a save is never lost silently.
+    /// </summary>
+    internal bool HasUnsavedText =>
+        IsSaving || SaveQueued || !string.Equals(Text.Trim(), Grade?.Token ?? string.Empty, StringComparison.Ordinal);
+
     /// <summary>Shows <paramref name="grade"/> as the saved state of the cell and clears any error.</summary>
     /// <param name="grade">The saved grade, or null when the cell is now empty.</param>
-    internal void ApplyGrade(GradeSheetGrade? grade)
+    internal void ApplyGrade(GradeSheetGrade? grade) => ApplyGrade(grade, null);
+
+    /// <summary>
+    /// Shows <paramref name="grade"/> as the saved state of a save that started with <paramref name="savedText"/>.
+    /// The grade and its derived flags are always updated. The text and the error mark are only replaced when the
+    /// user has not committed newer text since the save started; otherwise that newer text stays for the queued save.
+    /// </summary>
+    /// <param name="grade">The saved grade, or null when the cell is now empty.</param>
+    /// <param name="savedText">The trimmed text the save started with, or null to always replace the text.</param>
+    internal void ApplyGrade(GradeSheetGrade? grade, string? savedText)
     {
         Grade = grade;
-        SetTextWithoutCommit(grade?.Token ?? string.Empty);
-        HasError = false;
+        if (savedText is null || string.Equals(Text.Trim(), savedText, StringComparison.Ordinal))
+        {
+            SetTextWithoutCommit(grade?.Token ?? string.Empty);
+            HasError = false;
+        }
+
         OnPropertyChanged(nameof(Grade));
         OnPropertyChanged(nameof(HasActiveGrade));
         OnPropertyChanged(nameof(IsVoidedGrade));

@@ -172,7 +172,7 @@ public sealed partial class GradeSheetViewModel(
     public bool IsEditingAssessment => EditingAssessment is not null;
 
     /// <summary>True when a cell holds text that is not saved, or the detail panel has unsaved edits.</summary>
-    public bool HasUnsavedInput => IsDetailDirty || Rows.Any(r => r.Cells.Any(c => c.HasError));
+    public bool HasUnsavedInput => IsDetailDirty || Rows.Any(r => r.Cells.Any(c => c.HasError || c.HasUnsavedText));
 
     /// <summary>
     /// Loads the sheet for the subject instance id passed as <paramref name="parameter"/>. Without a known id the
@@ -661,8 +661,9 @@ public sealed partial class GradeSheetViewModel(
 
     /// <summary>
     /// Saves one cell at a time. A commit that arrives while a save of the same cell runs is queued, and the
-    /// latest text is saved after the running call completes, so quick re-entry neither records a grade twice nor
-    /// shows a stale value. Runs fire-and-forget, so nothing escapes it: an unexpected failure is logged, reported
+    /// latest text is saved after the running call completes, so quick re-entry never records a grade twice. A
+    /// finished save leaves newer text in the cell alone (see <see cref="GradeCellViewModel.ApplyGrade(GradeSheetGrade?, string?)"/>),
+    /// so the queued pass compares it with the freshly saved grade. Runs fire-and-forget, so nothing escapes it: an unexpected failure is logged, reported
     /// with a generic message and marked on the cell.
     /// </summary>
     private async Task SaveCellSerializedAsync(GradeCellViewModel cell)
@@ -741,33 +742,39 @@ public sealed partial class GradeSheetViewModel(
                 var saved = cell.Grade is { VoidedOn: null } existing && cell.HasActiveGrade
                     ? await gradeService.UpdateGradeAsync(existing.Id, value, existing.RecordedOn, existing.Label, existing.Comment)
                     : await gradeService.RecordAssessmentGradeAsync(cell.AssessmentId, cell.StudentId, value);
-                cell.ApplyGrade(ToSheetGrade(saved));
+                cell.ApplyGrade(ToSheetGrade(saved), text);
             },
             "The grade could not be saved. Check that the student was enrolled on the assessment's date and is not exempt.",
             "The grade could not be saved because its school year is closed.",
             successMessage: null,
-            reloadAfter: false);
+            reloadAfter: () => false);
     }
 
     /// <summary>
     /// Voids the grade of a cell the user emptied. With "show voided" on, the sheet reloads so the voided grade
-    /// shows in its cell and can be restored.
+    /// shows in its cell and can be restored. If the user typed a new value meanwhile, the cell drops the voided
+    /// grade without a reload (which would discard the typed text), and the queued save records the new value.
     /// </summary>
-    private async Task VoidCellAsync(GradeCellViewModel cell, GradeSheetGrade grade) =>
+    private async Task VoidCellAsync(GradeCellViewModel cell, GradeSheetGrade grade)
+    {
+        var text = cell.Text.Trim();
+        var typedMeanwhile = false;
         await SaveCellChangeAsync(
             cell,
             async () =>
             {
                 await gradeService.VoidGradeAsync(grade.Id);
-                if (!ShowVoidedGrades)
+                typedMeanwhile = cell.Text.Trim() != text;
+                if (!ShowVoidedGrades || typedMeanwhile)
                 {
-                    cell.ApplyGrade(null);
+                    cell.ApplyGrade(null, text);
                 }
             },
             "The grade could not be voided.",
             "The grade could not be voided because the school year is closed.",
             "The grade has been voided.",
-            reloadAfter: ShowVoidedGrades);
+            reloadAfter: () => ShowVoidedGrades && !typedMeanwhile);
+    }
 
     /// <summary>Runs one cell's write and, on success, recomputes that row's averages; on failure marks the cell.</summary>
     private async Task SaveCellChangeAsync(
@@ -776,7 +783,7 @@ public sealed partial class GradeSheetViewModel(
         string failureMessage,
         string closedYearMessage,
         string? successMessage,
-        bool reloadAfter)
+        Func<bool> reloadAfter)
     {
         var saved = await RunAsync(write, failureMessage, closedYearMessage);
         if (!saved)
@@ -796,7 +803,7 @@ public sealed partial class GradeSheetViewModel(
             ShowSuccess(successMessage);
         }
 
-        if (reloadAfter)
+        if (reloadAfter())
         {
             await LoadAsync();
         }
