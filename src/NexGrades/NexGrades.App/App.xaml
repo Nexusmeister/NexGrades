@@ -10,7 +10,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Dark" />
-                <ui:ControlsDictionary />
+                <ResourceDictionary Source="Shell/ShellControlStyles.xaml" />
                 
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
