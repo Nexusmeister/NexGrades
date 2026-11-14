@@ -63,6 +63,8 @@ public static class HostBuilderExtensions
         services.AddTransient<EnrollmentService>();
         services.AddTransient<GradeService>();
         services.AddTransient<AverageService>();
+        services.AddTransient<AssessmentService>();
+        services.AddTransient<GradeSheetService>();
         services.AddTransient<RolloverService>();
         services.AddTransient<YearCloseService>();
         services.AddTransient<UnlockService>();

@@ -75,4 +75,34 @@ public class GradingScaleTests
         Assert.False(found);
         Assert.Equal(0m, value);
     }
+
+    [Theory]
+    [InlineData("2-", 2.3)]
+    [InlineData(" 1+ ", 0.7)]
+    [InlineData("2 -", 2.3)]
+    [InlineData("6", 6.0)]
+    public void TryParseToken_ReturnsValue_ForLegalTokenIgnoringWhitespace(string input, decimal expected)
+    {
+        var parsed = GradingScale.TryParseToken(input, out var value);
+
+        Assert.True(parsed);
+        Assert.Equal(expected, value);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    [InlineData("7")]
+    [InlineData("0")]
+    [InlineData("2.3")]
+    [InlineData("2--")]
+    [InlineData("abc")]
+    public void TryParseToken_ReturnsFalse_ForIllegalInput(string? input)
+    {
+        var parsed = GradingScale.TryParseToken(input, out var value);
+
+        Assert.False(parsed);
+        Assert.Equal(0m, value);
+    }
 }

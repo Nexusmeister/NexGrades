@@ -28,4 +28,7 @@ public class GradeBucket
 
     /// <summary>The grades recorded in this bucket.</summary>
     public ICollection<Grade> Grades { get; set; } = [];
+
+    /// <summary>The assessments in this bucket, one grade sheet column each.</summary>
+    public ICollection<Assessment> Assessments { get; set; } = [];
 }

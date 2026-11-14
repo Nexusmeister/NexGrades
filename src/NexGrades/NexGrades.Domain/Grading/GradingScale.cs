@@ -67,6 +67,26 @@ public static class GradingScale
     /// <summary>Non-throwing variant of <see cref="ValueForToken"/>.</summary>
     public static bool TryGetValueForToken(string token, out decimal value) => TokenToValueMap.TryGetValue(token, out value);
 
+    /// <summary>
+    /// Parses typed input such as "2-", " 1+ " or "2 -" into its numeric value. Leading, trailing and inner
+    /// whitespace is ignored; the remaining text must be exactly one of the scale's tokens. Keeps scale
+    /// knowledge here so callers never parse tokens themselves.
+    /// </summary>
+    /// <param name="input">The raw typed text.</param>
+    /// <param name="value">The grade value when parsing succeeds, otherwise 0.</param>
+    /// <returns><see langword="true"/> when <paramref name="input"/> is a legal token.</returns>
+    public static bool TryParseToken(string? input, out decimal value)
+    {
+        value = 0m;
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return false;
+        }
+
+        var normalized = string.Concat(input.Where(c => !char.IsWhiteSpace(c)));
+        return TokenToValueMap.TryGetValue(normalized, out value);
+    }
+
     /// <summary>Non-throwing variant of <see cref="TokenForValue"/>.</summary>
     public static bool TryGetTokenForValue(decimal value, out string? token) => ValueToTokenMap.TryGetValue(value, out token);
 }

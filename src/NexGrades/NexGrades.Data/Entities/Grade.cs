@@ -4,6 +4,12 @@ namespace NexGrades.Data.Entities;
 /// A single grade. The school year is implicit via Grade -> GradeBucket -> SubjectInstance ->
 /// ClassInstance -> SchoolYear; there is deliberately no year column here to get out of sync.
 /// </summary>
+/// <remarks>
+/// A grade either belongs to an <see cref="Entities.Assessment"/> or stands alone (<see cref="AssessmentId"/> is
+/// null). When it belongs to one, <c>Grade.GradeBucketId == Assessment.GradeBucketId</c> always holds: the bucket
+/// is taken from the assessment when the grade is recorded, and neither side's bucket changes afterwards. The
+/// schema cannot express this, so the Domain keeps it. Grades are never deleted; see <see cref="VoidedOn"/>.
+/// </remarks>
 public class Grade
 {
     /// <summary>Primary key.</summary>
@@ -35,4 +41,21 @@ public class Grade
 
     /// <summary>Optional free-text remark about the grade.</summary>
     public string? Comment { get; set; }
+
+    /// <summary>
+    /// The assessment this grade was given for, or null for a single grade with no assessment. Its bucket is
+    /// always <see cref="GradeBucketId"/>; see the remarks. A partial unique index allows at most one active grade
+    /// per student and assessment.
+    /// </summary>
+    public int? AssessmentId { get; set; }
+
+    /// <summary>Navigation property for <see cref="AssessmentId"/>. Null for a grade with no assessment.</summary>
+    public Assessment? Assessment { get; set; }
+
+    /// <summary>
+    /// When the grade was voided, or <see langword="null"/> while it is active. Set by voiding and cleared by
+    /// restoring; this is how a grade is "removed", because nothing is ever deleted. A voided grade counts toward
+    /// no average.
+    /// </summary>
+    public DateTime? VoidedOn { get; set; }
 }

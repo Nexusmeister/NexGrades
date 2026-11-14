@@ -17,6 +17,9 @@ internal static class EnrollmentActivity
     public static bool IsActive(Enrollment enrollment, IClock clock) => IsActive(enrollment, clock.Now);
 
     /// <summary>Whether <paramref name="enrollment"/> is active as of an arbitrary point in time <paramref name="asOf"/>.</summary>
-    public static bool IsActive(Enrollment enrollment, DateTime asOf) =>
-        enrollment.JoinedOn <= asOf && (enrollment.LeftOn is null || asOf < enrollment.LeftOn);
+    public static bool IsActive(Enrollment enrollment, DateTime asOf) => IsActive(enrollment.JoinedOn, enrollment.LeftOn, asOf);
+
+    /// <summary>Same rule for callers that hold only the enrollment's dates, such as a projected read model.</summary>
+    public static bool IsActive(DateTime joinedOn, DateTime? leftOn, DateTime asOf) =>
+        joinedOn <= asOf && (leftOn is null || asOf < leftOn);
 }
