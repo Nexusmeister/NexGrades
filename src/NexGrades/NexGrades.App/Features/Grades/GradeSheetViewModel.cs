@@ -274,6 +274,12 @@ public sealed partial class GradeSheetViewModel(
             return;
         }
 
+        // With "show voided" on the sheet reloads afterwards, which would discard typed input, so ask first.
+        if (ShowVoidedGrades && !await ConfirmDiscardForReloadAsync(cancellationToken))
+        {
+            return;
+        }
+
         var voided = await RunAsync(
             async () =>
             {
@@ -295,7 +301,7 @@ public sealed partial class GradeSheetViewModel(
             // With "show voided" on, the voided grade stays in its cell, so the sheet reloads to show it.
             if (ShowVoidedGrades)
             {
-                await LoadAsync();
+                await ReloadAfterWriteAsync(cancellationToken);
             }
         }
     }
@@ -340,6 +346,11 @@ public sealed partial class GradeSheetViewModel(
             return;
         }
 
+        if (!await ConfirmDiscardForReloadAsync(cancellationToken))
+        {
+            return;
+        }
+
         var added = await RunAsync(
             () => assessmentService.CreateAssessmentAsync(bucket.Id, NewAssessmentTitle, DateOnly.FromDateTime(date), cancellationToken),
             "The assessment could not be added. Enter a title and a date within the school year.",
@@ -349,7 +360,7 @@ public sealed partial class GradeSheetViewModel(
         {
             NewAssessmentTitle = string.Empty;
             ShowSuccess("The assessment has been added.");
-            await LoadAsync();
+            await ReloadAfterWriteAsync(cancellationToken);
         }
     }
 
@@ -381,6 +392,11 @@ public sealed partial class GradeSheetViewModel(
             return;
         }
 
+        if (!await ConfirmDiscardForReloadAsync(cancellationToken))
+        {
+            return;
+        }
+
         var saved = await RunAsync(
             () => assessmentService.EditAssessmentAsync(id, EditAssessmentTitle, DateOnly.FromDateTime(date), cancellationToken),
             "The assessment could not be changed. Enter a title and a date within the school year, check that every graded student was enrolled and not exempt on the new date, and that the assessment is not voided.",
@@ -390,7 +406,7 @@ public sealed partial class GradeSheetViewModel(
         {
             EditingAssessment = null;
             ShowSuccess("The assessment has been changed.");
-            await LoadAsync();
+            await ReloadAfterWriteAsync(cancellationToken);
         }
     }
 
@@ -411,7 +427,7 @@ public sealed partial class GradeSheetViewModel(
             "Void",
             "Cancel",
             cancellationToken);
-        if (!confirmed)
+        if (!confirmed || !await ConfirmDiscardForReloadAsync(cancellationToken))
         {
             return;
         }
@@ -424,7 +440,7 @@ public sealed partial class GradeSheetViewModel(
         if (voided)
         {
             ShowSuccess("The assessment has been voided.");
-            await LoadAsync();
+            await ReloadAfterWriteAsync(cancellationToken);
         }
     }
 
@@ -439,6 +455,11 @@ public sealed partial class GradeSheetViewModel(
             return;
         }
 
+        if (!await ConfirmDiscardForReloadAsync(cancellationToken))
+        {
+            return;
+        }
+
         var restored = await RunAsync(
             () => assessmentService.RestoreAssessmentAsync(id, cancellationToken),
             "The assessment could not be restored.",
@@ -447,7 +468,7 @@ public sealed partial class GradeSheetViewModel(
         if (restored)
         {
             ShowSuccess("The assessment has been restored.");
-            await LoadAsync();
+            await ReloadAfterWriteAsync(cancellationToken);
         }
     }
 
@@ -482,7 +503,64 @@ public sealed partial class GradeSheetViewModel(
     {
         if (!_suppressVoidedReload && _subjectInstanceId is not null)
         {
-            _ = LoadAsync();
+            _ = ReloadForVoidedToggleAsync(value);
+        }
+    }
+
+    /// <summary>
+    /// Reloads the sheet after the user switched "Show voided grades" to <paramref name="shown"/>. The reload replaces
+    /// every row, so with unsaved input the user is asked first; declining keeps the sheet and puts the toggle back
+    /// without reloading.
+    /// </summary>
+    /// <param name="shown">The value the toggle was just switched to.</param>
+    internal async Task ReloadForVoidedToggleAsync(bool shown)
+    {
+        if (await ConfirmDiscardForReloadAsync())
+        {
+            await LoadAsync();
+            return;
+        }
+
+        // A newer toggle already changed the value again; then there is nothing to revert.
+        if (ShowVoidedGrades == shown)
+        {
+            _suppressVoidedReload = true;
+            try
+            {
+                ShowVoidedGrades = !shown;
+            }
+            finally
+            {
+                _suppressVoidedReload = false;
+            }
+        }
+    }
+
+    /// <summary>Asks whether a reload may discard unsaved input; true without a question when there is none.</summary>
+    private async Task<bool> ConfirmDiscardForReloadAsync(CancellationToken cancellationToken = default)
+    {
+        if (!HasUnsavedInput)
+        {
+            return true;
+        }
+
+        return await ConfirmAsync(
+            "Discard changes",
+            "You have grades or details that are not saved. Reloading the sheet discards them. Continue?",
+            "Discard",
+            "Keep editing",
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Reloads after a write succeeded. Input typed while the write ran is asked about again; declining skips the
+    /// reload, so that input is never cleared.
+    /// </summary>
+    private async Task ReloadAfterWriteAsync(CancellationToken cancellationToken)
+    {
+        if (await ConfirmDiscardForReloadAsync(cancellationToken))
+        {
+            await LoadAsync();
         }
     }
 
@@ -575,6 +653,12 @@ public sealed partial class GradeSheetViewModel(
         HasSheet = false;
         NotifyWriteCommands();
     }
+
+    /// <summary>True when the detail panel or any cell other than <paramref name="cell"/> holds unsaved input.</summary>
+    private bool HasUnsavedInputExcept(GradeCellViewModel cell) =>
+        IsDetailDirty
+        || Rows.Any(r => r.Cells.Any(c => !ReferenceEquals(c, cell) && (c.HasError || c.HasUnsavedText))
+            || r.FinalGrade.HasError || r.FinalGrade.HasUnsavedText);
 
     /// <summary>
     /// Loads the sheet and replaces rows and columns. Loads can overlap (toggling "show voided" quickly), so only
@@ -840,14 +924,19 @@ public sealed partial class GradeSheetViewModel(
     private async Task VoidCellAsync(GradeCellViewModel cell, GradeSheetGrade grade)
     {
         var text = cell.Text.Trim();
-        var typedMeanwhile = false;
+        var keepSheet = false;
         await SaveCellChangeAsync(
             cell,
             async () =>
             {
                 await gradeService.VoidGradeAsync(grade.Id);
-                typedMeanwhile = cell.Text.Trim() != text;
-                if (!ShowVoidedGrades || typedMeanwhile)
+
+                // A queued save counts as typed meanwhile even when its text equals the emptied one: the queued pass
+                // must see the cell without the voided grade, or it would void the same grade a second time.
+                // Unsaved input elsewhere also keeps the sheet, because a reload would discard it.
+                var typedMeanwhile = cell.SaveQueued || cell.Text.Trim() != text;
+                keepSheet = typedMeanwhile || HasUnsavedInputExcept(cell);
+                if (!ShowVoidedGrades || keepSheet)
                 {
                     cell.ApplyGrade(null, text);
                 }
@@ -855,7 +944,7 @@ public sealed partial class GradeSheetViewModel(
             "The grade could not be voided.",
             "The grade could not be voided because the school year is closed.",
             "The grade has been voided.",
-            reloadAfter: () => ShowVoidedGrades && !typedMeanwhile);
+            reloadAfter: () => ShowVoidedGrades && !keepSheet && !HasUnsavedInputExcept(cell));
     }
 
     /// <summary>Runs one cell's write and, on success, recomputes that row's averages; on failure marks the cell.</summary>

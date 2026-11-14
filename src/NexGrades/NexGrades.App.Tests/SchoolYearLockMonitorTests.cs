@@ -50,7 +50,7 @@ public class SchoolYearLockMonitorTests
         Assert.Null(SchoolYearLockMonitor.NextCheckDelay([State(1, SchoolYearStatus.Active, Now.AddMinutes(5))], Now));
 
     [Fact]
-    public async Task LoadClosedYearsAsync_ArmsTheTimer_ForAnActiveUnlockAsync()
+    public async Task LoadClosedYearsAsync_ArmsTheTimer_ForAnActiveUnlock()
     {
         using var env = new LockTestEnvironment(Now);
         await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(5), "correction");
@@ -62,7 +62,7 @@ public class SchoolYearLockMonitorTests
     }
 
     [Fact]
-    public async Task LoadClosedYearsAsync_ReportsAnEndedUnlockAsLocked_AndArmsNoTimerAsync()
+    public async Task LoadClosedYearsAsync_ReportsAnEndedUnlockAsLocked_AndArmsNoTimer()
     {
         using var env = new LockTestEnvironment(Now);
         await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(-5), "correction");
@@ -76,7 +76,7 @@ public class SchoolYearLockMonitorTests
     }
 
     [Fact]
-    public Task Expiry_BroadcastsLockedState_AndAnnouncesOnceAsync() => StaTestRunner.RunAsync(async () =>
+    public Task Expiry_BroadcastsLockedState_AndAnnouncesOnce() => StaTestRunner.RunAsync(async () =>
     {
         using var env = new LockTestEnvironment(Now);
         var yearId = await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(5), "correction");
@@ -104,7 +104,7 @@ public class SchoolYearLockMonitorTests
     });
 
     [Fact]
-    public Task Expiry_DoesNotAnnounce_WhenTheUnlockWasExtendedElsewhereAsync() => StaTestRunner.RunAsync(async () =>
+    public Task Expiry_DoesNotAnnounce_WhenTheUnlockWasExtendedElsewhere() => StaTestRunner.RunAsync(async () =>
     {
         using var env = new LockTestEnvironment(Now);
         var yearId = await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(5), "correction");
@@ -120,7 +120,7 @@ public class SchoolYearLockMonitorTests
     });
 
     [Fact]
-    public Task Expiry_DoesNotOverwriteAnUnlockMadeWhileTheCheckIsRunningAsync() => StaTestRunner.RunAsync(async () =>
+    public Task Expiry_DoesNotOverwriteAnUnlockMadeWhileTheCheckIsRunning() => StaTestRunner.RunAsync(async () =>
     {
         using var env = new LockTestEnvironment(Now);
         var yearId = await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(5), "old reason");
@@ -147,7 +147,7 @@ public class SchoolYearLockMonitorTests
     });
 
     [Fact]
-    public async Task RelockAsync_BroadcastsLockedState_AndArmsNoTimerAsync()
+    public async Task RelockAsync_BroadcastsLockedState_AndArmsNoTimer()
     {
         using var env = new LockTestEnvironment(Now);
         var yearId = await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(5), "correction");

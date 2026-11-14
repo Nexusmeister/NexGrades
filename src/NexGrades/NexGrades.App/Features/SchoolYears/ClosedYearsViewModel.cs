@@ -22,6 +22,12 @@ public sealed partial class ClosedYearsViewModel(
     /// <summary>True when there is at least one closed year; the section is hidden otherwise.</summary>
     public bool HasClosedYears => Years.Count > 0;
 
+    /// <summary>True when the last load failed, so the list may be missing or out of date.</summary>
+    public bool LoadFailed { get; private set; }
+
+    /// <summary>True when the load succeeded and found no closed year; a failed load is not "none".</summary>
+    public bool ShowNoClosedYears => !LoadFailed && !HasClosedYears;
+
     /// <summary>Reads the closed years again and replaces the list.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     public async Task ReloadAsync(CancellationToken cancellationToken = default)
@@ -29,6 +35,7 @@ public sealed partial class ClosedYearsViewModel(
         try
         {
             var states = await monitor.LoadClosedYearsAsync(cancellationToken);
+            LoadFailed = false;
 
             Years.Clear();
             foreach (var state in states)
@@ -38,6 +45,7 @@ public sealed partial class ClosedYearsViewModel(
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            LoadFailed = true;
             snackbar.Show(
                 "Error",
                 "The closed school years could not be loaded.",
@@ -47,5 +55,7 @@ public sealed partial class ClosedYearsViewModel(
         }
 
         OnPropertyChanged(nameof(HasClosedYears));
+        OnPropertyChanged(nameof(LoadFailed));
+        OnPropertyChanged(nameof(ShowNoClosedYears));
     }
 }

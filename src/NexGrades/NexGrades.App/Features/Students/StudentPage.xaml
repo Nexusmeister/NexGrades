@@ -179,7 +179,7 @@
                     <TabControl x:Name="DetailTabs" Grid.Row="2" Margin="0,12,0,0">
                         <!-- Grades tab -->
                         <TabItem Header="Grades" AutomationProperties.Name="Grades">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ScrollViewer x:Name="GradesScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                 <StackPanel Margin="0,12,8,0">
                                     <!-- Editor: one inline panel for add and edit -->
                                     <ui:Card Margin="0,0,0,12"

@@ -1,4 +1,7 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.App.Core.YearLock;
+using NexGrades.Data;
 using NexGrades.Domain.Services;
 
 namespace NexGrades.App.Tests;
@@ -11,7 +14,7 @@ public class YearLockViewModelTests
         new(env.Monitor, new FakeUnlockDialog(), env.Snackbar, env.Clock, initial);
 
     [Fact]
-    public async Task WritabilityChanged_IsRaised_WhenTheUnlockExpiresAsync()
+    public Task WritabilityChanged_IsRaised_WhenTheUnlockExpires() => StaTestRunner.RunAsync(async () =>
     {
         using var env = new LockTestEnvironment(Now);
         await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(5), "correction");
@@ -28,10 +31,10 @@ public class YearLockViewModelTests
         Assert.True(viewModel.IsLocked);
         Assert.False(viewModel.IsWritable);
         Assert.Equal(string.Empty, viewModel.UnlockReason);
-    }
+    });
 
     [Fact]
-    public async Task WritabilityChanged_IsNotRaised_ForAnotherYearAsync()
+    public async Task WritabilityChanged_IsNotRaised_ForAnotherYear()
     {
         using var env = new LockTestEnvironment(Now);
         await env.SeedClosedYearAsync("2024/25", new DateTime(2024, 8, 1));
@@ -50,7 +53,7 @@ public class YearLockViewModelTests
     }
 
     [Fact]
-    public async Task ShowAsync_FollowsTheNewYear_AndRaisesWritabilityChangedAsync()
+    public async Task ShowAsync_FollowsTheNewYear_AndRaisesWritabilityChanged()
     {
         using var env = new LockTestEnvironment(Now);
         var yearId = await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(5), "correction");
@@ -67,7 +70,7 @@ public class YearLockViewModelTests
     }
 
     [Fact]
-    public async Task UnlockedState_AllowsRelockButNotUnlockAsync()
+    public async Task UnlockedState_AllowsRelockButNotUnlock()
     {
         using var env = new LockTestEnvironment(Now);
         await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(5), "correction");
@@ -78,5 +81,60 @@ public class YearLockViewModelTests
         Assert.True(viewModel.IsWritable);
         Assert.False(viewModel.UnlockCommand.CanExecute(null));
         Assert.True(viewModel.RelockCommand.CanExecute(null));
+    }
+
+    private static YearLockViewModel CreateFailingRefreshViewModel(
+        LockTestEnvironment env, SchoolYearLockState state, UnlockRequest? answer, int allowedContexts)
+    {
+        var failing = new FlakyContextFactory(env.Factory, allowedContexts);
+        var monitor = new SchoolYearLockMonitor(
+            new UnlockService(failing, env.Clock, NullLogger<UnlockService>.Instance),
+            env.Clock,
+            env.Snackbar,
+            NullLogger<SchoolYearLockMonitor>.Instance,
+            (_, _) => new NoopDisposable());
+        return new YearLockViewModel(monitor, new FakeUnlockDialog(answer), env.Snackbar, env.Clock, state);
+    }
+
+    [Fact]
+    public Task UnlockCommand_ReportsError_WhenTheStateRefreshAfterwardsFails() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var yearId = await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1));
+        var state = (await env.Monitor.LoadClosedYearsAsync()).Single();
+        var until = Now.AddHours(1);
+
+        // One context is enough for the unlock itself; the refresh that follows then fails.
+        var viewModel = CreateFailingRefreshViewModel(env, state, new UnlockRequest(until, "correction"), allowedContexts: 1);
+
+        await viewModel.UnlockCommand.ExecuteAsync(null);
+
+        Assert.Equal(["Error"], env.FakeSnackbar.Titles);
+        await using var context = new AppDbContext(env.Options);
+        var year = await context.SchoolYears.AsNoTracking().SingleAsync(sy => sy.Id == yearId);
+        Assert.Equal(until, year.UnlockedUntil);
+    });
+
+    [Fact]
+    public Task RelockCommand_ReportsError_WhenTheStateRefreshAfterwardsFails() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var yearId = await env.SeedClosedYearAsync("2025/26", new DateTime(2025, 8, 1), Now.AddMinutes(5), "correction");
+        var state = (await env.Monitor.LoadClosedYearsAsync()).Single();
+        var viewModel = CreateFailingRefreshViewModel(env, state, null, allowedContexts: 1);
+
+        await viewModel.RelockCommand.ExecuteAsync(null);
+
+        Assert.Equal(["Error"], env.FakeSnackbar.Titles);
+        await using var context = new AppDbContext(env.Options);
+        var year = await context.SchoolYears.AsNoTracking().SingleAsync(sy => sy.Id == yearId);
+        Assert.Null(year.UnlockedUntil);
+    });
+
+    private sealed class NoopDisposable : IDisposable
+    {
+        public void Dispose()
+        {
+        }
     }
 }

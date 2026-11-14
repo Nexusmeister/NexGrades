@@ -283,7 +283,12 @@
                                       Appearance="Secondary"
                                       TextWrapping="Wrap"
                                       Text="No school year has been closed yet."
-                                      Visibility="{Binding ViewModel.ClosedYears.HasClosedYears, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                      Visibility="{Binding ViewModel.ClosedYears.ShowNoClosedYears, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <ui:TextBlock Margin="0,8,0,0"
+                                      Appearance="Secondary"
+                                      TextWrapping="Wrap"
+                                      Text="The closed school years could not be loaded."
+                                      Visibility="{Binding ViewModel.ClosedYears.LoadFailed, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                         <ItemsControl Margin="0,8,0,0"
                                       AutomationProperties.Name="Closed school years"
                                       ItemsSource="{Binding ViewModel.ClosedYears.Years}"
