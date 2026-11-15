@@ -95,7 +95,9 @@ they record *why* the model is shaped the way it is.
   English sentences; the UI words them.
 - **ClassGroup** — the persistent cohort across years. Carries no grades.
 - **ClassInstance** — one cohort in one school year (e.g. "5A"); where teaching happens. A rename between
-  years (5A → 6A) is a new row, never an update of a historic one.
+  years (5A → 6A) is a new row, never an update of a historic one. Renaming an Active instance changes `Name` in
+  place; a rolled-forward or archived one is refused. A new or changed name is at most 20 characters
+  (`ClassService.MaxNameLength`). A longer name from a rollover stays valid and can be saved unchanged.
 - **Student** — a person; not year-scoped.
 - **Enrollment** — Student ↔ ClassInstance membership with `JoinedOn`/`LeftOn`. A student has at most one
   enrollment per school year; this is enforced in the Domain (`EnrollmentInvariants`), not the schema.
@@ -112,9 +114,10 @@ they record *why* the model is shaped the way it is.
   which can be undone. A grade counts only while neither it nor its assessment is voided: voided grades and grades of
   voided assessments are excluded from averages, the class overview export and close readiness. Managed through
   `GradeService`. The student page's Grades tab reads a student's grades for one school year through
-  `GradeSheetService.GetStudentGradesAsync` (an exempt subject lists its grades without averages) and corrects them
+  `GradeSheetService.GetStudentGradesAsync`, which also returns each subject's final grade (`StudentSubjectGrades`,
+  shown read-only; an exempt subject lists its grades without averages or a final grade), and corrects them
   through `GradeService`, so the same rules apply as on the grade sheet.
-- **FinalGrade** — the teacher's override of a student's whole-grade final grade in one **SubjectInstance**; at most one row per subject instance and student. Only `OverrideValue` is stored. The proposal is derived from the subject average and never stored (see Grading scale). The row is created on the first override, and clearing sets `OverrideValue` to null instead of deleting it. An exempt student has no proposal and no override on the grade sheet, even if a row exists from before the exemption. Managed through `GradeService.SetFinalGradeOverrideAsync` and `ClearFinalGradeOverrideAsync`.
+- **FinalGrade** — the teacher's override of a student's whole-grade final grade in one **SubjectInstance**; at most one row per subject instance and student. Only `OverrideValue` is stored. The proposal is derived from the subject average and never stored (see Grading scale). The row is created on the first override, and clearing sets `OverrideValue` to null instead of deleting it. An exempt student has no proposal and no override on the grade sheet, even if a row exists from before the exemption. Managed through `GradeService.SetFinalGradeOverrideAsync` and `ClearFinalGradeOverrideAsync`. The student page's Grades tab shows the final grade read-only, marked when it is an override. The class overview export (`SubjectOverviewExportService`) writes the effective final grade (the override, else the proposal, empty when neither) and a "Final grade set by teacher" column that is `Yes` or empty; it lists no exempt students.
 - **SubjectParticipation** — per-student override of the default "enrolled ⇒ participates" rule
   (elective, exemption, religion/ethics split). Rows exist only for deviations.
 - **Note** — free-text note on a student within a school year, managed through `NoteService`. A note

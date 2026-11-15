@@ -149,4 +149,86 @@ public class SubjectOverviewExcelWriterTests
 
         Assert.Equal("Alpha, Test", workbook.Worksheet(1).Cell(2, 1).GetString());
     }
+
+    // ---------- Final grade ----------
+
+    private static readonly SubjectOverviewColumn[] FinalGradeColumns =
+    [
+        new(SubjectOverviewColumnKind.Student, null),
+        new(SubjectOverviewColumnKind.SubjectAverage, null),
+        new(SubjectOverviewColumnKind.FinalGrade, null),
+        new(SubjectOverviewColumnKind.FinalGradeOverridden, null),
+    ];
+
+    private static SubjectOverviewTable FinalGradeTable(decimal? average, decimal? finalGrade, bool overridden) =>
+        new(
+            "Testkunde",
+            "5A",
+            "2025/26",
+            FinalGradeColumns,
+            [
+                new SubjectOverviewRow(
+                    [
+                        SubjectOverviewCell.FromText("Alpha, Test"),
+                        SubjectOverviewCell.FromNumber(average),
+                        SubjectOverviewCell.FromNumber(finalGrade),
+                        overridden ? SubjectOverviewCell.FromText("Yes") : SubjectOverviewCell.Empty,
+                    ],
+                    null),
+            ]);
+
+    [Fact]
+    public void Write_WritesFinalGradeHeaders()
+    {
+        using var workbook = Write(FinalGradeTable(null, null, false));
+
+        var sheet = workbook.Worksheet(1);
+        Assert.Equal("Subject average", sheet.Cell(1, 2).GetString());
+        Assert.Equal("Final grade", sheet.Cell(1, 3).GetString());
+        Assert.Equal("Final grade set by teacher", sheet.Cell(1, 4).GetString());
+    }
+
+    [Fact]
+    public void Write_WritesFinalGradeAsWholeNumber_AndAverageWithOneDecimal()
+    {
+        using var workbook = Write(FinalGradeTable(2.5m, 3m, false));
+
+        var sheet = workbook.Worksheet(1);
+        Assert.Equal("0.0", sheet.Cell(2, 2).Style.NumberFormat.Format);
+        var finalGrade = sheet.Cell(2, 3);
+        Assert.True(finalGrade.Value.IsNumber);
+        Assert.Equal(3.0, finalGrade.Value.GetNumber());
+        Assert.Equal("0", finalGrade.Style.NumberFormat.Format);
+    }
+
+    [Fact]
+    public void Write_WritesYesAsText_ForAnOverriddenFinalGrade()
+    {
+        using var workbook = Write(FinalGradeTable(2.0m, 4m, true));
+
+        var cell = workbook.Worksheet(1).Cell(2, 4);
+        Assert.True(cell.Value.IsText);
+        Assert.Equal("Yes", cell.GetString());
+        Assert.Equal("@", cell.Style.NumberFormat.Format);
+    }
+
+    [Fact]
+    public void Write_LeavesFinalGradeAndMarkerEmpty_WhenThereIsNone()
+    {
+        using var workbook = Write(FinalGradeTable(null, null, false));
+
+        var sheet = workbook.Worksheet(1);
+        Assert.True(sheet.Cell(2, 3).IsEmpty());
+        Assert.True(sheet.Cell(2, 4).IsEmpty());
+    }
+
+    [Fact]
+    public void Write_LeavesMarkerEmpty_ForAProposedFinalGrade()
+    {
+        using var workbook = Write(FinalGradeTable(2.0m, 2m, false));
+
+        var sheet = workbook.Worksheet(1);
+        Assert.Equal(2.0, sheet.Cell(2, 3).Value.GetNumber());
+        Assert.True(sheet.Cell(2, 4).IsEmpty());
+    }
 }
