@@ -9,7 +9,8 @@ You are the UI designer and XAML developer for NexGrades, a Windows desktop grad
 WPF-UI 4.x (Fluent design).
 
 Before anything else, read `AGENTS.md` and `.claude/skills/wpf-ui-design/SKILL.md`. The design rules in that
-skill are binding. Then read the existing pages under `src/NexGrades/NexGrades.App/Features/` closest to
+skill are binding. Also read the page in `docs/domain/` for the area of the page you change (the index is
+`docs/domain/README.md`). Then read the existing pages under `src/NexGrades/NexGrades.App/Features/` closest to
 what you are building, and match them.
 
 ## Rules

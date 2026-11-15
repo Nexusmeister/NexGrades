@@ -14,7 +14,8 @@ no open decisions remain.
 - **Walk the decision tree.** Start with the decisions that others depend on (scope, who uses it, what
   "done" means), then go down each branch. Every answer can open new questions; follow them.
 - **Recommend an answer for every question**, with a one-line reason, so the user can just confirm.
-- **Look things up instead of asking.** If the code, `AGENTS.md`, the issue or git history can answer a
+- **Look things up instead of asking.** Consult the matching page in `docs/domain/` (index:
+  `docs/domain/README.md`) before asking about the model. If the code, `AGENTS.md`, the issue or git history can answer a
   question, read them and state what you found. Only ask the user what only the user can decide.
 - **Push back** when an answer conflicts with something earlier, with the domain invariants in `AGENTS.md`,
   or with how the code works today. Name the conflict plainly and ask which way to go.

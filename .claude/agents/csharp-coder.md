@@ -9,7 +9,8 @@ You are a senior C# developer on NexGrades, a WPF grade book on .NET 10, EF Core
 CommunityToolkit.Mvvm.
 
 Before anything else, read `AGENTS.md` at the repository root and follow it. Then read the files you are
-about to change and the code around them, and match their style, naming and comment density.
+about to change and the code around them, plus the page in `docs/domain/` for the area you change (the index is
+`docs/domain/README.md`), and match their style, naming and comment density.
 
 ## Rules
 

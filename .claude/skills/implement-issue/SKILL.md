@@ -1,71 +1,62 @@
 ---
 name: implement-issue
-description: Works a NexGrades GitHub issue end to end by orchestrating the project subagents through plan, implementation, tests, review, docs and a pull request against dev. Use when the user asks to implement, work on or pick up an issue by number.
+description: The lead's front door for one NexGrades GitHub issue. Reads the issue, settles open questions, hands a complete brief to the issue-orchestrator agent, then verifies and merges. Use when the user asks to implement, work on or pick up an issue by number.
 argument-hint: <issue-number>
 disable-model-invocation: true
 ---
 
 # Implement issue #$ARGUMENTS
 
-You are the orchestrator. This skill runs the pipeline from the main session: you delegate each step and
-carry the results between them. The `issue-orchestrator` agent is the alternative that runs the same
-pipeline as one subagent. Read `AGENTS.md` first if it is not already in context.
+You are the lead. This skill is the front door for one orchestrated issue: you prepare the brief, start one
+`issue-orchestrator` for the issue, and verify and merge its result. The orchestrator runs the pipeline (worktree,
+plan, implementation, tests, docs, PR, CI, review) through the role agents in `.claude/agents/`. Read `AGENTS.md`
+first if it is not already in context.
 
-Where the `gh` CLI is not installed, the GitHub MCP tools do the same (`gh issue view` →
-`mcp__github__issue_read`, `gh pr create` → `mcp__github__create_pull_request`).
+The `gh` CLI is not installed on the dev machine; use the GitHub MCP tools (`mcp__github__issue_read` and so on).
 
-Keep the user informed with one short line per step. Stop and ask whenever a step says so.
+Work goes through the role agents: `architect`, `csharp-coder`, `ui-designer`, `tester`, `docs-writer`, `reviewer`.
+A `general-purpose` agent never writes code.
+
+Keep the user informed with one short line per step.
 
 ## 1. Understand the issue
 
-- Read issue $ARGUMENTS and its comments (`gh issue view $ARGUMENTS --comments`, or
-  `mcp__github__issue_read` where `gh` is not installed).
+- Read issue $ARGUMENTS and its comments with `mcp__github__issue_read`.
 - If the goal, scope or acceptance criteria are unclear, run the `grill-me` skill with the user before
-  planning. Don't start planning on guesses.
+  starting the orchestrator. Don't hand over guesses.
 
-## 2. Branch
+## 2. Build the brief
 
-- Make sure the working tree is clean, then update `dev` and branch off it:
-  `git switch dev`, `git pull`, `git switch -c feature/$ARGUMENTS-<short-slug>`.
+The orchestrator sees only the brief. Fill every field of this template (the fields are the ones listed under
+"Input from the lead" in `.claude/agents/issue-orchestrator.md`):
 
-## 3. Plan: `architect`
+```text
+Issue: #$ARGUMENTS
+Main checkout (absolute path): <path>
+Base branch: dev
+Constraints: <dependencies on other issues, "runs alone", files to avoid, or "none">
+Binding decisions: <decisions already made, or "none">
+Commit attribution lines: <verbatim lines>
+PR footer lines: <verbatim lines>
+Model overrides: <optional, or "none">
+```
 
-- Delegate to the `architect` subagent with the issue text and the decisions from step 1.
-- Show the user the plan, especially its open questions and any invariants it touches.
-- **Stop and wait for the user to approve or adjust the plan.**
+If the commit attribution lines or the PR footer lines are missing, the orchestrator stops with `BLOCKED`.
 
-## 4. Implement: `csharp-coder` and `ui-designer`
+## 3. Launch the orchestrator
 
-- Give `csharp-coder` the approved plan's Domain, Data and view-model parts.
-- Give `ui-designer` the XAML parts once the view-model surface it binds to exists.
-- Run them one after the other when they touch the same files; in parallel only when they don't.
-- If either reports that the plan doesn't work, go back to step 3 with that finding.
+- Start the `issue-orchestrator` agent with the brief and pass `model` explicitly on every Agent call.
+- One orchestrator per issue; it works in its own worktree (`.claude/worktrees/issue-<n>`).
+- If it reports `BLOCKED: nesting unavailable`, run it as a background session instead:
 
-## 5. Test: `tester`
+  ```sh
+  claude --agent issue-orchestrator --bg "<brief>"
+  ```
 
-- Give `tester` the plan's test list and the list of changed files.
-- If it reports a production bug, send that to `csharp-coder`, then let `tester` re-run.
+- The orchestrator's steps 6 and 7 (verification, smoke start) and its CI wait rules in
+  `.claude/agents/issue-orchestrator.md` define how the result is verified. Don't copy or weaken them here.
 
-## 6. Verify yourself
+## 4. Verify and merge
 
-From `src/NexGrades/`, run `dotnet build NexGrades.App/NexGrades.App.csproj` and `dotnet test`. Don't rely
-only on the subagents' reports. Fix or delegate until both pass.
-
-## 7. Review: `reviewer`
-
-- Delegate to `reviewer` for the branch diff against `dev`.
-- Send blockers and majors to the agent that owns the code, then review again.
-- After two review rounds with blockers or majors remaining, stop and show the user the open findings.
-
-## 8. Docs: `docs-writer`
-
-Only when the change affects behavior users see, commands, conventions or the domain model: let
-`docs-writer` update `README.md`, `AGENTS.md` and the XML docs.
-
-## 9. Pull request
-
-- Commit with a short imperative subject, then push.
-- Open a PR against `dev` (`gh pr create --base dev`, or `mcp__github__create_pull_request`). The body
-  has a summary, the design decisions, the test coverage, anything the user must check by hand in the UI,
-  and `Closes #$ARGUMENTS`.
-- Report the PR link. **Don't merge unless the user asks.**
+When the orchestrator reports `MERGE-READY: PR #<n> @ <head sha>`, read and follow `.claude/skills/verify-and-merge/SKILL.md`. On
+`BLOCKED: <reason>`, deal with the reason (ask the owner where a decision is needed) before starting again.

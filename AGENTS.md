@@ -30,7 +30,7 @@ All code lives under `src/NexGrades/` (solution: `NexGrades.slnx`).
 | `NexGrades.Data` | EF Core `AppDbContext`, entities, entity configurations, migrations | — |
 | `NexGrades.Common` | Small cross-cutting helpers and service interfaces | — |
 | `NexGrades.Tests` | xUnit tests for Domain and Data | Data, Domain |
-| `NexGrades.App.Tests` | xUnit tests for the App's DI composition (Windows only) | App |
+| `NexGrades.App.Tests` | xUnit tests for the App's DI composition and XAML loading (Windows only) | App |
 | `Aspire/NexGrades.AppHost` | Dev-time orchestration (SQLite + SQLite Web) | App |
 | `Aspire/NexGrades.ServiceDefaults` | OpenTelemetry logs, metrics and traces, used by App; exports only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set | — |
 
@@ -56,29 +56,11 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
   `dotnet build` and `dotnet test`, so any warning fails CI. CI also runs `dotnet format NexGrades.slnx
   --verify-no-changes`, so unformatted code fails too. Local builds stay non-fatal; reproduce the CI checks with
   `dotnet build NexGrades.slnx -warnaserror` and `dotnet format NexGrades.slnx --verify-no-changes`.
-- In `Development`, the App reads its connection string from `ConnectionStrings:sqlite`, which the Aspire
-  AppHost supplies. Running `NexGrades.App` on its own in Development needs that value from user secrets.
-  Outside Development the database defaults to `%LOCALAPPDATA%\NexGrades\app.db` (see `IAppDataPaths`).
-  A `sqlite` key in configuration still overrides that. On startup a legacy `app.db` next to the executable or
-  in the working directory is moved there once (`LegacyDatabaseRelocator`).
-- Log files go to `%LOCALAPPDATA%\NexGrades\logs\` (`IAppDataPaths.LogDirectory`) in every environment, and the
-  database override does not move them. One file per day, `nexgrades-yyyyMMdd.log`, rolls to `nexgrades-yyyyMMdd_001.log`
-  when it reaches `Logging:File:MaxFileSizeMegabytes` (3 by default), and `Logging:File:RetainedFileCount` (14 by
-  default) files are kept. An unparseable value in `Logging:File` falls back to its default.
-  `Logging:LogLevel` and `Logging:File` in `NexGrades.App/appsettings.json` configure this,
-  and `appsettings.Development.json` overrides the levels only. The AppHost's own `appsettings*.json`
-  configure the AppHost, not the App. See `docs/decisions/0003-application-logging.md`.
+- In `Development`, the App needs `ConnectionStrings:sqlite`: the Aspire AppHost supplies it, and running
+  `NexGrades.App` on its own needs it from user secrets. Database location, legacy relocation and log files: see
+  [startup, logging and data paths](docs/domain/startup-logging-and-data-paths.md).
 - To see logs, metrics and traces live, run the AppHost command above and open the Aspire dashboard at the URL it
-  prints. Running `NexGrades.App` on its own exports nothing unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. See
-  `docs/decisions/0002-telemetry-and-privacy.md`.
-- Pending migrations are applied at startup by `DatabaseMigrationService`, which `StartupDatabaseMigrator` calls; the
-  migrator takes the backup described below first when one is needed. Then `SchoolYearService.EnsureActiveYearAsync`
-  bootstraps an Active school year if none exists. `App.xaml.cs` calls the migrator and then `EnsureActiveYearAsync`,
-  in that order. `Program.Main` runs `VelopackApp.Build().Run()` before `App` is created; it handles the installer's
-  hook arguments and returns on a normal start.
-- A startup failure at any step (host creation, configuration, database path, pre-migration backup, migration, host
-  start) is logged at Critical, shown once in a message box, and ends the process with exit code 1
-  (`StartupFailureHandler`, called from `App.OnStartup`). See `docs/decisions/0003-application-logging.md`.
+  prints. See `docs/decisions/0002-telemetry-and-privacy.md`.
 - The App is a GUI and cannot be meaningfully exercised headless. Verify changes with a build of
   `NexGrades.App` plus `dotnet test`; say so explicitly when a change also needs a manual UI check.
 - **Release assets:** from the repository root, `./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory <dir> -Channel beta`
@@ -86,110 +68,140 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
   portable zip and the update feed of that channel, in `<dir>\release`. The version is the one MinVer gives HEAD: the
   beta channel takes `X.Y.Z-beta.N`, the stable channel `X.Y.Z`. `<dir>` is emptied if it exists. Pull request builds
   run the beta pack without uploading anything. See `docs/releasing.md`.
-- **Settings file:** `settings.json` in `%LOCALAPPDATA%\NexGrades\` (`IAppDataPaths.SettingsFilePath`) holds the
-  preferences kept outside the database. `JsonUserSettingsStore` reads and writes it as `UserSettings`; a missing or
-  unreadable file gives the defaults. The file stays in that folder with a `sqlite` override. `LastRunVersion` is the
-  version that last started against the default database, and it names the next backup.
-- **Backups:** before a migration of an existing database (one with applied migrations), `DatabaseBackupService` copies
-  the database with SQLite's online backup into `%LOCALAPPDATA%\NexGrades\backups`. The copy must pass
-  `PRAGMA quick_check` before it gets its final name. `Backup:Directory` overrides the folder; with a `sqlite` override
-  the folder is `backups` beside the overridden database. Files are named `app-yyyyMMdd-HHmmss-v<version>.db`, with
-  `unknown` in place of the version when it is not known, and the five newest are kept. A failed backup stops startup
-  before anything is migrated. When a migration fails after a backup, the startup dialog names the backup file.
-  Nothing restores a backup automatically; `README.md` lists the manual steps. Backups hold pupil data, like the
-  database (see `docs/decisions/0001-encryption-at-rest.md`).
-- **Updates:** `UpdateCoordinator` (`NexGrades.App/Updates/`) runs the update cycle. It stays inactive, and makes no
-  network request, unless the app runs from a Velopack install, so development, the AppHost and the tests never check
-  for updates. The feeds come from `Updates:Repository` in `NexGrades.App/appsettings.json`: the stable channel reads
-  the release marked latest, and the beta channel reads GitHub pre-releases and is checked only when
-  `ReceiveBetaUpdates` is on. `Updates:SourceOverride`, a local folder or an http(s) URL, replaces the feed for every
-  channel. It is empty in shipped builds and is meant for testing a locally packed version. With
-  `AutoCheckForUpdates` on, a check runs about ten seconds after startup. A downloaded update is installed when the app
-  exits, or at once when the user chooses Restart now in the main window's notice. The Settings page shows the version
-  and both preferences and runs a manual check. See `docs/decisions/0004-application-updates.md`.
-- **Velopack pack id:** `NexGradesPackId` in `NexGrades.App.csproj` (`NexGrades.App`) is the id the release packs with,
-  and the app carries it as the `VelopackPackId` assembly metadata. Velopack installs to `%LOCALAPPDATA%\<packId>` and
-  deletes that folder on uninstall, so the id differs from the data folder `%LOCALAPPDATA%\NexGrades`, and
-  `New-ReleaseAsset.ps1` refuses that name. Changing the id would leave installed apps unable to find their updates.
 
 ## Domain model
+
+Before changing code, data or behaviour in an area listed in [`docs/domain/README.md`](docs/domain/README.md),
+read that area's page first; it explains the entities, behaviour and reasons that the rules below summarise.
 
 Read the XML doc comments on the entities in `NexGrades.Data/Entities/` before changing the model —
 they record *why* the model is shaped the way it is.
 
-- **SchoolYear** — the root scope (e.g. "2025/26", August–July). Status `Planned` → `Active` → `Closed`.
-  At most one year is Active. A Closed year is read-only unless temporarily unlocked: `UnlockedUntil` holds the
-  expiry and `UnlockReason` the reason. Both are stored on the row, so audit entries keep the reason after an app
-  restart; re-locking clears both. `UnlockService` unlocks, re-locks and reads the lock state.
-  `SchoolYearService.CreateNextYearAsync` creates the Planned successor of the Active year; only one Planned
-  successor may exist at a time. `YearCloseService.CloseAndActivateNextYearAsync` closes the Active year and
-  activates the next one in a single transaction. It is the only way to switch years: `CloseSchoolYearAsync`
-  refuses an Active year. `RolloverService.GetClassRolloverStatesAsync` lets a partly finished rollover resume
-  from database state alone. Close readiness is reported as structured `CloseReadinessIssue` values, never as
-  English sentences; the UI words them.
-- **ClassGroup** — the persistent cohort across years. Carries no grades.
-- **ClassInstance** — one cohort in one school year (e.g. "5A"); where teaching happens. A rename between
-  years (5A → 6A) is a new row, never an update of a historic one. Renaming an Active instance changes `Name` in
-  place; a rolled-forward or archived one is refused. A new or changed name is at most 20 characters
-  (`ClassService.MaxNameLength`). A longer name from a rollover stays valid and can be saved unchanged.
-- **Student** — a person; not year-scoped.
-- **Enrollment** — Student ↔ ClassInstance membership with `JoinedOn`/`LeftOn`. A student has at most one
-  enrollment per school year; this is enforced in the Domain (`EnrollmentInvariants`), not the schema.
-- **Subject** — catalogue entry (e.g. "Mathematik"); not year-scoped. Owns **BucketTemplate**s.
-- **SubjectInstance** — a subject taught to one ClassInstance in one year.
-- **GradeBucket** — a *snapshot* copied from the BucketTemplates when a SubjectInstance is created, then
-  independently editable. Deliberately no FK back to the template, so editing a template never changes a
-  past year's averages.
-- **Assessment** — one graded occasion in a **GradeBucket** (e.g. a class test) and one column of the grade sheet.
-  It has a title, a date and `VoidedOn`; its bucket never changes. It is "removed" by voiding, which can be undone,
-  like `Note.ArchivedOn`. Managed through `AssessmentService`.
-- **Grade** — one numeric grade in a bucket for a student. `AssessmentId` is null for a single grade with no
-  assessment; otherwise the grade's bucket is always the assessment's bucket. It is "removed" by voiding (`VoidedOn`),
-  which can be undone. A grade counts only while neither it nor its assessment is voided: voided grades and grades of
-  voided assessments are excluded from averages, the class overview export and close readiness. Managed through
-  `GradeService`. The student page's Grades tab reads a student's grades for one school year through
-  `GradeSheetService.GetStudentGradesAsync`, which also returns each subject's final grade (`StudentSubjectGrades`,
-  shown read-only; an exempt subject lists its grades without averages or a final grade), and corrects them
-  through `GradeService`, so the same rules apply as on the grade sheet.
-- **FinalGrade** — the teacher's override of a student's whole-grade final grade in one **SubjectInstance**; at most one row per subject instance and student. Only `OverrideValue` is stored. The proposal is derived from the subject average and never stored (see Grading scale). The row is created on the first override, and clearing sets `OverrideValue` to null instead of deleting it. An exempt student has no proposal and no override on the grade sheet, even if a row exists from before the exemption. Managed through `GradeService.SetFinalGradeOverrideAsync` and `ClearFinalGradeOverrideAsync`. The student page's Grades tab shows the final grade read-only, marked when it is an override. The class overview export (`SubjectOverviewExportService`) writes the effective final grade (the override, else the proposal, empty when neither) and a "Final grade set by teacher" column that is `Yes` or empty; it lists no exempt students.
-- **SubjectParticipation** — per-student override of the default "enrolled ⇒ participates" rule
-  (elective, exemption, religion/ethics split). Rows exist only for deviations.
-- **Note** — free-text note on a student within a school year, managed through `NoteService`. A note
-  needs an enrollment of the student in that year and records its class. It is "removed" by archiving
-  (`ArchivedOn`), which can be undone, and is locked like everything else in a closed year. The notes export
-  (`NoteExportService`) filters notes on `CreatedOn` and leaves archived ones out unless asked for.
-- **Teacher** — in practice one row (the app owner, `IsCurrentUser`).
-- **AuditEntry** — written for every change to a closed-but-unlocked year, carrying that year's `UnlockReason`.
+Entities: SchoolYear, ClassGroup, ClassInstance, Student, Enrollment, Subject, BucketTemplate, SubjectInstance,
+GradeBucket, Assessment, Grade, FinalGrade, SubjectParticipation, Note, Teacher, AuditEntry; the
+[glossary](docs/domain/README.md) describes each.
 
 ### Invariants agents must not break
 
 - **Nothing is ever deleted.** Entities change status instead. `ClosedYearAuditInterceptor` rejects every
-  `Deleted` entry.
+  `Deleted` entry. See [Closed-year lock and audit](docs/domain/closed-year-lock-and-audit.md).
 - **The school year is derived by traversal** (e.g. Grade → GradeBucket → SubjectInstance → ClassInstance →
   SchoolYear, and Assessment → GradeBucket → SubjectInstance → ClassInstance → SchoolYear, and FinalGrade → SubjectInstance → ClassInstance → SchoolYear). Do not add denormalized
-  `SchoolYearId` columns; only SchoolYear, ClassInstance and Note carry one.
+  `SchoolYearId` columns; only SchoolYear, ClassInstance and Note carry one. See [Closed-year lock and audit](docs/domain/closed-year-lock-and-audit.md).
 - **Closed years are locked.** Writes to a Closed year throw `ClosedYearException` unless the year is
   unlocked, and every allowed write produces `AuditEntry` rows. Go through `UnlockService` for unlocking.
+  See [Closed-year lock and audit](docs/domain/closed-year-lock-and-audit.md).
 - **Averages use the snapshotted `GradeBucket.Weight`**, never the live `BucketTemplate.Weight`.
-- **Business rules live in `NexGrades.Domain`** (services such as `GradeService`, `EnrollmentService`, `SchoolYearService`,
-  `RolloverService`, `YearCloseService`, `AssessmentService`, `GradeSheetService`). New rules go there, with tests,
-  not into view models.
+  See [Grades, assessments and averages](docs/domain/grades-assessments-and-averages.md).
+- **Business rules live in `NexGrades.Domain`** services. New rules go there, with tests, not into view models.
+  See [where the rules live](docs/domain/README.md).
 - **No pupil data in logs or telemetry.** Logs, metrics and traces never carry names, grades, notes, record ids or
   other record content, in a message, tag or metric dimension. Tag keys come only from `NexGradesTelemetry`. See
-  `docs/decisions/0002-telemetry-and-privacy.md` and `docs/decisions/0003-application-logging.md`.
+  `docs/decisions/0002-telemetry-and-privacy.md`, `docs/decisions/0003-application-logging.md` and
+  [startup, logging and data paths](docs/domain/startup-logging-and-data-paths.md).
 
-### Grading scale
+### Rules by area
 
-The German 1–6 scale with tendencies, defined in `NexGrades.Domain/Grading/GradingScale.cs`:
-16 legal values from 1+ (0.7) to 6 (6.0), stored as `decimal`, **lower is better**. The scale is fixed to
-1–6 for now; keep scale-specific knowledge inside `GradingScale` so another scale can be added later
-without touching callers.
+**School year** ([page](docs/domain/school-year-lifecycle.md)):
+
+- At most one year is Active.
+- `SchoolYearService.CreateNextYearAsync` creates the Planned successor of the Active year; only one Planned
+  successor may exist at a time.
+- `YearCloseService.CloseAndActivateNextYearAsync` closes the Active year and activates the next one in a single
+  transaction. It is the only way to switch years: `CloseSchoolYearAsync` refuses an Active year.
+- Close readiness is reported as structured `CloseReadinessIssue` values, never as English sentences; the UI words
+  them.
+
+**Closed-year lock and audit** ([page](docs/domain/closed-year-lock-and-audit.md)):
+
+- `UnlockService` unlocks, re-locks and reads the lock state.
+- `UnlockedUntil` and `UnlockReason` are stored on the SchoolYear row, so audit entries keep the reason after an app
+  restart; re-locking clears both.
+- An `AuditEntry` is written for every change to a closed-but-unlocked year, carrying that year's `UnlockReason`.
+
+**Classes and rollover** ([page](docs/domain/classes-cohorts-and-rollover.md)):
+
+- A ClassGroup is the persistent cohort and carries no grades.
+- A rename between years (5A → 6A) is a new ClassInstance row, never an update of a historic one.
+- Renaming an Active instance changes `Name` in place; a rolled-forward or archived one is refused.
+- A new or changed class name is at most 20 characters (`ClassService.MaxNameLength`). A longer name from a
+  rollover stays valid and can be saved unchanged.
+- `RolloverService.GetClassRolloverStatesAsync` lets a partly finished rollover resume from database state alone.
+
+**Students and enrollment** ([page](docs/domain/students-and-enrollment.md)):
+
+- A student has at most one enrollment per school year; this is enforced in the Domain (`EnrollmentInvariants`),
+  not the schema.
+
+**Subjects and buckets** ([page](docs/domain/subjects-buckets-and-participation.md)):
+
+- A GradeBucket is a snapshot copied from the BucketTemplates when a SubjectInstance is created, with deliberately
+  no FK back to the template, so editing a template never changes a past year's averages.
+- SubjectParticipation rows exist only for deviations from the default "enrolled ⇒ participates" rule.
+
+**Grades and assessments** ([page](docs/domain/grades-assessments-and-averages.md)):
+
+- An assessment's bucket never changes; a grade with an assessment is always in the assessment's bucket.
+- Grades and assessments are "removed" by voiding (`VoidedOn`), which can be undone.
+- A grade counts only while neither it nor its assessment is voided: voided grades and grades of voided
+  assessments are excluded from averages, the class overview export and close readiness.
+- Grades are managed through `GradeService` and assessments through `AssessmentService`.
+- The student page's Grades tab reads through `GradeSheetService.GetStudentGradesAsync` and corrects through
+  `GradeService`, so the same rules apply as on the grade sheet (an exempt subject lists its grades without
+  averages or a final grade).
+
+**Grading scale and final grade** ([page](docs/domain/grading-scale-and-final-grade.md)):
 
 - Always use `decimal` for grades, weights and averages — never `double`/`float`.
 - An empty bucket or subject has **no** average (`null`), not zero (`AverageCalculator`).
-- The proposed final grade (`GradingScale.ProposeFinalGrade`) is the subject average rounded to 2 decimals
-  (`AverageCalculator.RoundForDisplay`), then rounded to a whole grade from 1 to 6, with .5 going to the worse grade
-  (2.50 gives 3, 2.49 gives 2). It is `null` when there is no average. It is derived, never stored.
+- Keep scale-specific knowledge inside `GradingScale` (the German 1–6 scale, lower is better) so another scale can
+  be added later without touching callers.
+- The proposed final grade (`GradingScale.ProposeFinalGrade`) is derived, never stored.
+- `FinalGrade` stores only the teacher's `OverrideValue`, at most one row per subject instance and student, created
+  on the first override. Clearing sets `OverrideValue` to null instead of deleting the row.
+- Final grade overrides are managed through `GradeService.SetFinalGradeOverrideAsync` and
+  `ClearFinalGradeOverrideAsync`.
+- An exempt student has no proposal and no override on the grade sheet, even if a row exists from before the
+  exemption.
+
+**Notes** ([page](docs/domain/notes.md)):
+
+- A note (`NoteService`) needs an enrollment of the student in the note's school year and records its class.
+- It is "removed" by archiving (`ArchivedOn`), which can be undone, and is locked like everything else in a closed
+  year.
+
+**Exports** ([page](docs/domain/exports.md)):
+
+- The class overview export (`SubjectOverviewExportService`) lists no exempt students.
+- The notes export (`NoteExportService`) filters notes on `CreatedOn` and leaves archived ones out unless asked for.
+
+**Startup, logging and data paths** ([page](docs/domain/startup-logging-and-data-paths.md)):
+
+- Pending migrations are applied at startup by `DatabaseMigrationService`, which `StartupDatabaseMigrator` calls; the
+  migrator takes the backup described below first when one is needed. Then `SchoolYearService.EnsureActiveYearAsync`
+  bootstraps an Active school year if none exists. `App.xaml.cs` calls the migrator and then `EnsureActiveYearAsync`,
+  in that order.
+- `Program.Main` runs `VelopackApp.Build().Run()` before `App` is created; it handles the installer's hook arguments
+  and returns on a normal start.
+- A startup failure at any step (host creation, configuration, database path, pre-migration backup, migration, host
+  start) is logged at Critical, shown once in a message box, and ends the process with exit code 1
+  (`StartupFailureHandler`, called from `App.OnStartup`).
+- Log files go to `IAppDataPaths.LogDirectory` in every environment, and the database override does not move them.
+
+**Settings, backups and updates** ([page](docs/domain/updates-backups-and-settings.md), decision
+[0004](docs/decisions/0004-application-updates.md)):
+
+- Preferences kept outside the database live in `settings.json` in `%LOCALAPPDATA%\NexGrades\`
+  (`IAppDataPaths.SettingsFilePath`), read and written by `JsonUserSettingsStore` as `UserSettings`; a `sqlite`
+  override does not move it. `LastRunVersion` names the next backup.
+- Before a migration of an existing database, `DatabaseBackupService` makes a backup that must pass
+  `PRAGMA quick_check`; a failed backup stops startup before anything is migrated. Nothing restores a backup
+  automatically. Backups hold pupil data, like the database (see `docs/decisions/0001-encryption-at-rest.md`).
+- `UpdateCoordinator` stays inactive, and makes no network request, unless the app runs from a Velopack install, so
+  development, the AppHost and the tests never check for updates. `Updates:SourceOverride` is empty in shipped
+  builds.
+- `NexGradesPackId` in `NexGrades.App.csproj` is the Velopack pack id and must differ from the data folder name
+  `NexGrades`. Changing it would leave installed apps unable to find their updates.
 
 ## Coding conventions
 
@@ -302,7 +314,7 @@ localized later without a rewrite:
 ## Testing
 
 - Tests live in `NexGrades.Tests` and cover Domain and Data. There are no UI tests; `NexGrades.App.Tests`
-  only checks that the App's DI graph resolves, so it picks up new pages and services automatically. It also holds pure App-side unit tests, such as UI text formatting.
+  only checks that the App's DI graph resolves, so it picks up new pages and services automatically. It also holds pure App-side unit tests, such as UI text formatting. `XamlLoadTests` creates each view on an STA thread to catch XAML that compiles but throws when loaded.
 - Use `SqliteTestDatabase` (a real, migrated SQLite file — never the EF in-memory provider) and
   `FixedClock` for anything time-dependent. They are in `SqliteTestDatabase.cs` and `FixedClock.cs` (`NexGrades.Tests/`); `GradeSheetSeed.cs` builds grade sheet data. Construct Domain services with
   `db.CreateContextFactory()`, and assert through a fresh `db.CreateContext()`: the context that seeded the
@@ -334,7 +346,10 @@ live in Claude Code's folders:
   roles, never edits files and never merges. The lead starts one orchestrator per issue, each in its own
   worktree under `.claude/worktrees/issue-<n>`, so several can run in parallel; the lead merges.
 - `.claude/skills/`: workflows:
-  - `implement-issue`: end-to-end issue pipeline that uses the roles above
+  - `implement-issue`: the lead's front door: brief an issue-orchestrator, then verify-and-merge
+  - `verify-and-merge`: the lead's merge gate checklist for a MERGE-READY pull request, then the squash-merge
+  - `smoke-start`: the smoke start procedure (step 7 of the issue-orchestrator) for a pull request that touches `NexGrades.App`
+  - `lead-handover`: the rules for the lead's local `HANDOVER.md`, which is never committed
   - `grill-me`: interviews the user to settle open decisions before work starts
   - `wpf-ui-design`: UI design rules for this app
   - `new-feature-page`: adds a Page + ViewModel + DI registration and navigation
