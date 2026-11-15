@@ -41,7 +41,7 @@ public partial class ClassViewModel(
     IContentDialogService contentDialogService) : ViewModel
 {
     private int? _editingClassInstanceId;
-    private bool _allowLeave;
+    private readonly LeaveGuard _leaveGuard = new(contentDialogService);
     private string _loadedName = string.Empty;
 
     [ObservableProperty]
@@ -122,7 +122,7 @@ public partial class ClassViewModel(
     /// </summary>
     protected override async Task OnNavigatedToAsync(object? parameter)
     {
-        _allowLeave = false;
+        _leaveGuard.Reset();
         _editingClassInstanceId = parameter as int?;
 
         ActiveStudents = [];
@@ -261,7 +261,7 @@ public partial class ClassViewModel(
         }
 
         snackbar.Show("Success", "Class has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-        LeaveWithoutPrompt();
+        _leaveGuard.LeaveWithoutPrompt(navigation.GoBack);
     }
 
     /// <summary>True when the typed class name differs from the loaded one (empty for a new class).</summary>
@@ -269,38 +269,10 @@ public partial class ClassViewModel(
 
     /// <summary>Goes back without saving, asking first when the name has been changed.</summary>
     [RelayCommand]
-    private async Task CancelAsync(CancellationToken cancellationToken = default)
-    {
-        if (HasUnsavedChanges
-            && !await DiscardChangesDialog.ConfirmAsync(contentDialogService, DiscardChangesDialog.UnsavedChangesMessage, cancellationToken))
-        {
-            return;
-        }
+    private Task CancelAsync(CancellationToken cancellationToken = default) =>
+        _leaveGuard.CancelAsync(HasUnsavedChanges, navigation.GoBack, cancellationToken);
 
-        LeaveWithoutPrompt();
-    }
-
-    /// <summary>
-    /// Asks before sidebar navigation or the back button leaves the page with a changed name. Skipped once the page
-    /// itself decided to leave (after saving, or after its own confirmation).
-    /// </summary>
-    public override async Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default)
-    {
-        if (_allowLeave || !HasUnsavedChanges)
-        {
-            return true;
-        }
-
-        return await DiscardChangesDialog.ConfirmAsync(contentDialogService, DiscardChangesDialog.UnsavedChangesMessage, cancellationToken);
-    }
-
-    /// <summary>Goes back without the leave guard asking a second time; re-arms the guard if going back fails.</summary>
-    private void LeaveWithoutPrompt()
-    {
-        _allowLeave = true;
-        if (!navigation.GoBack())
-        {
-            _allowLeave = false;
-        }
-    }
+    /// <summary>Asks before sidebar navigation or the back button leaves the page with a changed name.</summary>
+    public override Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default) =>
+        _leaveGuard.CanLeaveAsync(HasUnsavedChanges, cancellationToken);
 }
