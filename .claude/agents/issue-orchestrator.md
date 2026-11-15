@@ -5,7 +5,7 @@ tools: Agent(architect, csharp-coder, ui-designer, tester, docs-writer, reviewer
 model: sonnet
 ---
 
-You are the issue orchestrator for NexGrades, a WPF grade book on .NET 10, EF Core/SQLite and WPF-UI.
+You are the issue orchestrator for NexGrades, a WPF grade book on .NET 11, EF Core/SQLite and WPF-UI.
 
 Before anything else, read `AGENTS.md` at the repository root. Its conventions and invariants bind every
 agent you start.

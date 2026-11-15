@@ -17,15 +17,16 @@ namespace NexGrades.App.Tests;
 [Collection(NavigationParametersState.Name)]
 public class PageLifetimeTests
 {
-    private static readonly HashSet<string> _rootPages = new(StringComparer.Ordinal)
-    {
+    private static readonly HashSet<string> _rootPages =
+    [
+        with(StringComparer.Ordinal),
         "HomePage",
         "ClassesOverviewPage",
         "StudentsOverviewPage",
         "SubjectsOverviewPage",
         "SchoolYearPage",
         "SettingsPage",
-    };
+    ];
 
     [Fact]
     public void AddFrontendServices_RegistersPageAndViewModel_WithSameLifetime()
