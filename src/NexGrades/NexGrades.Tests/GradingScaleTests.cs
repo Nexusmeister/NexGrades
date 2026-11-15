@@ -1,3 +1,4 @@
+using System.Globalization;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Grading;
 
@@ -5,24 +6,28 @@ namespace NexGrades.Tests;
 
 public class GradingScaleTests
 {
+    // Decimal theory data is passed as invariant strings: a double literal would be converted to decimal exactly
+    // (0.7 becomes 0.6999999999999999555910790150 since .NET 11), which is not the grade the test means.
+    private static decimal Parse(string value) => decimal.Parse(value, CultureInfo.InvariantCulture);
+
     [Theory]
-    [InlineData(0.7)]
-    [InlineData(1.0)]
-    [InlineData(3.3)]
-    [InlineData(6.0)]
-    public void IsLegalValue_ReturnsTrue_ForOneOfTheSixteenPoints(decimal value)
+    [InlineData("0.7")]
+    [InlineData("1.0")]
+    [InlineData("3.3")]
+    [InlineData("6.0")]
+    public void IsLegalValue_ReturnsTrue_ForOneOfTheSixteenPoints(string value)
     {
-        Assert.True(GradingScale.IsLegalValue(value));
+        Assert.True(GradingScale.IsLegalValue(Parse(value)));
     }
 
     [Theory]
-    [InlineData(0.0)]
-    [InlineData(2.5)]
-    [InlineData(7.0)]
-    [InlineData(-1.0)]
-    public void IsLegalValue_ReturnsFalse_ForValueNotOnTheScale(decimal value)
+    [InlineData("0.0")]
+    [InlineData("2.5")]
+    [InlineData("7.0")]
+    [InlineData("-1.0")]
+    public void IsLegalValue_ReturnsFalse_ForValueNotOnTheScale(string value)
     {
-        Assert.False(GradingScale.IsLegalValue(value));
+        Assert.False(GradingScale.IsLegalValue(Parse(value)));
     }
 
     [Fact]
@@ -45,12 +50,12 @@ public class GradingScaleTests
     }
 
     [Theory]
-    [InlineData("1", 1.0)]
-    [InlineData("2-", 2.3)]
-    [InlineData("6", 6.0)]
-    public void ValueForToken_ConvertsToken_ToItsNumericValue(string token, decimal expected)
+    [InlineData("1", "1.0")]
+    [InlineData("2-", "2.3")]
+    [InlineData("6", "6.0")]
+    public void ValueForToken_ConvertsToken_ToItsNumericValue(string token, string expected)
     {
-        Assert.Equal(expected, GradingScale.ValueForToken(token));
+        Assert.Equal(Parse(expected), GradingScale.ValueForToken(token));
     }
 
     [Fact]
@@ -60,11 +65,11 @@ public class GradingScaleTests
     }
 
     [Theory]
-    [InlineData(1.0, "1")]
-    [InlineData(2.3, "2-")]
-    public void TokenForValue_ConvertsValue_ToItsDisplayToken(decimal value, string expected)
+    [InlineData("1.0", "1")]
+    [InlineData("2.3", "2-")]
+    public void TokenForValue_ConvertsValue_ToItsDisplayToken(string value, string expected)
     {
-        Assert.Equal(expected, GradingScale.TokenForValue(value));
+        Assert.Equal(expected, GradingScale.TokenForValue(Parse(value)));
     }
 
     [Fact]
@@ -77,16 +82,16 @@ public class GradingScaleTests
     }
 
     [Theory]
-    [InlineData("2-", 2.3)]
-    [InlineData(" 1+ ", 0.7)]
-    [InlineData("2 -", 2.3)]
-    [InlineData("6", 6.0)]
-    public void TryParseToken_ReturnsValue_ForLegalTokenIgnoringWhitespace(string input, decimal expected)
+    [InlineData("2-", "2.3")]
+    [InlineData(" 1+ ", "0.7")]
+    [InlineData("2 -", "2.3")]
+    [InlineData("6", "6.0")]
+    public void TryParseToken_ReturnsValue_ForLegalTokenIgnoringWhitespace(string input, string expected)
     {
         var parsed = GradingScale.TryParseToken(input, out var value);
 
         Assert.True(parsed);
-        Assert.Equal(expected, value);
+        Assert.Equal(Parse(expected), value);
     }
 
     [Theory]

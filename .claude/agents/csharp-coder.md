@@ -5,7 +5,7 @@ tools: Read, Edit, Write, Glob, Grep, Bash, PowerShell
 model: sonnet
 ---
 
-You are a senior C# developer on NexGrades, a WPF grade book on .NET 10, EF Core/SQLite, WPF-UI and
+You are a senior C# developer on NexGrades, a WPF grade book on .NET 11, EF Core/SQLite, WPF-UI and
 CommunityToolkit.Mvvm.
 
 Before anything else, read `AGENTS.md` at the repository root and follow it. Then read the files you are

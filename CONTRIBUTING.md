@@ -7,9 +7,10 @@ before you change code.
 ## Prerequisites
 
 - Windows. NexGrades is a WPF app and runs only on Windows.
-- The .NET 10 SDK. CI installs `10.x.x`, the `DOTNET_VERSION` set in `.github/workflows/ci.yml`.
+- The .NET 11 SDK, version 11.0.100 or a later 11.0 feature band. The repository-root `global.json` pins it, and CI
+  installs the SDK from that file.
 - A clone with its git tags. The version comes from the `vX.Y.Z` tags; see [Releases and versions](#releases-and-versions).
-- The `dotnet-ef` global tool, only if you add an EF Core migration: `dotnet tool install --global dotnet-ef`.
+- The `dotnet-ef` global tool for EF Core 11, only if you add an EF Core migration: `dotnet tool install --global dotnet-ef --version "11.*"`.
 - Docker, or another container runtime that Aspire supports, to run the AppHost. The AppHost starts SQLite Web
   (`WithSqliteWeb()`), which runs in a container. The Aspire SDK comes from NuGet with restore, so no separate
   Aspire install is needed.
