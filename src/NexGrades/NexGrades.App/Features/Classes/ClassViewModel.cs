@@ -29,6 +29,7 @@ namespace NexGrades.App.Features.Classes;
 /// <param name="exporter">Writes the class overview of a subject to an Excel file.</param>
 /// <param name="fileSaveDialog">Asks where to save the export.</param>
 /// <param name="pageNavigator">Opens the grade sheet of a subject.</param>
+/// <param name="contentDialogService">Asks before unsaved input is discarded.</param>
 public partial class ClassViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
@@ -36,9 +37,11 @@ public partial class ClassViewModel(
     ClassService classService,
     SubjectOverviewExporter exporter,
     IFileSaveDialogService fileSaveDialog,
-    PageNavigator pageNavigator) : ViewModel
+    PageNavigator pageNavigator,
+    IContentDialogService contentDialogService) : ViewModel
 {
     private int? _editingClassInstanceId;
+    private readonly LeaveGuard _leaveGuard = new(contentDialogService);
     private string _loadedName = string.Empty;
 
     [ObservableProperty]
@@ -119,6 +122,7 @@ public partial class ClassViewModel(
     /// </summary>
     protected override async Task OnNavigatedToAsync(object? parameter)
     {
+        _leaveGuard.Reset();
         _editingClassInstanceId = parameter as int?;
 
         ActiveStudents = [];
@@ -257,12 +261,18 @@ public partial class ClassViewModel(
         }
 
         snackbar.Show("Success", "Class has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-        navigation.GoBack();
+        _leaveGuard.LeaveWithoutPrompt(navigation.GoBack);
     }
 
+    /// <summary>True when the typed class name differs from the loaded one (empty for a new class).</summary>
+    private bool HasUnsavedChanges => !string.Equals(Name.Trim(), _loadedName.Trim(), StringComparison.Ordinal);
+
+    /// <summary>Goes back without saving, asking first when the name has been changed.</summary>
     [RelayCommand]
-    private void Cancel()
-    {
-        navigation.GoBack();
-    }
+    private Task CancelAsync(CancellationToken cancellationToken = default) =>
+        _leaveGuard.CancelAsync(HasUnsavedChanges, navigation.GoBack, cancellationToken);
+
+    /// <summary>Asks before sidebar navigation or the back button leaves the page with a changed name.</summary>
+    public override Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default) =>
+        _leaveGuard.CanLeaveAsync(HasUnsavedChanges, cancellationToken);
 }

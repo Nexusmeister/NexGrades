@@ -51,7 +51,11 @@ If a choice cannot be saved, it applies until the app closes.
 - With `AutoCheckForUpdates` on, a check runs about ten seconds after startup.
 - A downloaded update is installed when the app exits, or at once when the user chooses Restart now in the main
   window's notice.
-- The Settings page shows the version and both preferences and runs a manual check.
+- Both ask the current page whether it may be left, as leaving it by the sidebar would. If the page holds unsaved
+  input and the user keeps editing, the app stays open and the update waits for the next exit or Restart now. A
+  confirmed close still installs the update on exit.
+- The Settings page shows the version and both preferences and runs a manual check. Its Restart now is the notice's
+  command, so it asks the page first too.
 - `Program.Main` runs `VelopackApp.Build().Run()` before `App` is created; it handles the installer's hook
   arguments and returns on a normal start.
 

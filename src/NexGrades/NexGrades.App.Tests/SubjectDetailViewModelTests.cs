@@ -8,7 +8,7 @@ namespace NexGrades.App.Tests;
 public class SubjectDetailViewModelTests
 {
     private static SubjectDetailViewModel Create(LockTestEnvironment env) =>
-        new(FakeNavigationService.Create(), env.Snackbar, new SubjectService(env.Factory));
+        new(FakeNavigationService.Create(), env.Snackbar, new SubjectService(env.Factory), null!);
 
     private static async Task<int> CountSubjectsAsync(LockTestEnvironment env)
     {

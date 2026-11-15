@@ -60,7 +60,7 @@ public sealed partial class PageNavigator
             .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(INavigableView<>))
             .GetGenericArguments()[0];
 
-        NavigationParameters.Set(viewModelType, parameter);
+        var version = NavigationParameters.Set(viewModelType, parameter);
 
         // Lets the guard re-issue exactly this call, parameter included, once the user confirms leaving.
         _request = () => NavigateWithHierarchy<TPage>(parameter);
@@ -70,18 +70,18 @@ public sealed partial class PageNavigator
             if (navigated)
             {
                 // The view model normally takes the value itself; this drops it if it never got to.
-                _scheduleCleanup(() => NavigationParameters.Discard(viewModelType));
+                _scheduleCleanup(() => NavigationParameters.Discard(viewModelType, version));
             }
             else
             {
-                _ = NavigationParameters.Take(viewModelType);
+                NavigationParameters.Discard(viewModelType, version);
             }
 
             return navigated;
         }
         catch
         {
-            _ = NavigationParameters.Take(viewModelType);
+            NavigationParameters.Discard(viewModelType, version);
             throw;
         }
         finally
@@ -116,7 +116,7 @@ public sealed partial class PageNavigator
         _guardActive = true;
         try
         {
-            return await current.CanLeaveAsync(cancellationToken);
+            return CommitPendingInput(current) && await current.CanLeaveAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -127,6 +127,31 @@ public sealed partial class PageNavigator
         {
             _guardActive = false;
         }
+    }
+
+    /// <summary>
+    /// Whether the user already agreed to end the app, so the window must close without asking again. Set by
+    /// <see cref="ConfirmExitAsync"/>.
+    /// </summary>
+    internal bool ExitConfirmed { get; private set; }
+
+    /// <summary>
+    /// Asks the current page whether the app may end, like <see cref="ConfirmLeaveAsync"/>, and remembers an
+    /// agreement in <see cref="ExitConfirmed"/> so that the window's closing check and the "Restart now" path do not
+    /// both prompt.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the check.</param>
+    /// <returns><see langword="true"/> when the app may end.</returns>
+    public async Task<bool> ConfirmExitAsync(CancellationToken cancellationToken = default)
+    {
+        if (ExitConfirmed)
+        {
+            return true;
+        }
+
+        ExitConfirmed = await ConfirmLeaveAsync(cancellationToken);
+
+        return ExitConfirmed;
     }
 
     /// <summary>Records the view model of the page that is now shown, or <see langword="null"/> if it has none.</summary>
@@ -148,11 +173,18 @@ public sealed partial class PageNavigator
     /// Called by the shell when the back button is clicked. Returns whether the shell must skip its own back
     /// navigation because the guard handles it.
     /// </summary>
-    /// <param name="goBack">Navigates back; called once the user agrees to leave.</param>
+    /// <param name="goBack">
+    /// Navigates back; called once the user agrees to leave, also when the page allows it at once, so the page is
+    /// asked exactly once.
+    /// </param>
     /// <returns><see langword="true"/> when the normal back navigation must not run.</returns>
-    internal bool TryGuardBack(Func<bool> goBack) => Guard(goBack);
+    internal bool TryGuardBack(Func<bool> goBack) => Guard(goBack, runWhenAllowed: true);
 
-    private bool Guard(Func<bool> reissue)
+    /// <summary>Runs the page's pending-input commit; false when the input could not be committed.</summary>
+    private static bool CommitPendingInput(ViewModel page) => page.CommitPendingInput?.Invoke() ?? true;
+
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Whatever the page's check throws, the safe outcome is to stay on the page.")]
+    private bool Guard(Func<bool> reissue, bool runWhenAllowed = false)
     {
         if (_bypass || _current is not { } current)
         {
@@ -165,10 +197,37 @@ public sealed partial class PageNavigator
             return true;
         }
 
-        var pending = current.CanLeaveAsync();
+        Task<bool> pending;
+        try
+        {
+            if (!CommitPendingInput(current))
+            {
+                return true;
+            }
+
+            pending = current.CanLeaveAsync();
+        }
+        catch (Exception ex)
+        {
+            // A check that throws before returning a task keeps the user on the page.
+            LogGuardFailed(ex);
+            return true;
+        }
+
         if (pending.IsCompletedSuccessfully)
         {
-            return !pending.Result;
+            if (!pending.Result)
+            {
+                return true;
+            }
+
+            if (!runWhenAllowed)
+            {
+                return false;
+            }
+
+            RunBypassed(reissue);
+            return true;
         }
 
         _guardActive = true;
@@ -201,6 +260,12 @@ public sealed partial class PageNavigator
             return;
         }
 
+        RunBypassed(reissue);
+    }
+
+    /// <summary>Runs the navigation without the guard asking again.</summary>
+    private void RunBypassed(Func<bool> reissue)
+    {
         _bypass = true;
         try
         {

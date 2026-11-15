@@ -13,7 +13,7 @@ public class ClassViewModelValidationTests
 
     /// <summary>Opens the protected navigation entry point so a test can load an existing class.</summary>
     private sealed class OpenableClassViewModel(LockTestEnvironment env) : ClassViewModel(
-        null!, env.Snackbar, env.Factory, null!, null!, null!, null!)
+        null!, env.Snackbar, env.Factory, null!, null!, null!, null!, null!)
     {
         public Task OpenAsync(int classInstanceId) => OnNavigatedToAsync((object?)classInstanceId);
 
@@ -23,7 +23,7 @@ public class ClassViewModelValidationTests
     // Only the name, the editing flag and the save command's availability are exercised, and none of them touch the
     // collaborators the form uses for saving and exporting, so those are passed as null.
     private static ClassViewModel Create(LockTestEnvironment env) => new(
-        null!, env.Snackbar, null!, null!, null!, null!, null!);
+        null!, env.Snackbar, null!, null!, null!, null!, null!, null!);
 
     private static async Task<int> SeedClassAsync(LockTestEnvironment env, string name)
     {

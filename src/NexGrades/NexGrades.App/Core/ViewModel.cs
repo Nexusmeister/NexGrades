@@ -12,6 +12,15 @@ namespace NexGrades.App.Core;
 public abstract partial class ViewModel : ObservableObject, INavigationAware
 {
     /// <summary>
+    /// Set by the page's view when it holds input that lives in a control until it is committed, such as a
+    /// <c>DataGrid</c> cell being edited. <see cref="PageNavigator"/> calls it before <see cref="CanLeaveAsync"/>, for
+    /// sidebar, back and window close alike, so the typed value reaches the view model and is saved or flagged as
+    /// unsaved instead of being lost. It returns <see langword="false"/> when the input cannot be committed (the
+    /// control rejected it); the user then stays on the page.
+    /// </summary>
+    public Func<bool>? CommitPendingInput { get; set; }
+
+    /// <summary>
     /// Asked before the user leaves the page, by sidebar navigation or the back button. A page that holds
     /// unsaved input overrides it to ask for confirmation. The default always allows leaving.
     /// </summary>
