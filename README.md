@@ -107,7 +107,7 @@ Nothing is deleted. Notes are archived, and grades and assessments are voided. Y
 Before a migration of an existing database, NexGrades copies the database into `%LOCALAPPDATA%\NexGrades\backups`.
 A migration runs when a new version changes the database. A new database, or one that is already up to date, is not
 copied. Each backup is named `app-<date>-<time>-v<version>.db`, after the time it was taken and the version that last
-used the database. The five newest backups are kept.
+used the database. Five backups are kept: the newest ones, plus the oldest backup taken for the same previous app version, which is pinned so repeated failed starts cannot rotate it out (see `docs/domain/updates-backups-and-settings.md`).
 
 If the backup fails, NexGrades does not start and the database is unchanged. If a migration fails after the backup,
 the startup message names the backup file.

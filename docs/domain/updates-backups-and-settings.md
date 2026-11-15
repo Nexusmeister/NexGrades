@@ -21,7 +21,8 @@ The Theme card on the Settings page applies a choice at once and saves it here. 
 that theme. `AppThemeService` applies the saved theme in `App.OnStartup`, before the main window is shown, so the
 window does not open in the wrong theme. `WpfThemeApplier` wraps WPF-UI's `ApplicationThemeManager` and
 `SystemThemeWatcher`; Light and Dark stop the watch. If the file cannot be read, the app starts in the System theme.
-If a choice cannot be saved, it applies until the app closes.
+Saves run one after another in the order the choices were made, so the file ends with the last choice. If a choice
+cannot be saved, it applies until the app closes, and a snackbar says so.
 
 ## Backups
 
@@ -31,7 +32,20 @@ If a choice cannot be saved, it applies until the app closes.
 - `Backup:Directory` overrides the folder. With a `sqlite` override the folder is `backups` beside the overridden
   database.
 - Files are named `app-yyyyMMdd-HHmmss-v<version>.db`, with `unknown` in place of the version when it is not
-  known, and the five newest are kept.
+  known. The version is `LastRunVersion`, so a backup is tagged with the version that last started successfully
+  and can be opened by it.
+- Five backups are kept. The backup just written is always one of them, and so is the oldest backup tagged with
+  the previous version (the pinned backup). The other kept backups are the newest of the rest.
+- The pin stops repeated failed starts of a new version from rotating out the copy the previous version can open.
+  Each failed start writes another backup with the same previous-version tag, and the pin keeps the oldest of them,
+  which is the database as the previous version left it.
+- The pin is used instead of skipping a backup after a failed start because the app stores no failure state:
+  `LastRunVersion` changes only after a successful start, so nothing records that an earlier attempt failed.
+  Skipping would need a new persisted flag. The pin needs only the file names, so it survives restarts and works
+  on a copied folder.
+- After a successful start, `LastRunVersion` names the new version and the pin moves to that version's backups.
+  The older backups are then no longer pinned and are deleted by the normal rule.
+- When no version is known, the pin applies to the oldest `unknown` backup.
 - A failed backup stops startup before anything is migrated. When a migration fails after a backup, the startup
   dialog names the backup file.
 - Nothing restores a backup automatically; `README.md` lists the manual steps.

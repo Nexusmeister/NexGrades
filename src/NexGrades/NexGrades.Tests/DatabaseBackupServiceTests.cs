@@ -301,4 +301,131 @@ public sealed class DatabaseBackupServiceTests : IDisposable
 
         Assert.True(File.Exists(path));
     }
+
+    [Fact]
+    public async Task CreateBackupAsync_KeepsFirstBackupOfTheVersion_WhenSixBackupsOfOneVersionAreCreated()
+    {
+        var service = CreateService();
+        var first = await service.CreateBackupAsync(BackupDirectory, "1.2.0");
+        for (var i = 1; i <= 5; i++)
+        {
+            _clock.Now = _now.AddMinutes(i);
+            _ = await service.CreateBackupAsync(BackupDirectory, "1.2.0");
+        }
+
+        Assert.Equal(DatabaseBackupService.RetainedBackupCount, Directory.EnumerateFiles(BackupDirectory).Count());
+        Assert.True(File.Exists(first));
+        Assert.False(File.Exists(Path.Combine(BackupDirectory, DatabaseBackupFileName.Create(_now.AddMinutes(1), "1.2.0"))));
+    }
+
+    [Fact]
+    public async Task CreateBackupAsync_PrunesBackupsOfOtherVersionsNormally_WhenOnlyTheNewBackupHasTheVersion()
+    {
+        for (var i = 1; i <= 6; i++)
+        {
+            _ = CreateBackupFile(new DateTime(2026, 1, i, 8, 0, 0));
+        }
+
+        var path = await CreateService().CreateBackupAsync(BackupDirectory, "1.2.0");
+
+        Assert.True(File.Exists(path));
+        Assert.Equal(DatabaseBackupService.RetainedBackupCount, Directory.EnumerateFiles(BackupDirectory).Count());
+        Assert.False(File.Exists(Path.Combine(BackupDirectory, "app-20260101-080000-v1.0.0.db")));
+        Assert.False(File.Exists(Path.Combine(BackupDirectory, "app-20260102-080000-v1.0.0.db")));
+        Assert.True(File.Exists(Path.Combine(BackupDirectory, "app-20260103-080000-v1.0.0.db")));
+    }
+
+    [Fact]
+    public async Task CreateBackupAsync_KeepsOldestUnknownVersionBackup_WhenVersionIsNull()
+    {
+        var oldestUnknown = Path.Combine(BackupDirectory, DatabaseBackupFileName.Create(new DateTime(2026, 1, 1, 8, 0, 0), null));
+        _ = Directory.CreateDirectory(BackupDirectory);
+        await File.WriteAllTextAsync(oldestUnknown, "x");
+        for (var i = 2; i <= 7; i++)
+        {
+            _ = CreateBackupFile(new DateTime(2026, 1, i, 8, 0, 0));
+        }
+
+        var path = await CreateService().CreateBackupAsync(BackupDirectory, null);
+
+        Assert.True(File.Exists(path));
+        Assert.True(File.Exists(oldestUnknown));
+        Assert.Equal(DatabaseBackupService.RetainedBackupCount, Directory.EnumerateFiles(BackupDirectory).Count());
+        Assert.False(File.Exists(Path.Combine(BackupDirectory, "app-20260102-080000-v1.0.0.db")));
+        Assert.True(File.Exists(Path.Combine(BackupDirectory, "app-20260107-080000-v1.0.0.db")));
+    }
+
+    [Fact]
+    public void PruneBackups_KeepsNewestFive_WhenNoBackupHasThePinnedVersion()
+    {
+        var paths = Enumerable.Range(1, 7).Select(i => CreateBackupFile(new DateTime(2026, 3, i, 12, 0, 0))).ToList();
+
+        var deleted = CreateService().PruneBackups(BackupDirectory, protectedPath: null, pinnedVersion: "9.9.9");
+
+        Assert.Equal(2, deleted);
+        Assert.False(File.Exists(paths[0]));
+        Assert.False(File.Exists(paths[1]));
+        Assert.All(paths.Skip(2), p => Assert.True(File.Exists(p)));
+    }
+
+    [Fact]
+    public void PruneBackups_KeepsOldestOfPinnedVersionAndNewestOthers_WhenOldOnesAreOfThatVersion()
+    {
+        var old = Enumerable.Range(1, 3).Select(i => CreateBackupFile(new DateTime(2026, 3, i, 12, 0, 0), "1.0.0")).ToList();
+        var recent = Enumerable.Range(4, 4).Select(i => CreateBackupFile(new DateTime(2026, 3, i, 12, 0, 0), "2.0.0")).ToList();
+
+        var deleted = CreateService().PruneBackups(BackupDirectory, protectedPath: null, pinnedVersion: "1.0.0");
+
+        Assert.Equal(2, deleted);
+        Assert.True(File.Exists(old[0]));
+        Assert.False(File.Exists(old[1]));
+        Assert.False(File.Exists(old[2]));
+        Assert.All(recent, p => Assert.True(File.Exists(p)));
+    }
+
+    [Fact]
+    public void PruneBackups_KeepsProtectedAndPinnedBackup_WhenTheyDiffer()
+    {
+        var old = Enumerable.Range(1, 3).Select(i => CreateBackupFile(new DateTime(2026, 3, i, 12, 0, 0), "1.0.0")).ToList();
+        var recent = Enumerable.Range(4, 4).Select(i => CreateBackupFile(new DateTime(2026, 3, i, 12, 0, 0), "2.0.0")).ToList();
+
+        var deleted = CreateService().PruneBackups(BackupDirectory, protectedPath: recent[0], pinnedVersion: "1.0.0");
+
+        Assert.Equal(2, deleted);
+        Assert.True(File.Exists(old[0]));
+        Assert.False(File.Exists(old[1]));
+        Assert.False(File.Exists(old[2]));
+        Assert.All(recent, p => Assert.True(File.Exists(p)));
+        Assert.Equal(DatabaseBackupService.RetainedBackupCount, Directory.EnumerateFiles(BackupDirectory).Count());
+    }
+
+    [Fact]
+    public void PruneBackups_KeepsProtectedBackup_WhenItIsTheOldest()
+    {
+        var paths = Enumerable.Range(1, 7).Select(i => CreateBackupFile(new DateTime(2026, 3, i, 12, 0, 0))).ToList();
+
+        var deleted = CreateService().PruneBackups(BackupDirectory, protectedPath: paths[0]);
+
+        Assert.Equal(2, deleted);
+        Assert.True(File.Exists(paths[0]));
+        Assert.False(File.Exists(paths[1]));
+        Assert.False(File.Exists(paths[2]));
+        Assert.Equal(DatabaseBackupService.RetainedBackupCount, Directory.EnumerateFiles(BackupDirectory).Count());
+    }
+
+    [Fact]
+    public async Task CreateBackupAsync_NeverKeepsMoreThanFiveBackups_WhenVersionsAlternate()
+    {
+        var service = CreateService();
+        string?[] versions = ["1.0.0", "1.1.0", "1.0.0", null, "1.1.0", "1.0.0", "1.2.0", "1.1.0", "1.0.0", "1.2.0"];
+        for (var i = 0; i < versions.Length; i++)
+        {
+            _clock.Now = _now.AddMinutes(i);
+            _ = await service.CreateBackupAsync(BackupDirectory, versions[i]);
+
+            Assert.True(Directory.EnumerateFiles(BackupDirectory).Count() <= DatabaseBackupService.RetainedBackupCount);
+        }
+
+        Assert.Equal(DatabaseBackupService.RetainedBackupCount, Directory.EnumerateFiles(BackupDirectory).Count());
+    }
 }

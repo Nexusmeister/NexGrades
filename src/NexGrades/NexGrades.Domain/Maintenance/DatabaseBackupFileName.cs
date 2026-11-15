@@ -75,6 +75,52 @@ public static class DatabaseBackupFileName
             out timestamp);
     }
 
+    /// <summary>
+    /// Tells whether a backup file name carries the version tag <see cref="Create"/> writes for
+    /// <paramref name="appVersion"/>. The tag must match whole: <c>v1.2</c> does not match a backup of
+    /// <c>1.2.0</c>. A collision suffix (<c>-1</c>, <c>-2</c>, ...) before the extension is allowed. A version that is
+    /// empty or not safe for a file name is tagged <see cref="UnknownVersion"/>, as in <see cref="Create"/>.
+    /// </summary>
+    /// <param name="fileName">A file name without a folder.</param>
+    /// <param name="appVersion">The app version to look for, or <see langword="null"/>/empty for the unknown-version tag.</param>
+    /// <returns><see langword="true"/> when <paramref name="fileName"/> is a backup name with that version tag.</returns>
+    public static bool HasVersion(string fileName, string? appVersion)
+    {
+        if (!TryParse(fileName, out _))
+        {
+            return false;
+        }
+
+        var tag = IsSafeVersion(appVersion) ? "v" + appVersion : UnknownVersion;
+        var restStart = Prefix.Length + TimestampFormat.Length + 1;
+        var rest = fileName.AsSpan(restStart, fileName.Length - Extension.Length - restStart);
+        if (!rest.StartsWith(tag, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var suffix = rest[tag.Length..];
+        if (suffix.IsEmpty)
+        {
+            return true;
+        }
+
+        if (suffix[0] != '-' || suffix.Length < 2)
+        {
+            return false;
+        }
+
+        foreach (var c in suffix[1..])
+        {
+            if (!char.IsAsciiDigit(c))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static bool IsSafeVersion(string? appVersion) => !string.IsNullOrEmpty(appVersion) && IsSafe(appVersion);
 
     private static bool IsSafe(ReadOnlySpan<char> text)

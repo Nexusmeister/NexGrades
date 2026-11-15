@@ -14,6 +14,7 @@ namespace NexGrades.App.Tests;
 /// edit pages) is transient, and a page and its view model always share a lifetime. Also checks that
 /// <see cref="PageNavigator"/> hands a parameter over exactly once.
 /// </summary>
+[Collection(NavigationParametersState.Name)]
 public class PageLifetimeTests
 {
     private static readonly HashSet<string> _rootPages = new(StringComparer.Ordinal)

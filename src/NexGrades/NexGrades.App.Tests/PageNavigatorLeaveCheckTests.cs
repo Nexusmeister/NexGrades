@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.App.Core;
+using Wpf.Ui.Abstractions.Controls;
 
 namespace NexGrades.App.Tests;
 
@@ -9,6 +10,7 @@ namespace NexGrades.App.Tests;
 /// runs before <see cref="ViewModel.CanLeaveAsync"/>, a throwing hook keeps the user on the page, the back button asks
 /// once, and a confirmed exit is remembered.
 /// </summary>
+[Collection(NavigationParametersState.Name)]
 public class PageNavigatorLeaveCheckTests
 {
     private readonly CapturingLogger<PageNavigator> _logger = new();
@@ -259,20 +261,21 @@ public class PageNavigatorLeaveCheckTests
         var received = new List<object?>();
         var cleanups = new List<Action>();
         var navigator = new PageNavigator(
-            PageNavigatorGuardTests.ScriptedNavigation.Create(() => new PageNavigatorGuardTests.TargetViewModel(received), out var navigation),
+            PageNavigatorGuardTests.ScriptedNavigation.Create(() => new IsolatedViewModel(received), out var navigation),
             NullLogger<PageNavigator>.Instance,
             cleanups.Add);
         navigation.Navigator = navigator;
         var older = new object();
         var newer = new object();
 
-        Assert.True(navigator.NavigateWithHierarchy<PageNavigatorGuardTests.TargetPage>(older));
-        Assert.True(navigator.NavigateWithHierarchy<PageNavigatorGuardTests.TargetPage>(newer));
+        Assert.True(navigator.NavigateWithHierarchy<IsolatedPage>(older));
+        Assert.True(navigator.NavigateWithHierarchy<IsolatedPage>(newer));
         Assert.Equal(2, cleanups.Count);
 
         cleanups[0]();
         await navigation.DrainAsync();
 
+        Assert.Equal(2, received.Count);
         Assert.Same(newer, Assert.Single(received, r => r is not null));
     }
 
@@ -280,5 +283,25 @@ public class PageNavigatorLeaveCheckTests
     {
         var entry = Assert.Single(_logger.Entries, e => e.Level >= LogLevel.Warning);
         Assert.DoesNotContain("Zebra42", entry.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A page and view model used by no other test, so the type-keyed hand-over of the parameter cannot be taken
+    /// or replaced by a test running at the same time (#160).
+    /// </summary>
+    public sealed class IsolatedPage : INavigableView<IsolatedViewModel>
+    {
+        public IsolatedViewModel ViewModel { get; } = null!;
+    }
+
+    /// <summary>The view model of <see cref="IsolatedPage"/>; records the parameter it receives.</summary>
+    public sealed class IsolatedViewModel(ICollection<object?> received) : ViewModel
+    {
+        protected override Task OnNavigatedToAsync(object? parameter)
+        {
+            received.Add(parameter);
+
+            return Task.CompletedTask;
+        }
     }
 }

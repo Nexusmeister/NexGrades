@@ -123,4 +123,27 @@ public sealed class AppThemeServiceTests : IDisposable
             return Task.CompletedTask;
         });
     }
+
+    [Fact]
+    public async Task SetAsync_AppliesAndReturnsFalse_WhenStoreThrowsNonIoException()
+    {
+        _store.UpdateFailure = new InvalidOperationException("secret-folder");
+        var service = CreateService();
+
+        var saved = await service.SetAsync(ThemePreference.Dark);
+
+        Assert.False(saved);
+        Assert.Equal([ThemePreference.Dark], _applier.Applied);
+        Assert.Equal(ThemePreference.Dark, service.Current);
+        Assert.DoesNotContain(_logger.Entries, e => e.Message.Contains("secret-folder", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task SetAsync_Throws_WhenSaveIsCancelled()
+    {
+        _store.UpdateFailure = new OperationCanceledException();
+        var service = CreateService();
+
+        _ = await Assert.ThrowsAsync<OperationCanceledException>(() => service.SetAsync(ThemePreference.Dark));
+    }
 }
