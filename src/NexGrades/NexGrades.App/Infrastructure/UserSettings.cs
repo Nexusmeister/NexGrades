@@ -1,3 +1,5 @@
+using NexGrades.App.Theming;
+
 namespace NexGrades.App.Infrastructure;
 
 /// <summary>
@@ -11,6 +13,9 @@ public sealed record UserSettings
 
     /// <summary>Whether beta releases are offered as updates as well. Off by default, and turning it off never downgrades.</summary>
     public bool ReceiveBetaUpdates { get; init; }
+
+    /// <summary>The colour theme: follow Windows (the default), or always light or dark.</summary>
+    public ThemePreference Theme { get; init; } = ThemePreference.System;
 
     /// <summary>
     /// The app version that last started successfully against the default database, or <see langword="null"/> when

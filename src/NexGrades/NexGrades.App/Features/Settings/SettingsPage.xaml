@@ -74,6 +74,25 @@
                        ToolTip="Open the folder with the application's log files"
                        Command="{Binding ViewModel.OpenLogFolderCommand}"/>
         </ui:CardControl>
+        <ui:CardControl Icon="{ui:SymbolIcon PaintBrush24}"
+                        Margin="0,0,0,12">
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Body"
+                                  Text="Theme"/>
+                    <ui:TextBlock FontTypography="Caption"
+                                  Appearance="Secondary"
+                                  TextWrapping="Wrap"
+                                  Text="Choose System to follow the Windows setting."/>
+                </StackPanel>
+            </ui:CardControl.Header>
+            <ComboBox MinWidth="160"
+                         AutomationProperties.Name="Theme"
+                         ItemsSource="{Binding ViewModel.Appearance.Options}"
+                         DisplayMemberPath="Label"
+                         SelectedValuePath="Value"
+                         SelectedValue="{Binding ViewModel.Appearance.SelectedTheme, Mode=TwoWay}"/>
+        </ui:CardControl>
         <ui:CardControl Icon="{ui:SymbolIcon ArrowSync24}"
                         Margin="0,0,0,12">
             <ui:CardControl.Header>
