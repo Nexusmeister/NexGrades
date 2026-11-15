@@ -119,7 +119,8 @@ they record *why* the model is shaped the way it is.
   (elective, exemption, religion/ethics split). Rows exist only for deviations.
 - **Note** — free-text note on a student within a school year, managed through `NoteService`. A note
   needs an enrollment of the student in that year and records its class. It is "removed" by archiving
-  (`ArchivedOn`), which can be undone, and is locked like everything else in a closed year.
+  (`ArchivedOn`), which can be undone, and is locked like everything else in a closed year. The notes export
+  (`NoteExportService`) filters notes on `CreatedOn` and leaves archived ones out unless asked for.
 - **Teacher** — in practice one row (the app owner, `IsCurrentUser`).
 - **AuditEntry** — written for every change to a closed-but-unlocked year, carrying that year's `UnlockReason`.
 

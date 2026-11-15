@@ -77,6 +77,9 @@ public static class HostBuilderExtensions
         services.AddTransient<SubjectOverviewExportService>();
         services.AddTransient<SubjectOverviewExcelWriter>();
         services.AddTransient<SubjectOverviewExporter>();
+        services.AddTransient<NoteExportService>();
+        services.AddTransient<NoteExcelWriter>();
+        services.AddTransient<NoteExporter>();
 
         // Configuration
         //_ = services.Configure<AppConfig>(context.Configuration.GetSection(nameof(AppConfig)));
@@ -88,6 +91,7 @@ public static class HostBuilderExtensions
         services.AddSingleton<IContentDialogService, ContentDialogService>();
         services.AddSingleton<SchoolYearLockMonitor>();
         services.AddSingleton<IUnlockYearDialogService, UnlockYearDialogService>();
+        services.AddSingleton<IExportNotesDialogService, ExportNotesDialogService>();
         services.AddSingleton<YearLockViewModelFactory>();
         services.AddSingleton<ClosedYearsViewModel>();
         return services;

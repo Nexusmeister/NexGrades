@@ -1,10 +1,15 @@
 using System.Collections.ObjectModel;
+using System.Data.Common;
 using System.Globalization;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NexGrades.App.Core;
 using NexGrades.App.Core.YearLock;
+using NexGrades.App.Features.Export;
+using NexGrades.App.Infrastructure;
 using NexGrades.Common;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
@@ -28,6 +33,10 @@ namespace NexGrades.App.Features.Students;
 /// <param name="contentDialogService">Shows the confirmations for discarding input and for archiving notes.</param>
 /// <param name="yearLockFactory">Creates the lock state of the selected school year, which gates note and grade writes.</param>
 /// <param name="grades">The grades tab; shares the year picker and the year lock with the notes tab.</param>
+/// <param name="noteExporter">Builds and writes the notes export.</param>
+/// <param name="exportNotesDialog">Asks for the date range of the notes export.</param>
+/// <param name="fileSaveDialog">Asks where to save the notes export.</param>
+/// <param name="logger">Records unexpected export failures, without any student data.</param>
 public partial class StudentViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
@@ -36,7 +45,11 @@ public partial class StudentViewModel(
     NoteService noteService,
     IContentDialogService contentDialogService,
     YearLockViewModelFactory yearLockFactory,
-    StudentGradesViewModel grades) : ViewModel
+    StudentGradesViewModel grades,
+    NoteExporter noteExporter,
+    IExportNotesDialogService exportNotesDialog,
+    IFileSaveDialogService fileSaveDialog,
+    ILogger<StudentViewModel> logger) : ViewModel
 {
     private int? _editingStudentId;
     private string? _editingNoteCategory;
@@ -110,6 +123,7 @@ public partial class StudentViewModel(
     [NotifyCanExecuteChangedFor(nameof(StartEditNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(ArchiveNoteCommand))]
     [NotifyCanExecuteChangedFor(nameof(RestoreNoteCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ExportNotesCommand))]
     private bool _isBusy;
 
     /// <summary>True when an existing student is being edited; notes are only available then.</summary>
@@ -311,6 +325,7 @@ public partial class StudentViewModel(
         StartEditNoteCommand.NotifyCanExecuteChanged();
         ArchiveNoteCommand.NotifyCanExecuteChanged();
         RestoreNoteCommand.NotifyCanExecuteChanged();
+        ExportNotesCommand.NotifyCanExecuteChanged();
 
         // The year can only change while the editors hold no input (see CanChangeNoteYear), so this resets them.
         CancelEditNote();
@@ -466,6 +481,90 @@ public partial class StudentViewModel(
 
         return confirmation == ContentDialogResult.Primary;
     }
+
+    private bool CanExportNotes() => !IsBusy && _editingStudentId is not null && SelectedNoteYear is not null;
+
+    /// <summary>
+    /// Asks for a date range, then for a file, and exports the student's notes to it as an Excel workbook.
+    /// Cancelling either dialog does nothing. Read-only, so it also works while the selected year is locked.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExportNotes))]
+    private async Task ExportNotesAsync(CancellationToken cancellationToken = default)
+    {
+        if (_editingStudentId is not { } studentId || SelectedNoteYear is not { } year)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var yearDates = await LoadYearDatesAsync(year.Id, cancellationToken);
+            if (yearDates is null)
+            {
+                ShowExportError("The notes could not be exported. Check that the student still exists and try again.");
+                return;
+            }
+
+            var request = await exportNotesDialog.AskAsync(yearDates.Value.Start, yearDates.Value.End, cancellationToken);
+            if (request is null)
+            {
+                return;
+            }
+
+            var table = await noteExporter.BuildAsync(studentId, request.From, request.To, request.IncludeArchived, cancellationToken);
+            if (table.NoteCount == 0)
+            {
+                snackbar.Show("No notes", "No notes in this date range", ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(5));
+                return;
+            }
+
+            var path = fileSaveDialog.SelectSaveFile(NoteExporter.SuggestFileName(table));
+            if (path is null)
+            {
+                return;
+            }
+
+            await noteExporter.WriteAsync(table, path, cancellationToken);
+            snackbar.Show("Success", string.Format(CultureInfo.CurrentCulture, "Exported {0}.", Path.GetFileName(path)), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        }
+        catch (OperationCanceledException)
+        {
+            // The page was left or the command cancelled; nothing to report.
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowExportError("The export could not be saved. Check that the file is not open and that you may write to the folder.");
+        }
+        catch (Exception ex) when (ex is InvariantViolationException or DbException)
+        {
+            LogNotesExportFailed(ex);
+            ShowExportError("The notes could not be exported. Check that the student still exists and try again.");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>The first and last day of a school year, the default range of the notes export; null if it is gone.</summary>
+    private async Task<(DateOnly Start, DateOnly End)?> LoadYearDatesAsync(int schoolYearId, CancellationToken cancellationToken)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var dates = await db.SchoolYears
+            .AsNoTracking()
+            .Where(sy => sy.Id == schoolYearId)
+            .Select(sy => new { sy.StartDate, sy.EndDate })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return dates is null ? null : (DateOnly.FromDateTime(dates.StartDate), DateOnly.FromDateTime(dates.EndDate));
+    }
+
+    private void ShowExportError(string message) =>
+        snackbar.Show("Error", message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Exporting the notes of a student failed.")]
+    private partial void LogNotesExportFailed(Exception exception);
 
     private bool CanAddNote() =>
         IsSelectedYearWritable && !IsEditingNote && !IsBusy && IsNoteTextValid();
