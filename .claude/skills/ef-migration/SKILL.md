@@ -11,7 +11,9 @@ factory (`AppDbContextFactory`), so it is both the target and the startup projec
 
 ## 1. Make the model change
 
-- Change the entity in `NexGrades.Data/Entities/` and update its XML doc comment if the meaning changed.
+- Read the `docs/domain/` page of the entity first (index: `docs/domain/README.md`).
+- Change the entity in `NexGrades.Data/Entities/` and update its XML doc comment if the meaning changed. Update
+  the `docs/domain/` page too when the change alters what the entity means.
 - Change its configuration in `NexGrades.Data/EntityMapConfigs/<Entity>Configuration.cs`. Don't use mapping
   attributes.
 - Check the change against the invariants in `AGENTS.md`: no denormalized `SchoolYearId`, no cascade

@@ -97,11 +97,10 @@ for confirmation in a dialog that says what happens and that it can be undone.
 
 ## Closed school years
 
-When the selected year is Closed and not unlocked, pages show its data read-only:
-
-- an `ui:InfoBar` explaining that the year is closed;
-- disabled edit actions;
-- an explicit "Unlock year" action that asks for a reason.
+When the selected year is Closed and not unlocked, pages show its data read-only. Don't build this per page.
+Use the shared year lock described in `AGENTS.md` under "Year-scoped editing pages": `YearLockViewModelFactory`
+creates the `YearLock`, write commands bind to `IsWritable`, and `<yearLock:YearLockBar>` shows the closed-year
+banner and the unlock action (code in `NexGrades.App/Core/YearLock`). `StudentPage` is the reference.
 
 ## Localization readiness
 

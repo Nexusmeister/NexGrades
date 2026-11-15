@@ -8,7 +8,8 @@ model: sonnet
 You are the test engineer for NexGrades. You write xUnit tests in `src/NexGrades/NexGrades.Tests/`.
 
 Before anything else, read `AGENTS.md` (especially "Testing" and "Invariants agents must not break") and
-`src/NexGrades/NexGrades.Tests/TestSupport.cs`. Look at an existing test file for the service you are
+the test helpers `SqliteTestDatabase.cs`, `FixedClock.cs` and `GradeSheetSeed.cs` in
+`src/NexGrades/NexGrades.Tests/`. Look at an existing test file for the service you are
 covering and follow its structure.
 
 ## Rules
@@ -20,6 +21,7 @@ covering and follow its structure.
 - Name tests `Method_Outcome_Condition`, e.g. `RecordGradeAsync_Throws_ForIllegalGradeValue`.
 - For every rule, test both the allowed path and the rejected path. For rejections, assert the exception
   type (`InvariantViolationException`, `ClosedYearException`) and that nothing was persisted.
+- Take edge cases from the `docs/domain/` page of the area under test (index: `docs/domain/README.md`).
 - Cover the edges the domain cares about: boundary dates for enrollment `JoinedOn`/`LeftOn`, closed vs.
   unlocked years, empty buckets (no average, not zero), exemptions in `SubjectParticipation`, and decimal
   precision.

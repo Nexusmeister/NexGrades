@@ -66,27 +66,10 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    the failing files (`csharp-coder` may run the formatter). Compare warnings with `dev` and note any new
    ones.
 7. **Smoke start** for every PR that touches `NexGrades.App`. The orchestrator runs it, never the owner. It tests
-   the working tree that will be committed in step 8, built in step 6, in PowerShell 5.1.
-   - Create a fresh, empty temp folder for this run under the session scratchpad or `$env:TEMP`. Set
-     `$env:DOTNET_ENVIRONMENT='Development'` and `$env:ConnectionStrings__sqlite="Data Source=<temp folder>\smoke.db"`.
-     The connection string keeps the run off the real `%LOCALAPPDATA%` database, which must never be used.
-   - `$start = [DateTimeOffset]::Now`.
-   - `$p = Start-Process "<worktree>\src\NexGrades\NexGrades.App\bin\Debug\net10.0-windows\NexGrades.App.exe" -PassThru -WorkingDirectory "<temp folder>"`,
-     then wait about 20 s. The working directory keeps the run out of the build folder.
-   - Read all of today's `%LOCALAPPDATA%\NexGrades\logs\nexgrades-<yyyyMMdd>*.log` files. The folder is shared with
-     the owner's session, and files roll over to `_001`. Parse each line's timestamp as a `DateTimeOffset` (the
-     format is `yyyy-MM-dd HH:mm:ss.fff zzz`, with a UTC offset). Judge only lines at or after `$start`,
-     and look for this run's `NexGrades <version> starting on` line.
-   - Pass: the process is still alive, and this run's log lines contain the "starting on" line and no `[ERR]` or
-     `[FTL]`. A failed start shows a modal message box and exits with code 1 only after the box is closed, so the
-     process can look alive. The log decides. If `[ERR]` or `[FTL]` appears in the window, check that it comes after
-     this run's "starting on" line before calling it a failure.
-   - Stop with `Stop-Process -Id $p.Id -Force`. Never kill by image name, because the owner may have the app open.
-     Then delete the temp folder, including `smoke.db` and any `-journal`, `-wal` or `-shm` files.
-   - A failed smoke start is a blocker. Send it to the owning agent like a failed build. If later commits change App
-     code (CI or review fixes), rebuild (step 6), then repeat the smoke start before reporting. Record the result
-     (pass, fail or not applicable) for the PR body and the final report. It does not replace the manual UI test
-     plan; it only shows that the app starts.
+   the working tree that will be committed in step 8, built in step 6. Follow `.claude/skills/smoke-start/SKILL.md`.
+   A failed smoke start is a blocker; send it to the owning agent like a failed build. After later commits that change
+   App code (CI or review fixes), rebuild (step 6) and repeat it before reporting. Record the result (pass, fail or not
+   applicable) for the PR body and the final report.
 8. **Commit and push.** The lead passes the commit attribution lines and the PR footer lines in the
    brief. If either set is missing, stop with `BLOCKED` before the first commit instead of inventing
    them. Commit with a short imperative subject and the commit attribution lines, verbatim. Push with

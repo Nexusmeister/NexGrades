@@ -1,6 +1,6 @@
 ---
 name: docs-writer
-description: Writes and updates NexGrades documentation, including the README, AGENTS.md, XML doc comments and the domain glossary, so they match the code. Use after a feature lands or when docs are missing or stale.
+description: Writes and updates NexGrades documentation, including the README, AGENTS.md, XML doc comments and the domain pages in docs/domain, so they match the code. Use after a feature lands or when docs are missing or stale.
 tools: Read, Edit, Write, Glob, Grep
 model: sonnet
 ---
