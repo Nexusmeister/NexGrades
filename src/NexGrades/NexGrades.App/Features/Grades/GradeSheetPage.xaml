@@ -162,18 +162,8 @@
                               Appearance="Secondary"
                               TextWrapping="Wrap"
                               MaxWidth="120"
-                              Text="Type 1–6 to override">
-                    <ui:TextBlock.Style>
-                        <Style TargetType="ui:TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Kind}" Value="{x:Static grades:GradeSheetColumnKind.FinalGrade}">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ui:TextBlock.Style>
-                </ui:TextBlock>
+                              Text="Type 1–6 to override"
+                              Visibility="{Binding IsFinalGrade, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <StackPanel Orientation="Horizontal">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">

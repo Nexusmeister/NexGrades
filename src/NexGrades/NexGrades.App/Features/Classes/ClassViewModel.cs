@@ -127,7 +127,7 @@ public partial class ClassViewModel(
         IsEditing = false;
         _loadedName = string.Empty;
         Name = string.Empty;
-        Title = "AddClass";
+        Title = "Add class";
 
         if (_editingClassInstanceId is not { } id)
         {
@@ -144,7 +144,7 @@ public partial class ClassViewModel(
 
         _loadedName = existing.Name;
         Name = existing.Name;
-        Title = "EditClass";
+        Title = "Edit class";
         IsEditing = true;
 
         var enrollments = await db.Enrollments.AsNoTracking()

@@ -78,6 +78,9 @@ public sealed class GradeSheetColumn
             ? string.Create(CultureInfo.InvariantCulture, $"{nameof(GradeSheetRow.FinalGrade)}.{propertyName}")
             : CellPath(propertyName);
 
+    /// <summary>True for the final grade column; its header shows the "Type 1–6 to override" hint.</summary>
+    public bool IsFinalGrade => Kind == GradeSheetColumnKind.FinalGrade;
+
     /// <summary>True when the user may type into the column's cells (subject to each cell's own state).</summary>
     public bool IsEditable => Kind is GradeSheetColumnKind.Assessment or GradeSheetColumnKind.FinalGrade;
 }
