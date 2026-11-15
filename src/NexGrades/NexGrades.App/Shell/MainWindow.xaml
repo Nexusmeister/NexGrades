@@ -20,7 +20,7 @@
         WindowBackdropType="Mica"
         WindowCornerPreference="Round"
         WindowStartupLocation="CenterScreen"
-        Title="MainWindow" d:DesignHeight="450" d:DesignWidth="800">
+        Title="NexGrades" d:DesignHeight="450" d:DesignWidth="800">
 
     <ui:FluentWindow.InputBindings>
         <KeyBinding

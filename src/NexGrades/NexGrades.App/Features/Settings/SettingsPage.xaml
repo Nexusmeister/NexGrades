@@ -5,14 +5,16 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:settings="clr-namespace:NexGrades.App.Features.Settings"
+      xmlns:core="clr-namespace:NexGrades.App.Core"
       d:DataContext="{d:DesignInstance settings:SettingsPage, IsDesignTimeCreatable=False}"
       mc:Ignorable="d" 
       d:DesignHeight="450" 
       d:DesignWidth="800"
       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-      Title="Settings Page">
+      Title="Settings">
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
+        <core:NonEmptyStringToVisibilityConverter x:Key="nonEmptyStringToVisibilityConverter" />
     </Page.Resources>
 
     <StackPanel Margin="10">
@@ -137,17 +139,8 @@
                               TextWrapping="Wrap"
                               MaxWidth="320"
                               HorizontalAlignment="Left"
-                              Text="{Binding ViewModel.Updates.StatusText}">
-                    <ui:TextBlock.Style>
-                        <Style TargetType="{x:Type ui:TextBlock}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding ViewModel.Updates.StatusText}" Value="">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ui:TextBlock.Style>
-                </ui:TextBlock>
+                              Text="{Binding ViewModel.Updates.StatusText}"
+                              Visibility="{Binding ViewModel.Updates.StatusText, Converter={StaticResource nonEmptyStringToVisibilityConverter}}"/>
                 <ui:Button Content="Restart now"
                            Margin="0,8,0,0"
                            Appearance="Primary"
