@@ -28,7 +28,7 @@
                 Command="{Binding ViewModel.CancelCommand}"/>
         </StackPanel>
 
-        <ui:TextBox ClearButtonEnabled="True" PlaceholderText="Subject name" PlaceholderEnabled="True" Text="{Binding ViewModel.Name}"></ui:TextBox>
-        <ui:TextBox Margin="0,8,0,0" ClearButtonEnabled="True" PlaceholderText="Short code (e.g. MA)" PlaceholderEnabled="True" Text="{Binding ViewModel.ShortCode}"></ui:TextBox>
+        <ui:TextBox ClearButtonEnabled="True" PlaceholderText="Subject name" PlaceholderEnabled="True" AutomationProperties.Name="Subject name" MaxLength="{Binding ViewModel.MaxNameLength, Mode=OneTime}" Text="{Binding ViewModel.Name}"></ui:TextBox>
+        <ui:TextBox Margin="0,8,0,0" ClearButtonEnabled="True" PlaceholderText="Short code (e.g. MA)" PlaceholderEnabled="True" AutomationProperties.Name="Short code" MaxLength="{Binding ViewModel.MaxShortCodeLength, Mode=OneTime}" Text="{Binding ViewModel.ShortCode}"></ui:TextBox>
     </StackPanel>
 </Page>

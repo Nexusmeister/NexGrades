@@ -59,6 +59,29 @@ public class NoteExportServiceTests
     private static string[] Texts(NoteExportTable table) => [.. table.Rows.Select(r => r.Text)];
 
     [Fact]
+    public async Task BuildAsync_Throws_WhenToIsDateOnlyMaxValue()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() =>
+            CreateService(db).BuildAsync(fixture.StudentId, new DateOnly(2025, 10, 1), DateOnly.MaxValue, false));
+    }
+
+    [Fact]
+    public async Task BuildAsync_ReturnsNotes_WhenToIsOneDayBelowDateOnlyMaxValue()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        await AddNoteAsync(db, fixture, "in range", new DateTime(2025, 10, 5, 8, 0, 0));
+
+        var table = await CreateService(db).BuildAsync(
+            fixture.StudentId, new DateOnly(2025, 10, 1), DateOnly.MaxValue.AddDays(-1), false);
+
+        Assert.Equal(["in range"], Texts(table));
+    }
+
+    [Fact]
     public async Task BuildAsync_ReturnsNotesInRange_IncludingBoundaryDays()
     {
         using var db = new SqliteTestDatabase();

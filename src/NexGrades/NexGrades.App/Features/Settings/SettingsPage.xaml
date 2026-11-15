@@ -56,5 +56,23 @@
                 </StackPanel>
             </StackPanel>
         </ui:CardControl>
+        <ui:CardControl Icon="{ui:SymbolIcon DocumentText24}"
+                        Margin="0,0,0,12">
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Body"
+                                  Text="Log files"/>
+                    <ui:TextBlock FontTypography="Caption"
+                                  Appearance="Secondary"
+                                  TextWrapping="Wrap"
+                                  Text="Opens the folder with the application's log files, for support."/>
+                </StackPanel>
+            </ui:CardControl.Header>
+            <ui:Button Content="Open log folder"
+                       Icon="{ui:SymbolIcon FolderOpen24}"
+                       AutomationProperties.Name="Open log folder"
+                       ToolTip="Open the folder with the application's log files"
+                       Command="{Binding ViewModel.OpenLogFolderCommand}"/>
+        </ui:CardControl>
     </StackPanel>
 </Page>

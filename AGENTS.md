@@ -218,7 +218,10 @@ particular:
   re-check them on `WritabilityChanged`, and place `<yearLock:YearLockBar DataContext="{Binding ViewModel.YearLock}"/>`
   on the page. A list of years creates one view model per row with `Create(state)`. `SchoolYearLockMonitor` owns the
   state and the expiry timer, so do not add a timer to a page. A change of writability must not clear what the user
-  has typed. A page that catches `ClosedYearException` from a write calls `YearLock.RefreshAsync()` afterwards, so the lock banner and writability reflect the new state. A user-started reload (a filter toggle or a refresh after a write) on a page with editable input checks for unsaved input and asks before dropping it; a writability change never clears typed input. `StudentPage` is the reference.
+  has typed. A page that catches `ClosedYearException` from a write calls `YearLock.RefreshAsync()` afterwards,
+  so the lock banner and writability reflect the new state. A user-started reload (a filter toggle or a refresh
+  after a write) on a page with editable input checks for unsaved input and asks before dropping it; a
+  writability change never clears typed input. `StudentPage` is the reference.
 - **Feature folders:** each screen lives in `NexGrades.App/Features/<Area>/` as `<Name>Page.xaml` (+ code
   behind) and `<Name>ViewModel.cs`. Register every new page, view model and service in
   `NexGrades.App/Extensions/HostBuilderExtensions.cs`.

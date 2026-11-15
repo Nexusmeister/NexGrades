@@ -82,4 +82,29 @@ public class ExportNotesDialogViewModelTests
 
     [Fact]
     public void IncludeArchived_IsOff_ByDefault() => Assert.False(Create().IncludeArchived);
+
+    [Fact]
+    public void DisplayDateEnd_IsOneDayBelowDateOnlyMaxValue() =>
+        Assert.Equal(DateOnly.MaxValue.AddDays(-1), DateOnly.FromDateTime(Create().DisplayDateEnd));
+
+    [Fact]
+    public void ValidationMessage_IsSet_WhenToIsBeyondDisplayDateEnd()
+    {
+        var viewModel = Create();
+        viewModel.To = DateTime.MaxValue.Date;
+
+        Assert.False(viewModel.IsValid);
+        Assert.True(viewModel.HasValidationMessage);
+        Assert.Null(viewModel.TryCreateRequest());
+    }
+
+    [Fact]
+    public void IsValid_IsTrue_WhenToEqualsDisplayDateEnd()
+    {
+        var viewModel = Create();
+        viewModel.To = viewModel.DisplayDateEnd;
+
+        Assert.True(viewModel.IsValid);
+        Assert.NotNull(viewModel.TryCreateRequest());
+    }
 }

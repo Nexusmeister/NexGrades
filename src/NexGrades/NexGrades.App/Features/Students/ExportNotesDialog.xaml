@@ -22,6 +22,7 @@
         <DatePicker x:Name="FromPicker"
                     HorizontalAlignment="Stretch"
                     TabIndex="0"
+                    DisplayDateEnd="{Binding DisplayDateEnd, Mode=OneWay}"
                     AutomationProperties.Name="From: first day of the exported notes"
                     SelectedDate="{Binding From}"/>
 
@@ -30,6 +31,7 @@
                       Text="To"/>
         <DatePicker HorizontalAlignment="Stretch"
                     TabIndex="1"
+                    DisplayDateEnd="{Binding DisplayDateEnd, Mode=OneWay}"
                     AutomationProperties.Name="To: last day of the exported notes"
                     SelectedDate="{Binding To}"/>
 

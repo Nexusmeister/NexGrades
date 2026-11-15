@@ -1,7 +1,11 @@
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using NexGrades.App.Core;
+using NexGrades.App.Infrastructure;
 using NexGrades.Common.Services;
+using NexGrades.Common.Storage;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
@@ -12,8 +16,16 @@ namespace NexGrades.App.Features.Settings;
 /// not saved.
 /// </summary>
 /// <param name="dialogService">Opens the folder picker.</param>
-/// <param name="snackbarService">Shows a caution message when no folder is selected.</param>
-public partial class SettingsViewModel(IFileSystemDialogService dialogService, ISnackbarService snackbarService) : ViewModel
+/// <param name="snackbarService">Shows a caution message when no folder is selected and reports a failed folder open.</param>
+/// <param name="appDataPaths">Locates the log folder.</param>
+/// <param name="folderOpener">Shows the log folder in the file browser.</param>
+/// <param name="logger">Records a failure to open the log folder.</param>
+public partial class SettingsViewModel(
+    IFileSystemDialogService dialogService,
+    ISnackbarService snackbarService,
+    IAppDataPaths appDataPaths,
+    IFolderOpener folderOpener,
+    ILogger<SettingsViewModel> logger) : ViewModel
 {
     [ObservableProperty]
     private bool _openedFolderPathVisibility;
@@ -47,4 +59,32 @@ public partial class SettingsViewModel(IFileSystemDialogService dialogService, I
         OpenedFolderPath = string.Join("\n", foldersSelected);
         OpenedFolderPathVisibility = true;
     }
+
+    /// <summary>
+    /// Opens the log folder in the file browser, creating it first when logging has not yet. Failure is reported in
+    /// a snackbar; the path itself is not logged, because it carries the Windows user name.
+    /// </summary>
+    [RelayCommand]
+    public void OpenLogFolder()
+    {
+        try
+        {
+            var directory = appDataPaths.LogDirectory;
+            _ = Directory.CreateDirectory(directory);
+            folderOpener.Open(directory);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            LogOpenLogFolderFailed(ex);
+            snackbarService.Show(
+                "Error",
+                "The log folder could not be opened.",
+                ControlAppearance.Caution,
+                new SymbolIcon(SymbolRegular.ErrorCircle24),
+                TimeSpan.FromSeconds(5));
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The log folder could not be opened.")]
+    private partial void LogOpenLogFolderFailed(Exception exception);
 }

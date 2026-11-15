@@ -24,7 +24,7 @@ public sealed class NoteExportService(IDbContextFactory<AppDbContext> contextFac
     /// <param name="to">Last day of the range; the whole day is included.</param>
     /// <param name="includeArchived">Whether archived notes are included.</param>
     /// <param name="cancellationToken">Cancels the query.</param>
-    /// <exception cref="InvariantViolationException">The range is reversed or the student does not exist.</exception>
+    /// <exception cref="InvariantViolationException">The range is reversed, ends on <see cref="DateOnly.MaxValue"/> or the student does not exist.</exception>
     public Task<NoteExportTable> BuildAsync(
         int studentId, DateOnly from, DateOnly to, bool includeArchived, CancellationToken cancellationToken = default) =>
         DomainOperation.RunAsync("NoteExportService.Build", async () =>
@@ -33,6 +33,12 @@ public sealed class NoteExportService(IDbContextFactory<AppDbContext> contextFac
             {
                 throw new InvariantViolationException(string.Create(
                     CultureInfo.InvariantCulture, $"The export range starts on {from:yyyy-MM-dd}, after it ends on {to:yyyy-MM-dd}."));
+            }
+
+            if (to == DateOnly.MaxValue)
+            {
+                // The query bound is the day after "to", which does not exist for the last representable day.
+                throw new InvariantViolationException("The export range must end before the last supported date.");
             }
 
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
