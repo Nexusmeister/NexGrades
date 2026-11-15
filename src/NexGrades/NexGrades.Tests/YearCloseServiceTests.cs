@@ -50,46 +50,6 @@ public class YearCloseServiceTests
         Assert.Contains(readiness.Warnings, w => w.Kind == CloseReadinessIssueKind.BucketWeightsNotHundred && w.WeightTotal == 90m);
     }
 
-    [Fact]
-    public async Task CloseSchoolYearAsync_SetsClosedStatusAndTimestamp_OnceEveryClassIsDispositioned()
-    {
-        using var db = new SqliteTestDatabase();
-        await using var context = db.CreateContext();
-
-        var year = new SchoolYear { Label = "2025/26", StartDate = new DateTime(2025, 8, 1), EndDate = new DateTime(2026, 7, 31) };
-        var group = new ClassGroup { CohortLabel = "Kohorte 2019", FoundedInSchoolYear = year };
-        var instance = new ClassInstance { ClassGroup = group, SchoolYear = year, Name = "5A", Status = ClassInstanceStatus.Archived };
-        context.AddRange(year, group, instance);
-        await context.SaveChangesAsync();
-
-        var now = new DateTime(2026, 7, 20);
-        var service = new YearCloseService(db.CreateContextFactory(), new FixedClock(now), NullLogger<YearCloseService>.Instance);
-        await service.CloseSchoolYearAsync(year.Id);
-
-        await using var verify = db.CreateContext();
-        var refreshed = await verify.SchoolYears.FindAsync(year.Id);
-        Assert.NotNull(refreshed);
-        Assert.Equal(SchoolYearStatus.Closed, refreshed!.Status);
-        Assert.Equal(now, refreshed.ClosedOn);
-    }
-
-    [Fact]
-    public async Task CloseSchoolYearAsync_Throws_WhenBlockingIssuesRemain()
-    {
-        using var db = new SqliteTestDatabase();
-        await using var context = db.CreateContext();
-
-        var year = new SchoolYear { Label = "2025/26", StartDate = new DateTime(2025, 8, 1), EndDate = new DateTime(2026, 7, 31) };
-        var group = new ClassGroup { CohortLabel = "Kohorte 2019", FoundedInSchoolYear = year };
-        var instance = new ClassInstance { ClassGroup = group, SchoolYear = year, Name = "5A", Status = ClassInstanceStatus.Active };
-        context.AddRange(year, group, instance);
-        await context.SaveChangesAsync();
-
-        var service = new YearCloseService(db.CreateContextFactory(), new FixedClock(DateTime.Now), NullLogger<YearCloseService>.Instance);
-
-        await Assert.ThrowsAsync<Domain.Exceptions.InvariantViolationException>(() => service.CloseSchoolYearAsync(year.Id));
-    }
-
     private static readonly DateTime Now = new(2026, 7, 20, 10, 0, 0);
 
     private sealed record Seeded(int OldYearId, int NextYearId, int ClassId);
@@ -442,15 +402,55 @@ public class YearCloseServiceTests
     }
 
     [Fact]
-    public async Task CloseSchoolYearAsync_Throws_ForActiveYear_EvenWhenNothingBlocks()
+    public async Task CloseAndActivateNextYearAsync_Throws_AndChangesNothing_WhenNextYearOverlapsOldYear()
     {
         using var db = new SqliteTestDatabase();
         var seeded = await SeedAsync(db);
+        await SetNextYearDatesAsync(db, seeded.NextYearId, new DateTime(2026, 7, 31), new DateTime(2027, 7, 31));
 
-        await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db).CloseSchoolYearAsync(seeded.OldYearId));
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db).CloseAndActivateNextYearAsync(seeded.OldYearId, seeded.NextYearId));
+
+        var old = await LoadYearAsync(db, seeded.OldYearId);
+        var next = await LoadYearAsync(db, seeded.NextYearId);
+        Assert.Equal(SchoolYearStatus.Active, old.Status);
+        Assert.Null(old.ClosedOn);
+        Assert.Equal(SchoolYearStatus.Planned, next.Status);
+    }
+
+    [Fact]
+    public async Task CloseAndActivateNextYearAsync_Throws_WhenNextYearStartsInsideOldYear()
+    {
+        using var db = new SqliteTestDatabase();
+        var seeded = await SeedAsync(db);
+        await SetNextYearDatesAsync(db, seeded.NextYearId, new DateTime(2025, 9, 1), new DateTime(2026, 8, 31));
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db).CloseAndActivateNextYearAsync(seeded.OldYearId, seeded.NextYearId));
 
         var old = await LoadYearAsync(db, seeded.OldYearId);
         Assert.Equal(SchoolYearStatus.Active, old.Status);
-        Assert.Null(old.ClosedOn);
+    }
+
+    [Fact]
+    public async Task CloseAndActivateNextYearAsync_Succeeds_WhenNextYearStartsTheDayAfterOldYearEnds()
+    {
+        using var db = new SqliteTestDatabase();
+        var seeded = await SeedAsync(db);
+        await SetNextYearDatesAsync(db, seeded.NextYearId, new DateTime(2026, 8, 1, 12, 0, 0), new DateTime(2027, 7, 31));
+
+        await CreateService(db).CloseAndActivateNextYearAsync(seeded.OldYearId, seeded.NextYearId);
+
+        var next = await LoadYearAsync(db, seeded.NextYearId);
+        Assert.Equal(SchoolYearStatus.Active, next.Status);
+    }
+
+    private static async Task SetNextYearDatesAsync(SqliteTestDatabase db, int nextYearId, DateTime start, DateTime end)
+    {
+        await using var context = db.CreateContext();
+        var next = await context.SchoolYears.SingleAsync(sy => sy.Id == nextYearId);
+        next.StartDate = start;
+        next.EndDate = end;
+        await context.SaveChangesAsync();
     }
 }

@@ -108,7 +108,7 @@ GradeBucket, Assessment, Grade, FinalGrade, SubjectParticipation, Note, Teacher,
 - `SchoolYearService.CreateNextYearAsync` creates the Planned successor of the Active year; only one Planned
   successor may exist at a time.
 - `YearCloseService.CloseAndActivateNextYearAsync` closes the Active year and activates the next one in a single
-  transaction. It is the only way to switch years: `CloseSchoolYearAsync` refuses an Active year.
+  transaction. It is the only way to switch years.
 - Close readiness is reported as structured `CloseReadinessIssue` values, never as English sentences; the UI words
   them.
 
@@ -124,8 +124,8 @@ GradeBucket, Assessment, Grade, FinalGrade, SubjectParticipation, Note, Teacher,
 - A ClassGroup is the persistent cohort and carries no grades.
 - A rename between years (5A → 6A) is a new ClassInstance row, never an update of a historic one.
 - Renaming an Active instance changes `Name` in place; a rolled-forward or archived one is refused.
-- A new or changed class name is at most 20 characters (`ClassService.MaxNameLength`). A longer name from a
-  rollover stays valid and can be saved unchanged.
+- A new or changed class name is at most 20 characters (`ClassService.MaxNameLength`). A longer name that
+  is already stored, such as one rolled forward unchanged, stays valid and can be saved unchanged.
 - `RolloverService.GetClassRolloverStatesAsync` lets a partly finished rollover resume from database state alone.
 
 **Students and enrollment** ([page](docs/domain/students-and-enrollment.md)):

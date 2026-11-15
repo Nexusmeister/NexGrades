@@ -197,13 +197,14 @@ public partial class ClassViewModel(
         IsExporting = true;
         try
         {
-            var path = fileSaveDialog.SelectSaveFile(await exporter.SuggestFileNameAsync(row.SubjectInstanceId, cancellationToken));
+            var table = await exporter.BuildAsync(row.SubjectInstanceId, cancellationToken);
+            var path = fileSaveDialog.SelectSaveFile(SubjectOverviewExporter.SuggestFileName(table));
             if (path is null)
             {
                 return;
             }
 
-            await exporter.ExportAsync(row.SubjectInstanceId, path, cancellationToken);
+            await exporter.ExportAsync(table, path, cancellationToken);
             snackbar.Show("Success", string.Format(CultureInfo.CurrentCulture, "Exported {0}.", Path.GetFileName(path)), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

@@ -28,11 +28,10 @@ starts after a given year. The end-of-year flow uses it to resume after a restar
 
 `YearCloseService.CloseAndActivateNextYearAsync` closes the `Active` year and activates the `Planned` next
 year in a single transaction. A failure leaves both years unchanged, so there is never a moment without an
-`Active` year. It sets `ClosedOn` on the closed year. The next year must start after the closed one, and no
+`Active` year. It sets `ClosedOn` on the closed year. The next year must start after the closed one ends, and no
 blocking issue may remain.
 
-It is the only way to switch years. `YearCloseService.CloseSchoolYearAsync` closes a year that is not
-`Active`, once no blocking issue remains, and refuses an `Active` year.
+It is the only way to close a year.
 
 ## Close readiness
 

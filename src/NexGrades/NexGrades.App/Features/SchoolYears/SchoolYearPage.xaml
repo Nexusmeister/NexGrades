@@ -100,6 +100,7 @@
                             <ui:TextBox Width="240"
                                         HorizontalAlignment="Left"
                                         AutomationProperties.Name="Name of the class in the next school year"
+                                        MaxLength="{Binding MaxNameLength, Mode=OneTime}"
                                         Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                         <CheckBox Margin="0,8,0,0"

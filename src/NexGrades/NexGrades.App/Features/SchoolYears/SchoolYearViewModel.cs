@@ -372,7 +372,7 @@ public sealed partial class SchoolYearViewModel(
 
     private static bool IsChoiceComplete(ClassChoiceRow row) => row.Choice switch
     {
-        ClassYearEndChoice.RollForward => !string.IsNullOrWhiteSpace(row.NewName),
+        ClassYearEndChoice.RollForward => row.IsNewNameValid,
         ClassYearEndChoice.Archive => true,
         _ => false,
     };

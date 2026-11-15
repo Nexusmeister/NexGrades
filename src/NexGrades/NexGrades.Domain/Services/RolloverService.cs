@@ -24,7 +24,7 @@ public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFacto
     /// overrides for the students who carried over.
     /// </summary>
     /// <exception cref="InvariantViolationException">
-    /// The new name is empty, the class instance or the target year does not exist, the class is not Active, the
+    /// The new name is empty, or changes from the old name and is longer than <see cref="ClassService.MaxNameLength"/>, the class instance or the target year does not exist, the class is not Active, the
     /// target year is not Planned or does not start after the class's year, the cohort already has a class in the
     /// target year, or a carried-forward student would end up double-enrolled in the target school year.
     /// </exception>
@@ -52,6 +52,12 @@ public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFacto
             }
 
             await EnsureTargetYearAsync(context, oldInstance, targetSchoolYearId, cancellationToken);
+
+            // The length limit applies only to a name that differs from the old one, as in ClassService.RenameClassAsync.
+            if (name != oldInstance.Name)
+            {
+                name = RequiredText.Normalize(name, "A class name", ClassService.MaxNameLength);
+            }
 
             // Step 1: old instance -> RolledForward. Nothing else about it changes.
             oldInstance.Status = ClassInstanceStatus.RolledForward;
@@ -191,8 +197,6 @@ public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFacto
         int targetSchoolYearId,
         CancellationToken cancellationToken)
     {
-        // Step 3: carry forward active enrollments, going through the same invariant check used by
-        // EnrollmentService, so a student can never end up double-enrolled in the target year.
         var activeEnrollments = oldInstance.Enrollments
             .Where(e => EnrollmentActivity.IsActive(e, clock))
             .ToList();

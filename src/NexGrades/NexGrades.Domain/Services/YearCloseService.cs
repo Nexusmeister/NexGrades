@@ -147,42 +147,13 @@ public sealed partial class YearCloseService(IDbContextFactory<AppDbContext> con
     }
 
     /// <summary>
-    /// Closes <paramref name="schoolYearId"/>: sets <see cref="SchoolYear.Status"/> to
-    /// <see cref="SchoolYearStatus.Closed"/> and <see cref="SchoolYear.ClosedOn"/> to now, but only once
-    /// every blocking issue from <see cref="GetCloseReadinessAsync(int, CancellationToken)"/> has been resolved.
-    /// </summary>
-    /// <exception cref="InvariantViolationException">
-    /// The year is Active (use <see cref="CloseAndActivateNextYearAsync"/>), or blocking issues remain; their
-    /// class ids are listed in the message.
-    /// </exception>
-    public Task CloseSchoolYearAsync(int schoolYearId, CancellationToken cancellationToken = default) =>
-        DomainOperation.RunAsync("YearCloseService.CloseSchoolYear", async () =>
-        {
-            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-            var readiness = await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);
-            var schoolYear = await context.SchoolYears.FirstAsync(sy => sy.Id == schoolYearId, cancellationToken);
-            if (schoolYear.Status == SchoolYearStatus.Active)
-            {
-                throw new InvariantViolationException(
-                    $"School year {schoolYearId} is Active; close it with {nameof(CloseAndActivateNextYearAsync)} so that the next year becomes Active.");
-            }
-
-            EnsureCanClose(schoolYearId, readiness);
-
-            schoolYear.Status = SchoolYearStatus.Closed;
-            schoolYear.ClosedOn = clock.Now;
-
-            await context.SaveChangesAsync(cancellationToken);
-        });
-
-    /// <summary>
     /// Closes the Active <paramref name="schoolYearId"/> and activates the Planned <paramref name="nextSchoolYearId"/>
     /// in one transaction, so a failure leaves both years unchanged and there is never a moment without an Active
     /// year.
     /// </summary>
     /// <exception cref="InvariantViolationException">
     /// Either year is missing, the years are the same, the first is not Active, the second is not Planned or does
-    /// not start after the first, or blocking issues remain (their class ids are listed in the message).
+    /// not start after the first ends, or blocking issues remain (their class ids are listed in the message).
     /// </exception>
     public Task CloseAndActivateNextYearAsync(int schoolYearId, int nextSchoolYearId, CancellationToken cancellationToken = default) =>
         DomainOperation.RunAsync("YearCloseService.CloseAndActivateNextYear", async () =>
@@ -212,10 +183,10 @@ public sealed partial class YearCloseService(IDbContextFactory<AppDbContext> con
                     $"School year {nextSchoolYearId} is not Planned (current status: {next.Status}).");
             }
 
-            if (next.StartDate <= old.StartDate)
+            if (next.StartDate.Date <= old.EndDate.Date)
             {
                 throw new InvariantViolationException(
-                    $"School year {nextSchoolYearId} does not start after school year {schoolYearId}.");
+                    $"School year {nextSchoolYearId} does not start after school year {schoolYearId} ends.");
             }
 
             var readiness = await GetCloseReadinessAsync(context, schoolYearId, cancellationToken);

@@ -26,7 +26,7 @@ historic one.
 keeps its historic name, so renaming it is refused. The cohort label of the `ClassGroup` is not changed.
 
 A new or changed name is at most 20 characters (`ClassService.MaxNameLength`). This is not a schema limit. A
-longer name that already exists, for example from a rollover, stays valid and can be saved unchanged.
+longer name that already exists, for example one rolled forward unchanged, stays valid and can be saved unchanged.
 
 ## Rollover
 
@@ -34,7 +34,7 @@ longer name that already exists, for example from a rollover, stays valid and ca
 after the class's own year, in one transaction:
 
 - The old instance becomes `RolledForward`. Nothing else about it changes.
-- A new instance of the same cohort and teacher is created in the target year, with the new name.
+- A new instance of the same cohort and teacher is created in the target year, with the new name. The new name is at most 20 characters, unless it is the old name unchanged.
 - Active enrollments are carried over, through the same one-enrollment-per-year check that
   `EnrollmentService` uses. See [Students and enrollment](students-and-enrollment.md).
 - Each subject instance is copied. Its buckets are copied from the current `BucketTemplate` rows, not from

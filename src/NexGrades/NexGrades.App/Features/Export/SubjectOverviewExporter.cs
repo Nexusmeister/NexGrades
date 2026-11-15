@@ -13,32 +13,32 @@ namespace NexGrades.App.Features.Export;
 public sealed class SubjectOverviewExporter(SubjectOverviewExportService exportService, SubjectOverviewExcelWriter writer)
 {
     /// <summary>
-    /// Suggests a file name such as "Mathematics 5A 2025-26.xlsx". Characters that are invalid in file names
-    /// (the year label "2025/26" contains one) are replaced.
+    /// Builds the overview table of <paramref name="subjectInstanceId"/> once, so a caller can use it for both
+    /// <see cref="SuggestFileName"/> and <see cref="ExportAsync"/>.
     /// </summary>
-    public async Task<string> SuggestFileNameAsync(int subjectInstanceId, CancellationToken cancellationToken = default)
-    {
-        var table = await exportService.BuildAsync(subjectInstanceId, cancellationToken);
-        return SuggestFileName(table);
-    }
+    /// <exception cref="Domain.Exceptions.InvariantViolationException">The subject instance does not exist.</exception>
+    public Task<SubjectOverviewTable> BuildAsync(int subjectInstanceId, CancellationToken cancellationToken = default) =>
+        exportService.BuildAsync(subjectInstanceId, cancellationToken);
 
     /// <summary>
-    /// Writes the overview of <paramref name="subjectInstanceId"/> to <paramref name="path"/>. The workbook is
+    /// Writes <paramref name="table"/> to <paramref name="path"/>. The workbook is
     /// built in memory first, so a failure never leaves a half-written file.
     /// </summary>
     /// <exception cref="IOException">The file cannot be written.</exception>
     /// <exception cref="UnauthorizedAccessException">The path is not writable.</exception>
-    public async Task ExportAsync(int subjectInstanceId, string path, CancellationToken cancellationToken = default)
+    public async Task ExportAsync(SubjectOverviewTable table, string path, CancellationToken cancellationToken = default)
     {
-        var table = await exportService.BuildAsync(subjectInstanceId, cancellationToken);
-
         using var stream = new MemoryStream();
         writer.Write(table, stream, CultureInfo.CurrentUICulture);
 
         await File.WriteAllBytesAsync(path, stream.ToArray(), cancellationToken);
     }
 
-    private static string SuggestFileName(SubjectOverviewTable table)
+    /// <summary>
+    /// Suggests a file name such as "Mathematics 5A 2025-26.xlsx". Characters that are invalid in file names
+    /// (the year label "2025/26" contains one) are replaced.
+    /// </summary>
+    public static string SuggestFileName(SubjectOverviewTable table)
     {
         var name = $"{table.SubjectName} {table.ClassName} {table.SchoolYearLabel}";
         var invalid = Path.GetInvalidFileNameChars();

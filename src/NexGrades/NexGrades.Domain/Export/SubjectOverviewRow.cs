@@ -6,4 +6,9 @@ namespace NexGrades.Domain.Export;
 /// The date the student left the class, or <see langword="null"/> for an active student. The Domain does not
 /// format it; the writer adds the "left on" marker in the UI culture.
 /// </param>
-public sealed record SubjectOverviewRow(IReadOnlyList<SubjectOverviewCell> Cells, DateOnly? LeftOn);
+/// <param name="IsFinalGradeOverridden">
+/// Whether the teacher set the final grade. A flag, not text, so the writer words it in the UI language; the cell of
+/// the <see cref="SubjectOverviewColumnKind.FinalGradeOverridden"/> column is empty.
+/// </param>
+public sealed record SubjectOverviewRow(
+    IReadOnlyList<SubjectOverviewCell> Cells, DateOnly? LeftOn, bool IsFinalGradeOverridden = false);

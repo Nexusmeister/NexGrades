@@ -427,4 +427,57 @@ public class RolloverServiceTests
         Assert.Equal(SchoolYearStatus.Closed, (await verify.SchoolYears.SingleAsync(sy => sy.Id == years.OldId)).Status);
         Assert.Equal(SchoolYearStatus.Active, (await verify.SchoolYears.SingleAsync(sy => sy.Id == years.TargetId)).Status);
     }
+
+    private static async Task<(int ClassId, int TargetYearId)> SeedForNameAsync(SqliteTestDatabase db, string oldName)
+    {
+        await using var context = db.CreateContext();
+        var yearOld = new SchoolYear { Label = "2025/26", StartDate = new DateTime(2025, 8, 1), EndDate = new DateTime(2026, 7, 31) };
+        var yearNew = new SchoolYear { Label = "2026/27", StartDate = new DateTime(2026, 8, 1), EndDate = new DateTime(2027, 7, 31) };
+        var group = new ClassGroup { CohortLabel = "Cohort A", FoundedInSchoolYear = yearOld };
+        var oldInstance = new ClassInstance { ClassGroup = group, SchoolYear = yearOld, Name = oldName };
+        context.AddRange(yearOld, yearNew, group, oldInstance);
+        await context.SaveChangesAsync();
+        return (oldInstance.Id, yearNew.Id);
+    }
+
+    [Fact]
+    public async Task RollClassInstanceForwardAsync_Throws_AndChangesNothing_WhenNewNameIsTooLong()
+    {
+        using var db = new SqliteTestDatabase();
+        var (classId, targetId) = await SeedForNameAsync(db, "5A");
+        var service = new RolloverService(db.CreateContextFactory(), new FixedClock(new DateTime(2026, 7, 15)));
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => service.RollClassInstanceForwardAsync(classId, targetId, new string('x', ClassService.MaxNameLength + 1)));
+
+        await using var verify = db.CreateContext();
+        Assert.Equal(ClassInstanceStatus.Active, (await verify.ClassInstances.AsNoTracking().SingleAsync(ci => ci.Id == classId)).Status);
+        Assert.Equal(1, await verify.ClassInstances.CountAsync());
+    }
+
+    [Fact]
+    public async Task RollClassInstanceForwardAsync_Accepts_NewNameOfMaximumLength()
+    {
+        using var db = new SqliteTestDatabase();
+        var (classId, targetId) = await SeedForNameAsync(db, "5A");
+        var service = new RolloverService(db.CreateContextFactory(), new FixedClock(new DateTime(2026, 7, 15)));
+        var name = new string('x', ClassService.MaxNameLength);
+
+        var created = await service.RollClassInstanceForwardAsync(classId, targetId, name);
+
+        Assert.Equal(name, created.Name);
+    }
+
+    [Fact]
+    public async Task RollClassInstanceForwardAsync_Accepts_UnchangedLegacyNameLongerThanMaximum()
+    {
+        using var db = new SqliteTestDatabase();
+        var legacyName = new string('y', ClassService.MaxNameLength + 5);
+        var (classId, targetId) = await SeedForNameAsync(db, legacyName);
+        var service = new RolloverService(db.CreateContextFactory(), new FixedClock(new DateTime(2026, 7, 15)));
+
+        var created = await service.RollClassInstanceForwardAsync(classId, targetId, "  " + legacyName + " ");
+
+        Assert.Equal(legacyName, created.Name);
+    }
 }
