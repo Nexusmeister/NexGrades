@@ -1,5 +1,4 @@
 using System.IO;
-using System.Runtime.ExceptionServices;
 using System.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +24,7 @@ public class ServiceRegistrationTests
     [Fact]
     public void Build_ResolvesEveryAppService_FromTheRootProviderWithScopeValidation()
     {
-        RunOnStaThread(() =>
+        SharedStaThread.Run(() =>
         {
             EnsureApplicationResources();
 
@@ -79,25 +78,5 @@ public class ServiceRegistrationTests
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         application.Resources.MergedDictionaries.Add(new ThemesDictionary());
         application.Resources.MergedDictionaries.Add(new ControlsDictionary());
-    }
-
-    private static void RunOnStaThread(Action action)
-    {
-        ExceptionDispatchInfo? failure = null;
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception ex)
-            {
-                failure = ExceptionDispatchInfo.Capture(ex);
-            }
-        });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
-        failure?.Throw();
     }
 }
