@@ -408,4 +408,139 @@ public class GradeSheetStudentGradesTests
         Assert.Null(entry.Label);
         Assert.Null(entry.Comment);
     }
+
+    // ---------- Final grade ----------
+
+    [Fact]
+    public async Task GetStudentGradesAsync_ReturnsTheOverride_AndTheProposalNextToIt()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await seed.AddGradeAsync(student, 2.0m, Day);
+        await AddFinalGradeAsync(db, seed.SubjectInstanceId, student, 4m);
+
+        var subject = Single(await CreateService(db).GetStudentGradesAsync(student, seed.YearId));
+
+        Assert.Equal(4m, subject.FinalGradeOverride);
+        Assert.Equal(2m, subject.ProposedFinalGrade);
+        Assert.Equal(4m, subject.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetStudentGradesAsync_DerivesTheProposalAsFinalGrade_WithoutAnOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await seed.AddGradeAsync(student, 2.0m, Day);
+        await seed.AddGradeAsync(student, 3.0m, Day);
+
+        var subject = Single(await CreateService(db).GetStudentGradesAsync(student, seed.YearId));
+
+        Assert.Null(subject.FinalGradeOverride);
+        Assert.Equal(3m, subject.ProposedFinalGrade);
+        Assert.Equal(3m, subject.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetStudentGradesAsync_ReturnsNoProposalAndNoFinalGrade_WithoutAverageOrOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+
+        var subject = Single(await CreateService(db).GetStudentGradesAsync(student, seed.YearId));
+
+        Assert.Null(subject.SubjectAverage);
+        Assert.Null(subject.ProposedFinalGrade);
+        Assert.Null(subject.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetStudentGradesAsync_ReturnsTheOverrideAsFinalGrade_WithoutAnyAverage()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await AddFinalGradeAsync(db, seed.SubjectInstanceId, student, 5m);
+
+        var subject = Single(await CreateService(db).GetStudentGradesAsync(student, seed.YearId));
+
+        Assert.Null(subject.ProposedFinalGrade);
+        Assert.Equal(5m, subject.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetStudentGradesAsync_ReturnsNoOverrideProposalOrFinalGrade_ForExemptSubjectWithStaleRow()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await seed.AddGradeAsync(student, 2.0m, Day);
+        await AddFinalGradeAsync(db, seed.SubjectInstanceId, student, 4m);
+        await seed.AddExemptionAsync(student);
+
+        var subject = Single(await CreateService(db).GetStudentGradesAsync(student, seed.YearId));
+
+        Assert.True(subject.IsExempt);
+        Assert.Null(subject.FinalGradeOverride);
+        Assert.Null(subject.ProposedFinalGrade);
+        Assert.Null(subject.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetStudentGradesAsync_TreatsAClearedOverrideAsNoOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await seed.AddGradeAsync(student, 2.0m, Day);
+        await AddFinalGradeAsync(db, seed.SubjectInstanceId, student, null);
+
+        var subject = Single(await CreateService(db).GetStudentGradesAsync(student, seed.YearId));
+
+        Assert.Null(subject.FinalGradeOverride);
+        Assert.Equal(2m, subject.FinalGrade);
+    }
+
+    [Fact]
+    public async Task GetStudentGradesAsync_DoesNotLeakAnOverride_AcrossSubjectsOrStudents()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var (otherSubject, _) = await AddSubjectAsync(db, seed, "Zeichnen");
+        var alpha = await seed.AddStudentAsync("Test", "Alpha");
+        var beta = await seed.AddStudentAsync("Test", "Beta");
+        await AddFinalGradeAsync(db, seed.SubjectInstanceId, alpha, 4m);
+        var service = CreateService(db);
+
+        var alphaOverview = await service.GetStudentGradesAsync(alpha, seed.YearId);
+        var betaOverview = await service.GetStudentGradesAsync(beta, seed.YearId);
+
+        Assert.Equal(4m, alphaOverview.Subjects.Single(s => s.SubjectInstanceId == seed.SubjectInstanceId).FinalGradeOverride);
+        Assert.Null(alphaOverview.Subjects.Single(s => s.SubjectInstanceId == otherSubject).FinalGradeOverride);
+        Assert.All(betaOverview.Subjects, s => Assert.Null(s.FinalGradeOverride));
+    }
+
+    [Fact]
+    public async Task GetStudentGradesAsync_ReturnsTheOverride_InAClosedYear()
+    {
+        using var db = new SqliteTestDatabase();
+        var seed = await GradeSheetSeed.CreateAsync(db);
+        var student = await seed.AddStudentAsync("Test", "Alpha");
+        await AddFinalGradeAsync(db, seed.SubjectInstanceId, student, 3m);
+        await seed.SetYearStatusAsync(SchoolYearStatus.Closed);
+
+        var subject = Single(await CreateService(db).GetStudentGradesAsync(student, seed.YearId));
+
+        Assert.Equal(3m, subject.FinalGrade);
+    }
+
+    private static async Task AddFinalGradeAsync(SqliteTestDatabase db, int subjectInstanceId, int studentId, decimal? overrideValue)
+    {
+        await using var context = db.CreateContext();
+        context.Add(new FinalGrade { SubjectInstanceId = subjectInstanceId, StudentId = studentId, OverrideValue = overrideValue });
+        await context.SaveChangesAsync();
+    }
 }

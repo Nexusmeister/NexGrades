@@ -17,17 +17,23 @@ namespace NexGrades.Domain.Services;
 public sealed class ClassService(IDbContextFactory<AppDbContext> contextFactory)
 {
     /// <summary>
+    /// Longest class name, after trimming, that a new or changed name may have. It is not a schema limit: a longer
+    /// name that already exists (for example from a rollover) stays valid and can be saved unchanged.
+    /// </summary>
+    public const int MaxNameLength = 20;
+
+    /// <summary>
     /// Creates a <see cref="ClassGroup"/> and its first <see cref="ClassInstance"/> in the Active school year,
     /// both named <paramref name="name"/>, in one transaction. A new class is its own cohort, as opposed to one
     /// rolled forward from a prior year.
     /// </summary>
     /// <exception cref="InvariantViolationException">
-    /// The name is empty, or there is not exactly one Active school year.
+    /// The name is empty or longer than <see cref="MaxNameLength"/>, or there is not exactly one Active school year.
     /// </exception>
     public Task<ClassInstance> CreateClassAsync(string name, CancellationToken cancellationToken = default) =>
         DomainOperation.RunAsync("ClassService.CreateClass", async () =>
         {
-            var normalizedName = RequiredText.Normalize(name, "A class name");
+            var normalizedName = RequiredText.Normalize(name, "A class name", MaxNameLength);
 
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
             await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
@@ -74,16 +80,17 @@ public sealed class ClassService(IDbContextFactory<AppDbContext> contextFactory)
 
     /// <summary>
     /// Renames an Active class instance. The cohort label of its <see cref="ClassGroup"/> is left alone. Saving
-    /// the same name is a no-op.
+    /// the same name is a no-op, even if that name is longer than <see cref="MaxNameLength"/>.
     /// </summary>
     /// <exception cref="InvariantViolationException">
-    /// The name is empty, the class does not exist, or it is no longer Active (rolled forward or archived).
+    /// The name is empty, the class does not exist, the name changes and is longer than <see cref="MaxNameLength"/>, or it is no longer Active (rolled forward or archived).
     /// </exception>
     /// <exception cref="ClosedYearException">The class's school year is closed and not unlocked.</exception>
     public Task RenameClassAsync(int classInstanceId, string newName, CancellationToken cancellationToken = default) =>
         DomainOperation.RunAsync("ClassService.RenameClass", async () =>
         {
-            var normalizedName = RequiredText.Normalize(newName, "A class name");
+            // Empty check first; the length limit applies only once the name is known to differ from the stored one.
+            var trimmedName = RequiredText.Normalize(newName, "A class name");
 
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
             var classInstance = await context.ClassInstances
@@ -97,11 +104,12 @@ public sealed class ClassService(IDbContextFactory<AppDbContext> contextFactory)
                     "a rolled-forward or archived class keeps its historic name.");
             }
 
-            if (classInstance.Name == normalizedName)
+            if (classInstance.Name == trimmedName)
             {
                 return;
             }
 
+            var normalizedName = RequiredText.Normalize(trimmedName, "A class name", MaxNameLength);
             classInstance.Name = normalizedName;
             await context.SaveChangesAsync(cancellationToken);
         });

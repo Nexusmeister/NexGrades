@@ -53,7 +53,8 @@ public class ClassServiceTests
         Env env,
         SchoolYearStatus status = SchoolYearStatus.Active,
         ClassInstanceStatus classStatus = ClassInstanceStatus.Active,
-        DateTime? unlockedUntil = null)
+        DateTime? unlockedUntil = null,
+        string name = "Test 5A")
     {
         await using var context = env.SeedContext();
         var year = new SchoolYear
@@ -70,7 +71,7 @@ public class ClassServiceTests
         {
             ClassGroup = group,
             SchoolYear = year,
-            Name = "Test 5A",
+            Name = name,
             Status = classStatus,
         };
         context.AddRange(year, group, instance);
@@ -274,5 +275,103 @@ public class ClassServiceTests
 
         Assert.Equal("Test 5A", (await LoadInstanceAsync(env, id)).Name);
         Assert.Empty(await ClassAuditEntriesAsync(env));
+    }
+
+    // ---------- Name length ----------
+
+    private static readonly string Name20 = new('a', ClassService.MaxNameLength);
+    private static readonly string Name21 = new('a', ClassService.MaxNameLength + 1);
+
+    [Fact]
+    public async Task CreateClassAsync_CreatesClass_ForNameOfExactlyMaxLength()
+    {
+        using var env = new Env();
+        await SeedYearAsync(env, SchoolYearStatus.Active);
+
+        await env.Service.CreateClassAsync(Name20);
+
+        await using var verify = env.Db.CreateContext();
+        Assert.Equal(Name20, (await verify.ClassInstances.AsNoTracking().SingleAsync()).Name);
+    }
+
+    [Fact]
+    public async Task CreateClassAsync_Throws_ForNameOneOverMaxLength()
+    {
+        using var env = new Env();
+        await SeedYearAsync(env, SchoolYearStatus.Active);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => env.Service.CreateClassAsync(Name21));
+
+        await AssertNoClassRowsAsync(env);
+    }
+
+    [Fact]
+    public async Task CreateClassAsync_TrimsPaddingBeforeCheckingLength()
+    {
+        using var env = new Env();
+        await SeedYearAsync(env, SchoolYearStatus.Active);
+
+        await env.Service.CreateClassAsync("  " + Name20 + "  ");
+
+        await using var verify = env.Db.CreateContext();
+        Assert.Equal(Name20, (await verify.ClassInstances.AsNoTracking().SingleAsync()).Name);
+    }
+
+    [Fact]
+    public async Task RenameClassAsync_Renames_ToNameOfExactlyMaxLength()
+    {
+        using var env = new Env();
+        var id = await SeedClassAsync(env);
+
+        await env.Service.RenameClassAsync(id, " " + Name20 + " ");
+
+        Assert.Equal(Name20, (await LoadInstanceAsync(env, id)).Name);
+    }
+
+    [Fact]
+    public async Task RenameClassAsync_Throws_ForNameOneOverMaxLength()
+    {
+        using var env = new Env();
+        var id = await SeedClassAsync(env);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => env.Service.RenameClassAsync(id, Name21));
+
+        Assert.Equal("Test 5A", (await LoadInstanceAsync(env, id)).Name);
+    }
+
+    [Fact]
+    public async Task RenameClassAsync_IsNoOp_ForUnchangedLegacyNameLongerThanMax()
+    {
+        using var env = new Env();
+        var legacy = new string('L', 30);
+        var id = await SeedClassAsync(env, SchoolYearStatus.Closed, unlockedUntil: Now.AddDays(1), name: legacy);
+
+        await env.Service.RenameClassAsync(id, "  " + legacy + " ");
+
+        Assert.Equal(legacy, (await LoadInstanceAsync(env, id)).Name);
+        Assert.Empty(await ClassAuditEntriesAsync(env));
+    }
+
+    [Fact]
+    public async Task RenameClassAsync_Throws_WhenLegacyLongNameChangesToAnotherLongName()
+    {
+        using var env = new Env();
+        var legacy = new string('L', 30);
+        var id = await SeedClassAsync(env, name: legacy);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => env.Service.RenameClassAsync(id, new string('M', 30)));
+
+        Assert.Equal(legacy, (await LoadInstanceAsync(env, id)).Name);
+    }
+
+    [Fact]
+    public async Task RenameClassAsync_Renames_FromLegacyLongNameToShortName()
+    {
+        using var env = new Env();
+        var id = await SeedClassAsync(env, name: new string('L', 30));
+
+        await env.Service.RenameClassAsync(id, "Test 5C");
+
+        Assert.Equal("Test 5C", (await LoadInstanceAsync(env, id)).Name);
     }
 }

@@ -74,6 +74,13 @@ public class SubjectOverviewExportServiceTests
             await context.SaveChangesAsync();
         }
 
+        public async Task AddFinalGradeAsync(int studentId, decimal? overrideValue)
+        {
+            await using var context = db.CreateContext();
+            context.Add(new FinalGrade { SubjectInstanceId = SubjectInstanceId, StudentId = studentId, OverrideValue = overrideValue });
+            await context.SaveChangesAsync();
+        }
+
         public async Task AddParticipationAsync(int studentId, ParticipationMode mode)
         {
             await using var context = db.CreateContext();
@@ -120,6 +127,8 @@ public class SubjectOverviewExportServiceTests
                 (SubjectOverviewColumnKind.BucketGrades, "Oral"),
                 (SubjectOverviewColumnKind.BucketAverage, "Oral"),
                 (SubjectOverviewColumnKind.SubjectAverage, null),
+                (SubjectOverviewColumnKind.FinalGrade, null),
+                (SubjectOverviewColumnKind.FinalGradeOverridden, null),
             },
             table.Columns.Select(c => (c.Kind, c.BucketName)).ToArray());
     }
@@ -447,5 +456,138 @@ public class SubjectOverviewExportServiceTests
 
         await using var context = db.CreateContext();
         Assert.Empty(context.AuditEntries);
+    }
+
+    // ---------- Final grade ----------
+
+    private const int FinalGradeColumn = 4;
+    private const int OverriddenColumn = 5;
+
+    [Fact]
+    public async Task BuildAsync_UsesTheProposal_WhenThereIsNoOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        var bucket = await fixture.AddBucketAsync("Written", 100m, 1);
+        var student = await fixture.AddStudentAsync("Test", "Alpha");
+        await fixture.AddGradeAsync(bucket, student, 2.0m);
+        await fixture.AddGradeAsync(bucket, student, 3.0m, new DateOnly(2025, 9, 16));
+
+        var row = Assert.Single((await BuildAsync(db, fixture)).Rows);
+
+        Assert.Equal(2.5m, row.Cells[3].Number);
+        Assert.Equal(3m, row.Cells[FinalGradeColumn].Number);
+        Assert.Equal(SubjectOverviewCell.Empty, row.Cells[OverriddenColumn]);
+    }
+
+    [Fact]
+    public async Task BuildAsync_UsesTheOverrideAndMarksIt_WhenAnOverrideIsSet()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        var bucket = await fixture.AddBucketAsync("Written", 100m, 1);
+        var student = await fixture.AddStudentAsync("Test", "Alpha");
+        await fixture.AddGradeAsync(bucket, student, 2.0m);
+        await fixture.AddFinalGradeAsync(student, 4m);
+
+        var row = Assert.Single((await BuildAsync(db, fixture)).Rows);
+
+        Assert.Equal(2.0m, row.Cells[3].Number);
+        Assert.Equal(4m, row.Cells[FinalGradeColumn].Number);
+        Assert.Equal("Yes", row.Cells[OverriddenColumn].Text);
+    }
+
+    [Fact]
+    public async Task BuildAsync_ShowsTheOverride_ForStudentWithoutAnyGrades()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        await fixture.AddBucketAsync("Written", 100m, 1);
+        var student = await fixture.AddStudentAsync("Test", "Alpha");
+        await fixture.AddFinalGradeAsync(student, 5m);
+
+        var row = Assert.Single((await BuildAsync(db, fixture)).Rows);
+
+        Assert.Equal(SubjectOverviewCell.Empty, row.Cells[3]);
+        Assert.Equal(5m, row.Cells[FinalGradeColumn].Number);
+        Assert.Equal("Yes", row.Cells[OverriddenColumn].Text);
+    }
+
+    [Fact]
+    public async Task BuildAsync_LeavesFinalGradeCellsEmptyNotZero_WithNoAverageAndNoOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        await fixture.AddBucketAsync("Written", 100m, 1);
+        await fixture.AddStudentAsync("Test", "Alpha");
+
+        var row = Assert.Single((await BuildAsync(db, fixture)).Rows);
+
+        Assert.Equal(SubjectOverviewCell.Empty, row.Cells[FinalGradeColumn]);
+        Assert.Equal(SubjectOverviewCell.Empty, row.Cells[OverriddenColumn]);
+    }
+
+    [Fact]
+    public async Task BuildAsync_TreatsAClearedOverrideAsNoOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        var bucket = await fixture.AddBucketAsync("Written", 100m, 1);
+        var student = await fixture.AddStudentAsync("Test", "Alpha");
+        await fixture.AddGradeAsync(bucket, student, 2.0m);
+        await fixture.AddFinalGradeAsync(student, null);
+
+        var row = Assert.Single((await BuildAsync(db, fixture)).Rows);
+
+        Assert.Equal(2m, row.Cells[FinalGradeColumn].Number);
+        Assert.Equal(SubjectOverviewCell.Empty, row.Cells[OverriddenColumn]);
+    }
+
+    [Fact]
+    public async Task BuildAsync_OmitsAnExemptStudent_EvenWithAStaleOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        await fixture.AddBucketAsync("Written", 100m, 1);
+        var exempt = await fixture.AddStudentAsync("Test", "Alpha");
+        await fixture.AddStudentAsync("Test", "Beta");
+        await fixture.AddFinalGradeAsync(exempt, 2m);
+        await fixture.AddParticipationAsync(exempt, ParticipationMode.Exempt);
+
+        var table = await BuildAsync(db, fixture);
+
+        Assert.Equal(["Beta, Test"], Names(table));
+    }
+
+    [Fact]
+    public async Task BuildAsync_GivesALeftStudentWithGradesAFinalGrade()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        var bucket = await fixture.AddBucketAsync("Written", 100m, 1);
+        var student = await fixture.AddStudentAsync("Test", "Alpha", leftOn: new DateTime(2025, 12, 1));
+        await fixture.AddGradeAsync(bucket, student, 2.0m);
+
+        var row = Assert.Single((await BuildAsync(db, fixture)).Rows);
+
+        Assert.NotNull(row.LeftOn);
+        Assert.Equal(2m, row.Cells[FinalGradeColumn].Number);
+    }
+
+    [Fact]
+    public async Task BuildAsync_DoesNotLeakAnOverride_BetweenStudents()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        await fixture.AddBucketAsync("Written", 100m, 1);
+        var alpha = await fixture.AddStudentAsync("Test", "Alpha");
+        await fixture.AddStudentAsync("Test", "Beta");
+        await fixture.AddFinalGradeAsync(alpha, 3m);
+
+        var table = await BuildAsync(db, fixture);
+
+        Assert.Equal("Yes", table.Rows[0].Cells[OverriddenColumn].Text);
+        Assert.Equal(SubjectOverviewCell.Empty, table.Rows[1].Cells[FinalGradeColumn]);
+        Assert.Equal(SubjectOverviewCell.Empty, table.Rows[1].Cells[OverriddenColumn]);
     }
 }

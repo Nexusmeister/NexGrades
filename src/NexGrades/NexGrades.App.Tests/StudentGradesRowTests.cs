@@ -32,7 +32,8 @@ public class StudentGradesRowTests
             "Testkunde",
             false,
             [new StudentBucketGrades(10, "Written", weight, [], bucketAverage, [Entry()])],
-            subjectAverage);
+            subjectAverage,
+            null);
 
     [Fact]
     public void StudentSubjectRow_FormatsAveragesWithDecimalComma_InDeDeCulture()
@@ -96,7 +97,7 @@ public class StudentGradesRowTests
     public void StudentSubjectRow_PassesExemptionToBucketsAndGradeRows()
     {
         var subject = new StudentSubjectGrades(
-            5, "Testkunde", true, [new StudentBucketGrades(10, "Written", 100m, [], null, [Entry()])], null);
+            5, "Testkunde", true, [new StudentBucketGrades(10, "Written", 100m, [], null, [Entry()])], null, null);
 
         var row = new StudentSubjectRow(subject);
 
@@ -164,5 +165,74 @@ public class StudentGradesRowTests
         Assert.True(row.CanVoid);
         Assert.False(row.CanRestore);
         Assert.Null(row.VoidedText);
+    }
+
+    private static StudentSubjectGrades FinalGradeSubject(
+        decimal? subjectAverage, decimal? finalGradeOverride, bool exempt = false) =>
+        new(
+            5,
+            "Testkunde",
+            exempt,
+            [new StudentBucketGrades(10, "Written", 100m, [], subjectAverage, [Entry()])],
+            subjectAverage,
+            finalGradeOverride);
+
+    [Fact]
+    public void StudentSubjectRow_ShowsTheProposalAsAWholeNumber_WithoutAnOverride_InDeDeCulture()
+    {
+        InCulture("de-DE", () =>
+        {
+            var row = new StudentSubjectRow(FinalGradeSubject(2.5m, null));
+
+            Assert.Equal("3", row.FinalGradeText);
+            Assert.False(row.HasFinalGradeOverride);
+            Assert.Equal("Final grade: 3", row.FinalGradeDescription);
+        });
+    }
+
+    [Fact]
+    public void StudentSubjectRow_ShowsTheOverrideAndMarksIt_WhenAnOverrideIsSet()
+    {
+        InCulture("de-DE", () =>
+        {
+            var row = new StudentSubjectRow(FinalGradeSubject(2.0m, 4m));
+
+            Assert.Equal("4", row.FinalGradeText);
+            Assert.True(row.HasFinalGradeOverride);
+            Assert.Equal("Final grade: 4 (set by teacher, proposal 2)", row.FinalGradeDescription);
+        });
+    }
+
+    [Fact]
+    public void StudentSubjectRow_DescribesAnOverrideWithoutProposal_WhenThereIsNoAverage()
+    {
+        InCulture("de-DE", () =>
+        {
+            var row = new StudentSubjectRow(FinalGradeSubject(null, 5m));
+
+            Assert.Equal("5", row.FinalGradeText);
+            Assert.True(row.HasFinalGradeOverride);
+            Assert.Equal("Final grade: 5 (set by teacher, no proposal)", row.FinalGradeDescription);
+        });
+    }
+
+    [Fact]
+    public void StudentSubjectRow_LeavesFinalGradeEmpty_WithoutAverageAndOverride()
+    {
+        var row = new StudentSubjectRow(FinalGradeSubject(null, null));
+
+        Assert.Equal(string.Empty, row.FinalGradeText);
+        Assert.False(row.HasFinalGradeOverride);
+        Assert.Equal(string.Empty, row.FinalGradeDescription);
+    }
+
+    [Fact]
+    public void StudentSubjectRow_LeavesFinalGradeEmpty_ForAnExemptSubject()
+    {
+        var row = new StudentSubjectRow(FinalGradeSubject(null, null, exempt: true));
+
+        Assert.Equal(string.Empty, row.FinalGradeText);
+        Assert.False(row.HasFinalGradeOverride);
+        Assert.Equal(string.Empty, row.FinalGradeDescription);
     }
 }

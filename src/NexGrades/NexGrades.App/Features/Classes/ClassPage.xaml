@@ -31,7 +31,20 @@
                 Command="{Binding ViewModel.CancelCommand}"/>
         </StackPanel>
 
-        <ui:TextBox ClearButtonEnabled="True" Text="{Binding ViewModel.Name}" PlaceholderText="ClassName"></ui:TextBox>
+        <ui:TextBox ClearButtonEnabled="True"
+                    PlaceholderText="Class name"
+                    PlaceholderEnabled="True"
+                    AutomationProperties.Name="Class name"
+                    MaxLength="{Binding ViewModel.MaxNameLength, Mode=OneTime}"
+                    Text="{Binding ViewModel.Name, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <!-- Why Save is disabled -->
+        <ui:TextBlock Margin="0,8,0,0"
+                      FontTypography="Caption"
+                      Appearance="Secondary"
+                      TextWrapping="Wrap"
+                      Text="{Binding ViewModel.ClassValidationMessage}"
+                      Visibility="{Binding ViewModel.HasClassValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
         <StackPanel Margin="0,16,0,0"
                     Visibility="{Binding ViewModel.IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">

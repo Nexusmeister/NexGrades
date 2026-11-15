@@ -7,13 +7,16 @@ using NexGrades.Domain.Export;
 namespace NexGrades.App.Features.Export;
 
 /// <summary>
-/// Writes a <see cref="SubjectOverviewTable"/> as an .xlsx workbook with a single sheet. This is the only place
+/// Writes a <see cref="SubjectOverviewTable"/> as an .xlsx workbook with a single sheet. The sheet ends with the final grade and a marker for one set by the teacher. This is the only place
 /// that knows ClosedXML and the header wording of the export.
 /// </summary>
 public sealed class SubjectOverviewExcelWriter
 {
     private const string StudentHeader = "Student";
     private const string SubjectAverageHeader = "Subject average";
+    private const string FinalGradeHeader = "Final grade";
+    private const string FinalGradeOverriddenHeader = "Final grade set by teacher";
+    private const string FinalGradeNumberFormat = "0";
     private const string AverageNumberFormat = "0.0";
     private const string TextNumberFormat = "@";
 
@@ -48,7 +51,9 @@ public sealed class SubjectOverviewExcelWriter
 
                 if (value.Number is { } number)
                 {
-                    cell.Style.NumberFormat.Format = AverageNumberFormat;
+                    cell.Style.NumberFormat.Format = table.Columns[c].Kind == SubjectOverviewColumnKind.FinalGrade
+                        ? FinalGradeNumberFormat
+                        : AverageNumberFormat;
                     cell.Value = (double)number;
                 }
                 else if (value.Text is { } text)
@@ -93,6 +98,8 @@ public sealed class SubjectOverviewExcelWriter
         SubjectOverviewColumnKind.BucketGrades => string.Format(uiCulture, _bucketGradesHeaderFormat, column.BucketName),
         SubjectOverviewColumnKind.BucketAverage => string.Format(uiCulture, _bucketAverageHeaderFormat, column.BucketName),
         SubjectOverviewColumnKind.SubjectAverage => SubjectAverageHeader,
+        SubjectOverviewColumnKind.FinalGrade => FinalGradeHeader,
+        SubjectOverviewColumnKind.FinalGradeOverridden => FinalGradeOverriddenHeader,
         _ => throw new ArgumentOutOfRangeException(nameof(column), column.Kind, "Unknown column kind."),
     };
 }
