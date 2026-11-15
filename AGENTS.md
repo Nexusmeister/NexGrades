@@ -277,6 +277,8 @@ localized later without a rewrite:
 ## Git and pull requests
 
 - Branch off `dev` as `feature/<issue-number>-<short-slug>`; open pull requests against `dev`.
+- Versions are not set in the project files: MinVer derives them from `vX.Y.Z` git tags, and CI publishes a beta
+  pre-release on every push to `dev` and a stable release on every push to `main`. See `docs/releasing.md`.
 - Commit subjects are short and imperative ("Add edit-class flow on the year-scoped model").
 - One logical change per PR; reference the issue it closes.
 - To take in newer `dev`, merge `origin/dev` into the feature branch; don't rebase or force-push a pushed
