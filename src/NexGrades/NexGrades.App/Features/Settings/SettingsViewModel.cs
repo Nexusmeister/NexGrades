@@ -21,16 +21,21 @@ namespace NexGrades.App.Features.Settings;
 /// <param name="folderOpener">Shows the log folder in the file browser.</param>
 /// <param name="logger">Records a failure to open the log folder.</param>
 /// <param name="updates">The update section of the page.</param>
+/// <param name="appearance">The appearance section of the page.</param>
 public partial class SettingsViewModel(
     IFileSystemDialogService dialogService,
     ISnackbarService snackbarService,
     IAppDataPaths appDataPaths,
     IFolderOpener folderOpener,
     ILogger<SettingsViewModel> logger,
-    UpdateSettingsViewModel updates) : ViewModel
+    UpdateSettingsViewModel updates,
+    AppearanceSettingsViewModel appearance) : ViewModel
 {
     /// <summary>The update section: version, update preferences, "Check for updates now" and "Restart now".</summary>
     public UpdateSettingsViewModel Updates { get; } = updates;
+
+    /// <summary>The appearance section: the colour theme.</summary>
+    public AppearanceSettingsViewModel Appearance { get; } = appearance;
 
     [ObservableProperty]
     private bool _openedFolderPathVisibility;
@@ -38,12 +43,13 @@ public partial class SettingsViewModel(
     [ObservableProperty]
     private string _openedFolderPath = string.Empty;
 
-    /// <summary>Reloads the stored update preferences each time the page is shown.</summary>
+    /// <summary>Reloads the stored update and appearance preferences each time the page is shown.</summary>
     /// <param name="parameter">Not used; the settings page takes no parameter.</param>
     protected override async Task OnNavigatedToAsync(object? parameter)
     {
         await base.OnNavigatedToAsync(parameter);
         await Updates.LoadAsync();
+        await Appearance.LoadAsync();
     }
 
     /// <summary>

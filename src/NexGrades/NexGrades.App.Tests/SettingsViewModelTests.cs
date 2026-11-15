@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using NexGrades.App.Core;
 using NexGrades.App.Features.Settings;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Theming;
 using NexGrades.App.Updates;
 using NexGrades.Common.Storage;
 
@@ -30,12 +31,12 @@ public sealed class SettingsViewModelTests : IDisposable
         }
     }
 
-    private (SettingsViewModel ViewModel, FakeFolderOpener Opener, FakeSnackbar Snackbar, AppDataPaths Paths) Create(Exception? openerFailure = null, UpdateSettingsViewModel? updates = null)
+    private (SettingsViewModel ViewModel, FakeFolderOpener Opener, FakeSnackbar Snackbar, AppDataPaths Paths) Create(Exception? openerFailure = null, UpdateSettingsViewModel? updates = null, AppearanceSettingsViewModel? appearance = null)
     {
         var paths = new AppDataPaths(_folder.Path);
         var opener = new FakeFolderOpener(openerFailure);
         var (snackbar, fake) = FakeSnackbar.Create();
-        var viewModel = new SettingsViewModel(null!, snackbar, paths, opener, NullLogger<SettingsViewModel>.Instance, updates!);
+        var viewModel = new SettingsViewModel(null!, snackbar, paths, opener, NullLogger<SettingsViewModel>.Instance, updates!, appearance!);
         return (viewModel, opener, fake, paths);
     }
 
@@ -102,7 +103,8 @@ public sealed class SettingsViewModelTests : IDisposable
         var notice = new UpdateNoticeViewModel(coordinator, navigator, new FakeAppShutdown(), action => action());
         var (snackbar, _) = FakeSnackbar.Create();
         var updates = new UpdateSettingsViewModel(coordinator, store, notice, snackbar, NullLogger<UpdateSettingsViewModel>.Instance, action => action());
-        var (viewModel, _, _, _) = Create(updates: updates);
+        var appearance = new AppearanceSettingsViewModel(new AppThemeService(store, new WpfThemeApplier(), NullLogger<AppThemeService>.Instance), snackbar);
+        var (viewModel, _, _, _) = Create(updates: updates, appearance: appearance);
 
         await viewModel.OnNavigatedToAsync();
 

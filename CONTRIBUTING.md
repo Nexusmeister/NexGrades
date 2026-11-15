@@ -109,6 +109,25 @@ Architecture decisions are recorded as numbered records in [docs/decisions](docs
 
 Record a new decision as `docs/decisions/NNNN-<slug>.md`, using the next free number.
 
+## Taking screenshots
+
+The screenshots in `docs/images` show made-up data only. To take new ones, point the database and the settings file
+at a scratch folder, so the real database and settings are not opened. From `src/NexGrades/` in PowerShell:
+
+```powershell
+$scratch = Join-Path $env:TEMP "nexgrades-screenshots"
+New-Item -ItemType Directory -Force -Path $scratch | Out-Null
+$env:ConnectionStrings__sqlite = "Data Source=$(Join-Path $scratch 'app.db')"
+$env:Settings__FilePath = Join-Path $scratch "settings.json"
+dotnet run --project NexGrades.App
+Remove-Item Env:ConnectionStrings__sqlite, Env:Settings__FilePath
+```
+
+The last line clears the two variables from the shell once the app has closed. Enter the sample data by hand, with
+invented names and grades. The database and `settings.json` go to the scratch folder, but the log files do not: they
+still go to `%LOCALAPPDATA%\NexGrades\logs`. The logs hold no pupil data, but they contain your Windows user name in
+file paths, so keep them private. Delete the scratch folder when you are done.
+
 ## Privacy rule
 
 Pupil data must never appear in logs, telemetry, tests, issues or pull requests. That covers names, grades, notes,

@@ -1,7 +1,9 @@
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Features.Home;
 using NexGrades.App.Shell;
+using NexGrades.App.Theming;
 using Wpf.Ui;
 
 namespace NexGrades.App;
@@ -44,6 +46,10 @@ public class ApplicationHostService(IServiceProvider serviceProvider) : IHostedS
         {
             _navigationWindow = (serviceProvider.GetService(typeof(INavigationWindow)) as INavigationWindow)!;
             _navigationWindow!.ShowWindow();
+            if (_navigationWindow is Window window)
+            {
+                serviceProvider.GetRequiredService<AppThemeService>().AttachWindow(window);
+            }
 
             _ = _navigationWindow.Navigate(typeof(HomePage));
         }

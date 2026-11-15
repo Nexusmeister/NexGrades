@@ -19,8 +19,9 @@ public interface IAppDataPaths
     string LogDirectory { get; }
 
     /// <summary>
-    /// Full path of the user settings file (for example the update preferences). It sits next to the database so
-    /// it survives app updates, and is created on the first save, not by <see cref="EnsureCreated"/>.
+    /// Full path of the user settings file (for example the update and theme preferences). By default it sits next to
+    /// the database so it survives app updates; the <c>Settings:FilePath</c> configuration key can point it elsewhere.
+    /// It is created on the first save, not by <see cref="EnsureCreated"/>.
     /// </summary>
     string SettingsFilePath { get; }
 
