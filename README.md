@@ -1,105 +1,139 @@
 # NexGrades
 
-A Windows desktop grade book for a teacher: school years, classes, students, subjects, weighted grade buckets and
-averages. It is for one user and keeps everything in a local SQLite database; there is no server.
+NexGrades is a Windows grade book for teachers: school years, classes, students, weighted grades, final grades and
+Excel export. It is for one user. Your data stays in a local database on your computer. There is no account and no
+server.
 
-*Screenshot: placeholder, to be added.*
+## Screenshots
 
-## Features
+![School year page listing the school years and their states](docs/images/school-year.png)
 
-- School years (Planned, Active, Closed). Closing a year and activating the next one is a single step, and a closed
-  year is read-only until you unlock it.
-- Classes, students and subjects per school year, with weighted grade buckets and averages.
-- A grade sheet with assessments. Final grades are proposed from the subject average and can be overridden. The student page shows each subject's final grade read-only.
-- Notes on students, archived instead of deleted.
-- Excel exports: the overview of one subject on the class page ("Export to Excel"), and a student's notes for a
-  date range on the student page ("Export notes…", Notes tab). The notes export has its own dialog for the range
-  and for including archived notes.
+*School years: each year is Planned, Active or Closed.*
+
+![Class page with the students and subjects of one class](docs/images/class.png)
+
+*A class page with its students and subjects.*
+
+![Grade sheet of one subject with one column per assessment](docs/images/grade-sheet.png)
+
+*The grade sheet of one subject.*
+
+![Student page on the Grades tab for one school year](docs/images/student-grades.png)
+
+*The Grades tab of a student, for one school year.*
+
+## What you can do
+
+- Manage school years. Each year is Planned, Active or Closed. A readiness check lists what is still open before a
+  year can be closed.
+- Close a year and activate the next one in one step.
+- A closed year is read-only. To correct it, choose **Unlock year…**, then give a reason and a time limit. **Lock
+  again** makes it read-only again straight away.
+- Changes made in an unlocked closed year are recorded in an audit trail.
+- Keep classes, students with their class enrolment, and a subject catalogue.
+- When you close a year, choose for each class either **Roll forward**, with the class name for the next year, or
+  **Archive**.
+- Keep a grade sheet per subject with assessments. Add, edit, void and restore assessments, and show voided grades.
+- On a student's **Grades** tab, add single grades (without an assessment) and assessment grades, correct them, and
+  void and restore them.
+- Weighted grade buckets and averages. The weights are kept for each school year.
+- Final grades: NexGrades proposes one from the subject average on the German 1–6 scale, with tendencies. You can
+  override it with your own grade. Exempt students are shown as exempt.
+- On a student's **Notes** tab, add, edit and archive notes, and show archived notes.
+- Excel export: **Export to Excel** on the class page writes the overview of one subject. **Export notes…** on the
+  Notes tab writes a student's notes for a date range, with or without archived notes.
+- **Settings** > **Open log folder** opens the folder with the log files.
 
 ## Install
 
-Download a release from the [GitHub Releases page](https://github.com/Nexusmeister/NexGrades/releases) and use one of:
+NexGrades runs on 64-bit Windows. You do not need to install .NET.
 
-- `NexGrades-<version>-win-x64-Setup.exe`: installs NexGrades for your Windows user account. No administrator rights
-  are needed.
-- `NexGrades-<version>-win-x64-Portable.zip`: unzip it to a folder of your own and run `NexGrades.App.exe` from there.
+1. Open the [GitHub Releases page](https://github.com/Nexusmeister/NexGrades/releases) and use the release marked
+   **Latest**. Pre-releases are betas for testing. Do not use them with real data.
+2. Download one of these files. `<version>` is the version number of the release.
+   - `NexGrades-<version>-win-x64-Setup.exe` (recommended). Run it to install NexGrades for your Windows user account.
+     It goes into `%LOCALAPPDATA%\NexGrades.App`, and no administrator rights are needed.
+   - `NexGrades-<version>-win-x64-Portable.zip`. Unzip it into a new folder for each version, then run
+     `NexGrades.App.exe` from that folder. Your data is not kept in the app folder, so a new folder is safe.
+3. Windows SmartScreen may warn the first time, because NexGrades is not code-signed yet. Choose **More info**, then
+   **Run anyway**.
 
-Both update themselves. The other files on a release are the update feed; you don't need them. Uninstalling keeps
-your data in `%LOCALAPPDATA%\NexGrades`.
+Automatic updates are confirmed only for the Setup.exe install. The portable zip has not been confirmed to update
+itself (see [ADR 0004](docs/decisions/0004-application-updates.md)), so use the Setup.exe if you want updates to
+install on their own.
 
-If you used an earlier plain zip, install the Setup.exe or the portable zip once by hand. The plain zip does not
-update itself.
+If you used an earlier plain zip (`NexGrades-<version>-win-x64.zip`), install the Setup.exe or the portable zip once
+by hand. The plain zip does not update itself and is no longer published.
 
-NexGrades is not code-signed yet, so Windows SmartScreen may warn the first time. Choose **More info**, then
-**Run anyway**.
+## Updates
 
-### Updates
+NexGrades checks for updates about ten seconds after it starts. A newer version downloads in the background and is
+installed when you close the app. When an update is ready, the main window shows a notice with **Restart now**.
+Choose it to install the update and start NexGrades again straight away. Restart now first asks the open page
+whether you can leave it, so unsaved input is not lost.
 
-NexGrades checks for updates about ten seconds after it starts, downloads a newer version in the background and
-installs it when you close the app. Under **Settings > Updates** you can turn automatic checks off, receive beta
-releases, or check now. Turning beta releases off never moves you to an older version.
+You can change these settings under **Settings** > **Updates**:
 
-## Build and run (developers)
+- **Automatically check for updates**: check about ten seconds after the app starts. This is on by default.
+- **Receive beta updates**: also offer beta pre-releases. Betas may contain unfinished features. This is off by
+  default.
+- **Check for updates now**: check straight away and show the result.
 
-Prerequisites:
+Turning beta updates off never moves you to an older version.
 
-- Windows
-- The [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- A clone with its git tags. Version numbers come from the `vX.Y.Z` tags (see [docs/releasing.md](docs/releasing.md)).
+## Where your data lives
 
-From `src/NexGrades/`:
+NexGrades keeps its data in `%LOCALAPPDATA%\NexGrades`. To open the folder, paste `%LOCALAPPDATA%\NexGrades` into the
+address bar of File Explorer.
 
-```sh
-dotnet restore
-dotnet build NexGrades.slnx
-dotnet test
-dotnet run --project Aspire/NexGrades.AppHost
-```
+- `app.db`: the database, with your school years, classes, students, grades and notes.
+- `backups\`: copies of the database, see [Backups](#backups).
+- `logs\`: daily log files. **Settings** > **Open log folder** opens this folder. The app writes one log file per
+  day and keeps up to 14 files. The app itself does not log pupil names, grades or notes. File paths in the logs
+  include your Windows user name, and some error text from system components can contain values. Treat the log
+  folder like the database. See [0003](docs/decisions/0003-application-logging.md).
+- `settings.json`: the update preferences.
 
-The AppHost starts NexGrades with a SQLite database and prints the URL of the Aspire dashboard, where logs, metrics
-and traces are shown. Running `NexGrades.App` on its own needs a connection string from user secrets; see
-[AGENTS.md](AGENTS.md).
+Uninstalling the Setup.exe install removes the app folder `%LOCALAPPDATA%\NexGrades.App`. It keeps
+`%LOCALAPPDATA%\NexGrades`, so your data stays.
 
-Conventions, dependency rules and the domain model are in [AGENTS.md](AGENTS.md).
+Before you do anything risky, copy `app.db` with NexGrades closed. Keep the copy on encrypted media (see
+[Data protection](#data-protection)).
 
-## Project layout
+Nothing is deleted. Notes are archived, and grades and assessments are voided. You can restore any of them.
 
-| Path | Contents |
-|---|---|
-| `src/NexGrades/NexGrades.App` | WPF app: pages, view models, startup, logging, updates |
-| `src/NexGrades/NexGrades.Domain` | Business rules: grading, services, closed-year auditing, backups |
-| `src/NexGrades/NexGrades.Data` | EF Core model, entity configurations and migrations |
-| `src/NexGrades/NexGrades.Common` | Shared helpers and service interfaces |
-| `src/NexGrades/NexGrades.Tests`, `NexGrades.App.Tests` | xUnit tests |
-| `src/NexGrades/Aspire/` | AppHost and ServiceDefaults for development |
-| `.github/workflows/ci.yml`, `.github/scripts/` | Build, test and release pipeline |
-| `docs/` | [Releasing](docs/releasing.md) and architecture decisions in `docs/decisions/` |
+## Backups
 
-## Data and backups
+Before a migration of an existing database, NexGrades copies the database into `%LOCALAPPDATA%\NexGrades\backups`.
+A migration runs when a new version changes the database. A new database, or one that is already up to date, is not
+copied. Each backup is named `app-<date>-<time>-v<version>.db`, after the time it was taken and the version that last
+used the database. The five newest backups are kept.
 
-NexGrades keeps its files in `%LOCALAPPDATA%\NexGrades`:
+If the backup fails, NexGrades does not start and the database is unchanged. If a migration fails after the backup,
+the startup message names the backup file.
 
-- `app.db`: the database
-- `backups\`: copies of the database, taken before an update changes it
-- `logs\`: daily log files
-- `settings.json`: update preferences
-
-Before a migration of an existing database, NexGrades copies the database into `backups\`. Each backup is named
-`app-<date>-<time>-v<version>.db`, after the time it was taken and the version that last used the database. The five
-newest are kept. If the backup fails, NexGrades does not start and the database is unchanged.
-
-To restore a backup by hand:
+NexGrades never restores a backup by itself. To restore one by hand:
 
 1. Quit NexGrades.
 2. Rename `%LOCALAPPDATA%\NexGrades\app.db` to keep it aside, for example `app.db.old`. Do the same with
-   `app.db-wal`, `app.db-shm` and `app.db-journal`, whichever of them exist. The database runs in WAL mode, so a
-   leftover `-wal` file would be replayed onto the restored file.
+   `app.db-wal`, `app.db-shm` and `app.db-journal`, whichever of them exist. SQLite can apply a leftover side file
+   to the restored database, so the old ones must not stay next to it.
 3. Make sure no `app.db-wal`, `app.db-shm` or `app.db-journal` is left next to `app.db`.
 4. Copy the backup you want from `%LOCALAPPDATA%\NexGrades\backups\` into `%LOCALAPPDATA%\NexGrades\` and rename it
    to `app.db`.
 5. Start NexGrades.
 
-Backups contain the same data as the database, so the rules in *Data protection* apply to them too.
+Backups contain the same data as the database, so the rules in [Data protection](#data-protection) apply to them too.
+
+## Privacy
+
+NexGrades works on your computer only. It has no account and sends no data by default. Telemetry (logs, metrics and
+traces for developers) is off unless a developer sets the environment variable `OTEL_EXPORTER_OTLP_ENDPOINT`. The
+app does not set it. Telemetry never carries pupil data. See
+[0002](docs/decisions/0002-telemetry-and-privacy.md) and [0003](docs/decisions/0003-application-logging.md).
+
+An update check is a request to GitHub. Apart from what any web request carries, such as your network address, it
+sends nothing about you, your grades or your notes. See [0004](docs/decisions/0004-application-updates.md).
 
 ## Data protection
 
@@ -113,3 +147,11 @@ this file itself. Before you use it with real student data:
   principal's approval.
 
 Background and when this will be revisited: [docs/decisions/0001-encryption-at-rest.md](docs/decisions/0001-encryption-at-rest.md).
+
+## For developers
+
+To build, test and run NexGrades, and to publish a release, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+NexGrades is released under the [MIT License](LICENSE).
