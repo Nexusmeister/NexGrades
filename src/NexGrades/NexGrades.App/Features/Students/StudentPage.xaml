@@ -428,11 +428,22 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
+                                    <!-- Notes actions -->
+                                    <ui:Button Grid.Row="0"
+                                               Margin="0,12,0,0"
+                                               HorizontalAlignment="Left"
+                                               Content="Export notes…"
+                                               Icon="{ui:SymbolIcon ArrowDownload24}"
+                                               ToolTip="Export this student's notes to an Excel file"
+                                               AutomationProperties.Name="Export notes"
+                                               Command="{Binding ViewModel.ExportNotesCommand}"/>
+
                                     <!-- Editor -->
-                                    <StackPanel Grid.Row="0"
+                                    <StackPanel Grid.Row="1"
                                                 Margin="0,12,0,0"
                                                 Visibility="{Binding ViewModel.ShowNoteEditor, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="{Binding ViewModel.NoteEditorLabel}"/>
@@ -467,7 +478,7 @@
                                     </StackPanel>
 
                                     <!-- Empty state -->
-                                    <ui:TextBlock Grid.Row="1"
+                                    <ui:TextBlock Grid.Row="2"
                                                   Margin="0,16,0,0"
                                                   Appearance="Secondary"
                                                   TextWrapping="Wrap"
@@ -475,7 +486,7 @@
                                                   Visibility="{Binding ViewModel.HasNoNotes, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                     <!-- Notes list -->
-                                    <ListView Grid.Row="2"
+                                    <ListView Grid.Row="3"
                                               Margin="0,12,0,0"
                                               AutomationProperties.Name="Notes"
                                               ItemsSource="{Binding ViewModel.Notes}"
