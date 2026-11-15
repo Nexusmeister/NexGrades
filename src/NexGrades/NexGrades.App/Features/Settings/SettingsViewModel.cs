@@ -62,7 +62,8 @@ public partial class SettingsViewModel(
 
     /// <summary>
     /// Opens the log folder in the file browser, creating it first when logging has not yet. Failure is reported in
-    /// a snackbar; the path itself is not logged, because it carries the Windows user name.
+    /// a snackbar. The log entry carries a constant message only and not the exception, because the exception text can
+    /// contain the path, which carries the Windows user name.
     /// </summary>
     [RelayCommand]
     public void OpenLogFolder()
@@ -75,7 +76,7 @@ public partial class SettingsViewModel(
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
         {
-            LogOpenLogFolderFailed(ex);
+            LogOpenLogFolderFailed();
             snackbarService.Show(
                 "Error",
                 "The log folder could not be opened.",
@@ -86,5 +87,5 @@ public partial class SettingsViewModel(
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The log folder could not be opened.")]
-    private partial void LogOpenLogFolderFailed(Exception exception);
+    private partial void LogOpenLogFolderFailed();
 }

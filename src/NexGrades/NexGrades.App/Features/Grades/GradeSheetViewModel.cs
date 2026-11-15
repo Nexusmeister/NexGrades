@@ -443,7 +443,9 @@ public sealed partial class GradeSheetViewModel(
         if (voided)
         {
             ShowSuccess("The assessment has been voided.");
-            await ReloadAfterWriteAsync(cancellationToken);
+
+            // The void dialog already warned about unsaved input, so reload without asking a second time.
+            await LoadAsync();
         }
     }
 
