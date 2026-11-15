@@ -55,7 +55,7 @@
         </Style>
 
         <!-- Takes no room when the text is empty. -->
-        <Style x:Key="OptionalText" TargetType="ui:TextBlock" BasedOn="{DynamicResource {x:Type ui:TextBlock}}">
+        <Style x:Key="OptionalText" TargetType="ui:TextBlock">
             <Style.Triggers>
                 <Trigger Property="Text" Value="">
                     <Setter Property="Visibility" Value="Collapsed"/>

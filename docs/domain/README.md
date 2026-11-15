@@ -20,6 +20,7 @@ column.
 | [Notes](notes.md) | Free-text notes on a student | `Note`, `NoteService` |
 | [Exports](exports.md) | The class overview export and the notes export | `SubjectOverviewExportService`, `NoteExportService` |
 | [Startup, logging and data paths](startup-logging-and-data-paths.md) | Database location, startup order and failures, log files, telemetry, privacy | `IAppDataPaths`, `LegacyDatabaseRelocator`, `StartupFailureHandler`, `FileLogging` |
+| [Updates, backups and settings](updates-backups-and-settings.md) | The preferences file, the backup before a migration, self-update, the Velopack pack id | `JsonUserSettingsStore`, `DatabaseBackupService`, `UpdateCoordinator` |
 
 ## Glossary
 
@@ -65,3 +66,4 @@ short-lived context per method.
 - [0001: Encryption at rest for the database](../decisions/0001-encryption-at-rest.md)
 - [0002: Telemetry and privacy](../decisions/0002-telemetry-and-privacy.md)
 - [0003: Application logging](../decisions/0003-application-logging.md)
+- [0004: Application updates](../decisions/0004-application-updates.md)

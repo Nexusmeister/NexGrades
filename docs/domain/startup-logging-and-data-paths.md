@@ -26,17 +26,20 @@ startup fails, and how telemetry and privacy fit in.
 2. Write the startup lines to the log, then create the telemetry listeners. A failure to set telemetry up is
    logged and the App runs without it; it is not a startup failure.
 3. Relocate a legacy database, when there is no database override.
-4. Apply pending migrations with `DatabaseMigrationService`.
+4. Apply pending migrations. `StartupDatabaseMigrator` calls `DatabaseMigrationService`, and takes the backup
+   first when one is needed (see [Updates, backups and settings](updates-backups-and-settings.md)).
 5. Call `SchoolYearService.EnsureActiveYearAsync`, which bootstraps an `Active` school year if none exists.
    See [School year lifecycle](school-year-lifecycle.md).
 6. Start the host, which shows the window.
 
-Migrations run before the bootstrap, so the year is created in a migrated database.
+Migrations run before the bootstrap, so the year is created in a migrated database. Before `App` is created,
+`Program.Main` runs `VelopackApp.Build().Run()`; it handles the installer's hook arguments and returns on a
+normal start.
 
 ## Startup failures
 
-A failure at any step (host creation, configuration, database path, migration, host start) is logged at
-Critical, shown once in a message box, and ends the process with exit code 1. The `catch` in `OnStartup`
+A failure at any step (host creation, configuration, database path, pre-migration backup, migration, host
+start) is logged at Critical, shown once in a message box, and ends the process with exit code 1. The `catch` in `OnStartup`
 calls `App.ReportStartupFailure`, which hands the exception to `StartupFailureHandler`. The box never shows
 the exception text. It names the log folder only when the file logger was created. The handler guards
 everything that can throw, so the box and the exit always happen.

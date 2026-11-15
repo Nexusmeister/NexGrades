@@ -16,6 +16,7 @@ buckets and averages. Single user, local SQLite database, no server.
 - CommunityToolkit.Mvvm 8.x (`[ObservableProperty]`, `[RelayCommand]`)
 - EF Core 10 on SQLite
 - .NET Aspire AppHost for local development only
+- Velopack 1.x for installing, updating and packing the app (`Directory.Packages.props`); the `vpk` tool in `.config/dotnet-tools.json` has the same version
 - xUnit for tests
 
 ## Repository layout
@@ -24,12 +25,12 @@ All code lives under `src/NexGrades/` (solution: `NexGrades.slnx`).
 
 | Project | Role | References |
 |---|---|---|
-| `NexGrades.App` | WPF shell, pages, view models, DI wiring, host setup, file logging (`Logging/`) | Common, Data, Domain, ServiceDefaults |
+| `NexGrades.App` | WPF shell, pages, view models, DI wiring, host setup, file logging (`Logging/`), self-update (`Updates/`) | Common, Data, Domain, ServiceDefaults |
 | `NexGrades.Domain` | Business rules: services, grading, closed-year auditing, `IClock` | Data |
 | `NexGrades.Data` | EF Core `AppDbContext`, entities, entity configurations, migrations | — |
 | `NexGrades.Common` | Small cross-cutting helpers and service interfaces | — |
 | `NexGrades.Tests` | xUnit tests for Domain and Data | Data, Domain |
-| `NexGrades.App.Tests` | xUnit tests for the App's DI composition (Windows only) | App |
+| `NexGrades.App.Tests` | xUnit tests for the App's DI composition and XAML loading (Windows only) | App |
 | `Aspire/NexGrades.AppHost` | Dev-time orchestration (SQLite + SQLite Web) | App |
 | `Aspire/NexGrades.ServiceDefaults` | OpenTelemetry logs, metrics and traces, used by App; exports only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set | — |
 
@@ -62,6 +63,11 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
   prints. See `docs/decisions/0002-telemetry-and-privacy.md`.
 - The App is a GUI and cannot be meaningfully exercised headless. Verify changes with a build of
   `NexGrades.App` plus `dotnet test`; say so explicitly when a change also needs a manual UI check.
+- **Release assets:** from the repository root, `./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory <dir> -Channel beta`
+  (or `-Channel stable`) publishes the App self-contained for win-x64 and packs it with `vpk` into the installer, the
+  portable zip and the update feed of that channel, in `<dir>\release`. The version is the one MinVer gives HEAD: the
+  beta channel takes `X.Y.Z-beta.N`, the stable channel `X.Y.Z`. `<dir>` is emptied if it exists. Pull request builds
+  run the beta pack without uploading anything. See `docs/releasing.md`.
 
 ## Domain model
 
@@ -171,12 +177,31 @@ GradeBucket, Assessment, Grade, FinalGrade, SubjectParticipation, Note, Teacher,
 
 **Startup, logging and data paths** ([page](docs/domain/startup-logging-and-data-paths.md)):
 
-- Pending migrations are applied at startup by `DatabaseMigrationService`, then
-  `SchoolYearService.EnsureActiveYearAsync` bootstraps an Active school year if none exists; `App.xaml.cs` calls
-  both, in that order.
-- A startup failure at any step is logged at Critical, shown once in a message box, and ends the process with exit
-  code 1 (`StartupFailureHandler`).
+- Pending migrations are applied at startup by `DatabaseMigrationService`, which `StartupDatabaseMigrator` calls; the
+  migrator takes the backup described below first when one is needed. Then `SchoolYearService.EnsureActiveYearAsync`
+  bootstraps an Active school year if none exists. `App.xaml.cs` calls the migrator and then `EnsureActiveYearAsync`,
+  in that order.
+- `Program.Main` runs `VelopackApp.Build().Run()` before `App` is created; it handles the installer's hook arguments
+  and returns on a normal start.
+- A startup failure at any step (host creation, configuration, database path, pre-migration backup, migration, host
+  start) is logged at Critical, shown once in a message box, and ends the process with exit code 1
+  (`StartupFailureHandler`, called from `App.OnStartup`).
 - Log files go to `IAppDataPaths.LogDirectory` in every environment, and the database override does not move them.
+
+**Settings, backups and updates** ([page](docs/domain/updates-backups-and-settings.md), decision
+[0004](docs/decisions/0004-application-updates.md)):
+
+- Preferences kept outside the database live in `settings.json` in `%LOCALAPPDATA%\NexGrades\`
+  (`IAppDataPaths.SettingsFilePath`), read and written by `JsonUserSettingsStore` as `UserSettings`; a `sqlite`
+  override does not move it. `LastRunVersion` names the next backup.
+- Before a migration of an existing database, `DatabaseBackupService` makes a backup that must pass
+  `PRAGMA quick_check`; a failed backup stops startup before anything is migrated. Nothing restores a backup
+  automatically. Backups hold pupil data, like the database (see `docs/decisions/0001-encryption-at-rest.md`).
+- `UpdateCoordinator` stays inactive, and makes no network request, unless the app runs from a Velopack install, so
+  development, the AppHost and the tests never check for updates. `Updates:SourceOverride` is empty in shipped
+  builds.
+- `NexGradesPackId` in `NexGrades.App.csproj` is the Velopack pack id and must differ from the data folder name
+  `NexGrades`. Changing it would leave installed apps unable to find their updates.
 
 ## Coding conventions
 
@@ -289,7 +314,7 @@ localized later without a rewrite:
 ## Testing
 
 - Tests live in `NexGrades.Tests` and cover Domain and Data. There are no UI tests; `NexGrades.App.Tests`
-  only checks that the App's DI graph resolves, so it picks up new pages and services automatically. It also holds pure App-side unit tests, such as UI text formatting.
+  only checks that the App's DI graph resolves, so it picks up new pages and services automatically. It also holds pure App-side unit tests, such as UI text formatting. `XamlLoadTests` creates each view on an STA thread to catch XAML that compiles but throws when loaded.
 - Use `SqliteTestDatabase` (a real, migrated SQLite file — never the EF in-memory provider) and
   `FixedClock` for anything time-dependent. They are in `SqliteTestDatabase.cs` and `FixedClock.cs` (`NexGrades.Tests/`); `GradeSheetSeed.cs` builds grade sheet data. Construct Domain services with
   `db.CreateContextFactory()`, and assert through a fresh `db.CreateContext()`: the context that seeded the

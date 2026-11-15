@@ -388,6 +388,10 @@ public class FileLoggingTests
 
         public string LogDirectory => throw new InvalidOperationException("paths");
 
+        public string SettingsFilePath => throw new InvalidOperationException("paths");
+
+        public string BackupDirectory => throw new InvalidOperationException("paths");
+
         public void EnsureCreated()
         {
         }

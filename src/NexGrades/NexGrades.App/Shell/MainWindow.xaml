@@ -32,16 +32,32 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar 
-            Title="NexGrades" 
+        <ui:TitleBar
+            Title="NexGrades"
             Grid.Row="0"/>
 
+        <!-- Update notice: closing only hides it; it opens again when another update is ready. -->
+        <ui:InfoBar Grid.Row="1"
+                    Margin="12,0,12,8"
+                    Severity="Informational"
+                    IsClosable="True"
+                    IsOpen="{Binding ViewModel.UpdateNotice.IsOpen, Mode=TwoWay}"
+                    Message="{Binding ViewModel.UpdateNotice.Message}"
+                    AutomationProperties.Name="Update ready">
+            <ui:Button Content="Restart now"
+                       Appearance="Primary"
+                       AutomationProperties.Name="Restart now"
+                       ToolTip="Close NexGrades, install the update and start it again"
+                       Command="{Binding ViewModel.UpdateNotice.RestartNowCommand}"/>
+        </ui:InfoBar>
+
         <shell:GuardedNavigationView
-            x:Name="RootNavigation" 
-            Grid.Row="1">
+            x:Name="RootNavigation"
+            Grid.Row="2">
             <ui:NavigationView.AutoSuggestBox>
                 <ui:AutoSuggestBox x:Name="AutoSuggestBox" PlaceholderText="Search">
                     <ui:AutoSuggestBox.Icon>
@@ -92,8 +108,8 @@
             </ui:NavigationView.FooterMenuItems>
         </shell:GuardedNavigationView>
 
-        <!-- Host for content dialogs; spans both rows so the dialog overlay also covers the title bar. -->
-        <ui:ContentDialogHost x:Name="RootContentDialog" Grid.Row="0" Grid.RowSpan="2" />
+        <!-- Host for content dialogs; spans all rows so the dialog overlay also covers the title bar. -->
+        <ui:ContentDialogHost x:Name="RootContentDialog" Grid.Row="0" Grid.RowSpan="3" />
 
     </Grid>
 </ui:FluentWindow>
