@@ -119,6 +119,8 @@ folder to `<OutputDirectory>\release`. The version is the one MinVer gives HEAD 
   the script refuses it; delete those tags locally first.
 - `-Channel stable` needs a plain `X.Y.Z`, so HEAD must carry the `vX.Y.Z` tag.
 
+The `vpk` tool (Velopack 1.2.161) ships builds only for .NET 8, 9 and 10, so its entry in `.config/dotnet-tools.json` sets `rollForward` to `true` and runs on the installed .NET 11 runtime.
+
 Pull request builds run the beta pack with the same script and upload nothing, so a packaging problem fails the pull
 request.
 

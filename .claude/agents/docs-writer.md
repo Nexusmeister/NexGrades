@@ -12,7 +12,7 @@ does, never what you assume it does.
 
 ## What you maintain
 
-- **`README.md`**: what the app is, a screenshot placeholder if none exists, prerequisites (.NET 10 SDK,
+- **`README.md`**: what the app is, a screenshot placeholder if none exists, prerequisites (.NET 11 SDK,
   Windows), how to build, test and run (via the Aspire AppHost), and the project layout. Keep it short;
   link to `AGENTS.md` for conventions rather than copying them.
 - **`AGENTS.md`**: update it when a convention, command or domain concept changes. It is shared by every AI
