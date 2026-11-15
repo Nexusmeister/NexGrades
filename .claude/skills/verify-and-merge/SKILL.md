@@ -20,14 +20,14 @@ line and check every item yourself; don't rely on the report.
 4. When dev moved since the PR's base and the PR and dev changed the same files, build, test and format the merge
    result in a scratch worktree:
    - `git worktree add --detach <scratch> <sha>`
-   - `git -C <scratch> merge origin/dev`
+   - `git -C <scratch> merge --no-edit origin/dev`
    - run the checks in item 5 from `<scratch>/src/NexGrades/`
    - `git worktree remove <scratch>` afterwards.
 5. The CI-equivalent checks pass in the PR's worktree. Run them from `src/NexGrades/` in a subshell (Git Bash
    syntax), so the current directory does not change:
 
    ```sh
-   (cd "<worktree>/src/NexGrades" && CI=true dotnet build NexGrades.slnx -warnaserror && dotnet test && dotnet format NexGrades.slnx --verify-no-changes)
+   (cd "<worktree>/src/NexGrades" && export CI=true && dotnet build NexGrades.slnx -warnaserror && dotnet test -warnaserror && dotnet format NexGrades.slnx --verify-no-changes)
    ```
 6. Diff sanity check on `git diff --name-status origin/dev...<sha>` and the added lines:
    - No migration file is hand-edited: existing migrations are unchanged in the diff.
