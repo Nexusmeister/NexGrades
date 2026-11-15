@@ -10,7 +10,9 @@
   </PropertyGroup>
 
   <!-- Version comes from git tags `vX.Y.Z` (see docs/releasing.md). Untagged commits get X.Y.(Z+1)-beta.<height>;
-       before the first tag the minimum 0.1 gives 0.1.0-beta.<height>. -->
+       before the first tag the minimum 0.1 gives 0.1.0-beta.<height>. Beta release tags (vX.Y.Z-beta.N) are tags too:
+       CI drops them from its clone before versioning; a local clone that fetched them shows X.Y.Z-beta.N.<height>,
+       and you can delete them locally (git tag -d). -->
   <PropertyGroup>
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <MinVerDefaultPreReleaseIdentifiers>beta</MinVerDefaultPreReleaseIdentifiers>

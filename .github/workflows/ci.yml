@@ -5,8 +5,9 @@ permissions:
 
 on:
   workflow_dispatch:
-  # Every branch, including main and dev; the release jobs below filter by ref themselves.
+  # Every branch, including main and dev (the release jobs below filter by ref themselves), but not tag pushes.
   push:
+    branches: ['**']
 
   pull_request:
     branches:
@@ -72,22 +73,32 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
+    # Own group per channel, so a slow beta never delays a stable release and vice versa.
     concurrency:
-      group: release
+      group: release-beta
       cancel-in-progress: false
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
       RELEASE_SHA: ${{ github.sha }}
       BETAS_TO_KEEP: 10
     steps:
+      # Full history and tags: MinVer derives the version from them. The token is not persisted; every step
+      # that talks to GitHub gets GH_TOKEN itself, and git only reads (the public repo fetches unauthenticated).
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+      # Beta tags (v0.1.1-beta.4) are real tags with the v prefix, so MinVer would pick the newest one as its base
+      # and yield 0.1.1-beta.4.1. Dropping them from this runner's clone only (nothing is pushed) leaves the stable
+      # tags: version = latest stable + 1 patch, -beta.<height since that stable tag>.
+      - name: Ignore beta tags
+        shell: pwsh
+        run: |
+          git tag --list 'v*-beta.*' | ForEach-Object { git tag -d $_ }
       - name: Publish and zip
         id: asset
         shell: pwsh
@@ -96,9 +107,16 @@ jobs:
         id: release
         shell: pwsh
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.asset.outputs.version }}
           ZIP: ${{ steps.asset.outputs.zip }}
         run: |
+          # A stable tag on the dev tip (e.g. after merging main back) gives a version without pre-release part.
+          # That commit is already released from main; there is no beta to publish.
+          if ($env:VERSION -notmatch '-') {
+            Write-Host "::notice::dev tip is version $env:VERSION (a stable tag); no beta published."
+            exit 0
+          }
           $tag = "v$env:VERSION"
           if ($tag -notmatch '^v\d+\.\d+\.\d+-beta\.\d+$') { throw "Unexpected beta version '$tag'." }
 
@@ -113,17 +131,24 @@ jobs:
             --title "NexGrades $env:VERSION" --generate-notes --notes $env:SMARTSCREEN_NOTE
           if ($LASTEXITCODE -ne 0) { throw 'gh release create failed.' }
       # Retention: only releases that are pre-releases AND named v*-beta.* are ever considered, so stable
-      # releases and their tags are never touched.
+      # releases and their tags are never touched. Newest by publish date win; the release of this run always
+      # counts among the kept ones.
       - name: Delete old betas
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.asset.outputs.version }}
         run: |
-          $json = gh release list --limit 200 --json tagName,isPrerelease,createdAt
+          $json = gh release list --limit 200 --json tagName,isPrerelease,publishedAt
           if ($LASTEXITCODE -ne 0) { throw 'gh release list failed.' }
           $all = ConvertFrom-Json $json
-          $betas = @($all) |
-            Where-Object { $_.isPrerelease -and $_.tagName -match '^v\d+\.\d+\.\d+-beta\.\d+$' } |
-            Sort-Object { [datetime]$_.createdAt } -Descending
-          $old = @($betas | Select-Object -Skip ([int]$env:BETAS_TO_KEEP))
+          $betas = @(@($all) |
+            Where-Object { $_.isPrerelease -and $_.tagName -match '^v\d+\.\d+\.\d+-beta\.\d+$' })
+          $current = "v$env:VERSION"
+          $keep = [int]$env:BETAS_TO_KEEP
+          $others = @($betas | Where-Object { $_.tagName -ne $current } | Sort-Object { [datetime]$_.publishedAt } -Descending)
+          if (@($betas | Where-Object { $_.tagName -eq $current }).Count -gt 0) { $keep-- }
+          $old = @($others | Select-Object -Skip $keep)
           Write-Host "Beta pre-releases: $($betas.Count); deleting: $($old.Count)"
           foreach ($r in $old) {
             Write-Host "Deleting $($r.tagName)"
@@ -140,16 +165,17 @@ jobs:
     permissions:
       contents: write
     concurrency:
-      group: release
+      group: release-stable
       cancel-in-progress: false
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
       RELEASE_SHA: ${{ github.sha }}
     steps:
+      # Token not persisted; see the beta job.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -157,12 +183,27 @@ jobs:
       - name: Decide the version
         id: version
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Only the tip of main is ever released. A re-run or a late run of an older push would otherwise
+          # publish older code under a higher version number.
+          $tip = (git ls-remote origin refs/heads/main) -split '\s+' | Select-Object -First 1
+          if ($LASTEXITCODE -ne 0 -or -not $tip) { throw 'git ls-remote failed.' }
+          if ($tip -ne $env:RELEASE_SHA) {
+            Write-Host "::notice::$env:RELEASE_SHA is no longer the tip of main; the newer push releases instead."
+            "build=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            exit 0
+          }
+
           git fetch --tags --force
           if ($LASTEXITCODE -ne 0) { throw 'git fetch --tags failed.' }
 
-          # Stable tags only (vX.Y.Z); betas such as v0.1.1-beta.3 do not match.
-          $stable = @(git tag --list 'v[0-9]*' |
+          # Beta tags (v0.1.1-beta.3) would make MinVer build on them; drop them from this clone (nothing is pushed).
+          git tag --list 'v*-beta.*' | ForEach-Object { git tag -d $_ }
+
+          # Stable tags (vX.Y.Z) reachable from this commit only; tags on other branches or later commits do not count.
+          $stable = @(git tag --list 'v[0-9]*' --merged $env:RELEASE_SHA |
             Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } |
             Sort-Object { [version]$_.Substring(1) })
           $onHead = @(git tag --points-at $env:RELEASE_SHA | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' })
@@ -184,16 +225,17 @@ jobs:
           gh release view $tag *> $null
           $exists = if ($LASTEXITCODE -eq 0) { 'true' } else { 'false' }
           $global:LASTEXITCODE = 0
+          $build = if ($exists -eq 'true') { 'false' } else { 'true' }
 
           Write-Host "Tag: $tag (create tag: $createTag, release exists: $exists, notes start: $startTag)"
           "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "create_tag=$createTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "exists=$exists" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "build=$build" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "start_tag=$startTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
       # The tag must exist locally at this commit before publishing, so MinVer yields the plain X.Y.Z. It is
       # created on GitHub by `gh release create --target` below, only after the asset was built successfully.
       - name: Tag locally
-        if: steps.version.outputs.exists == 'false' && steps.version.outputs.create_tag == 'true'
+        if: steps.version.outputs.build == 'true' && steps.version.outputs.create_tag == 'true'
         shell: pwsh
         env:
           TAG: ${{ steps.version.outputs.tag }}
@@ -201,7 +243,7 @@ jobs:
           git tag $env:TAG $env:RELEASE_SHA
           if ($LASTEXITCODE -ne 0) { throw 'git tag failed.' }
       - name: Publish and zip
-        if: steps.version.outputs.exists == 'false'
+        if: steps.version.outputs.build == 'true'
         id: asset
         shell: pwsh
         env:
@@ -210,9 +252,10 @@ jobs:
           $expected = $env:TAG.Substring(1)
           ./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory "$env:RUNNER_TEMP/release" -ExpectedVersion $expected
       - name: Create release
-        if: steps.version.outputs.exists == 'false'
+        if: steps.version.outputs.build == 'true'
         shell: pwsh
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.tag }}
           START_TAG: ${{ steps.version.outputs.start_tag }}
           VERSION: ${{ steps.asset.outputs.version }}

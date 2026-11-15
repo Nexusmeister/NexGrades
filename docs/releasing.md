@@ -15,18 +15,29 @@ GitHub Releases. Nothing is signed, and the pipeline needs no secrets beyond the
 | 4 commits after `v0.1.1`, not tagged | `0.1.2-beta.4` |
 | no stable tag reachable yet | `0.1.0-beta.<height>` (`MinVerMinimumMajorMinor` is 0.1) |
 
+Beta release tags (`v0.1.2-beta.4`) are tags with the `v` prefix as well, so MinVer would build on the newest one
+(`0.1.2-beta.4.7`). The pipeline therefore deletes them from its own clone (never from GitHub) before computing the
+version, which keeps the table above true. A local clone that fetched the beta tags shows `X.Y.Z-beta.N.<height>`
+versions; delete them locally if that bothers you (`git tag --list 'v*-beta.*'` piped to `git tag -d`).
+
 ## Betas (push to `dev`)
 
 Every push to `dev` that passes the test and build jobs publishes a GitHub **pre-release** `vX.Y.Z-beta.<height>`
 with the asset attached. Only the 10 newest beta pre-releases are kept. Older ones are deleted together with their
-tags. The cleanup only considers pre-releases whose tag matches `v*-beta.*`.
+tags. The cleanup only considers pre-releases whose tag matches `v*-beta.*`, sorts them by publish date and always keeps
+the one just published. If the dev tip carries a stable tag (for example after merging `main` back into `dev`), the
+version has no pre-release part; the job then logs a notice and publishes nothing.
 
 ## Stable releases (push to `main`)
 
 Every push (merge) to `main` that passes the test and build jobs publishes the next patch version as a stable
-release (`v0.1.0` -> `v0.1.1`), marked as the latest release. The pipeline takes the highest existing stable tag
-(`vX.Y.Z`, betas excluded), adds one to the patch number, tags the merged commit and builds the asset from that
-tag. **Stable releases and their tags are never deleted.**
+release (`v0.1.0` -> `v0.1.1`), marked as the latest release. The pipeline takes the highest stable tag (`vX.Y.Z`,
+betas excluded) that is reachable from the merged commit (`git tag --merged`), adds one to the patch number, tags the
+merged commit and builds the asset from that tag. **Stable releases and their tags are never deleted.**
+
+Only the tip of `main` is released: if the pushed commit is no longer the current tip of `main` when the job runs (a
+re-run, or a queued run that a newer push overtook), the job logs a notice and releases nothing, so older code never
+receives a higher version than newer code. The newer push releases both.
 
 **First version.** With no stable tag at all, the first push to `main` becomes `v0.1.0`. To choose differently,
 push the tag yourself before that merge (`git tag v0.1.0 <commit>` and `git push origin v0.1.0`); the next main
@@ -43,7 +54,10 @@ git push origin v0.2.0
 - The next merge to `main` then releases `v0.2.1`, because the pipeline always adds one to the highest stable tag.
 - If `v0.2.0` itself should be a release, push the tag together with the commit it points to, so the tag is
   already on `HEAD` when the main workflow runs: `git push origin main v0.2.0`. The pipeline then releases exactly
-  that tag instead of adding a patch. A tag pushed alone does not start a release.
+  that tag instead of adding a patch. This needs a direct push to `main`. If `main` only accepts pull request
+  merges, push the tag `v0.2.0` (on the commit the line should start from) before the next merge to `main`; that
+  merge then releases `v0.2.1` and `v0.2.0` is not a release of its own. A tag pushed alone does not start a
+  release.
 - A manual tag on a commit that is only on `dev` does not count for the stable job until that commit is on
   `main`. Squash merges create a new commit, so tag the squashed commit on `main`.
 - Betas follow the tags reachable from `dev`. After a release on `main`, merge `main` back into `dev` so the next
