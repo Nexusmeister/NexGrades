@@ -15,6 +15,7 @@ using NexGrades.App.Features.Students;
 using NexGrades.App.Features.Subjects;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Shell;
+using NexGrades.App.Theming;
 using NexGrades.App.Updates;
 using NexGrades.Common.Services;
 using NexGrades.Common.Storage;
@@ -111,7 +112,8 @@ public static class HostBuilderExtensions
         return services
             .AddViews()
             .AddViewModels()
-            .AddUpdateServices();
+            .AddUpdateServices()
+            .AddThemeServices();
 
     }
 
@@ -123,7 +125,7 @@ public static class HostBuilderExtensions
     /// <param name="builder">The host builder to configure.</param>
     public static HostApplicationBuilder AddDatabase(this HostApplicationBuilder builder)
     {
-        var paths = AppDataPaths.CreateDefault();
+        var paths = AppDataPaths.CreateDefault(builder.Configuration[AppDataPaths.SettingsFileConfigurationKey]);
         var location = ResolveDatabaseLocation(builder.Configuration, builder.Environment, paths);
         builder.Services.AddSingleton<IAppDataPaths>(paths);
         builder.Services.AddSingleton(location);
@@ -193,6 +195,18 @@ public static class HostBuilderExtensions
             .AddTransient<StudentGradesViewModel>()
             .AddTransient<ClassViewModel>()
             .AddTransient<GradeSheetViewModel>();
+    }
+
+    /// <summary>
+    /// Registers the colour theme: the WPF applier, the service that loads, applies and saves the preference, and the
+    /// settings section. All are singletons, so the window and the settings page share one state.
+    /// </summary>
+    private static IServiceCollection AddThemeServices(this IServiceCollection services)
+    {
+        services.AddSingleton<IThemeApplier, WpfThemeApplier>();
+        services.AddSingleton<AppThemeService>();
+        services.AddSingleton<AppearanceSettingsViewModel>();
+        return services;
     }
 
     /// <summary>

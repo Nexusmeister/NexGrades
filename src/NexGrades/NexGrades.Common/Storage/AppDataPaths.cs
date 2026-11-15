@@ -4,8 +4,15 @@ namespace NexGrades.Common.Storage;
 /// Default <see cref="IAppDataPaths"/>. The root is a constructor argument so tests can use a temp folder.
 /// </summary>
 /// <param name="dataDirectory">The root folder for per-user data. It is made absolute when the instance is created.</param>
-public sealed class AppDataPaths(string dataDirectory) : IAppDataPaths
+/// <param name="settingsFilePathOverride">
+/// A settings file to use instead of <c>settings.json</c> in the data folder, or <see langword="null"/> or blank for the
+/// default. It lets a development or test run keep its settings apart from the real ones.
+/// </param>
+public sealed class AppDataPaths(string dataDirectory, string? settingsFilePathOverride = null) : IAppDataPaths
 {
+    /// <summary>Configuration key that overrides <see cref="SettingsFilePath"/>.</summary>
+    public const string SettingsFileConfigurationKey = "Settings:FilePath";
+
     /// <summary>File name of the database inside the data directory (unchanged from the legacy name).</summary>
     public const string DatabaseFileName = "app.db";
 
@@ -27,15 +34,18 @@ public sealed class AppDataPaths(string dataDirectory) : IAppDataPaths
     /// <summary>Absolute path of the log folder inside <see cref="DataDirectory"/>.</summary>
     public string LogDirectory => Path.Combine(DataDirectory, LogDirectoryName);
 
-    /// <summary>Absolute path of the user settings file inside <see cref="DataDirectory"/>.</summary>
-    public string SettingsFilePath => Path.Combine(DataDirectory, SettingsFileName);
+    /// <summary>Absolute path of the user settings file: the override when one was given, else inside <see cref="DataDirectory"/>.</summary>
+    public string SettingsFilePath { get; } = string.IsNullOrWhiteSpace(settingsFilePathOverride)
+        ? Path.Combine(Path.GetFullPath(dataDirectory), SettingsFileName)
+        : Path.GetFullPath(settingsFilePathOverride);
 
     /// <summary>Absolute path of the database backup folder inside <see cref="DataDirectory"/>.</summary>
     public string BackupDirectory => Path.Combine(DataDirectory, BackupDirectoryName);
 
     /// <summary>Uses <c>%LOCALAPPDATA%\NexGrades</c>.</summary>
-    public static AppDataPaths CreateDefault() =>
-        new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NexGrades"));
+    /// <param name="settingsFilePathOverride">An alternative settings file, or <see langword="null"/> for the default.</param>
+    public static AppDataPaths CreateDefault(string? settingsFilePathOverride = null) =>
+        new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NexGrades"), settingsFilePathOverride);
 
     /// <summary>Creates <see cref="DataDirectory"/> if it does not exist yet.</summary>
     public void EnsureCreated() => Directory.CreateDirectory(DataDirectory);

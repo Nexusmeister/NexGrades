@@ -4,7 +4,6 @@ using NexGrades.App.Core;
 using NexGrades.Data.Diagnostics;
 using Wpf.Ui;
 using Wpf.Ui.Abstractions;
-using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Shell;
@@ -34,8 +33,6 @@ public partial class MainWindow : INavigationWindow
         ViewModel = viewModel;
         _pageNavigator = pageNavigator;
         DataContext = this;
-
-        SystemThemeWatcher.Watch(this);
 
         InitializeComponent();
 

@@ -7,9 +7,21 @@ the Velopack pack id. The reasoning for updates is in
 ## Settings file
 
 `settings.json` in `%LOCALAPPDATA%\NexGrades\` (`IAppDataPaths.SettingsFilePath`) holds the preferences kept
-outside the database. `JsonUserSettingsStore` reads and writes it as `UserSettings`; a missing or unreadable file
-gives the defaults. The file stays in that folder with a `sqlite` override. `LastRunVersion` is the version that
-last started against the default database, and it names the next backup.
+outside the database: the update preferences, and the colour theme in `UserSettings.Theme`, which is stored by name.
+`JsonUserSettingsStore` reads and writes it as `UserSettings`; a missing or unreadable file gives the defaults.
+`LastRunVersion` is the version that last started against the default database, and it names the next backup.
+
+The file stays in that folder when the database is overridden with `sqlite`. The `Settings:FilePath` configuration
+key (environment variable `Settings__FilePath`) moves only `settings.json` to another file. A relative path is
+resolved against the working directory. It is empty in shipped builds and is meant for screenshots and tests. The
+database and the log files do not move with it; use `sqlite` for the database.
+
+The Theme card on the Settings page applies a choice at once and saves it here. Three choices exist: **System**
+(the default) follows the Windows light or dark setting while the app runs, and **Light** and **Dark** always use
+that theme. `AppThemeService` applies the saved theme in `App.OnStartup`, before the main window is shown, so the
+window does not open in the wrong theme. `WpfThemeApplier` wraps WPF-UI's `ApplicationThemeManager` and
+`SystemThemeWatcher`; Light and Dark stop the watch. If the file cannot be read, the app starts in the System theme.
+If a choice cannot be saved, it applies until the app closes.
 
 ## Backups
 

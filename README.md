@@ -92,7 +92,7 @@ address bar of File Explorer.
   day and keeps up to 14 files. The app itself does not log pupil names, grades or notes. File paths in the logs
   include your Windows user name, and some error text from system components can contain values. Treat the log
   folder like the database. See [0003](docs/decisions/0003-application-logging.md).
-- `settings.json`: the update preferences.
+- `settings.json`: the update and theme preferences.
 
 Uninstalling the Setup.exe install removes the app folder `%LOCALAPPDATA%\NexGrades.App`. It keeps
 `%LOCALAPPDATA%\NexGrades`, so your data stays.

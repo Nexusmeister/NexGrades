@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using NexGrades.App.Extensions;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Logging;
+using NexGrades.App.Theming;
 using NexGrades.App.Updates;
 using NexGrades.Common.Storage;
 using NexGrades.Data.Diagnostics;
@@ -108,6 +109,8 @@ public partial class App : Application
             await scope.ServiceProvider.GetRequiredService<StartupDatabaseMigrator>().RunAsync(CancellationToken.None);
             await scope.ServiceProvider.GetRequiredService<SchoolYearService>().EnsureActiveYearAsync(CancellationToken.None);
 
+            // Must run before the window is shown (host.StartAsync), so it opens in the saved theme without a flash.
+            await host.Services.GetRequiredService<AppThemeService>().InitializeAsync();
             await host.StartAsync();
 
             // The window is shown by ApplicationHostService.StartAsync, so this is the time to a usable UI.

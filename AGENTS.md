@@ -194,6 +194,8 @@ GradeBucket, Assessment, Grade, FinalGrade, SubjectParticipation, Note, Teacher,
 - Preferences kept outside the database live in `settings.json` in `%LOCALAPPDATA%\NexGrades\`
   (`IAppDataPaths.SettingsFilePath`), read and written by `JsonUserSettingsStore` as `UserSettings`; a `sqlite`
   override does not move it. `LastRunVersion` names the next backup.
+- `AppThemeService` applies the saved theme before the main window shows, and `Settings:FilePath` (environment
+  variable `Settings__FilePath`) moves only `settings.json`, for screenshots and tests.
 - Before a migration of an existing database, `DatabaseBackupService` makes a backup that must pass
   `PRAGMA quick_check`; a failed backup stops startup before anything is migrated. Nothing restores a backup
   automatically. Backups hold pupil data, like the database (see `docs/decisions/0001-encryption-at-rest.md`).
