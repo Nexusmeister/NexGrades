@@ -58,7 +58,7 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    view-model code. `ui-designer` takes XAML, after the view-model surface exists. Run them one after the
    other when their files overlap.
 5. **Tests and docs: `tester` and `docs-writer`.** `tester` only changes `NexGrades.Tests`. `docs-writer`
-   covers `README.md`, `AGENTS.md`, XML docs, the domain glossary and `docs/decisions`. Run them in
+   covers `README.md`, `AGENTS.md`, XML docs, `docs/domain` and `docs/decisions`. Run them in
    parallel when their files don't overlap. Skip `docs-writer` when there is no user-visible change and no
    change to a command, convention or the domain model.
 6. **Verify yourself** in the worktree, from `src/NexGrades/`: `dotnet build NexGrades.slnx`,

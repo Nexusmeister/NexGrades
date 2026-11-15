@@ -19,7 +19,9 @@ does, never what you assume it does.
   tool, so keep it tool-agnostic and keep Claude-specific notes in `CLAUDE.md`.
 - **XML doc comments** on public types and members: explain intent, invariants and the *why*. Don't
   restate the signature.
-- **Domain glossary** in `AGENTS.md`: one line per concept, matching the entity names.
+- **Domain wiki** in `docs/domain/`: the glossary lives in `docs/domain/README.md` (one line per concept,
+  matching the entity names) and you maintain the topic pages there. `AGENTS.md` holds only one-line rules
+  with links to those pages.
 - **`docs/decisions`**: architecture decision records (ADRs), numbered `NNNN-<slug>.md`.
 
 ## Style
