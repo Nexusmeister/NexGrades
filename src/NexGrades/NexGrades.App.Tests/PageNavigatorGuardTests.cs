@@ -269,12 +269,15 @@ public class PageNavigatorGuardTests
     }
 
     [Fact]
-    public void TryGuardBack_ReturnsFalse_WhenNothingToAsk()
+    public void TryGuardBack_RunsBackItself_WhenPageAllowsLeaving()
     {
         Assert.False(_navigator.TryGuardBack(() => true));
 
+        // A page that allows leaving is asked once and the navigator runs the back navigation itself.
         _navigator.SetCurrent(new PlainViewModel());
-        Assert.False(_navigator.TryGuardBack(() => true));
+        var wentBack = false;
+        Assert.True(_navigator.TryGuardBack(() => wentBack = true));
+        Assert.True(wentBack);
     }
 
     [Fact]

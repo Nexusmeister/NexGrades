@@ -14,8 +14,11 @@ namespace NexGrades.App.Features.Subjects;
 /// <param name="navigation">Navigates back after a save or a cancel.</param>
 /// <param name="snackbar">Reports the outcome of a save.</param>
 /// <param name="subjectService">Validates and saves the subject.</param>
-public partial class SubjectDetailViewModel(INavigationService navigation, ISnackbarService snackbar, SubjectService subjectService) : ViewModel
+/// <param name="contentDialogService">Asks before unsaved input is discarded.</param>
+public partial class SubjectDetailViewModel(INavigationService navigation, ISnackbarService snackbar, SubjectService subjectService, IContentDialogService contentDialogService) : ViewModel
 {
+    private bool _allowLeave;
+
     [ObservableProperty] private string _title = "AddSubject";
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _shortCode = string.Empty;
@@ -26,10 +29,47 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
     /// <summary>Longest short code the form accepts; for the text box's <c>MaxLength</c> and a counter.</summary>
     public int MaxShortCodeLength { get; } = SubjectService.MaxShortCodeLength;
 
+    /// <summary>True when the name or the short code has been typed into.</summary>
+    private bool HasUnsavedChanges => Name.Trim().Length > 0 || ShortCode.Trim().Length > 0;
+
+    /// <summary>Resets the leave guard when the page is shown.</summary>
+    public override void OnNavigatedTo() => _allowLeave = false;
+
+    /// <summary>Goes back without saving, asking first when something has been typed.</summary>
     [RelayCommand]
-    private void Cancel()
+    private async Task CancelAsync(CancellationToken cancellationToken = default)
     {
-        navigation.GoBack();
+        if (HasUnsavedChanges
+            && !await DiscardChangesDialog.ConfirmAsync(contentDialogService, DiscardChangesDialog.UnsavedChangesMessage, cancellationToken))
+        {
+            return;
+        }
+
+        LeaveWithoutPrompt();
+    }
+
+    /// <summary>
+    /// Asks before sidebar navigation or the back button leaves the page with typed input. Skipped once the page
+    /// itself decided to leave (after saving, or after its own confirmation).
+    /// </summary>
+    public override async Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default)
+    {
+        if (_allowLeave || !HasUnsavedChanges)
+        {
+            return true;
+        }
+
+        return await DiscardChangesDialog.ConfirmAsync(contentDialogService, DiscardChangesDialog.UnsavedChangesMessage, cancellationToken);
+    }
+
+    /// <summary>Goes back without the leave guard asking a second time; re-arms the guard if going back fails.</summary>
+    private void LeaveWithoutPrompt()
+    {
+        _allowLeave = true;
+        if (!navigation.GoBack())
+        {
+            _allowLeave = false;
+        }
     }
 
     [RelayCommand]
@@ -67,7 +107,7 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
         }
 
         snackbar.Show("Success", "Subject has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-        navigation.GoBack();
+        LeaveWithoutPrompt();
     }
 
     private void ShowError(string message) =>

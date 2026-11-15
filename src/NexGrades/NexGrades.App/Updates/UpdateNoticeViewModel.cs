@@ -67,7 +67,7 @@ public sealed partial class UpdateNoticeViewModel : ObservableObject
     [RelayCommand]
     private async Task RestartNowAsync()
     {
-        if (!await _pageNavigator.ConfirmLeaveAsync())
+        if (!await _pageNavigator.ConfirmExitAsync())
         {
             return;
         }

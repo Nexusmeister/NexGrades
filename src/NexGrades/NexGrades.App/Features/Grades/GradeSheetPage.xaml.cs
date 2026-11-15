@@ -1,3 +1,4 @@
+using System.Windows.Controls;
 using Wpf.Ui.Abstractions.Controls;
 
 namespace NexGrades.App.Features.Grades;
@@ -15,7 +16,14 @@ public partial class GradeSheetPage : INavigableView<GradeSheetViewModel>
         DataContext = this;
 
         InitializeComponent();
+
+        // A typed grade lives in the cell editor until it is committed; the navigator commits it before it asks
+        // whether the page may be left, so it is saved or flagged as unsaved rather than lost.
+        vm.CommitPendingInput = CommitPendingCellEdit;
     }
+
+    /// <summary>Commits the grid's cell or row edit in progress; false when the grid rejected the edit.</summary>
+    private bool CommitPendingCellEdit() => SheetGrid.CommitEdit(DataGridEditingUnit.Row, exitEditingMode: true);
 
     /// <summary>The view model that drives this page.</summary>
     public GradeSheetViewModel ViewModel { get; }

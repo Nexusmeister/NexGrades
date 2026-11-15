@@ -305,7 +305,8 @@
         <!-- Sheet -->
         <Grid Grid.Row="4"
               Visibility="{Binding ViewModel.HasSheet, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <ui:DataGrid AutoGenerateColumns="False"
+            <ui:DataGrid x:Name="SheetGrid"
+                         AutoGenerateColumns="False"
                          CanUserAddRows="False"
                          CanUserDeleteRows="False"
                          CanUserReorderColumns="False"

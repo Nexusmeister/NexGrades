@@ -29,6 +29,7 @@ namespace NexGrades.App.Features.Classes;
 /// <param name="exporter">Writes the class overview of a subject to an Excel file.</param>
 /// <param name="fileSaveDialog">Asks where to save the export.</param>
 /// <param name="pageNavigator">Opens the grade sheet of a subject.</param>
+/// <param name="contentDialogService">Asks before unsaved input is discarded.</param>
 public partial class ClassViewModel(
     INavigationService navigation,
     ISnackbarService snackbar,
@@ -36,9 +37,11 @@ public partial class ClassViewModel(
     ClassService classService,
     SubjectOverviewExporter exporter,
     IFileSaveDialogService fileSaveDialog,
-    PageNavigator pageNavigator) : ViewModel
+    PageNavigator pageNavigator,
+    IContentDialogService contentDialogService) : ViewModel
 {
     private int? _editingClassInstanceId;
+    private bool _allowLeave;
     private string _loadedName = string.Empty;
 
     [ObservableProperty]
@@ -119,6 +122,7 @@ public partial class ClassViewModel(
     /// </summary>
     protected override async Task OnNavigatedToAsync(object? parameter)
     {
+        _allowLeave = false;
         _editingClassInstanceId = parameter as int?;
 
         ActiveStudents = [];
@@ -257,12 +261,46 @@ public partial class ClassViewModel(
         }
 
         snackbar.Show("Success", "Class has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
-        navigation.GoBack();
+        LeaveWithoutPrompt();
     }
 
+    /// <summary>True when the typed class name differs from the loaded one (empty for a new class).</summary>
+    private bool HasUnsavedChanges => !string.Equals(Name.Trim(), _loadedName.Trim(), StringComparison.Ordinal);
+
+    /// <summary>Goes back without saving, asking first when the name has been changed.</summary>
     [RelayCommand]
-    private void Cancel()
+    private async Task CancelAsync(CancellationToken cancellationToken = default)
     {
-        navigation.GoBack();
+        if (HasUnsavedChanges
+            && !await DiscardChangesDialog.ConfirmAsync(contentDialogService, DiscardChangesDialog.UnsavedChangesMessage, cancellationToken))
+        {
+            return;
+        }
+
+        LeaveWithoutPrompt();
+    }
+
+    /// <summary>
+    /// Asks before sidebar navigation or the back button leaves the page with a changed name. Skipped once the page
+    /// itself decided to leave (after saving, or after its own confirmation).
+    /// </summary>
+    public override async Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default)
+    {
+        if (_allowLeave || !HasUnsavedChanges)
+        {
+            return true;
+        }
+
+        return await DiscardChangesDialog.ConfirmAsync(contentDialogService, DiscardChangesDialog.UnsavedChangesMessage, cancellationToken);
+    }
+
+    /// <summary>Goes back without the leave guard asking a second time; re-arms the guard if going back fails.</summary>
+    private void LeaveWithoutPrompt()
+    {
+        _allowLeave = true;
+        if (!navigation.GoBack())
+        {
+            _allowLeave = false;
+        }
     }
 }
