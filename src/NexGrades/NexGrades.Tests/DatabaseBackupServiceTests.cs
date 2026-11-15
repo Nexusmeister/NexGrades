@@ -168,6 +168,23 @@ public sealed class DatabaseBackupServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateBackupAsync_KeepsNewBackup_WhenClockIsBehindExistingBackups()
+    {
+        for (var i = 1; i <= 6; i++)
+        {
+            _ = CreateBackupFile(new DateTime(2027, 1, i, 8, 0, 0));
+        }
+
+        var path = await CreateService().CreateBackupAsync(BackupDirectory, "0.1.1");
+
+        Assert.True(File.Exists(path));
+        Assert.Equal(DatabaseBackupService.RetainedBackupCount, Directory.EnumerateFiles(BackupDirectory).Count());
+        Assert.False(File.Exists(Path.Combine(BackupDirectory, "app-20270101-080000-v1.0.0.db")));
+        Assert.False(File.Exists(Path.Combine(BackupDirectory, "app-20270102-080000-v1.0.0.db")));
+        Assert.True(File.Exists(Path.Combine(BackupDirectory, "app-20270106-080000-v1.0.0.db")));
+    }
+
+    [Fact]
     public async Task CreateBackupAsync_Throws_AndLeavesNoDatabaseFile_WhenBackupDirectoryIsAFile()
     {
         _ = Directory.CreateDirectory(_root);

@@ -54,7 +54,7 @@ public sealed partial class DatabaseBackupService(
             var backupPath = MoveToFreeName(temporaryPath, backupDirectory, fileName);
             LogBackupCreated();
 
-            _ = PruneBackups(backupDirectory);
+            _ = PruneBackups(backupDirectory, backupPath);
             return backupPath;
         });
 
@@ -65,8 +65,13 @@ public sealed partial class DatabaseBackupService(
     /// a warning and skipped, never thrown.
     /// </summary>
     /// <param name="backupDirectory">The backup folder.</param>
+    /// <param name="protectedPath">
+    /// A backup that is never deleted and counts as one of the kept ones, so the other kept backups are the newest
+    /// <see cref="RetainedBackupCount"/> - 1. <see cref="CreateBackupAsync"/> passes the file it just wrote, because
+    /// a clock that went backwards would otherwise make it sort oldest and delete it at once.
+    /// </param>
     /// <returns>How many backups were deleted.</returns>
-    public int PruneBackups(string backupDirectory)
+    public int PruneBackups(string backupDirectory, string? protectedPath = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(backupDirectory);
 
@@ -94,11 +99,13 @@ public sealed partial class DatabaseBackupService(
             return 0;
         }
 
-        var deleted = 0;
-        foreach (var backup in backups
+        var ordered = backups
             .OrderByDescending(b => b.Timestamp)
-            .ThenByDescending(b => b.Name, StringComparer.Ordinal)
-            .Skip(RetainedBackupCount))
+            .ThenByDescending(b => b.Name, StringComparer.Ordinal);
+        var deleted = 0;
+        foreach (var backup in protectedPath is null
+            ? ordered.Skip(RetainedBackupCount)
+            : ordered.Where(b => !IsSamePath(b.Path, protectedPath)).Skip(RetainedBackupCount - 1))
         {
             try
             {
@@ -118,6 +125,9 @@ public sealed partial class DatabaseBackupService(
 
         return deleted;
     }
+
+    private static bool IsSamePath(string left, string right) =>
+        string.Equals(Path.GetFullPath(left), Path.GetFullPath(right), StringComparison.OrdinalIgnoreCase);
 
     private async Task CopyDatabaseAsync(string temporaryPath, CancellationToken cancellationToken)
     {

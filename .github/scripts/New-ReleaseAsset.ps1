@@ -90,7 +90,8 @@ if ($vpkVersion -ne $velopackVersion[0]) { throw "The vpk tool version '$vpkVers
 Push-Location $repoRoot
 try
 {
-    dotnet tool restore | Out-Host
+    # The tool manifest is at the repo root, so the package source mapping in src\NexGrades\nuget.config is not picked up by itself.
+    dotnet tool restore --configfile (Join-Path $solutionDir 'nuget.config') | Out-Host
     Assert-Success 'dotnet tool restore'
 
     # A fresh output folder holds no earlier release, so vpk has nothing to build a delta from; --delta None makes

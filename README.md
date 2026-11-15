@@ -91,8 +91,10 @@ newest are kept. If the backup fails, NexGrades does not start and the database 
 To restore a backup by hand:
 
 1. Quit NexGrades.
-2. Rename `%LOCALAPPDATA%\NexGrades\app.db` to keep it aside, for example `app.db.old`.
-3. Delete any `app.db-journal` file next to it, if one exists.
+2. Rename `%LOCALAPPDATA%\NexGrades\app.db` to keep it aside, for example `app.db.old`. Do the same with
+   `app.db-wal`, `app.db-shm` and `app.db-journal`, whichever of them exist. The database runs in WAL mode, so a
+   leftover `-wal` file would be replayed onto the restored file.
+3. Make sure no `app.db-wal`, `app.db-shm` or `app.db-journal` is left next to `app.db`.
 4. Copy the backup you want from `%LOCALAPPDATA%\NexGrades\backups\` into `%LOCALAPPDATA%\NexGrades\` and rename it
    to `app.db`.
 5. Start NexGrades.

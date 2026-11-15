@@ -42,8 +42,8 @@ the release notes and `docs/releasing.md`).
   belong to.
 - Stable checks read `releases/latest/download/` of the repository. Beta checks use Velopack's GitHub source for
   pre-releases; they are made only when the user turns on beta updates, and make one unauthenticated API call.
-- Only versions newer than the installed one are offered (`UpdatePolicy.Choose`), and Velopack's downgrade check is
-  off. Turning beta updates off therefore never installs an older version.
+- Only versions newer than the installed one are offered (`UpdatePolicy.Choose`), and Velopack's `AllowVersionDowngrade`
+  is off, so downgrades are not allowed. Turning beta updates off therefore never installs an older version.
 - Releases are created as drafts with all assets and published afterwards. A failed run leaves a draft, which the next
   run for the same version replaces. Beta releases keep the ten newest; stable releases are never deleted.
 - The app is unsigned. The release notes and `README.md` describe the SmartScreen prompt.
@@ -57,8 +57,10 @@ the release notes and `docs/releasing.md`).
   "Restart now", which first asks the current page whether it may be left, so unsaved input is not lost.
 - An update downloaded earlier and not yet installed is taken up at the next start. Velopack also applies a leftover
   downloaded update at the next launch.
-- Velopack's own logger is not bridged into the app log, because its messages contain local paths and URLs. The
-  coordinator logs versions and channel names only.
+- The coordinator logs versions and channel names. Exception messages from Velopack, IO or HTTP can appear in the local
+  file log only, as `docs/decisions/0003-application-logging.md` allows for framework and third-party exceptions; the
+  OpenTelemetry export strips messages. Velopack's own logger is not bridged into the app log, because its messages
+  contain local paths and URLs.
 
 ### Backups before a migration
 
