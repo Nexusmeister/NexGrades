@@ -9,7 +9,7 @@
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance students:StudentsOverviewPage, IsDesignTimeCreatable=False}"
-      Title="StudentsOverviewPage">
+      Title="Students">
 
     <b:Interaction.Triggers>
         <b:EventTrigger EventName="Loaded">
@@ -24,9 +24,8 @@
             FontTypography="Title" 
             Margin="5,0,0,0"></ui:TextBlock>
         <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
-            <ui:Button Margin="0,0,5,0" Content="AddStudent" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddStudentCommand}"/>
+            <ui:Button Margin="0,0,5,0" Content="Add student" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddStudentCommand}"/>
             <ui:Button Margin="0,0,5,0" Content="Edit student" Icon="{ui:SymbolIcon Edit24}" Command="{Binding ViewModel.EditStudentCommand}"/>
-            <ui:Button Margin="0,0,5,0" Content="RemoveStudent" Icon="{ui:SymbolIcon SubtractCircle32}"/>
         </StackPanel>
         <!--<ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
         <ui:DropDownButton.Flyout>
@@ -49,8 +48,8 @@
             </ui:DataGrid.InputBindings>
             <ui:DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding Id}"/>
-                <DataGridTextColumn Header="LastName" Binding="{Binding LastName}"/>
-                <DataGridTextColumn Header="FirstName" Binding="{Binding FirstName}"/>
+                <DataGridTextColumn Header="Last name" Binding="{Binding LastName}"/>
+                <DataGridTextColumn Header="First name" Binding="{Binding FirstName}"/>
                 <DataGridTextColumn Header="Class" Binding="{Binding ClassName}"></DataGridTextColumn>
             </ui:DataGrid.Columns>
         </ui:DataGrid>

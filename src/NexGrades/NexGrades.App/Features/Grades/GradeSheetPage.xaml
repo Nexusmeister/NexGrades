@@ -11,7 +11,7 @@
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="900"
       d:DataContext="{d:DesignInstance grades:GradeSheetPage, IsDesignTimeCreatable=False}"
-      Title="GradeSheetPage">
+      Title="Grade sheet">
 
     <!-- Page-local, like ClassPage: the page must build without App.xaml's resources (see NexGrades.App.Tests). -->
     <Page.Resources>
@@ -325,14 +325,12 @@
                          grades:DataGridColumnsBehavior.Columns="{Binding ViewModel.Columns}"
                          grades:DataGridColumnsBehavior.SelectedCell="{Binding ViewModel.SelectedCell, Mode=OneWayToSource}"/>
 
-            <ui:TextBlock HorizontalAlignment="Center"
-                          VerticalAlignment="Center"
-                          Appearance="Secondary"
-                          TextWrapping="Wrap"
-                          Text="There are no students in this class yet."
-                          IsHitTestVisible="False">
-                <ui:TextBlock.Style>
-                    <Style TargetType="ui:TextBlock">
+            <!-- The style sits on a plain Grid: WPF-UI replaces the style of a ui:TextBlock, so it would never apply there. -->
+            <Grid HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  IsHitTestVisible="False">
+                <Grid.Style>
+                    <Style TargetType="Grid">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding ViewModel.Rows.Count}" Value="0">
@@ -340,8 +338,11 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </ui:TextBlock.Style>
-            </ui:TextBlock>
+                </Grid.Style>
+                <ui:TextBlock Appearance="Secondary"
+                              TextWrapping="Wrap"
+                              Text="There are no students in this class yet."/>
+            </Grid>
         </Grid>
 
         <!-- Details and assessments. The cards wrap and the panel scrolls, so nothing is clipped at 900 x 600. -->

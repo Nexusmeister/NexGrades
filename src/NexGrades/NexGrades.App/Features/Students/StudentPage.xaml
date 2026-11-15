@@ -11,12 +11,13 @@
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="900"
       d:DataContext="{d:DesignInstance students:StudentPage, IsDesignTimeCreatable=False}"
-      Title="StudentPage">
+      Title="Student">
 
     <!-- Page-local, like ClassPage: the page must build without App.xaml's resources (see NexGrades.App.Tests). -->
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <core:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <core:NonEmptyStringToVisibilityConverter x:Key="NonEmptyStringToVisibilityConverter"/>
 
         <!-- Header filters that belong to one tab only. -->
         <Style x:Key="GradesTabOnly" TargetType="Grid">
@@ -51,18 +52,6 @@
                 <DataTrigger Binding="{Binding IsVoided}" Value="True">
                     <Setter Property="Opacity" Value="0.6"/>
                 </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- Takes no room when the text is empty. -->
-        <Style x:Key="OptionalText" TargetType="ui:TextBlock">
-            <Style.Triggers>
-                <Trigger Property="Text" Value="">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                </Trigger>
-                <Trigger Property="Text" Value="{x:Null}">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                </Trigger>
             </Style.Triggers>
         </Style>
     </Page.Resources>
@@ -391,21 +380,21 @@
                                                                                                           Text="{Binding DateText}"/>
                                                                                             <ui:TextBlock FontTypography="Body"
                                                                                                           TextWrapping="Wrap"
-                                                                                                          Style="{StaticResource OptionalText}"
-                                                                                                          Text="{Binding AssessmentTitle}"/>
+                                                                                                          Text="{Binding AssessmentTitle}"
+                                                                                                          Visibility="{Binding AssessmentTitle, Converter={StaticResource NonEmptyStringToVisibilityConverter}}"/>
                                                                                             <ui:TextBlock FontTypography="Body"
                                                                                                           TextWrapping="Wrap"
-                                                                                                          Style="{StaticResource OptionalText}"
-                                                                                                          Text="{Binding Label}"/>
+                                                                                                          Text="{Binding Label}"
+                                                                                                          Visibility="{Binding Label, Converter={StaticResource NonEmptyStringToVisibilityConverter}}"/>
                                                                                             <ui:TextBlock FontTypography="Caption"
                                                                                                           Appearance="Secondary"
                                                                                                           TextWrapping="Wrap"
-                                                                                                          Style="{StaticResource OptionalText}"
-                                                                                                          Text="{Binding Comment}"/>
+                                                                                                          Text="{Binding Comment}"
+                                                                                                          Visibility="{Binding Comment, Converter={StaticResource NonEmptyStringToVisibilityConverter}}"/>
                                                                                             <ui:TextBlock FontTypography="Caption"
                                                                                                           TextWrapping="Wrap"
-                                                                                                          Style="{StaticResource OptionalText}"
-                                                                                                          Text="{Binding VoidedText}"/>
+                                                                                                          Text="{Binding VoidedText}"
+                                                                                                          Visibility="{Binding VoidedText, Converter={StaticResource NonEmptyStringToVisibilityConverter}}"/>
                                                                                         </StackPanel>
                                                                                     </StackPanel>
 

@@ -9,7 +9,7 @@
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance subjects:SubjectsOverviewPage, IsDesignTimeCreatable=False}"
-      Title="SubjectsOverviewPage">
+      Title="Subjects">
 
     <b:Interaction.Triggers>
         <b:EventTrigger EventName="Loaded">
@@ -24,9 +24,7 @@
             FontTypography="Title" 
             Margin="5,0,0,0"></ui:TextBlock>
         <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
-            <ui:Button Margin="0,0,5,0" Content="AddSubject" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddSubjectCommand}"/>
-            <ui:Button Margin="0,0,5,0" Content="EditSubject" Icon="{ui:SymbolIcon Edit32}"/>
-            <ui:Button Margin="0,0,5,0" Content="RemoveSubject" Icon="{ui:SymbolIcon SubtractCircle32}"/>
+            <ui:Button Margin="0,0,5,0" Content="Add subject" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddSubjectCommand}"/>
         </StackPanel>
 
         <ui:DataGrid ItemsSource="{Binding ViewModel.Subjects}" 

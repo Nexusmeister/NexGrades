@@ -8,7 +8,7 @@
       d:DataContext="{d:DesignInstance subjects:SubjectDetailPage, IsDesignTimeCreatable=False}"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="SubjectDetailPage">
+      Title="Subject">
 
     <StackPanel Margin="5,0,5, 0" Orientation="Vertical">
         <ui:TextBlock FontTypography="Title" 
