@@ -11,11 +11,12 @@ a convention changes.
   `.claude/settings.local.json` (git-ignored).
 - The development machine is Windows. Commands in `AGENTS.md` work in both PowerShell and Git Bash; run
   them from `src/NexGrades/`.
-- To work an issue end to end, run `/implement-issue <number>`. It drives the subagents in
-  `.claude/agents/` from the main session. Alternatively, hand the issue to the `issue-orchestrator`
-  agent, which runs it end to end through the role agents (nested subagents are supported; if nesting
-  fails, run the orchestrator as a background session (`claude --agent issue-orchestrator --bg "<brief>"`))
-  and stops at merge-ready. The main session (the lead) merges.
+- To work an issue end to end, run `/implement-issue <number>` in the main session. It is the lead's front
+  door: it reads the issue, settles open questions and briefs an `issue-orchestrator` agent. The orchestrator
+  works in its own worktree (`.claude/worktrees/issue-<n>`) and runs the role agents in `.claude/agents/`
+  (nested subagents are supported; if nesting fails, the skill runs it as a background session with
+  `claude --agent issue-orchestrator --bg "<brief>"`). It stops at merge-ready. The lead then runs the
+  `verify-and-merge` skill and merges.
 - Delegate to a subagent when its role fits:
   - `issue-orchestrator`: runs one issue end to end through the roles below; never edits, never merges
   - `architect`: design a change before code is written
