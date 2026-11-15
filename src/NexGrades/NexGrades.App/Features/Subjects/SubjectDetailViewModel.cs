@@ -10,16 +10,21 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Features.Subjects;
 
-/// <summary>Form for adding a subject to the catalogue.</summary>
+/// <summary>
+/// Add and edit form for a subject. Editing changes the name and short code only; bucket templates are not touched.
+/// </summary>
 /// <param name="navigation">Navigates back after a save or a cancel.</param>
 /// <param name="snackbar">Reports the outcome of a save.</param>
-/// <param name="subjectService">Validates and saves the subject.</param>
+/// <param name="subjectService">Loads, validates and saves the subject.</param>
 /// <param name="contentDialogService">Asks before unsaved input is discarded.</param>
 public partial class SubjectDetailViewModel(INavigationService navigation, ISnackbarService snackbar, SubjectService subjectService, IContentDialogService contentDialogService) : ViewModel
 {
     private readonly LeaveGuard _leaveGuard = new(contentDialogService);
+    private int? _editingSubjectId;
+    private string _loadedName = string.Empty;
+    private string _loadedShortCode = string.Empty;
 
-    [ObservableProperty] private string _title = "AddSubject";
+    [ObservableProperty] private string _title = "Add subject";
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _shortCode = string.Empty;
 
@@ -29,18 +34,56 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
     /// <summary>Longest short code the form accepts; for the text box's <c>MaxLength</c> and a counter.</summary>
     public int MaxShortCodeLength { get; } = SubjectService.MaxShortCodeLength;
 
-    /// <summary>True when the name or the short code has been typed into.</summary>
-    private bool HasUnsavedChanges => Name.Trim().Length > 0 || ShortCode.Trim().Length > 0;
+    /// <summary>True when the form edits an existing subject rather than adding a new one.</summary>
+    public bool IsEditing => _editingSubjectId is not null;
 
-    /// <summary>Resets the leave guard when the page is shown.</summary>
-    public override void OnNavigatedTo() => _leaveGuard.Reset();
+    /// <summary>True when the name or the short code differs from the loaded values (empty for a new subject).</summary>
+    private bool HasUnsavedChanges =>
+        !string.Equals(Name.Trim(), _loadedName, StringComparison.Ordinal)
+        || !string.Equals(ShortCode.Trim(), _loadedShortCode, StringComparison.Ordinal);
 
-    /// <summary>Goes back without saving, asking first when something has been typed.</summary>
+    /// <summary>
+    /// Loads the subject when the page opens for editing, with the subject id as <paramref name="parameter"/>.
+    /// Otherwise resets the form to the add state.
+    /// </summary>
+    protected override async Task OnNavigatedToAsync(object? parameter)
+    {
+        _leaveGuard.Reset();
+        SetFormState(null, string.Empty, string.Empty);
+
+        if (parameter is not int id)
+        {
+            return;
+        }
+
+        var subject = await subjectService.FindSubjectAsync(id);
+        if (subject is null)
+        {
+            snackbar.Show("Error", "The subject could not be found. It may have been removed.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            return;
+        }
+
+        SetFormState(subject.Id, subject.Name, subject.ShortCode);
+    }
+
+    /// <summary>Sets the mode and the loaded baseline together, so the leave guard compares against what was loaded.</summary>
+    private void SetFormState(int? subjectId, string name, string shortCode)
+    {
+        _editingSubjectId = subjectId;
+        _loadedName = name.Trim();
+        _loadedShortCode = shortCode.Trim();
+        Name = name;
+        ShortCode = shortCode;
+        Title = subjectId is null ? "Add subject" : "Edit subject";
+        OnPropertyChanged(nameof(IsEditing));
+    }
+
+    /// <summary>Goes back without saving, asking first when something has been changed.</summary>
     [RelayCommand]
     private Task CancelAsync(CancellationToken cancellationToken = default) =>
         _leaveGuard.CancelAsync(HasUnsavedChanges, navigation.GoBack, cancellationToken);
 
-    /// <summary>Asks before sidebar navigation or the back button leaves the page with typed input.</summary>
+    /// <summary>Asks before sidebar navigation or the back button leaves the page with changed input.</summary>
     public override Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default) =>
         _leaveGuard.CanLeaveAsync(HasUnsavedChanges, cancellationToken);
 
@@ -61,20 +104,22 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
 
         try
         {
-            await subjectService.CreateSubjectAsync(Name, ShortCode, cancellationToken);
+            if (_editingSubjectId is { } id)
+            {
+                await subjectService.UpdateSubjectAsync(id, Name, ShortCode, cancellationToken);
+            }
+            else
+            {
+                await subjectService.CreateSubjectAsync(Name, ShortCode, cancellationToken);
+            }
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            snackbar.Show(
-                "Error",
-                string.Format(
-                    CultureInfo.CurrentCulture,
-                    "The subject could not be saved. Enter a name of up to {0} characters and a short code of up to {1} characters.",
-                    SubjectService.MaxNameLength,
-                    SubjectService.MaxShortCodeLength),
-                ControlAppearance.Caution,
-                new SymbolIcon(SymbolRegular.ErrorCircle24),
-                TimeSpan.FromSeconds(5));
+            ShowError(string.Format(
+                CultureInfo.CurrentCulture,
+                "The subject could not be saved. Enter a name of up to {0} characters and a short code of up to {1} characters.",
+                SubjectService.MaxNameLength,
+                SubjectService.MaxShortCodeLength));
             return;
         }
 

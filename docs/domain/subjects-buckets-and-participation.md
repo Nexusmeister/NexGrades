@@ -6,8 +6,8 @@ one year, and which students take part.
 ## Subject and BucketTemplate
 
 A `Subject` is a catalogue entry (for example "Mathematik") with a name and a short code. It is not
-year-scoped. `SubjectService.CreateSubjectAsync` adds subjects to the catalogue. `Subject.IsActive` is stored
-only; no Domain or App code reads it yet.
+year-scoped. `SubjectService.CreateSubjectAsync` adds subjects to the catalogue, and `SubjectService.UpdateSubjectAsync`
+edits an existing one (see below). `Subject.IsActive` is stored only; no Domain or App code reads it yet.
 
 A `Subject` owns `BucketTemplate` rows: its default bucket layout, each with a name, a weight and a sort
 order. A template is copied into a `GradeBucket` whenever a subject instance is created. Editing a template
@@ -15,6 +15,23 @@ afterwards affects only subject instances created afterwards.
 
 No Domain or App code creates or edits templates today; they are read by the rollover. Editing templates is
 the model's intent, not a current feature.
+
+## Editing a subject
+
+`SubjectService.UpdateSubjectAsync` changes the name and the short code of an existing subject. The rules and
+limits are the same as for `CreateSubjectAsync`: both values are trimmed, must not be empty, and must not exceed
+`SubjectService.MaxNameLength` (50) and `SubjectService.MaxShortCodeLength` (10). The duplicate check ignores the
+subject being edited, so a subject can be saved with its own values unchanged. An unknown id and any violated rule
+throw `InvariantViolationException`.
+
+The edit changes only the catalogue entry. It does not change the subject's `BucketTemplate` rows. A past year keeps
+its `GradeBucket` snapshots and their weights, because those were copied when the subject instance was created. The
+subject's name and short code are not snapshotted, though: a past year's `SubjectInstance` refers to the same
+`Subject` row, so it shows the new name and code. A subject is not year-scoped, so no closed-year lock applies to
+the edit.
+
+The Subjects overview has an Edit subject action that opens `SubjectDetailPage` with the subject's id. The same
+page serves Add and Edit. Its title is "Add subject" or "Edit subject".
 
 ## SubjectInstance
 
@@ -58,6 +75,8 @@ See [Rules by area](../../AGENTS.md#rules-by-area) in `AGENTS.md`.
 - `NexGrades.Data/Entities/ParticipationMode.cs`
 - `NexGrades.Domain/Services/SubjectService.cs`
 - `NexGrades.Domain/Services/RolloverService.cs`
+- `NexGrades.App/Features/Subjects/SubjectsOverviewViewModel.cs`
+- `NexGrades.App/Features/Subjects/SubjectDetailViewModel.cs`
 
 ## Related
 

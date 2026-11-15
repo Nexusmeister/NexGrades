@@ -23,6 +23,16 @@ public partial class SubjectsOverviewViewModel(PageNavigator navigator, IDbConte
         navigator.NavigateWithHierarchy<SubjectDetailPage>();
     }
 
+    /// <summary>Opens the form to edit one subject's name and short code.</summary>
+    /// <param name="subject">The subject row to edit.</param>
+    [RelayCommand]
+    private void EditSubject(SubjectRow subject)
+    {
+        ArgumentNullException.ThrowIfNull(subject);
+
+        navigator.NavigateWithHierarchy<SubjectDetailPage>(subject.Id);
+    }
+
     [RelayCommand]
     private async Task LoadSubjectsAsync(CancellationToken cancellationToken = default)
     {
