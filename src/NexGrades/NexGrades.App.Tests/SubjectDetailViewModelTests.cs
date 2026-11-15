@@ -131,6 +131,23 @@ public class SubjectDetailViewModelTests
         Assert.Equal(0, fake.Shown);
     });
 
+    [Theory]
+    [InlineData("Mathe", "Ma")]
+    [InlineData("Mathematik", "M")]
+    public Task CanLeaveAsync_PromptsAndBlocks_WhenEditedSubjectIsChangedAsync(string name, string shortCode) => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(new DateTime(2025, 10, 1));
+        var id = await SeedSubjectAsync(env);
+        var (dialogs, fake) = FakeContentDialogService.Create(ContentDialogResult.None);
+        var viewModel = new OpenableSubjectViewModel(env, dialogs);
+        await viewModel.OpenAsync(id);
+        viewModel.Name = name;
+        viewModel.ShortCode = shortCode;
+
+        Assert.False(await viewModel.CanLeaveAsync());
+        Assert.Equal(1, fake.Shown);
+    });
+
     [Fact]
     public void MaxLengths_MatchTheService()
     {

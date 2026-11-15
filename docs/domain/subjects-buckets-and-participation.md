@@ -20,8 +20,8 @@ the model's intent, not a current feature.
 
 `SubjectService.UpdateSubjectAsync` changes the name and the short code of an existing subject. The rules and
 limits are the same as for `CreateSubjectAsync`: both values are trimmed, must not be empty, and must not exceed
-`SubjectService.MaxNameLength` (50) and `SubjectService.MaxShortCodeLength` (10). The duplicate check ignores the
-subject being edited, so a subject can be saved with its own values unchanged. An unknown id and any violated rule
+`SubjectService.MaxNameLength` (50) and `SubjectService.MaxShortCodeLength` (10). Saving a subject with its values
+unchanged is allowed, and names and short codes need not be unique. An unknown id and any violated rule
 throw `InvariantViolationException`.
 
 The edit changes only the catalogue entry. It does not change the subject's `BucketTemplate` rows. A past year keeps

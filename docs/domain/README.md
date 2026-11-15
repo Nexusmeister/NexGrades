@@ -53,7 +53,7 @@ short-lived context per method.
 - `ClassService`: creating and renaming classes.
 - `StudentService`: creating and renaming students, enrolling them on creation.
 - `EnrollmentService`: enrolling a student, with the one-enrollment-per-year rule.
-- `SubjectService`: adding subjects to the catalogue.
+- `SubjectService`: adding subjects to the catalogue and editing their name and short code.
 - `GradeService`: recording, changing, voiding and restoring grades; final grade overrides.
 - `AssessmentService`: creating, editing, voiding and restoring assessments.
 - `GradeSheetService`: the grade sheet of a subject instance and the grades of one student in one year.
