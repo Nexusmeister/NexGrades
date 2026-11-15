@@ -421,13 +421,16 @@ public sealed partial class GradeSheetViewModel(
             return;
         }
 
+        // One dialog: voiding reloads the sheet, so unsaved input is part of the same question instead of a second one.
         var confirmed = await ConfirmAsync(
             "Void assessment",
-            "The grades of this assessment no longer count towards any average while it is voided. You can restore it later. Void the assessment?",
+            HasUnsavedInput
+                ? "The grades of this assessment no longer count towards any average while it is voided. You can restore it later. Voiding reloads the sheet and discards the grades or details that are not saved. Void the assessment?"
+                : "The grades of this assessment no longer count towards any average while it is voided. You can restore it later. Void the assessment?",
             "Void",
             "Cancel",
             cancellationToken);
-        if (!confirmed || !await ConfirmDiscardForReloadAsync(cancellationToken))
+        if (!confirmed)
         {
             return;
         }
@@ -440,7 +443,9 @@ public sealed partial class GradeSheetViewModel(
         if (voided)
         {
             ShowSuccess("The assessment has been voided.");
-            await ReloadAfterWriteAsync(cancellationToken);
+
+            // The void dialog already warned about unsaved input, so reload without asking a second time.
+            await LoadAsync();
         }
     }
 
@@ -515,24 +520,33 @@ public sealed partial class GradeSheetViewModel(
     /// <param name="shown">The value the toggle was just switched to.</param>
     internal async Task ReloadForVoidedToggleAsync(bool shown)
     {
-        if (await ConfirmDiscardForReloadAsync())
+        try
         {
-            await LoadAsync();
-            return;
-        }
+            if (await ConfirmDiscardForReloadAsync())
+            {
+                await LoadAsync();
+                return;
+            }
 
-        // A newer toggle already changed the value again; then there is nothing to revert.
-        if (ShowVoidedGrades == shown)
+            // A newer toggle already changed the value again; then there is nothing to revert.
+            if (ShowVoidedGrades == shown)
+            {
+                _suppressVoidedReload = true;
+                try
+                {
+                    ShowVoidedGrades = !shown;
+                }
+                finally
+                {
+                    _suppressVoidedReload = false;
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _suppressVoidedReload = true;
-            try
-            {
-                ShowVoidedGrades = !shown;
-            }
-            finally
-            {
-                _suppressVoidedReload = false;
-            }
+            // Fire-and-forget caller: nothing above can observe this, so report it here.
+            LogVoidedToggleReloadFailed(ex);
+            ShowError("The grade sheet could not be reloaded. It may be out of date until you reload it.");
         }
     }
 
@@ -561,7 +575,10 @@ public sealed partial class GradeSheetViewModel(
         if (await ConfirmDiscardForReloadAsync(cancellationToken))
         {
             await LoadAsync();
+            return;
         }
+
+        ShowError("The sheet may be out of date until you reload it.");
     }
 
     partial void OnSelectedCellChanged(GradeCellViewModel? value) => RefreshDetail();
@@ -1056,6 +1073,9 @@ public sealed partial class GradeSheetViewModel(
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Saving a grade cell failed unexpectedly.")]
     private partial void LogCellSaveFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Reloading the grade sheet after the voided-grades toggle failed.")]
+    private partial void LogVoidedToggleReloadFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "A grade sheet change was refused because the school year is closed.")]
     private partial void LogWriteRefused(Exception exception);

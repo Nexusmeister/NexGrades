@@ -18,6 +18,9 @@ public sealed partial class ExportNotesDialogViewModel(DateOnly defaultFrom, Dat
     [NotifyPropertyChangedFor(nameof(ValidationMessage), nameof(HasValidationMessage), nameof(IsValid))]
     private DateTime? _to = defaultTo.ToDateTime(TimeOnly.MinValue);
 
+    /// <summary>Latest date the pickers should offer; the export range must end before <see cref="DateOnly.MaxValue"/>.</summary>
+    public DateTime DisplayDateEnd { get; } = DateOnly.MaxValue.AddDays(-1).ToDateTime(TimeOnly.MinValue);
+
     /// <summary>Whether archived notes are exported too. Off by default.</summary>
     [ObservableProperty]
     private bool _includeArchived;
@@ -30,6 +33,11 @@ public sealed partial class ExportNotesDialogViewModel(DateOnly defaultFrom, Dat
             if (From is null || To is null)
             {
                 return "Enter a start date and an end date.";
+            }
+
+            if (To > DisplayDateEnd)
+            {
+                return "The end date is too far in the future.";
             }
 
             return From > To ? "The start date must not be after the end date." : null;

@@ -156,6 +156,39 @@ public class GradeSheetViewModelTests
     });
 
     [Fact]
+    public Task VoidAssessment_AsksOnce_AndReloads_WhenThereIsUnsavedInput() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var ids = await SeedAsync(env, withGrade: false);
+        var (dialogs, fake) = FakeContentDialogService.Create(ContentDialogResult.Primary);
+        var viewModel = await CreateAsync(env, ids, dialogs);
+        var column = viewModel.Columns.Single(c => c.AssessmentId is not null);
+        TheCell(viewModel).Text = "x";
+        Assert.True(viewModel.HasUnsavedInput);
+
+        await viewModel.VoidAssessmentCommand.ExecuteAsync(column);
+
+        Assert.Equal(1, fake.Shown);
+        Assert.False(viewModel.HasUnsavedInput);
+        await using var context = new AppDbContext(env.Options);
+        Assert.NotNull((await context.Assessments.AsNoTracking().SingleAsync()).VoidedOn);
+    });
+
+    [Fact]
+    public Task VoidAssessment_AsksOnce_WhenThereIsNoUnsavedInput() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var ids = await SeedAsync(env, withGrade: false);
+        var (dialogs, fake) = FakeContentDialogService.Create(ContentDialogResult.Primary);
+        var viewModel = await CreateAsync(env, ids, dialogs);
+        var column = viewModel.Columns.Single(c => c.AssessmentId is not null);
+
+        await viewModel.VoidAssessmentCommand.ExecuteAsync(column);
+
+        Assert.Equal(1, fake.Shown);
+    });
+
+    [Fact]
     public Task VoidCell_SendsNoSecondVoid_WhenTheCellIsEmptiedTypedAndEmptiedAgainDuringTheVoid() => StaTestRunner.RunAsync(async () =>
     {
         using var env = new LockTestEnvironment(Now);

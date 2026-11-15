@@ -7,24 +7,6 @@ namespace NexGrades.Tests;
 
 public class DatabaseMigrationServiceLoggingTests
 {
-    private sealed record Entry(LogLevel Level, string Message, Exception? Exception);
-
-    private sealed class CapturingLogger<T> : ILogger<T>
-    {
-        public List<Entry> Entries { get; } = [];
-
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-        {
-            ArgumentNullException.ThrowIfNull(formatter);
-            Entries.Add(new Entry(logLevel, formatter(state, exception), exception));
-        }
-    }
-
     private sealed class FailingFactory : IDbContextFactory<AppDbContext>
     {
         public AppDbContext CreateDbContext() => throw new InvalidOperationException("ZZ-SECRET factory failure");

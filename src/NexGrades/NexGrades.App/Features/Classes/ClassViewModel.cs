@@ -193,7 +193,12 @@ public partial class ClassViewModel(
         }
         catch (ClosedYearException)
         {
-            snackbar.Show("Error", "The class could not be renamed because its school year is closed.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show(
+                "Error",
+                editId is null
+                ? "The class could not be created because the school year is closed."
+                : "The class could not be renamed because its school year is closed.",
+                ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
             return;
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)

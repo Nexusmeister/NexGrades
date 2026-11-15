@@ -106,11 +106,13 @@
                     <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="First name"/>
                     <ui:TextBox Margin="0,0,0,12"
                                 ClearButtonEnabled="True"
+                                MaxLength="{Binding ViewModel.MaxNameLength, Mode=OneTime}"
                                 AutomationProperties.Name="First name"
                                 Text="{Binding ViewModel.FirstName, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Last name"/>
                     <ui:TextBox ClearButtonEnabled="True"
+                                MaxLength="{Binding ViewModel.MaxNameLength, Mode=OneTime}"
                                 AutomationProperties.Name="Last name"
                                 Text="{Binding ViewModel.LastName, UpdateSourceTrigger=PropertyChanged}"/>
 

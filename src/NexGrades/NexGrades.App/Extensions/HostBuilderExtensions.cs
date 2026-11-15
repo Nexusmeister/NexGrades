@@ -87,6 +87,7 @@ public static class HostBuilderExtensions
         services.AddSingleton<IUserService, UserService>();
         services.AddTransient<IFileSystemDialogService, WindowsFileSystemDialogService>();
         services.AddSingleton<IFileSaveDialogService, WindowsFileSaveDialogService>();
+        services.AddSingleton<IFolderOpener, ExplorerFolderOpener>();
         services.AddSingleton<ISnackbarService, SnackbarService>();
         services.AddSingleton<IContentDialogService, ContentDialogService>();
         services.AddSingleton<SchoolYearLockMonitor>();

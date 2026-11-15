@@ -20,6 +20,12 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _shortCode = string.Empty;
 
+    /// <summary>Longest subject name the form accepts; for the text box's <c>MaxLength</c> and a counter.</summary>
+    public int MaxNameLength { get; } = SubjectService.MaxNameLength;
+
+    /// <summary>Longest short code the form accepts; for the text box's <c>MaxLength</c> and a counter.</summary>
+    public int MaxShortCodeLength { get; } = SubjectService.MaxShortCodeLength;
+
     [RelayCommand]
     private void Cancel()
     {
@@ -29,6 +35,18 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
     [RelayCommand]
     private async Task SaveAsync(CancellationToken cancellationToken = default)
     {
+        if (Name.Trim().Length > MaxNameLength)
+        {
+            ShowError(string.Format(CultureInfo.CurrentCulture, "The subject name can be at most {0} characters.", MaxNameLength));
+            return;
+        }
+
+        if (ShortCode.Trim().Length > MaxShortCodeLength)
+        {
+            ShowError(string.Format(CultureInfo.CurrentCulture, "The short code can be at most {0} characters.", MaxShortCodeLength));
+            return;
+        }
+
         try
         {
             await subjectService.CreateSubjectAsync(Name, ShortCode, cancellationToken);
@@ -51,4 +69,7 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
         snackbar.Show("Success", "Subject has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
         navigation.GoBack();
     }
+
+    private void ShowError(string message) =>
+        snackbar.Show("Error", message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
 }

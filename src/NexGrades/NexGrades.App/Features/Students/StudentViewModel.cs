@@ -132,6 +132,9 @@ public partial class StudentViewModel(
     [NotifyCanExecuteChangedFor(nameof(SaveStudentCommand))]
     private bool _isExistingStudent;
 
+    /// <summary>Longest first or last name the form accepts; for the text boxes' <c>MaxLength</c> and a counter.</summary>
+    public int MaxNameLength { get; } = StudentService.MaxNameLength;
+
     /// <summary>
     /// Why the student can't be saved yet, shown next to the form; <see langword="null"/> when the input is valid.
     /// Editing an existing student changes the names only, so the class is required for a new student alone.
@@ -143,6 +146,16 @@ public partial class StudentViewModel(
             if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName))
             {
                 return "Enter a first name and a last name.";
+            }
+
+            if (FirstName.Trim().Length > MaxNameLength)
+            {
+                return string.Format(CultureInfo.CurrentCulture, "The first name can be at most {0} characters.", MaxNameLength);
+            }
+
+            if (LastName.Trim().Length > MaxNameLength)
+            {
+                return string.Format(CultureInfo.CurrentCulture, "The last name can be at most {0} characters.", MaxNameLength);
             }
 
             if (IsExistingStudent)

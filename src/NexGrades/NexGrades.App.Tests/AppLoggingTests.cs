@@ -192,7 +192,7 @@ public sealed class AppLoggingTests : IDisposable
         var builder = CreateBuilder(Environments.Production);
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["sqlite"] = $"Data Source={Path.Combine(_folder.Path, "app.db")}",
+            ["sqlite"] = $"Data Source={Path.Combine(_folder.Path, "app.db")};Pooling=False",
         });
         builder.Services.AddGradeServices().AddFrontendServices();
         builder.AddDatabase();
@@ -213,7 +213,7 @@ public sealed class AppLoggingTests : IDisposable
         var builder = CreateBuilder(Environments.Development);
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["ConnectionStrings:sqlite"] = $"Data Source={Path.Combine(_folder.Path, "app.db")}",
+            ["ConnectionStrings:sqlite"] = $"Data Source={Path.Combine(_folder.Path, "app.db")};Pooling=False",
         });
         _ = builder.AddServiceDefaults(NexGradesTelemetry.Name);
         builder.Services.AddGradeServices().AddFrontendServices();
