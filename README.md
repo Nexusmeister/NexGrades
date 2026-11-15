@@ -12,6 +12,11 @@ Grade Maker
   date range on the student page ("Export notes…", Notes tab). The notes export has its own dialog for the range
   and for including archived notes.
 
+## Releases
+
+Each push to `dev` publishes a beta pre-release and each merge to `main` a stable release, as a self-contained
+Windows zip on GitHub Releases. See [docs/releasing.md](docs/releasing.md).
+
 ## Data protection
 
 NexGrades stores grades and notes about students in a local SQLite database. The app does not encrypt

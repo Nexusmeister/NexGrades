@@ -5,10 +5,8 @@ permissions:
 
 on:
   workflow_dispatch:
-  # Not on master
+  # Every branch, including main and dev; the release jobs below filter by ref themselves.
   push:
-    branches-ignore:
-      - main
 
   pull_request:
     branches:
@@ -17,6 +15,10 @@ on:
 
 env:
   DOTNET_VERSION: 10.x.x
+  SMARTSCREEN_NOTE: |
+    NexGrades is not code-signed yet, so Windows SmartScreen may warn when you start it for the first time.
+    Choose **More info**, then **Run anyway**. Unzip the archive to a folder of your own before running it.
+    The version is taken from the git tag; see docs/releasing.md.
 
 jobs:
   test:
@@ -25,7 +27,10 @@ jobs:
       run:
         working-directory: ./src/NexGrades
     steps:
+      # Full history: MinVer derives the version from git tags.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -44,6 +49,8 @@ jobs:
         working-directory: ./src/NexGrades
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -57,3 +64,162 @@ jobs:
       # Formatting follows .editorconfig; CI fails on any file dotnet format would change.
       - name: Verify formatting
         run: dotnet format NexGrades.slnx --verify-no-changes --no-restore
+
+  # Every push to dev publishes a GitHub pre-release, e.g. v0.1.1-beta.4. Only the 10 newest are kept.
+  release-beta:
+    needs: [test, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_SHA: ${{ github.sha }}
+      BETAS_TO_KEEP: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Publish and zip
+        id: asset
+        shell: pwsh
+        run: ./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory "$env:RUNNER_TEMP/release"
+      - name: Create pre-release
+        id: release
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.asset.outputs.version }}
+          ZIP: ${{ steps.asset.outputs.zip }}
+        run: |
+          $tag = "v$env:VERSION"
+          if ($tag -notmatch '^v\d+\.\d+\.\d+-beta\.\d+$') { throw "Unexpected beta version '$tag'." }
+
+          # A re-run of the same commit finds its release already there.
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $tag already exists; nothing to create."
+            exit 0
+          }
+
+          gh release create $tag $env:ZIP --prerelease --latest=false --target $env:RELEASE_SHA `
+            --title "NexGrades $env:VERSION" --generate-notes --notes $env:SMARTSCREEN_NOTE
+          if ($LASTEXITCODE -ne 0) { throw 'gh release create failed.' }
+      # Retention: only releases that are pre-releases AND named v*-beta.* are ever considered, so stable
+      # releases and their tags are never touched.
+      - name: Delete old betas
+        shell: pwsh
+        run: |
+          $json = gh release list --limit 200 --json tagName,isPrerelease,createdAt
+          if ($LASTEXITCODE -ne 0) { throw 'gh release list failed.' }
+          $all = ConvertFrom-Json $json
+          $betas = @($all) |
+            Where-Object { $_.isPrerelease -and $_.tagName -match '^v\d+\.\d+\.\d+-beta\.\d+$' } |
+            Sort-Object { [datetime]$_.createdAt } -Descending
+          $old = @($betas | Select-Object -Skip ([int]$env:BETAS_TO_KEEP))
+          Write-Host "Beta pre-releases: $($betas.Count); deleting: $($old.Count)"
+          foreach ($r in $old) {
+            Write-Host "Deleting $($r.tagName)"
+            gh release delete $r.tagName --cleanup-tag --yes
+            if ($LASTEXITCODE -ne 0) { throw "Could not delete $($r.tagName)." }
+          }
+
+  # Every push to main publishes the next patch version as a stable release (v0.1.0 -> v0.1.1). Minor and major
+  # bumps are tags the owner pushes by hand; see docs/releasing.md.
+  release-stable:
+    needs: [test, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Decide the version
+        id: version
+        shell: pwsh
+        run: |
+          git fetch --tags --force
+          if ($LASTEXITCODE -ne 0) { throw 'git fetch --tags failed.' }
+
+          # Stable tags only (vX.Y.Z); betas such as v0.1.1-beta.3 do not match.
+          $stable = @(git tag --list 'v[0-9]*' |
+            Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Substring(1) })
+          $onHead = @(git tag --points-at $env:RELEASE_SHA | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' })
+
+          if ($onHead.Count -gt 0) {
+            # The owner pushed a tag together with this commit: release exactly that version.
+            $tag = $onHead | Sort-Object { [version]$_.Substring(1) } | Select-Object -Last 1
+            $createTag = 'false'
+          } elseif ($stable.Count -eq 0) {
+            $tag = 'v0.1.0'
+            $createTag = 'true'
+          } else {
+            $latest = [version]($stable | Select-Object -Last 1).Substring(1)
+            $tag = "v$($latest.Major).$($latest.Minor).$($latest.Build + 1)"
+            $createTag = 'true'
+          }
+          $startTag = if ($stable.Count -gt 0) { ($stable | Where-Object { $_ -ne $tag } | Select-Object -Last 1) } else { '' }
+
+          gh release view $tag *> $null
+          $exists = if ($LASTEXITCODE -eq 0) { 'true' } else { 'false' }
+          $global:LASTEXITCODE = 0
+
+          Write-Host "Tag: $tag (create tag: $createTag, release exists: $exists, notes start: $startTag)"
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "create_tag=$createTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "exists=$exists" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "start_tag=$startTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+      # The tag must exist locally at this commit before publishing, so MinVer yields the plain X.Y.Z. It is
+      # created on GitHub by `gh release create --target` below, only after the asset was built successfully.
+      - name: Tag locally
+        if: steps.version.outputs.exists == 'false' && steps.version.outputs.create_tag == 'true'
+        shell: pwsh
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git tag $env:TAG $env:RELEASE_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'git tag failed.' }
+      - name: Publish and zip
+        if: steps.version.outputs.exists == 'false'
+        id: asset
+        shell: pwsh
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          $expected = $env:TAG.Substring(1)
+          ./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory "$env:RUNNER_TEMP/release" -ExpectedVersion $expected
+      - name: Create release
+        if: steps.version.outputs.exists == 'false'
+        shell: pwsh
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          START_TAG: ${{ steps.version.outputs.start_tag }}
+          VERSION: ${{ steps.asset.outputs.version }}
+          ZIP: ${{ steps.asset.outputs.zip }}
+        run: |
+          $ghArgs = @($env:TAG, $env:ZIP, '--latest', '--target', $env:RELEASE_SHA,
+            '--title', "NexGrades $env:VERSION", '--generate-notes', '--notes', $env:SMARTSCREEN_NOTE)
+          if ($env:START_TAG) { $ghArgs += @('--notes-start-tag', $env:START_TAG) }
+          gh release create @ghArgs
+          if ($LASTEXITCODE -ne 0) { throw 'gh release create failed.' }

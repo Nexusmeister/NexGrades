@@ -9,11 +9,26 @@
     <UserSecretsId>75c42a89-1b41-4aa6-8d68-8f4f9a086939</UserSecretsId>
   </PropertyGroup>
 
+  <!-- Version comes from git tags `vX.Y.Z` (see docs/releasing.md). Untagged commits get X.Y.(Z+1)-beta.<height>;
+       before the first tag the minimum 0.1 gives 0.1.0-beta.<height>. -->
+  <PropertyGroup>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>beta</MinVerDefaultPreReleaseIdentifiers>
+    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Include="appsettings*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <!-- Development settings never ship: drop them from a publish, keep them for build and F5. -->
+  <Target Name="ExcludeDevelopmentSettingsFromPublish" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(ResolvedFileToPublish.RelativePath)' == 'appsettings.Development.json'" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" />
@@ -30,6 +45,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="MinVer" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
