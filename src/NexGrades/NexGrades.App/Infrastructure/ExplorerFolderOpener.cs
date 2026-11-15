@@ -13,7 +13,9 @@ public sealed class ExplorerFolderOpener : IFolderOpener
         try
         {
             // Explorer gets the path as one argument, so spaces and special characters need no quoting.
-            var startInfo = new ProcessStartInfo("explorer.exe") { UseShellExecute = false };
+            // An absolute path keeps the search path (current directory, PATH) from deciding which program runs.
+            var explorerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+            var startInfo = new ProcessStartInfo(explorerPath) { UseShellExecute = false };
             startInfo.ArgumentList.Add(path);
             using var process = Process.Start(startInfo);
         }
