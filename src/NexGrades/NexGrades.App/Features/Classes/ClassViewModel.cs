@@ -39,10 +39,20 @@ public partial class ClassViewModel(
     PageNavigator pageNavigator) : ViewModel
 {
     private int? _editingClassInstanceId;
+    private string _loadedName = string.Empty;
 
-    [ObservableProperty] private string _name = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ClassValidationMessage), nameof(HasClassValidationMessage))]
+    [NotifyCanExecuteChangedFor(nameof(SaveClassCommand))]
+    private string _name = string.Empty;
+
     [ObservableProperty] private string _title = "AddClass";
-    [ObservableProperty] private bool _isEditing;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ClassValidationMessage), nameof(HasClassValidationMessage))]
+    [NotifyCanExecuteChangedFor(nameof(SaveClassCommand))]
+    private bool _isEditing;
+
     [ObservableProperty] private ObservableCollection<ClassStudentRow> _activeStudents = [];
     [ObservableProperty] private ObservableCollection<ClassStudentRow> _leftStudents = [];
     [ObservableProperty] private ObservableCollection<SubjectInstanceRow> _subjects = [];
@@ -50,6 +60,34 @@ public partial class ClassViewModel(
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ExportSubjectOverviewCommand))]
     private bool _isExporting;
+
+    /// <summary>Longest class name the form accepts; for the text box's <c>MaxLength</c> and a counter.</summary>
+    public int MaxNameLength { get; } = ClassService.MaxNameLength;
+
+    /// <summary>
+    /// Why the class can't be saved yet, shown next to the form; <see langword="null"/> when the input is valid.
+    /// When editing, a name that is unchanged from the loaded one is never too long, because a rolled-forward class
+    /// can carry a name that is longer than the limit for new names.
+    /// </summary>
+    public string? ClassValidationMessage
+    {
+        get
+        {
+            var trimmed = Name.Trim();
+            if (trimmed.Length == 0)
+            {
+                return "Enter a class name.";
+            }
+
+            var unchanged = IsEditing && string.Equals(trimmed, _loadedName, StringComparison.Ordinal);
+            return !unchanged && trimmed.Length > MaxNameLength
+                ? string.Format(CultureInfo.CurrentCulture, "The class name can be at most {0} characters.", MaxNameLength)
+                : null;
+        }
+    }
+
+    /// <summary>True when <see cref="ClassValidationMessage"/> has something to show.</summary>
+    public bool HasClassValidationMessage => ClassValidationMessage is not null;
 
     /// <summary>True when the class has at least one subject to export.</summary>
     public bool HasSubjects => Subjects.Count > 0;
@@ -87,6 +125,7 @@ public partial class ClassViewModel(
         LeftStudents = [];
         Subjects = [];
         IsEditing = false;
+        _loadedName = string.Empty;
         Name = string.Empty;
         Title = "AddClass";
 
@@ -103,6 +142,7 @@ public partial class ClassViewModel(
             return;
         }
 
+        _loadedName = existing.Name;
         Name = existing.Name;
         Title = "EditClass";
         IsEditing = true;
@@ -176,7 +216,9 @@ public partial class ClassViewModel(
         }
     }
 
-    [RelayCommand]
+    private bool CanSaveClass() => ClassValidationMessage is null;
+
+    [RelayCommand(CanExecute = nameof(CanSaveClass))]
     private async Task SaveClassAsync(CancellationToken cancellationToken = default)
     {
         var editId = _editingClassInstanceId;
@@ -206,8 +248,8 @@ public partial class ClassViewModel(
             snackbar.Show(
                 "Error",
                 editId is null
-                ? "The class could not be created. Enter a name and make sure there is an active school year."
-                : "The class could not be renamed. Enter a name, and check that the class has not been rolled forward or archived.",
+                ? string.Format(CultureInfo.CurrentCulture, "The class could not be created. Enter a name of at most {0} characters and make sure there is an active school year.", MaxNameLength)
+                : string.Format(CultureInfo.CurrentCulture, "The class could not be renamed. Enter a name of at most {0} characters, and check that the class has not been rolled forward or archived.", MaxNameLength),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.ErrorCircle24),
                 TimeSpan.FromSeconds(5));

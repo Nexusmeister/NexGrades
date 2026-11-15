@@ -14,4 +14,10 @@ public enum SubjectOverviewColumnKind
 
     /// <summary>The student's weighted average over the whole subject.</summary>
     SubjectAverage,
+
+    /// <summary>The final grade that applies: the teacher's override, otherwise the proposal; empty when there is neither.</summary>
+    FinalGrade,
+
+    /// <summary>"Yes" when the final grade is an override set by the teacher, otherwise empty.</summary>
+    FinalGradeOverridden,
 }

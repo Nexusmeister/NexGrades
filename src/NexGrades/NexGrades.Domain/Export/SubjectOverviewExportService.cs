@@ -9,7 +9,7 @@ namespace NexGrades.Domain.Export;
 
 /// <summary>
 /// Builds the class overview of one subject instance: a row per student with the grades and average of each
-/// bucket and the weighted subject average. Read-only, so it also works on closed years.
+/// bucket, the weighted subject average and the final grade (the teacher's override, otherwise the proposal). Read-only, so it also works on closed years.
 /// </summary>
 /// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
 /// <remarks>
@@ -20,6 +20,7 @@ namespace NexGrades.Domain.Export;
 public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext> contextFactory)
 {
     private const string GradeSeparator = "; ";
+    private const string OverriddenMarker = "Yes";
 
     /// <summary>Builds the overview table for <paramref name="subjectInstanceId"/>.</summary>
     /// <exception cref="InvariantViolationException">The subject instance does not exist.</exception>
@@ -37,6 +38,11 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
 
             var gradesByStudent = grades.ToLookup(g => g.StudentId);
 
+            var finalGradeOverrides = await context.FinalGrades.AsNoTracking()
+                .Where(f => f.SubjectInstanceId == subjectInstanceId && f.OverrideValue != null)
+                .Select(f => new { f.StudentId, f.OverrideValue })
+                .ToDictionaryAsync(f => f.StudentId, f => f.OverrideValue, cancellationToken);
+
             var included = enrollments
                 .Where(e => !exemptIds.Contains(e.StudentId))
                 .Where(e => e.LeftOn is null || gradesByStudent[e.StudentId].Any())
@@ -44,7 +50,7 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
 
             var rows = Sort(included.Where(e => e.LeftOn is null))
                 .Concat(Sort(included.Where(e => e.LeftOn is not null)))
-                .Select(e => BuildRow(e, buckets, [.. gradesByStudent[e.StudentId]]))
+                .Select(e => BuildRow(e, buckets, [.. gradesByStudent[e.StudentId]], finalGradeOverrides.GetValueOrDefault(e.StudentId)))
                 .ToList();
 
             return new SubjectOverviewTable(header.SubjectName, header.ClassName, header.SchoolYearLabel, BuildColumns(buckets), rows);
@@ -60,6 +66,8 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
         }
 
         columns.Add(new(SubjectOverviewColumnKind.SubjectAverage, null));
+        columns.Add(new(SubjectOverviewColumnKind.FinalGrade, null));
+        columns.Add(new(SubjectOverviewColumnKind.FinalGradeOverridden, null));
         return columns;
     }
 
@@ -70,7 +78,10 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
             .ThenBy(e => e.StudentId);
 
     private static SubjectOverviewRow BuildRow(
-        SubjectGradeData.EnrollmentRow student, IReadOnlyList<SubjectGradeData.BucketRow> buckets, List<SubjectGradeData.GradeRow> studentGrades)
+        SubjectGradeData.EnrollmentRow student,
+        IReadOnlyList<SubjectGradeData.BucketRow> buckets,
+        List<SubjectGradeData.GradeRow> studentGrades,
+        decimal? finalGradeOverride)
     {
         var cells = new List<SubjectOverviewCell>
         {
@@ -94,7 +105,12 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
             weighted.Add(new AverageCalculator.WeightedBucketAverage(bucket.Weight, average));
         }
 
-        cells.Add(SubjectOverviewCell.FromNumber(AverageCalculator.SubjectAverage(weighted)));
+        var subjectAverage = AverageCalculator.SubjectAverage(weighted);
+        cells.Add(SubjectOverviewCell.FromNumber(subjectAverage));
+
+        // The proposal is derived here, never stored; no override and no average leaves the cell empty, not 0.
+        cells.Add(SubjectOverviewCell.FromNumber(finalGradeOverride ?? GradingScale.ProposeFinalGrade(subjectAverage)));
+        cells.Add(finalGradeOverride is null ? SubjectOverviewCell.Empty : SubjectOverviewCell.FromText(OverriddenMarker));
 
         DateOnly? leftOn = student.LeftOn is { } left ? DateOnly.FromDateTime(left) : null;
         return new SubjectOverviewRow(cells, leftOn);

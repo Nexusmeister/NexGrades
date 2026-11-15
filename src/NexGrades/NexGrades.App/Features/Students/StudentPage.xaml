@@ -301,12 +301,38 @@
                                                                   Appearance="Caution"
                                                                   Content="Exempt"
                                                                   Visibility="{Binding IsExempt, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                        <ui:TextBlock Grid.Column="2"
-                                                                      Margin="12,0,0,0"
-                                                                      VerticalAlignment="Center"
-                                                                      HorizontalAlignment="Right"
-                                                                      FontTypography="BodyStrong"
-                                                                      Text="{Binding SubjectAverageText, StringFormat='Average: {0}'}"/>
+                                                        <StackPanel Grid.Column="2"
+                                                                    Margin="12,0,0,0"
+                                                                    HorizontalAlignment="Right"
+                                                                    VerticalAlignment="Center"
+                                                                    Orientation="Horizontal">
+                                                            <StackPanel Orientation="Horizontal"
+                                                                        Margin="0,0,16,0"
+                                                                        ToolTip="{Binding FinalGradeDescription}"
+                                                                        AutomationProperties.Name="{Binding FinalGradeDescription}"
+                                                                        Focusable="False">
+                                                                <StackPanel.Style>
+                                                                    <Style TargetType="StackPanel">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding FinalGradeText}" Value="">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </StackPanel.Style>
+                                                                <ui:SymbolIcon Margin="0,0,4,0"
+                                                                               VerticalAlignment="Center"
+                                                                               Symbol="Edit24"
+                                                                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                                               Visibility="{Binding HasFinalGradeOverride, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                                <ui:TextBlock VerticalAlignment="Center"
+                                                                              FontTypography="BodyStrong"
+                                                                              Text="{Binding FinalGradeText, StringFormat='Final grade: {0}'}"/>
+                                                            </StackPanel>
+                                                            <ui:TextBlock VerticalAlignment="Center"
+                                                                          FontTypography="BodyStrong"
+                                                                          Text="{Binding SubjectAverageText, StringFormat='Average: {0}'}"/>
+                                                        </StackPanel>
                                                     </Grid>
 
                                                     <ItemsControl Margin="0,8,0,0"

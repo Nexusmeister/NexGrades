@@ -180,6 +180,13 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
             .ToListAsync(cancellationToken))
             .ToHashSet();
 
+        var finalGradeOverrides = await context.FinalGrades.AsNoTracking()
+            .Where(f => f.StudentId == studentId
+                && f.SubjectInstance.ClassInstanceId == classInstanceId
+                && f.OverrideValue != null)
+            .Select(f => new { f.SubjectInstanceId, f.OverrideValue })
+            .ToDictionaryAsync(f => f.SubjectInstanceId, f => f.OverrideValue, cancellationToken);
+
         var gradeQuery = context.Grades.AsNoTracking()
             .Where(g => g.StudentId == studentId && g.GradeBucket.SubjectInstance.ClassInstanceId == classInstanceId);
         if (!includeVoided)
@@ -208,7 +215,7 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
             .Select(a => new { a.Id, a.Title })
             .ToDictionaryAsync(a => a.Id, a => a.Title, cancellationToken);
 
-        return new StudentClassData(subjectInstances, buckets, assessments, exemptIds, grades, assessmentTitles);
+        return new StudentClassData(subjectInstances, buckets, assessments, exemptIds, grades, assessmentTitles, finalGradeOverrides);
     }
 
     private static StudentSubjectGrades BuildSubject(SubjectInstanceRow subject, StudentClassData data)
@@ -251,7 +258,10 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
                     .Select(g => ToEntry(g, data.AssessmentTitles))]))
             .ToList();
 
-        return new StudentSubjectGrades(subject.Id, subject.Name, isExempt, bucketResults, averages.SubjectAverage);
+        return new StudentSubjectGrades(subject.Id, subject.Name, isExempt,
+            bucketResults,
+            averages.SubjectAverage,
+            isExempt ? null : data.FinalGradeOverrides.GetValueOrDefault(subject.Id));
     }
 
     private static StudentGradeEntry ToEntry(SubjectGradeData.GradeRow g, Dictionary<int, string> assessmentTitles) =>
@@ -358,5 +368,6 @@ public sealed class GradeSheetService(IDbContextFactory<AppDbContext> contextFac
         List<GradeSheetAssessmentRow> Assessments,
         HashSet<int> ExemptSubjectInstanceIds,
         List<SubjectGradeData.GradeRow> Grades,
-        Dictionary<int, string> AssessmentTitles);
+        Dictionary<int, string> AssessmentTitles,
+        Dictionary<int, decimal?> FinalGradeOverrides);
 }

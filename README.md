@@ -6,7 +6,7 @@ Grade Maker
 - School years (Planned, Active, Closed). Closing a year and activating the next one is a single step, and a closed
   year is read-only until you unlock it.
 - Classes, students and subjects per school year, with weighted grade buckets and averages.
-- A grade sheet with assessments. Final grades are proposed from the subject average and can be overridden.
+- A grade sheet with assessments. Final grades are proposed from the subject average and can be overridden. The student page shows each subject's final grade read-only.
 - Notes on students, archived instead of deleted.
 - Excel exports: the overview of one subject on the class page ("Export to Excel"), and a student's notes for a
   date range on the student page ("Export notes…", Notes tab). The notes export has its own dialog for the range

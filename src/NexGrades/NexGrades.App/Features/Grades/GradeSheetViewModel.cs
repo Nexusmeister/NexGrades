@@ -759,18 +759,23 @@ public sealed partial class GradeSheetViewModel(
         NewAssessmentBucket = sheet.Buckets.FirstOrDefault(b => NewAssessmentBucket is null || b.Id == NewAssessmentBucket.Id);
     }
 
-    private void OnCellTextCommitted(GradeCellViewModel cell) => _ = SaveSerializedAsync(cell, () => SaveCellAsync(cell));
+    private void OnCellTextCommitted(GradeCellViewModel cell) => _ = SaveSerializedAsync(
+        cell, () => SaveCellAsync(cell), "The grade could not be saved because of an unexpected problem.");
 
-    private void OnFinalCellTextCommitted(FinalGradeCellViewModel cell) => _ = SaveSerializedAsync(cell, () => SaveFinalCellAsync(cell));
+    private void OnFinalCellTextCommitted(FinalGradeCellViewModel cell) => _ = SaveSerializedAsync(
+        cell, () => SaveFinalCellAsync(cell), "The final grade could not be saved because of an unexpected problem.");
 
     /// <summary>
     /// Saves one cell (assessment or final grade) at a time. A commit that arrives while a save of the same cell runs is queued, and the
     /// latest text is saved after the running call completes, so quick re-entry never records a grade twice. A
     /// finished save leaves newer text in the cell alone (see <see cref="GradeCellViewModel.ApplyGrade(GradeSheetGrade?, string?)"/>),
     /// so the queued pass compares it with the freshly saved grade. Runs fire-and-forget, so nothing escapes it: an unexpected failure is logged, reported
-    /// with a generic message and marked on the cell.
+    /// with <paramref name="unexpectedFailureMessage"/> and marked on the cell.
     /// </summary>
-    private async Task SaveSerializedAsync(IGradeSheetEditableCell cell, Func<Task> save)
+    /// <param name="cell">The cell to save.</param>
+    /// <param name="save">Saves the cell's current text.</param>
+    /// <param name="unexpectedFailureMessage">The snackbar text for an unexpected failure; it names what kind of grade failed.</param>
+    private async Task SaveSerializedAsync(IGradeSheetEditableCell cell, Func<Task> save, string unexpectedFailureMessage)
     {
         if (cell.IsSaving)
         {
@@ -792,7 +797,7 @@ public sealed partial class GradeSheetViewModel(
                 {
                     LogCellSaveFailed(ex);
                     cell.HasError = true;
-                    ShowError("The grade could not be saved because of an unexpected problem.");
+                    ShowError(unexpectedFailureMessage);
                 }
             }
             while (cell.SaveQueued);

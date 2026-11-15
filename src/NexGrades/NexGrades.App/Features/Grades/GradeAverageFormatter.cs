@@ -3,7 +3,7 @@ using NexGrades.Domain.Grading;
 
 namespace NexGrades.App.Features.Grades;
 
-/// <summary>Formats averages for the grade sheet with the current UI culture.</summary>
+/// <summary>Formats averages and final grades for the grade sheet with the current UI culture.</summary>
 public static class GradeAverageFormatter
 {
     /// <summary>The text shown for an average that does not exist (an en dash).</summary>
@@ -20,4 +20,13 @@ public static class GradeAverageFormatter
         average is { } value
             ? AverageCalculator.RoundForDisplay(value).ToString("0.00", CultureInfo.CurrentCulture)
             : Missing;
+
+    /// <summary>
+    /// Formats a final grade as a whole number in the current culture. A final grade that does not exist gives an
+    /// empty string, never zero.
+    /// </summary>
+    /// <param name="finalGrade">The final grade, or <see langword="null"/> when there is none.</param>
+    /// <returns>The text to display, or an empty string.</returns>
+    public static string FormatFinalGrade(decimal? finalGrade) =>
+        finalGrade is { } value ? decimal.Truncate(value).ToString("0", CultureInfo.CurrentCulture) : string.Empty;
 }

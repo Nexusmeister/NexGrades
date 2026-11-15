@@ -277,6 +277,42 @@ public class FinalGradeOverrideTests
         Assert.Null(Assert.Single(await LoadAsync(s)).OverrideValue);
     }
 
+    [Fact]
+    public async Task SetFinalGradeOverrideAsync_WritesOneAuditEntry_WhenSetTwiceWithTheSameValue()
+    {
+        var s = await SeedAsync(withInterceptor: true);
+        using var _ = s.Db;
+        await s.Seed.SetYearStatusAsync(SchoolYearStatus.Closed, UnlockedUntil, Reason);
+        var service = CreateService(s);
+
+        await service.SetFinalGradeOverrideAsync(s.Seed.SubjectInstanceId, s.StudentId, 3m);
+        await service.SetFinalGradeOverrideAsync(s.Seed.SubjectInstanceId, s.StudentId, 3m);
+
+        await using var verify = s.Db.CreateContext();
+        var entry = Assert.Single(await verify.AuditEntries.Where(a => a.EntityType == nameof(FinalGrade)).ToListAsync());
+        Assert.Equal("<created>", entry.Field);
+        Assert.Equal(3m, Assert.Single(await LoadAsync(s)).OverrideValue);
+    }
+
+    [Fact]
+    public async Task SetFinalGradeOverrideAsync_AddsAnotherAuditEntry_WhenTheValueChanges()
+    {
+        var s = await SeedAsync(withInterceptor: true);
+        using var _ = s.Db;
+        await s.Seed.SetYearStatusAsync(SchoolYearStatus.Closed, UnlockedUntil, Reason);
+        var service = CreateService(s);
+        await service.SetFinalGradeOverrideAsync(s.Seed.SubjectInstanceId, s.StudentId, 3m);
+
+        await service.SetFinalGradeOverrideAsync(s.Seed.SubjectInstanceId, s.StudentId, 4m);
+
+        await using var verify = s.Db.CreateContext();
+        var entries = await verify.AuditEntries.Where(a => a.EntityType == nameof(FinalGrade)).ToListAsync();
+        Assert.Equal(2, entries.Count);
+        var change = Assert.Single(entries, e => e.Field == "OverrideValue");
+        Assert.Equal(Reason, change.Reason);
+        Assert.Equal(4m, Assert.Single(await LoadAsync(s)).OverrideValue);
+    }
+
     // Data rules
 
     [Fact]
