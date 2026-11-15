@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Hosting;
@@ -34,7 +33,7 @@ public static partial class StartupDiagnostics
         ArgumentNullException.ThrowIfNull(location);
         ArgumentNullException.ThrowIfNull(paths);
 
-        var version = AppVersion();
+        var version = AppVersion.Current;
         var operatingSystem = RuntimeInformation.OSDescription;
         var framework = RuntimeInformation.FrameworkDescription;
         var environmentName = environment.EnvironmentName;
@@ -61,9 +60,6 @@ public static partial class StartupDiagnostics
         ArgumentNullException.ThrowIfNull(logger);
         LogStopped(logger);
     }
-
-    private static string AppVersion() =>
-        typeof(StartupDiagnostics).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
 
     /// <summary>
     /// The default database is a plain path. A configured connection string may carry other settings, so only its

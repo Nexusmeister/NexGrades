@@ -12,6 +12,12 @@ public sealed class AppDataPaths(string dataDirectory) : IAppDataPaths
     /// <summary>Name of the log folder inside the data directory.</summary>
     public const string LogDirectoryName = "logs";
 
+    /// <summary>File name of the user settings file inside the data directory.</summary>
+    public const string SettingsFileName = "settings.json";
+
+    /// <summary>Name of the database backup folder inside the data directory.</summary>
+    public const string BackupDirectoryName = "backups";
+
     /// <summary>Absolute path of the data folder. It is resolved once, so later changes to the working directory do not move it.</summary>
     public string DataDirectory { get; } = Path.GetFullPath(dataDirectory);
 
@@ -20,6 +26,12 @@ public sealed class AppDataPaths(string dataDirectory) : IAppDataPaths
 
     /// <summary>Absolute path of the log folder inside <see cref="DataDirectory"/>.</summary>
     public string LogDirectory => Path.Combine(DataDirectory, LogDirectoryName);
+
+    /// <summary>Absolute path of the user settings file inside <see cref="DataDirectory"/>.</summary>
+    public string SettingsFilePath => Path.Combine(DataDirectory, SettingsFileName);
+
+    /// <summary>Absolute path of the database backup folder inside <see cref="DataDirectory"/>.</summary>
+    public string BackupDirectory => Path.Combine(DataDirectory, BackupDirectoryName);
 
     /// <summary>Uses <c>%LOCALAPPDATA%\NexGrades</c>.</summary>
     public static AppDataPaths CreateDefault() =>

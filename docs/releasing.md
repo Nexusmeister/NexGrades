@@ -23,17 +23,18 @@ versions; delete them locally if that bothers you (`git tag --list 'v*-beta.*'` 
 ## Betas (push to `dev`)
 
 Every push to `dev` that passes the test and build jobs publishes a GitHub **pre-release** `vX.Y.Z-beta.<height>`
-with the asset attached. Only the 10 newest beta pre-releases are kept. Older ones are deleted together with their
+with the assets attached. Only the 10 newest beta pre-releases are kept. Older ones are deleted together with their
 tags. The cleanup only considers pre-releases whose tag matches `v*-beta.*`, sorts them by publish date and always keeps
-the one just published. If the dev tip carries a stable tag (for example after merging `main` back into `dev`), the
-version has no pre-release part; the job then logs a notice and publishes nothing.
+the one just published. Drafts are neither counted nor deleted by the cleanup. If the dev tip carries a stable tag (for
+example after merging `main` back into `dev`), the version has no pre-release part; the job then logs a notice and
+publishes nothing.
 
 ## Stable releases (push to `main`)
 
 Every push (merge) to `main` that passes the test and build jobs publishes the next patch version as a stable
 release (`v0.1.0` -> `v0.1.1`), marked as the latest release. The pipeline takes the highest stable tag (`vX.Y.Z`,
 betas excluded) that is reachable from the merged commit (`git tag --merged`), adds one to the patch number, tags the
-merged commit and builds the asset from that tag. **Stable releases and their tags are never deleted.**
+merged commit and builds the assets from that tag. **Stable releases and their tags are never deleted.**
 
 Only the tip of `main` is released: if the pushed commit is no longer the current tip of `main` when the job runs (a
 re-run, or a queued run that a newer push overtook), the job logs a notice and releases nothing, so older code never
@@ -63,18 +64,74 @@ git push origin v0.2.0
 - Betas follow the tags reachable from `dev`. After a release on `main`, merge `main` back into `dev` so the next
   betas continue from the new version.
 
-## Asset
+## Assets
 
-`NexGrades-<version>-win-x64.zip`, a self-contained Production publish (no .NET install needed, no
-`appsettings.Development.json`, no AppHost). Unzip it to a folder of your own and run `NexGrades.App.exe`. Release
-notes are generated from the merged pull requests and carry the SmartScreen note.
+Each release, beta or stable, attaches the same set of files. They come from one self-contained Production publish
+for win-x64 (no .NET install needed; `appsettings.Development.json` is left out), packed by the Velopack CLI (`vpk`):
 
-Build the same asset locally from `src/NexGrades` with:
+| File | What it is |
+|---|---|
+| `NexGrades-<version>-win-x64-Setup.exe` | Per-user installer. It needs no administrator rights. |
+| `NexGrades-<version>-win-x64-Portable.zip` | Portable bundle. Unzip it to a folder of your own and run `NexGrades.App.exe`. |
+| `releases.<channel>.json`, `RELEASES-<channel>` | The update feed. Installed apps read these names, so they are not renamed. |
+| `NexGrades.App-<version>-<channel>-full.nupkg` | The full package that the feed lists. |
 
-```sh
-dotnet publish NexGrades.App -c Release -r win-x64 --self-contained -o <folder>
+Each release carries exactly one full package. No delta packages are built, so every update downloads the whole app,
+and deleting an old beta removes nothing that a later update needs.
+
+The release notes are generated from the merged pull requests and start with the install note, which is the
+`SMARTSCREEN_NOTE` text in `ci.yml`.
+
+The Velopack pack id is `NexGrades.App` (`NexGradesPackId` in `NexGrades.App.csproj`). Installs go to
+`%LOCALAPPDATA%\NexGrades.App`, and uninstalling deletes that folder and keeps the data in `%LOCALAPPDATA%\NexGrades`.
+Changing the pack id would leave installed apps unable to find their updates.
+
+Releases from before the Velopack change attached one plain zip, `NexGrades-<version>-win-x64.zip`. That zip is no
+longer published and has no update feed. Users of it install the Setup.exe or the portable zip once by hand.
+
+## Update feeds
+
+An installed app checks the feed of its channel and offers only versions newer than the installed one, so turning
+beta updates off never installs an older version.
+
+- The stable channel reads `releases/latest/download/` of the repository. GitHub serves the release marked as latest,
+  so a check makes no GitHub API call and does not depend on the first page of the release list.
+- The beta channel (only for users who turn on beta updates) uses Velopack's GitHub source for pre-releases. That makes
+  one unauthenticated API request, which lists the ten newest releases.
+
+Each release is created as a draft with all its assets and published after the upload. A run that fails before
+publishing leaves a draft, and the next run for the same version replaces it. Installed apps therefore never see a
+partly uploaded release.
+
+## Packing locally
+
+From the repository root, in PowerShell:
+
+```powershell
+./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory "$env:TEMP\nexgrades-release" -Channel beta
 ```
+
+The script restores the packages and the tools in `.config/dotnet-tools.json`, publishes the App, packs it and checks
+that the upload folder holds exactly the files listed above. It empties `-OutputDirectory` first and writes the upload
+folder to `<OutputDirectory>\release`. The version is the one MinVer gives HEAD (see *How versions are computed*), so:
+
+- `-Channel beta` needs a version `X.Y.Z-beta.N`. A clone that fetched the beta tags gets `X.Y.Z-beta.N.<height>`, and
+  the script refuses it; delete those tags locally first.
+- `-Channel stable` needs a plain `X.Y.Z`, so HEAD must carry the `vX.Y.Z` tag.
+
+Pull request builds run the beta pack with the same script and upload nothing, so a packaging problem fails the pull
+request.
+
+## Testing an update locally
+
+To test an update end to end, install an earlier release, pack a newer version locally (the rules above apply), and set
+`Updates:SourceOverride` in the installed app's `appsettings.json` to the `release` folder. The installed app is in
+`%LOCALAPPDATA%\NexGrades.App\current\`. The override replaces the feed for every channel, so pack the channel you test,
+and turn beta updates on in Settings when testing a beta. The override is empty in shipped builds, so releases are not
+affected.
 
 ## SmartScreen
 
-The app is unsigned, so Windows SmartScreen may warn on first start. Choose **More info**, then **Run anyway**.
+The app is unsigned, so Windows SmartScreen may warn when the installer or the app starts for the first time. Choose
+**More info**, then **Run anyway**.
+</content>

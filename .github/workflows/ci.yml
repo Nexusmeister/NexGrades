@@ -16,9 +16,17 @@ on:
 
 env:
   DOTNET_VERSION: 10.x.x
+  # The release notes; the create steps replace <version> with the version of the release.
   SMARTSCREEN_NOTE: |
-    NexGrades is not code-signed yet, so Windows SmartScreen may warn when you start it for the first time.
-    Choose **More info**, then **Run anyway**. Unzip the archive to a folder of your own before running it.
+    **Install:** download `NexGrades-<version>-win-x64-Setup.exe` and run it. It installs NexGrades for your Windows
+    user account; no administrator rights are needed. Alternatively, unzip `NexGrades-<version>-win-x64-Portable.zip`
+    to a folder of your own and start NexGrades from there. Both update themselves. The other files are the update
+    feed; you don't need to download them.
+
+    Uninstalling NexGrades keeps your data in `%LOCALAPPDATA%\NexGrades`.
+
+    NexGrades is not code-signed yet, so Windows SmartScreen may warn when you start the installer or the app for the
+    first time. Choose **More info**, then **Run anyway**.
     The version is taken from the git tag; see docs/releasing.md.
 
 jobs:
@@ -65,6 +73,16 @@ jobs:
       # Formatting follows .editorconfig; CI fails on any file dotnet format would change.
       - name: Verify formatting
         run: dotnet format NexGrades.slnx --verify-no-changes --no-restore
+      # Pull requests build the beta release assets without uploading anything, so a packaging problem fails the
+      # pull request instead of the next beta. As in the release jobs, beta tags are dropped from this runner's clone
+      # only, so MinVer yields X.Y.Z-beta.<height>, the version the beta channel requires.
+      - name: Package (dry run)
+        if: github.event_name == 'pull_request'
+        working-directory: .
+        shell: pwsh
+        run: |
+          git tag --list 'v*-beta.*' | ForEach-Object { git tag -d $_ }
+          ./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory "$env:RUNNER_TEMP/release" -Channel beta
 
   # Every push to dev publishes a GitHub pre-release, e.g. v0.1.1-beta.4. Only the 10 newest are kept.
   release-beta:
@@ -99,51 +117,73 @@ jobs:
         shell: pwsh
         run: |
           git tag --list 'v*-beta.*' | ForEach-Object { git tag -d $_ }
-      - name: Publish and zip
+      # A stable tag on the dev tip (e.g. after merging main back) makes MinVer yield a version without pre-release
+      # part. That commit is already released from main; there is no beta to publish.
+      - name: Check for a stable tag
+        id: check
+        shell: pwsh
+        run: |
+          $stableTags = @(git tag --points-at $env:RELEASE_SHA | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' })
+          if ($stableTags.Count -gt 0) {
+            Write-Host "::notice::dev tip carries the stable tag $($stableTags -join ', '); no beta published."
+            "build=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } else {
+            "build=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
+      - name: Publish and pack
+        if: steps.check.outputs.build == 'true'
         id: asset
         shell: pwsh
-        run: ./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory "$env:RUNNER_TEMP/release"
+        run: ./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory "$env:RUNNER_TEMP/release" -Channel beta
+      # The release is created as a draft with all assets and only then published, so a partly uploaded release is
+      # never visible to users or to installed apps looking for updates.
       - name: Create pre-release
-        id: release
+        if: steps.check.outputs.build == 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.asset.outputs.version }}
-          ZIP: ${{ steps.asset.outputs.zip }}
+          ASSETS_DIR: ${{ steps.asset.outputs.assets_dir }}
         run: |
-          # A stable tag on the dev tip (e.g. after merging main back) gives a version without pre-release part.
-          # That commit is already released from main; there is no beta to publish.
-          if ($env:VERSION -notmatch '-') {
-            Write-Host "::notice::dev tip is version $env:VERSION (a stable tag); no beta published."
-            exit 0
-          }
           $tag = "v$env:VERSION"
           if ($tag -notmatch '^v\d+\.\d+\.\d+-beta\.\d+$') { throw "Unexpected beta version '$tag'." }
 
-          # A re-run of the same commit finds its release already there.
-          gh release view $tag *> $null
+          # A re-run of the same commit finds its release already there. A draft is left over from a run that failed
+          # before publishing; it is replaced. A draft has no tag yet, so there is no tag to clean up.
+          $isDraft = gh release view $tag --json isDraft --jq '.isDraft' 2> $null
           if ($LASTEXITCODE -eq 0) {
-            Write-Host "Release $tag already exists; nothing to create."
-            exit 0
+            if ($isDraft -ne 'true') {
+              Write-Host "Release $tag already exists; nothing to create."
+              exit 0
+            }
+            Write-Host "Deleting the unpublished draft of $tag."
+            gh release delete $tag --yes
+            if ($LASTEXITCODE -ne 0) { throw "Could not delete the draft of $tag." }
           }
+          $global:LASTEXITCODE = 0
 
-          gh release create $tag $env:ZIP --prerelease --latest=false --target $env:RELEASE_SHA `
-            --title "NexGrades $env:VERSION" --generate-notes --notes $env:SMARTSCREEN_NOTE
+          $files = @(Get-ChildItem -LiteralPath $env:ASSETS_DIR -File | ForEach-Object FullName)
+          if ($files.Count -eq 0) { throw "No release assets in $env:ASSETS_DIR." }
+          gh release create $tag @files --draft --prerelease --latest=false --target $env:RELEASE_SHA `
+            --title "NexGrades $env:VERSION" --generate-notes --notes ($env:SMARTSCREEN_NOTE.Replace('<version>', $env:VERSION))
           if ($LASTEXITCODE -ne 0) { throw 'gh release create failed.' }
-      # Retention: only releases that are pre-releases AND named v*-beta.* are ever considered, so stable
-      # releases and their tags are never touched. Newest by publish date win; the release of this run always
-      # counts among the kept ones.
+          gh release edit $tag --draft=false --latest=false
+          if ($LASTEXITCODE -ne 0) { throw 'Publishing the draft failed.' }
+      # Retention: only published releases that are pre-releases AND named v*-beta.* are ever considered, so stable
+      # releases and their tags are never touched, and neither are drafts (the next run of a draft's version replaces
+      # it). Newest by publish date win; the release of this run always counts among the kept ones. Deleting a release
+      # deletes all its assets (Setup, Portable and feed files).
       - name: Delete old betas
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.asset.outputs.version }}
         run: |
-          $json = gh release list --limit 200 --json tagName,isPrerelease,publishedAt
+          $json = gh release list --limit 200 --json tagName,isPrerelease,isDraft,publishedAt
           if ($LASTEXITCODE -ne 0) { throw 'gh release list failed.' }
           $all = ConvertFrom-Json $json
           $betas = @(@($all) |
-            Where-Object { $_.isPrerelease -and $_.tagName -match '^v\d+\.\d+\.\d+-beta\.\d+$' })
+            Where-Object { $_.isPrerelease -and -not $_.isDraft -and $_.tagName -match '^v\d+\.\d+\.\d+-beta\.\d+$' })
           $current = "v$env:VERSION"
           $keep = [int]$env:BETAS_TO_KEEP
           $others = @($betas | Where-Object { $_.tagName -ne $current } | Sort-Object { [datetime]$_.publishedAt } -Descending)
@@ -222,8 +262,10 @@ jobs:
           }
           $startTag = if ($stable.Count -gt 0) { ($stable | Where-Object { $_ -ne $tag } | Select-Object -Last 1) } else { '' }
 
-          gh release view $tag *> $null
-          $exists = if ($LASTEXITCODE -eq 0) { 'true' } else { 'false' }
+          # A draft is left over from a run that failed before publishing. It counts as not released; the create step
+          # replaces it.
+          $isDraft = gh release view $tag --json isDraft --jq '.isDraft' 2> $null
+          $exists = if ($LASTEXITCODE -eq 0 -and $isDraft -ne 'true') { 'true' } else { 'false' }
           $global:LASTEXITCODE = 0
           $build = if ($exists -eq 'true') { 'false' } else { 'true' }
 
@@ -242,7 +284,7 @@ jobs:
         run: |
           git tag $env:TAG $env:RELEASE_SHA
           if ($LASTEXITCODE -ne 0) { throw 'git tag failed.' }
-      - name: Publish and zip
+      - name: Publish and pack
         if: steps.version.outputs.build == 'true'
         id: asset
         shell: pwsh
@@ -250,7 +292,10 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           $expected = $env:TAG.Substring(1)
-          ./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory "$env:RUNNER_TEMP/release" -ExpectedVersion $expected
+          ./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory "$env:RUNNER_TEMP/release" -Channel stable -ExpectedVersion $expected
+      # Created as a draft with all assets and only then published as the latest release, so a partly uploaded
+      # release is never visible. Installed stable apps read their feed from releases/latest/download/, so the latest
+      # release must always be a complete one.
       - name: Create release
         if: steps.version.outputs.build == 'true'
         shell: pwsh
@@ -259,10 +304,26 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
           START_TAG: ${{ steps.version.outputs.start_tag }}
           VERSION: ${{ steps.asset.outputs.version }}
-          ZIP: ${{ steps.asset.outputs.zip }}
+          ASSETS_DIR: ${{ steps.asset.outputs.assets_dir }}
         run: |
-          $ghArgs = @($env:TAG, $env:ZIP, '--latest', '--target', $env:RELEASE_SHA,
-            '--title', "NexGrades $env:VERSION", '--generate-notes', '--notes', $env:SMARTSCREEN_NOTE)
+          # Only a stale draft can be here ('Decide the version' skips published releases). Without --cleanup-tag,
+          # deleting it leaves every tag alone, including a tag pushed by hand. Published stable releases are never
+          # deleted.
+          $isDraft = gh release view $env:TAG --json isDraft --jq '.isDraft' 2> $null
+          if ($LASTEXITCODE -eq 0) {
+            if ($isDraft -ne 'true') { throw "Release $env:TAG is already published." }
+            Write-Host "Deleting the unpublished draft of $env:TAG."
+            gh release delete $env:TAG --yes
+            if ($LASTEXITCODE -ne 0) { throw "Could not delete the draft of $env:TAG." }
+          }
+          $global:LASTEXITCODE = 0
+
+          $files = @(Get-ChildItem -LiteralPath $env:ASSETS_DIR -File | ForEach-Object FullName)
+          if ($files.Count -eq 0) { throw "No release assets in $env:ASSETS_DIR." }
+          $ghArgs = @($env:TAG) + $files + @('--draft', '--target', $env:RELEASE_SHA,
+            '--title', "NexGrades $env:VERSION", '--generate-notes', '--notes', $env:SMARTSCREEN_NOTE.Replace('<version>', $env:VERSION))
           if ($env:START_TAG) { $ghArgs += @('--notes-start-tag', $env:START_TAG) }
           gh release create @ghArgs
           if ($LASTEXITCODE -ne 0) { throw 'gh release create failed.' }
+          gh release edit $env:TAG --draft=false --latest
+          if ($LASTEXITCODE -ne 0) { throw 'Publishing the draft failed.' }

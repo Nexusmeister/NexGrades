@@ -12,26 +12,39 @@ using Wpf.Ui.Controls;
 namespace NexGrades.App.Features.Settings;
 
 /// <summary>
-/// View model of the settings page. It lets the user pick a folder. For now the selection is only shown; it is
-/// not saved.
+/// View model of the settings page. It lets the user pick a folder (for now the selection is only shown; it is
+/// not saved), opens the log folder, and holds the update section in <see cref="Updates"/>.
 /// </summary>
 /// <param name="dialogService">Opens the folder picker.</param>
 /// <param name="snackbarService">Shows a caution message when no folder is selected and reports a failed folder open.</param>
 /// <param name="appDataPaths">Locates the log folder.</param>
 /// <param name="folderOpener">Shows the log folder in the file browser.</param>
 /// <param name="logger">Records a failure to open the log folder.</param>
+/// <param name="updates">The update section of the page.</param>
 public partial class SettingsViewModel(
     IFileSystemDialogService dialogService,
     ISnackbarService snackbarService,
     IAppDataPaths appDataPaths,
     IFolderOpener folderOpener,
-    ILogger<SettingsViewModel> logger) : ViewModel
+    ILogger<SettingsViewModel> logger,
+    UpdateSettingsViewModel updates) : ViewModel
 {
+    /// <summary>The update section: version, update preferences, "Check for updates now" and "Restart now".</summary>
+    public UpdateSettingsViewModel Updates { get; } = updates;
+
     [ObservableProperty]
     private bool _openedFolderPathVisibility;
 
     [ObservableProperty]
     private string _openedFolderPath = string.Empty;
+
+    /// <summary>Reloads the stored update preferences each time the page is shown.</summary>
+    /// <param name="parameter">Not used; the settings page takes no parameter.</param>
+    protected override async Task OnNavigatedToAsync(object? parameter)
+    {
+        await base.OnNavigatedToAsync(parameter);
+        await Updates.LoadAsync();
+    }
 
     /// <summary>
     /// Opens the folder picker and shows the chosen path. Cancelling, or selecting nothing, hides the path and shows

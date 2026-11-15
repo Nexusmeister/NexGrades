@@ -46,37 +46,84 @@ server.
 
 ## Install
 
-1. Open the [latest release](https://github.com/Nexusmeister/NexGrades/releases/latest). Use the release marked
+NexGrades runs on 64-bit Windows. You do not need to install .NET.
+
+1. Open the [GitHub Releases page](https://github.com/Nexusmeister/NexGrades/releases) and use the release marked
    **Latest**. Pre-releases are betas for testing. Do not use them with real data.
-2. Download `NexGrades-<version>-win-x64.zip`, where `<version>` is the version number in the release.
-3. Unzip it into a folder of your own.
-4. Run `NexGrades.App.exe` from that folder.
+2. Download one of these files. `<version>` is the version number of the release.
+   - `NexGrades-<version>-win-x64-Setup.exe` (recommended). Run it to install NexGrades for your Windows user account.
+     It goes into `%LOCALAPPDATA%\NexGrades.App`, and no administrator rights are needed.
+   - `NexGrades-<version>-win-x64-Portable.zip`. Unzip it into a new folder for each version, then run
+     `NexGrades.App.exe` from that folder. Your data is not kept in the app folder, so a new folder is safe.
+3. Windows SmartScreen may warn the first time, because NexGrades is not code-signed yet. Choose **More info**, then
+   **Run anyway**.
 
-You do not need to install .NET. The app is self-contained and runs on 64-bit Windows.
+Automatic updates are confirmed only for the Setup.exe install. The portable zip has not been confirmed to update
+itself (see [ADR 0004](docs/decisions/0004-application-updates.md)), so use the Setup.exe if you want updates to
+install on their own.
 
-Windows SmartScreen may warn when you start the app for the first time, because the app is not code-signed yet.
-Choose **More info**, then **Run anyway**.
+If you used an earlier plain zip (`NexGrades-<version>-win-x64.zip`), install the Setup.exe or the portable zip once
+by hand. The plain zip does not update itself and is no longer published.
 
-How releases are made is described in [docs/releasing.md](docs/releasing.md).
+## Updates
 
-## Update
+NexGrades checks for updates about ten seconds after it starts. A newer version downloads in the background and is
+installed when you close the app. When an update is ready, the main window shows a notice with **Restart now**.
+Choose it to install the update and start NexGrades again straight away. Restart now first asks the open page
+whether you can leave it, so unsaved input is not lost.
 
-Updates are manual. Download the new zip from the latest release, then unzip it into a new folder or over the old
-one. Your data is not stored in the app folder, so it is kept. The database upgrades itself the first time the new
-version starts.
+You can change these settings under **Settings** > **Updates**:
 
-Before you update, copy `app.db` to a backup location. Keep the backup on encrypted media (see
-[Data protection](#data-protection)).
+- **Automatically check for updates**: check about ten seconds after the app starts. This is on by default.
+- **Receive beta updates**: also offer beta pre-releases. Betas may contain unfinished features. This is off by
+  default.
+- **Check for updates now**: check straight away and show the result.
+
+Turning beta updates off never moves you to an older version.
 
 ## Where your data lives
 
-- **Database:** `%LOCALAPPDATA%\NexGrades\app.db`. To open the folder, paste `%LOCALAPPDATA%\NexGrades` into the
-  address bar of File Explorer.
-- **Logs:** `%LOCALAPPDATA%\NexGrades\logs\`, or **Settings** > **Open log folder**. The app writes one log file per
+NexGrades keeps its data in `%LOCALAPPDATA%\NexGrades`. To open the folder, paste `%LOCALAPPDATA%\NexGrades` into the
+address bar of File Explorer.
+
+- `app.db`: the database, with your school years, classes, students, grades and notes.
+- `backups\`: copies of the database, see [Backups](#backups).
+- `logs\`: daily log files. **Settings** > **Open log folder** opens this folder. The app writes one log file per
   day and keeps up to 14 files. The app itself does not log pupil names, grades or notes. File paths in the logs
-  include your Windows user name, and some error text from system components can contain values. Treat the log folder
-  like the database. See [0003](docs/decisions/0003-application-logging.md).
-- **Nothing is deleted.** Notes are archived, and grades and assessments are voided. You can restore any of them.
+  include your Windows user name, and some error text from system components can contain values. Treat the log
+  folder like the database. See [0003](docs/decisions/0003-application-logging.md).
+- `settings.json`: the update preferences.
+
+Uninstalling the Setup.exe install removes the app folder `%LOCALAPPDATA%\NexGrades.App`. It keeps
+`%LOCALAPPDATA%\NexGrades`, so your data stays.
+
+Before you do anything risky, copy `app.db` with NexGrades closed. Keep the copy on encrypted media (see
+[Data protection](#data-protection)).
+
+Nothing is deleted. Notes are archived, and grades and assessments are voided. You can restore any of them.
+
+## Backups
+
+Before a migration of an existing database, NexGrades copies the database into `%LOCALAPPDATA%\NexGrades\backups`.
+A migration runs when a new version changes the database. A new database, or one that is already up to date, is not
+copied. Each backup is named `app-<date>-<time>-v<version>.db`, after the time it was taken and the version that last
+used the database. The five newest backups are kept.
+
+If the backup fails, NexGrades does not start and the database is unchanged. If a migration fails after the backup,
+the startup message names the backup file.
+
+NexGrades never restores a backup by itself. To restore one by hand:
+
+1. Quit NexGrades.
+2. Rename `%LOCALAPPDATA%\NexGrades\app.db` to keep it aside, for example `app.db.old`. Do the same with
+   `app.db-wal`, `app.db-shm` and `app.db-journal`, whichever of them exist. SQLite can apply a leftover side file
+   to the restored database, so the old ones must not stay next to it.
+3. Make sure no `app.db-wal`, `app.db-shm` or `app.db-journal` is left next to `app.db`.
+4. Copy the backup you want from `%LOCALAPPDATA%\NexGrades\backups\` into `%LOCALAPPDATA%\NexGrades\` and rename it
+   to `app.db`.
+5. Start NexGrades.
+
+Backups contain the same data as the database, so the rules in [Data protection](#data-protection) apply to them too.
 
 ## Privacy
 
@@ -84,6 +131,9 @@ NexGrades works on your computer only. It has no account and sends no data by de
 traces for developers) is off unless a developer sets the environment variable `OTEL_EXPORTER_OTLP_ENDPOINT`. The
 app does not set it. Telemetry never carries pupil data. See
 [0002](docs/decisions/0002-telemetry-and-privacy.md) and [0003](docs/decisions/0003-application-logging.md).
+
+An update check is a request to GitHub. Apart from what any web request carries, such as your network address, it
+sends nothing about you, your grades or your notes. See [0004](docs/decisions/0004-application-updates.md).
 
 ## Data protection
 
@@ -100,7 +150,7 @@ Background and when this will be revisited: [docs/decisions/0001-encryption-at-r
 
 ## For developers
 
-To build, test and run NexGrades, see [CONTRIBUTING.md](CONTRIBUTING.md).
+To build, test and run NexGrades, and to publish a release, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

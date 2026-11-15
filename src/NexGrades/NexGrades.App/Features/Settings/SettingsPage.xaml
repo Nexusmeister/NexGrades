@@ -74,5 +74,69 @@
                        ToolTip="Open the folder with the application's log files"
                        Command="{Binding ViewModel.OpenLogFolderCommand}"/>
         </ui:CardControl>
+        <ui:CardControl Icon="{ui:SymbolIcon ArrowSync24}"
+                        Margin="0,0,0,12">
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Body"
+                                  Text="Updates"/>
+                    <ui:TextBlock FontTypography="Caption"
+                                  Appearance="Secondary"
+                                  Text="{Binding ViewModel.Updates.VersionText}"/>
+                </StackPanel>
+            </ui:CardControl.Header>
+            <StackPanel MinWidth="280"
+                        IsEnabled="{Binding ViewModel.Updates.IsUpdaterAvailable}">
+                <ui:ToggleSwitch Content="Automatically check for updates"
+                                 AutomationProperties.Name="Automatically check for updates"
+                                 IsChecked="{Binding ViewModel.Updates.AutoCheckForUpdates, Mode=TwoWay}"/>
+                <ui:ToggleSwitch Content="Receive beta updates"
+                                 Margin="0,8,0,0"
+                                 AutomationProperties.Name="Receive beta updates"
+                                 IsChecked="{Binding ViewModel.Updates.ReceiveBetaUpdates, Mode=TwoWay}"/>
+                <ui:TextBlock FontTypography="Caption"
+                              Appearance="Secondary"
+                              TextWrapping="Wrap"
+                              MaxWidth="320"
+                              HorizontalAlignment="Left"
+                              Text="Beta versions may contain unfinished features. Turning this off never reverts to an older version."/>
+                <StackPanel Orientation="Horizontal"
+                            Margin="0,12,0,0">
+                    <ui:Button Content="Check for updates now"
+                               Icon="{ui:SymbolIcon ArrowSync24}"
+                               AutomationProperties.Name="Check for updates now"
+                               ToolTip="Look for a newer version of NexGrades"
+                               Command="{Binding ViewModel.Updates.CheckNowCommand}"/>
+                    <ui:ProgressRing IsIndeterminate="True"
+                                     Width="20"
+                                     Height="20"
+                                     Margin="10,0,0,0"
+                                     AutomationProperties.Name="Checking for updates"
+                                     Visibility="{Binding ViewModel.Updates.IsChecking, Converter={StaticResource booleanToVisibilityConverter}}"/>
+                </StackPanel>
+                <ui:TextBlock Margin="0,8,0,0"
+                              TextWrapping="Wrap"
+                              MaxWidth="320"
+                              HorizontalAlignment="Left"
+                              Text="{Binding ViewModel.Updates.StatusText}">
+                    <ui:TextBlock.Style>
+                        <Style TargetType="{x:Type ui:TextBlock}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ViewModel.Updates.StatusText}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:TextBlock.Style>
+                </ui:TextBlock>
+                <ui:Button Content="Restart now"
+                           Margin="0,8,0,0"
+                           Appearance="Primary"
+                           AutomationProperties.Name="Restart now"
+                           ToolTip="Close NexGrades, install the update and start it again"
+                           Command="{Binding ViewModel.Updates.RestartNowCommand}"
+                           Visibility="{Binding ViewModel.Updates.IsReadyToInstall, Converter={StaticResource booleanToVisibilityConverter}}"/>
+            </StackPanel>
+        </ui:CardControl>
     </StackPanel>
 </Page>
