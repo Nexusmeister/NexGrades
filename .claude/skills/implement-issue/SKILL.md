@@ -58,5 +58,5 @@ If the commit attribution lines or the PR footer lines are missing, the orchestr
 
 ## 4. Verify and merge
 
-When the orchestrator reports `MERGE-READY: PR #<n> @ <head sha>`, run the `verify-and-merge` skill. On
+When the orchestrator reports `MERGE-READY: PR #<n> @ <head sha>`, read and follow `.claude/skills/verify-and-merge/SKILL.md`. On
 `BLOCKED: <reason>`, deal with the reason (ask the owner where a decision is needed) before starting again.

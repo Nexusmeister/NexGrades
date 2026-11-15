@@ -346,7 +346,10 @@ live in Claude Code's folders:
   roles, never edits files and never merges. The lead starts one orchestrator per issue, each in its own
   worktree under `.claude/worktrees/issue-<n>`, so several can run in parallel; the lead merges.
 - `.claude/skills/`: workflows:
-  - `implement-issue`: end-to-end issue pipeline that uses the roles above
+  - `implement-issue`: the lead's front door: brief an issue-orchestrator, then verify-and-merge
+  - `verify-and-merge`: the lead's merge gate checklist for a MERGE-READY pull request, then the squash-merge
+  - `smoke-start`: the smoke start procedure (step 7 of the issue-orchestrator) for a pull request that touches `NexGrades.App`
+  - `lead-handover`: the rules for the lead's local `HANDOVER.md`, which is never committed
   - `grill-me`: interviews the user to settle open decisions before work starts
   - `wpf-ui-design`: UI design rules for this app
   - `new-feature-page`: adds a Page + ViewModel + DI registration and navigation

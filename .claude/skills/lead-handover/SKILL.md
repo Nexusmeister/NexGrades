@@ -1,6 +1,6 @@
 ---
 name: lead-handover
-description: Writes or refreshes the lead's local HANDOVER.md so a new lead session can continue the work. Use after every merge, and when the owner asks for a handover or the session reaches about 90 % usage.
+description: Writes or refreshes the lead's local HANDOVER.md so a new lead session can continue the work. Use after every merge. The handover is written when the session ends and, when the owner has asked for it, at about 90 % usage.
 disable-model-invocation: true
 ---
 
