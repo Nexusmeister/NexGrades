@@ -66,6 +66,22 @@ public sealed partial class ClassChoiceRow : ObservableObject
     /// <summary>The class name in the closing year.</summary>
     public string Name { get; }
 
+    /// <summary>The longest new class name the Domain accepts; the name box stops typing at this length.</summary>
+    public int MaxNameLength { get; } = ClassService.MaxNameLength;
+
+    /// <summary>
+    /// Whether <see cref="NewName"/> is acceptable: not empty, and within <see cref="MaxNameLength"/> unless it is
+    /// the unchanged old name (the Domain keeps such a legacy name valid).
+    /// </summary>
+    public bool IsNewNameValid
+    {
+        get
+        {
+            var trimmed = NewName.Trim();
+            return trimmed.Length > 0 && (trimmed.Length <= MaxNameLength || trimmed == Name);
+        }
+    }
+
     /// <summary>Whether the class has been rolled forward or archived already.</summary>
     public bool IsDone => Status != ClassInstanceStatus.Active;
 

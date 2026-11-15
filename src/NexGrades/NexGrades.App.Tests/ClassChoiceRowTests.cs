@@ -44,4 +44,46 @@ public class ClassChoiceRowTests
             CultureInfo.CurrentCulture = original;
         }
     }
+
+    private static ClassChoiceRow CreateNamedRow(string oldName, string newName)
+    {
+        var row = new ClassChoiceRow(new ClassRolloverState(4711, oldName, ClassInstanceStatus.Active, 0, "6A", null, null, false))
+        {
+            NewName = newName
+        };
+        return row;
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void IsNewNameValid_IsFalse_ForEmptyName(string newName)
+    {
+        Assert.False(CreateNamedRow("5A", newName).IsNewNameValid);
+    }
+
+    [Fact]
+    public void IsNewNameValid_IsTrue_ForNameOfMaximumLength()
+    {
+        var row = CreateNamedRow("5A", new string('x', ClassService.MaxNameLength));
+
+        Assert.True(row.IsNewNameValid);
+    }
+
+    [Fact]
+    public void IsNewNameValid_IsFalse_ForNameOneOverMaximumLength()
+    {
+        var row = CreateNamedRow("5A", new string('x', ClassService.MaxNameLength + 1));
+
+        Assert.False(row.IsNewNameValid);
+    }
+
+    [Fact]
+    public void IsNewNameValid_IsTrue_ForUnchangedLegacyNameLongerThanMaximum()
+    {
+        var legacy = new string('y', ClassService.MaxNameLength + 5);
+        var row = CreateNamedRow(legacy, legacy);
+
+        Assert.True(row.IsNewNameValid);
+    }
 }

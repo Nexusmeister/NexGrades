@@ -16,6 +16,7 @@ public sealed class SubjectOverviewExcelWriter
     private const string SubjectAverageHeader = "Subject average";
     private const string FinalGradeHeader = "Final grade";
     private const string FinalGradeOverriddenHeader = "Final grade set by teacher";
+    private const string OverriddenText = "Yes";
     private const string FinalGradeNumberFormat = "0";
     private const string AverageNumberFormat = "0.0";
     private const string TextNumberFormat = "@";
@@ -55,6 +56,13 @@ public sealed class SubjectOverviewExcelWriter
                         ? FinalGradeNumberFormat
                         : AverageNumberFormat;
                     cell.Value = (double)number;
+                }
+                else if (table.Columns[c].Kind == SubjectOverviewColumnKind.FinalGradeOverridden)
+                {
+                    if (row.IsFinalGradeOverridden)
+                    {
+                        SetText(cell, OverriddenText);
+                    }
                 }
                 else if (value.Text is { } text)
                 {

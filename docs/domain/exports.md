@@ -10,10 +10,10 @@ the grades and average of each bucket, the weighted subject average and the fina
 
 - The final grade is the effective one: the teacher's override, otherwise the proposal, and empty when neither
   exists. See [Grading scale and final grade](grading-scale-and-final-grade.md).
-- A "Final grade set by teacher" column is `Yes` when the final grade is an override, and empty otherwise.
+- The Domain sets `SubjectOverviewRow.IsFinalGradeOverridden` when the final grade is an override. The App writes `Yes` in the "Final grade set by teacher" column for those rows and leaves the cell empty otherwise.
   The column header is written by `SubjectOverviewExcelWriter` in the App.
 - Exempt students are not listed, even if they have grades.
-- Students who left the class appear only if they have grades in this subject.
+- Students who left the class appear only if they have grades in this subject or a final-grade override.
 - Voided grades and grades of voided assessments are excluded. See
   [Grades, assessments and averages](grades-assessments-and-averages.md).
 

@@ -18,7 +18,7 @@ internal interface IGradeSheetEditableCell
     /// <summary>What the cell looks like, for styling.</summary>
     GradeCellVisualState VisualState { get; }
 
-    /// <summary>A whole-sentence explanation of the cell's state; never empty. A normal cell explains that the proposal is used.</summary>
+    /// <summary>A whole-sentence explanation of the cell's state. Empty for a normal assessment grade cell; always set for the final grade cell.</summary>
     string Description { get; }
 
     /// <summary>True while a save of this cell runs.</summary>

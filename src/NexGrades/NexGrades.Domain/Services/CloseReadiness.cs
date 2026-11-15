@@ -9,6 +9,6 @@ namespace NexGrades.Domain.Services;
 /// <param name="Warnings">Advisory findings. They never block the close.</param>
 public sealed record CloseReadiness(IReadOnlyList<CloseReadinessIssue> BlockingIssues, IReadOnlyList<CloseReadinessIssue> Warnings)
 {
-    /// <summary>Whether <see cref="YearCloseService.CloseSchoolYearAsync"/> would succeed right now.</summary>
+    /// <summary>Whether no blocking issue remains, so <see cref="YearCloseService.CloseAndActivateNextYearAsync"/> may close the year.</summary>
     public bool CanClose => BlockingIssues.Count == 0;
 }

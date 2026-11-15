@@ -297,8 +297,6 @@
                                                                     Orientation="Horizontal">
                                                             <StackPanel Orientation="Horizontal"
                                                                         Margin="0,0,16,0"
-                                                                        ToolTip="{Binding FinalGradeDescription}"
-                                                                        AutomationProperties.Name="{Binding FinalGradeDescription}"
                                                                         Focusable="False">
                                                                 <StackPanel.Style>
                                                                     <Style TargetType="StackPanel">
@@ -316,6 +314,8 @@
                                                                                Visibility="{Binding HasFinalGradeOverride, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                                                 <ui:TextBlock VerticalAlignment="Center"
                                                                               FontTypography="BodyStrong"
+                                                                              ToolTip="{Binding FinalGradeDescription}"
+                                                                              AutomationProperties.Name="{Binding FinalGradeDescription}"
                                                                               Text="{Binding FinalGradeText, StringFormat='Final grade: {0}'}"/>
                                                             </StackPanel>
                                                             <ui:TextBlock VerticalAlignment="Center"

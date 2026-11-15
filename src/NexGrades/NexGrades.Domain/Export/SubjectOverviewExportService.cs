@@ -15,12 +15,11 @@ namespace NexGrades.Domain.Export;
 /// <remarks>
 /// Averages come from <see cref="AverageCalculator"/> with the snapshotted <see cref="Data.Entities.GradeBucket.Weight"/>.
 /// Exempt students are omitted even if they have grades (exempt wins). Students who left the class appear
-/// only if they have grades in this subject.
+/// only if they have grades in this subject or a final-grade override.
 /// </remarks>
 public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext> contextFactory)
 {
     private const string GradeSeparator = "; ";
-    private const string OverriddenMarker = "Yes";
 
     /// <summary>Builds the overview table for <paramref name="subjectInstanceId"/>.</summary>
     /// <exception cref="InvariantViolationException">The subject instance does not exist.</exception>
@@ -45,7 +44,7 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
 
             var included = enrollments
                 .Where(e => !exemptIds.Contains(e.StudentId))
-                .Where(e => e.LeftOn is null || gradesByStudent[e.StudentId].Any())
+                .Where(e => e.LeftOn is null || gradesByStudent[e.StudentId].Any() || finalGradeOverrides.ContainsKey(e.StudentId))
                 .ToList();
 
             var rows = Sort(included.Where(e => e.LeftOn is null))
@@ -110,10 +109,10 @@ public sealed class SubjectOverviewExportService(IDbContextFactory<AppDbContext>
 
         // The proposal is derived here, never stored; no override and no average leaves the cell empty, not 0.
         cells.Add(SubjectOverviewCell.FromNumber(finalGradeOverride ?? GradingScale.ProposeFinalGrade(subjectAverage)));
-        cells.Add(finalGradeOverride is null ? SubjectOverviewCell.Empty : SubjectOverviewCell.FromText(OverriddenMarker));
+        cells.Add(SubjectOverviewCell.Empty);
 
         DateOnly? leftOn = student.LeftOn is { } left ? DateOnly.FromDateTime(left) : null;
-        return new SubjectOverviewRow(cells, leftOn);
+        return new SubjectOverviewRow(cells, leftOn, finalGradeOverride is not null);
     }
 
     // Legacy data may hold values outside the scale; show them rather than failing the export.

@@ -477,6 +477,7 @@ public class SubjectOverviewExportServiceTests
 
         Assert.Equal(2.5m, row.Cells[3].Number);
         Assert.Equal(3m, row.Cells[FinalGradeColumn].Number);
+        Assert.False(row.IsFinalGradeOverridden);
         Assert.Equal(SubjectOverviewCell.Empty, row.Cells[OverriddenColumn]);
     }
 
@@ -494,7 +495,8 @@ public class SubjectOverviewExportServiceTests
 
         Assert.Equal(2.0m, row.Cells[3].Number);
         Assert.Equal(4m, row.Cells[FinalGradeColumn].Number);
-        Assert.Equal("Yes", row.Cells[OverriddenColumn].Text);
+        Assert.True(row.IsFinalGradeOverridden);
+        Assert.Equal(SubjectOverviewCell.Empty, row.Cells[OverriddenColumn]);
     }
 
     [Fact]
@@ -510,7 +512,8 @@ public class SubjectOverviewExportServiceTests
 
         Assert.Equal(SubjectOverviewCell.Empty, row.Cells[3]);
         Assert.Equal(5m, row.Cells[FinalGradeColumn].Number);
-        Assert.Equal("Yes", row.Cells[OverriddenColumn].Text);
+        Assert.True(row.IsFinalGradeOverridden);
+        Assert.Equal(SubjectOverviewCell.Empty, row.Cells[OverriddenColumn]);
     }
 
     [Fact]
@@ -524,6 +527,7 @@ public class SubjectOverviewExportServiceTests
         var row = Assert.Single((await BuildAsync(db, fixture)).Rows);
 
         Assert.Equal(SubjectOverviewCell.Empty, row.Cells[FinalGradeColumn]);
+        Assert.False(row.IsFinalGradeOverridden);
         Assert.Equal(SubjectOverviewCell.Empty, row.Cells[OverriddenColumn]);
     }
 
@@ -540,6 +544,7 @@ public class SubjectOverviewExportServiceTests
         var row = Assert.Single((await BuildAsync(db, fixture)).Rows);
 
         Assert.Equal(2m, row.Cells[FinalGradeColumn].Number);
+        Assert.False(row.IsFinalGradeOverridden);
         Assert.Equal(SubjectOverviewCell.Empty, row.Cells[OverriddenColumn]);
     }
 
@@ -586,8 +591,40 @@ public class SubjectOverviewExportServiceTests
 
         var table = await BuildAsync(db, fixture);
 
-        Assert.Equal("Yes", table.Rows[0].Cells[OverriddenColumn].Text);
+        Assert.True(table.Rows[0].IsFinalGradeOverridden);
+        Assert.Equal(SubjectOverviewCell.Empty, table.Rows[0].Cells[OverriddenColumn]);
         Assert.Equal(SubjectOverviewCell.Empty, table.Rows[1].Cells[FinalGradeColumn]);
+        Assert.False(table.Rows[1].IsFinalGradeOverridden);
         Assert.Equal(SubjectOverviewCell.Empty, table.Rows[1].Cells[OverriddenColumn]);
+    }
+
+    [Fact]
+    public async Task BuildAsync_IncludesLeftStudent_WithOnlyAnOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        await fixture.AddBucketAsync("Written", 100m, 1);
+        var student = await fixture.AddStudentAsync("Test", "Alpha", leftOn: new DateTime(2025, 12, 1));
+        await fixture.AddFinalGradeAsync(student, 4m);
+
+        var row = Assert.Single((await BuildAsync(db, fixture)).Rows);
+
+        Assert.Equal(new DateOnly(2025, 12, 1), row.LeftOn);
+        Assert.Equal(4m, row.Cells[FinalGradeColumn].Number);
+        Assert.True(row.IsFinalGradeOverridden);
+    }
+
+    [Fact]
+    public async Task BuildAsync_ExcludesLeftStudent_WithOnlyAClearedOverride()
+    {
+        using var db = new SqliteTestDatabase();
+        var fixture = await SeedAsync(db);
+        await fixture.AddBucketAsync("Written", 100m, 1);
+        var student = await fixture.AddStudentAsync("Test", "Alpha", leftOn: new DateTime(2025, 12, 1));
+        await fixture.AddFinalGradeAsync(student, null);
+
+        var table = await BuildAsync(db, fixture);
+
+        Assert.Empty(table.Rows);
     }
 }

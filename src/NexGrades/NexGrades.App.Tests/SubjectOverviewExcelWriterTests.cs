@@ -172,9 +172,10 @@ public class SubjectOverviewExcelWriterTests
                         SubjectOverviewCell.FromText("Alpha, Test"),
                         SubjectOverviewCell.FromNumber(average),
                         SubjectOverviewCell.FromNumber(finalGrade),
-                        overridden ? SubjectOverviewCell.FromText("Yes") : SubjectOverviewCell.Empty,
+                        SubjectOverviewCell.Empty,
                     ],
-                    null),
+                    null,
+                    overridden),
             ]);
 
     [Fact]
