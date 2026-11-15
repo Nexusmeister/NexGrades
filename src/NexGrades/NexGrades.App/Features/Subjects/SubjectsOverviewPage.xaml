@@ -29,11 +29,24 @@
 
         <ui:DataGrid ItemsSource="{Binding ViewModel.Subjects}" 
                      SelectionMode="Single"
-                     AutoGenerateColumns="False">
+                     IsReadOnly="True"
+                     AutoGenerateColumns="False"
+                     MouseDoubleClick="OnSubjectsGridMouseDoubleClick">
             <ui:DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding Id}"/>
                 <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
                 <DataGridTextColumn Header="Code" Binding="{Binding ShortCode}"/>
+                <DataGridTemplateColumn Header="Actions">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ui:Button Icon="{ui:SymbolIcon Edit24}"
+                                       ToolTip="Edit subject"
+                                       AutomationProperties.Name="Edit subject"
+                                       Command="{Binding DataContext.ViewModel.EditSubjectCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                       CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </ui:DataGrid.Columns>
         </ui:DataGrid>
     </StackPanel>
