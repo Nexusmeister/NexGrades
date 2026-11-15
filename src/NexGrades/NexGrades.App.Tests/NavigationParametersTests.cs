@@ -3,6 +3,7 @@ using NexGrades.App.Core;
 namespace NexGrades.App.Tests;
 
 /// <summary>Tests the versioned one-shot hand-over of <see cref="NavigationParameters"/>.</summary>
+[Collection(NavigationParametersState.Name)]
 public class NavigationParametersTests
 {
     [Fact]

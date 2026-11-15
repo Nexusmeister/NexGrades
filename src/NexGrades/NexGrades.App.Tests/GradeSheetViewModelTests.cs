@@ -11,6 +11,7 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Tests;
 
+[Collection(NavigationParametersState.Name)]
 public class GradeSheetViewModelTests
 {
     private static readonly DateTime Now = new(2025, 10, 1, 10, 0, 0);

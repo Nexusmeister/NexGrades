@@ -71,7 +71,7 @@ the release notes and `docs/releasing.md`).
 - The folder is `%LOCALAPPDATA%\NexGrades\backups`. `Backup:Directory` overrides it. With a `sqlite` override the folder
   is `backups` beside the overridden database, so a development database never writes to the teacher's folder.
 - Names are `app-yyyyMMdd-HHmmss-v<version>.db`, with `unknown` for the version when it is not known. The version is the
-  one that last started against the default database (`LastRunVersion`). The five newest backups are kept.
+  one that last started against the default database (`LastRunVersion`). Five backups are kept: the newest ones, plus the oldest backup taken for the same previous app version, which is pinned so repeated failed starts cannot rotate it out (see `docs/domain/updates-backups-and-settings.md`).
 - A backup that fails stops startup before the migration runs; the database is unchanged. A migration that fails after
   a backup ends startup, and the dialog names the backup file.
 - Nothing restores a backup automatically. The manual steps are in `README.md`.

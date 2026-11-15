@@ -13,6 +13,7 @@ namespace NexGrades.App.Tests;
 /// Tests the leave guard of the class and subject forms: unchanged input leaves silently, changed input asks, the
 /// answer decides, and Save or Cancel leave without a second prompt.
 /// </summary>
+[Collection(NavigationParametersState.Name)]
 public class FormLeaveGuardTests
 {
     private static readonly DateTime Now = new(2025, 10, 1);

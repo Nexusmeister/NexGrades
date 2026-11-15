@@ -13,6 +13,7 @@ namespace NexGrades.App.Tests;
 /// matter: it asks the navigator first (the <c>Navigating</c> event) and runs the view model callback later, not
 /// inside the navigate call.
 /// </summary>
+[Collection(NavigationParametersState.Name)]
 public class PageNavigatorGuardTests
 {
     private readonly List<Action> _cleanups = [];

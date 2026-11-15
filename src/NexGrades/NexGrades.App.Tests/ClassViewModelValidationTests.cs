@@ -5,6 +5,7 @@ using NexGrades.Domain.Services;
 
 namespace NexGrades.App.Tests;
 
+[Collection(NavigationParametersState.Name)]
 public class ClassViewModelValidationTests
 {
     private static readonly DateTime Now = new(2025, 10, 1);

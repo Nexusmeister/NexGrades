@@ -10,6 +10,7 @@ using NexGrades.Common.Storage;
 
 namespace NexGrades.App.Tests;
 
+[Collection(NavigationParametersState.Name)]
 public sealed class SettingsViewModelTests : IDisposable
 {
     private readonly TempFolder _folder = new();

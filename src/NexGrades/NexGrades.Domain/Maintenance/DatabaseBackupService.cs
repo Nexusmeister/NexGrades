@@ -54,12 +54,14 @@ public sealed partial class DatabaseBackupService(
             var backupPath = MoveToFreeName(temporaryPath, backupDirectory, fileName);
             LogBackupCreated();
 
-            _ = PruneBackups(backupDirectory, backupPath);
+            // An empty version pins the unknown-version backups, which is how a null version is named.
+            _ = PruneBackups(backupDirectory, backupPath, previousAppVersion ?? string.Empty);
             return backupPath;
         });
 
     /// <summary>
-    /// Deletes all but the newest <see cref="RetainedBackupCount"/> backups in <paramref name="backupDirectory"/>.
+    /// Deletes all but the newest <see cref="RetainedBackupCount"/> backups in <paramref name="backupDirectory"/>,
+    /// except that the oldest backup of <paramref name="pinnedVersion"/> is kept as one of them.
     /// Only files named by <see cref="DatabaseBackupFileName"/> are considered, newest first by the timestamp in the
     /// name, then by file name. Pruning is housekeeping: a file or folder that cannot be read or deleted is logged as
     /// a warning and skipped, never thrown.
@@ -70,8 +72,15 @@ public sealed partial class DatabaseBackupService(
     /// <see cref="RetainedBackupCount"/> - 1. <see cref="CreateBackupAsync"/> passes the file it just wrote, because
     /// a clock that went backwards would otherwise make it sort oldest and delete it at once.
     /// </param>
+    /// <param name="pinnedVersion">
+    /// The app version whose oldest backup is kept (pinned), or <see langword="null"/> to pin nothing; an empty string
+    /// pins the oldest unknown-version backup. The pinned backup counts toward <see cref="RetainedBackupCount"/> and
+    /// the rest of the kept ones are the newest of the other backups. <see cref="CreateBackupAsync"/> passes the
+    /// previous app version, so repeated failed starts of a new version cannot rotate out the last backup the previous
+    /// version can open. Oldest is by the timestamp in the name, then by file name.
+    /// </param>
     /// <returns>How many backups were deleted.</returns>
-    public int PruneBackups(string backupDirectory, string? protectedPath = null)
+    public int PruneBackups(string backupDirectory, string? protectedPath = null, string? pinnedVersion = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(backupDirectory);
 
@@ -99,13 +108,13 @@ public sealed partial class DatabaseBackupService(
             return 0;
         }
 
+        var kept = GetKeptRegardlessOfAge(backups, protectedPath, pinnedVersion);
         var ordered = backups
+            .Where(b => !kept.Exists(p => IsSamePath(p, b.Path)))
             .OrderByDescending(b => b.Timestamp)
             .ThenByDescending(b => b.Name, StringComparer.Ordinal);
         var deleted = 0;
-        foreach (var backup in protectedPath is null
-            ? ordered.Skip(RetainedBackupCount)
-            : ordered.Where(b => !IsSamePath(b.Path, protectedPath)).Skip(RetainedBackupCount - 1))
+        foreach (var backup in ordered.Skip(Math.Max(0, RetainedBackupCount - kept.Count)))
         {
             try
             {
@@ -124,6 +133,35 @@ public sealed partial class DatabaseBackupService(
         }
 
         return deleted;
+    }
+
+    // The protected file and the oldest backup of the pinned version (they may be the same file).
+    private static List<string> GetKeptRegardlessOfAge(
+        List<(string Path, string Name, DateTime Timestamp)> backups,
+        string? protectedPath,
+        string? pinnedVersion)
+    {
+        var kept = new List<string>();
+        if (protectedPath is not null)
+        {
+            kept.Add(protectedPath);
+        }
+
+        if (pinnedVersion is not null)
+        {
+            var pinned = backups
+                .Where(b => DatabaseBackupFileName.HasVersion(b.Name, pinnedVersion))
+                .OrderBy(b => b.Timestamp)
+                .ThenBy(b => b.Name, StringComparer.Ordinal)
+                .Select(b => b.Path)
+                .FirstOrDefault();
+            if (pinned is not null && !kept.Exists(p => IsSamePath(p, pinned)))
+            {
+                kept.Add(pinned);
+            }
+        }
+
+        return kept;
     }
 
     private static bool IsSamePath(string left, string right) =>

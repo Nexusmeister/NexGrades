@@ -54,15 +54,26 @@ public partial class SettingsViewModel(
 
     /// <summary>
     /// Opens the folder picker and shows the chosen path. Cancelling, or selecting nothing, hides the path and shows
-    /// a caution message instead.
+    /// a caution message instead; so does a result of more than one folder, none of which is used.
     /// </summary>
     [RelayCommand]
     public void OnOpenFolder()
     {
         OpenedFolderPathVisibility = false;
 
-        // Only one folder can be used for now; selecting several is not supported yet (#83).
         var foldersSelected = dialogService.SelectFolder(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)).ToList();
+
+        // The dialog allows a single folder; if an implementation still returns several, none is used.
+        if (foldersSelected.Count > 1)
+        {
+            snackbarService.Show(
+                "Too many folders",
+                "Select a single folder.",
+                ControlAppearance.Caution,
+                new SymbolIcon(SymbolRegular.FolderLightning20),
+                TimeSpan.FromSeconds(5));
+            return;
+        }
 
         if (foldersSelected.Count == 0)
         {
@@ -75,7 +86,7 @@ public partial class SettingsViewModel(
             return;
         }
 
-        OpenedFolderPath = string.Join("\n", foldersSelected);
+        OpenedFolderPath = foldersSelected[0];
         OpenedFolderPathVisibility = true;
     }
 

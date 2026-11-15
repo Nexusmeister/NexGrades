@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Windows;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Infrastructure;
@@ -51,6 +50,7 @@ public sealed partial class AppThemeService(IUserSettingsStore store, IThemeAppl
     /// <param name="preference">The theme to use.</param>
     /// <param name="cancellationToken">Cancels the save.</param>
     /// <returns><see langword="true"/> when the preference was saved; <see langword="false"/> when it applies only until the app closes.</returns>
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "A preference that cannot be saved, for whatever reason, must not crash the app; it applies until the app closes and the caller reports it.")]
     public async Task<bool> SetAsync(ThemePreference preference, CancellationToken cancellationToken = default)
     {
         applier.Apply(preference);
@@ -61,7 +61,7 @@ public sealed partial class AppThemeService(IUserSettingsStore store, IThemeAppl
             _ = await store.UpdateAsync(settings => settings with { Theme = preference }, cancellationToken);
             return true;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             LogSaveFailed(ex.GetType().Name);
             return false;
