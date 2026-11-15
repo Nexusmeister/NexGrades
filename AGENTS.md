@@ -16,6 +16,7 @@ buckets and averages. Single user, local SQLite database, no server.
 - CommunityToolkit.Mvvm 8.x (`[ObservableProperty]`, `[RelayCommand]`)
 - EF Core 10 on SQLite
 - .NET Aspire AppHost for local development only
+- Velopack 1.x for installing, updating and packing the app (`Directory.Packages.props`); the `vpk` tool in `.config/dotnet-tools.json` has the same version
 - xUnit for tests
 
 ## Repository layout
@@ -24,7 +25,7 @@ All code lives under `src/NexGrades/` (solution: `NexGrades.slnx`).
 
 | Project | Role | References |
 |---|---|---|
-| `NexGrades.App` | WPF shell, pages, view models, DI wiring, host setup, file logging (`Logging/`) | Common, Data, Domain, ServiceDefaults |
+| `NexGrades.App` | WPF shell, pages, view models, DI wiring, host setup, file logging (`Logging/`), self-update (`Updates/`) | Common, Data, Domain, ServiceDefaults |
 | `NexGrades.Domain` | Business rules: services, grading, closed-year auditing, `IClock` | Data |
 | `NexGrades.Data` | EF Core `AppDbContext`, entities, entity configurations, migrations | — |
 | `NexGrades.Common` | Small cross-cutting helpers and service interfaces | — |
@@ -70,13 +71,46 @@ dotnet run --project Aspire/NexGrades.AppHost                        # run the a
 - To see logs, metrics and traces live, run the AppHost command above and open the Aspire dashboard at the URL it
   prints. Running `NexGrades.App` on its own exports nothing unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. See
   `docs/decisions/0002-telemetry-and-privacy.md`.
-- Pending migrations are applied at startup by `DatabaseMigrationService`. Then `SchoolYearService.EnsureActiveYearAsync`
-  bootstraps an Active school year if none exists. `App.xaml.cs` calls both, in that order.
-- A startup failure at any step (host creation, configuration, database path, migration, host start) is logged at
-  Critical, shown once in a message box, and ends the process with exit code 1 (`StartupFailureHandler`, called from
-  `App.OnStartup`). See `docs/decisions/0003-application-logging.md`.
+- Pending migrations are applied at startup by `DatabaseMigrationService`, which `StartupDatabaseMigrator` calls; the
+  migrator takes the backup described below first when one is needed. Then `SchoolYearService.EnsureActiveYearAsync`
+  bootstraps an Active school year if none exists. `App.xaml.cs` calls the migrator and then `EnsureActiveYearAsync`,
+  in that order. `Program.Main` runs `VelopackApp.Build().Run()` before `App` is created; it handles the installer's
+  hook arguments and returns on a normal start.
+- A startup failure at any step (host creation, configuration, database path, pre-migration backup, migration, host
+  start) is logged at Critical, shown once in a message box, and ends the process with exit code 1
+  (`StartupFailureHandler`, called from `App.OnStartup`). See `docs/decisions/0003-application-logging.md`.
 - The App is a GUI and cannot be meaningfully exercised headless. Verify changes with a build of
   `NexGrades.App` plus `dotnet test`; say so explicitly when a change also needs a manual UI check.
+- **Release assets:** from the repository root, `./.github/scripts/New-ReleaseAsset.ps1 -OutputDirectory <dir> -Channel beta`
+  (or `-Channel stable`) publishes the App self-contained for win-x64 and packs it with `vpk` into the installer, the
+  portable zip and the update feed of that channel, in `<dir>\release`. The version is the one MinVer gives HEAD: the
+  beta channel takes `X.Y.Z-beta.N`, the stable channel `X.Y.Z`. `<dir>` is emptied if it exists. Pull request builds
+  run the beta pack without uploading anything. See `docs/releasing.md`.
+- **Settings file:** `settings.json` in `%LOCALAPPDATA%\NexGrades\` (`IAppDataPaths.SettingsFilePath`) holds the
+  preferences kept outside the database. `JsonUserSettingsStore` reads and writes it as `UserSettings`; a missing or
+  unreadable file gives the defaults. The file stays in that folder with a `sqlite` override. `LastRunVersion` is the
+  version that last started against the default database, and it names the next backup.
+- **Backups:** before a migration of an existing database (one with applied migrations), `DatabaseBackupService` copies
+  the database with SQLite's online backup into `%LOCALAPPDATA%\NexGrades\backups`. The copy must pass
+  `PRAGMA quick_check` before it gets its final name. `Backup:Directory` overrides the folder; with a `sqlite` override
+  the folder is `backups` beside the overridden database. Files are named `app-yyyyMMdd-HHmmss-v<version>.db`, with
+  `unknown` in place of the version when it is not known, and the five newest are kept. A failed backup stops startup
+  before anything is migrated. When a migration fails after a backup, the startup dialog names the backup file.
+  Nothing restores a backup automatically; `README.md` lists the manual steps. Backups hold pupil data, like the
+  database (see `docs/decisions/0001-encryption-at-rest.md`).
+- **Updates:** `UpdateCoordinator` (`NexGrades.App/Updates/`) runs the update cycle. It stays inactive, and makes no
+  network request, unless the app runs from a Velopack install, so development, the AppHost and the tests never check
+  for updates. The feeds come from `Updates:Repository` in `NexGrades.App/appsettings.json`: the stable channel reads
+  the release marked latest, and the beta channel reads GitHub pre-releases and is checked only when
+  `ReceiveBetaUpdates` is on. `Updates:SourceOverride`, a local folder or an http(s) URL, replaces the feed for every
+  channel. It is empty in shipped builds and is meant for testing a locally packed version. With
+  `AutoCheckForUpdates` on, a check runs about ten seconds after startup. A downloaded update is installed when the app
+  exits, or at once when the user chooses Restart now in the main window's notice. The Settings page shows the version
+  and both preferences and runs a manual check. See `docs/decisions/0004-application-updates.md`.
+- **Velopack pack id:** `NexGradesPackId` in `NexGrades.App.csproj` (`NexGrades.App`) is the id the release packs with,
+  and the app carries it as the `VelopackPackId` assembly metadata. Velopack installs to `%LOCALAPPDATA%\<packId>` and
+  deletes that folder on uninstall, so the id differs from the data folder `%LOCALAPPDATA%\NexGrades`, and
+  `New-ReleaseAsset.ps1` refuses that name. Changing the id would leave installed apps unable to find their updates.
 
 ## Domain model
 

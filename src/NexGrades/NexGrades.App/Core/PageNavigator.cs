@@ -90,6 +90,45 @@ public sealed partial class PageNavigator
         }
     }
 
+    /// <summary>
+    /// Asks the current page whether it may be left, for an action that leaves it without a navigation, such as
+    /// restarting the app to install an update. It is the same check as for sidebar and back navigation.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the check.</param>
+    /// <returns>
+    /// <see langword="true"/> when there is no current page or it allows leaving; <see langword="false"/> when it
+    /// refuses, when its check fails, or when a leave prompt is already open.
+    /// </returns>
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Whatever the page's check throws, the safe outcome is to stay on the page.")]
+    public async Task<bool> ConfirmLeaveAsync(CancellationToken cancellationToken = default)
+    {
+        if (_current is not { } current)
+        {
+            return true;
+        }
+
+        if (_guardActive)
+        {
+            return false;
+        }
+
+        // Navigation clicks while this prompt is open are swallowed, as in the navigation guard.
+        _guardActive = true;
+        try
+        {
+            return await current.CanLeaveAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            LogGuardFailed(ex);
+            return false;
+        }
+        finally
+        {
+            _guardActive = false;
+        }
+    }
+
     /// <summary>Records the view model of the page that is now shown, or <see langword="null"/> if it has none.</summary>
     /// <param name="viewModel">The view model of the current page.</param>
     internal void SetCurrent(ViewModel? viewModel) => _current = viewModel;

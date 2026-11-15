@@ -19,6 +19,24 @@
     <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
   </PropertyGroup>
 
+  <!-- The Velopack package id, defined only here: the release workflow reads this property as the vpk pack id,
+       and the app carries it as assembly metadata. Velopack installs to %LOCALAPPDATA%\<packId> and deletes that folder on
+       uninstall, so it must never be `NexGrades`: that is the data folder with the database, its backups and the logs. -->
+  <PropertyGroup>
+    <NexGradesPackId>NexGrades.App</NexGradesPackId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="VelopackPackId" Value="$(NexGradesPackId)" />
+  </ItemGroup>
+
+  <!-- Program.Main is the entry point (Velopack must run first), so App.xaml is compiled as a page and no Main is
+       generated from it. -->
+  <ItemGroup>
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Include="appsettings*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -48,6 +66,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="MinVer" PrivateAssets="all" />
+    <PackageReference Include="Velopack" />
   </ItemGroup>
 
   <ItemGroup>

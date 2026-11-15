@@ -18,6 +18,18 @@ public interface IAppDataPaths
     /// </summary>
     string LogDirectory { get; }
 
+    /// <summary>
+    /// Full path of the user settings file (for example the update preferences). It sits next to the database so
+    /// it survives app updates, and is created on the first save, not by <see cref="EnsureCreated"/>.
+    /// </summary>
+    string SettingsFilePath { get; }
+
+    /// <summary>
+    /// Default folder for the database backups taken before a migration. It is created when the first backup is
+    /// written, not by <see cref="EnsureCreated"/>.
+    /// </summary>
+    string BackupDirectory { get; }
+
     /// <summary>Creates <see cref="DataDirectory"/> if it does not exist yet. Safe to call repeatedly.</summary>
     void EnsureCreated();
 }

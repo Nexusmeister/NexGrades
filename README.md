@@ -1,5 +1,9 @@
 # NexGrades
-Grade Maker
+
+A Windows desktop grade book for a teacher: school years, classes, students, subjects, weighted grade buckets and
+averages. It is for one user and keeps everything in a local SQLite database; there is no server.
+
+*Screenshot: placeholder, to be added.*
 
 ## Features
 
@@ -12,10 +16,90 @@ Grade Maker
   date range on the student page ("Export notes…", Notes tab). The notes export has its own dialog for the range
   and for including archived notes.
 
-## Releases
+## Install
 
-Each push to `dev` publishes a beta pre-release and each merge to `main` a stable release, as a self-contained
-Windows zip on GitHub Releases. See [docs/releasing.md](docs/releasing.md).
+Download a release from the [GitHub Releases page](https://github.com/Nexusmeister/NexGrades/releases) and use one of:
+
+- `NexGrades-<version>-win-x64-Setup.exe`: installs NexGrades for your Windows user account. No administrator rights
+  are needed.
+- `NexGrades-<version>-win-x64-Portable.zip`: unzip it to a folder of your own and run `NexGrades.App.exe` from there.
+
+Both update themselves. The other files on a release are the update feed; you don't need them. Uninstalling keeps
+your data in `%LOCALAPPDATA%\NexGrades`.
+
+If you used an earlier plain zip, install the Setup.exe or the portable zip once by hand. The plain zip does not
+update itself.
+
+NexGrades is not code-signed yet, so Windows SmartScreen may warn the first time. Choose **More info**, then
+**Run anyway**.
+
+### Updates
+
+NexGrades checks for updates about ten seconds after it starts, downloads a newer version in the background and
+installs it when you close the app. Under **Settings > Updates** you can turn automatic checks off, receive beta
+releases, or check now. Turning beta releases off never moves you to an older version.
+
+## Build and run (developers)
+
+Prerequisites:
+
+- Windows
+- The [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- A clone with its git tags. Version numbers come from the `vX.Y.Z` tags (see [docs/releasing.md](docs/releasing.md)).
+
+From `src/NexGrades/`:
+
+```sh
+dotnet restore
+dotnet build NexGrades.slnx
+dotnet test
+dotnet run --project Aspire/NexGrades.AppHost
+```
+
+The AppHost starts NexGrades with a SQLite database and prints the URL of the Aspire dashboard, where logs, metrics
+and traces are shown. Running `NexGrades.App` on its own needs a connection string from user secrets; see
+[AGENTS.md](AGENTS.md).
+
+Conventions, dependency rules and the domain model are in [AGENTS.md](AGENTS.md).
+
+## Project layout
+
+| Path | Contents |
+|---|---|
+| `src/NexGrades/NexGrades.App` | WPF app: pages, view models, startup, logging, updates |
+| `src/NexGrades/NexGrades.Domain` | Business rules: grading, services, closed-year auditing, backups |
+| `src/NexGrades/NexGrades.Data` | EF Core model, entity configurations and migrations |
+| `src/NexGrades/NexGrades.Common` | Shared helpers and service interfaces |
+| `src/NexGrades/NexGrades.Tests`, `NexGrades.App.Tests` | xUnit tests |
+| `src/NexGrades/Aspire/` | AppHost and ServiceDefaults for development |
+| `.github/workflows/ci.yml`, `.github/scripts/` | Build, test and release pipeline |
+| `docs/` | [Releasing](docs/releasing.md) and architecture decisions in `docs/decisions/` |
+
+## Data and backups
+
+NexGrades keeps its files in `%LOCALAPPDATA%\NexGrades`:
+
+- `app.db`: the database
+- `backups\`: copies of the database, taken before an update changes it
+- `logs\`: daily log files
+- `settings.json`: update preferences
+
+Before a migration of an existing database, NexGrades copies the database into `backups\`. Each backup is named
+`app-<date>-<time>-v<version>.db`, after the time it was taken and the version that last used the database. The five
+newest are kept. If the backup fails, NexGrades does not start and the database is unchanged.
+
+To restore a backup by hand:
+
+1. Quit NexGrades.
+2. Rename `%LOCALAPPDATA%\NexGrades\app.db` to keep it aside, for example `app.db.old`. Do the same with
+   `app.db-wal`, `app.db-shm` and `app.db-journal`, whichever of them exist. The database runs in WAL mode, so a
+   leftover `-wal` file would be replayed onto the restored file.
+3. Make sure no `app.db-wal`, `app.db-shm` or `app.db-journal` is left next to `app.db`.
+4. Copy the backup you want from `%LOCALAPPDATA%\NexGrades\backups\` into `%LOCALAPPDATA%\NexGrades\` and rename it
+   to `app.db`.
+5. Start NexGrades.
+
+Backups contain the same data as the database, so the rules in *Data protection* apply to them too.
 
 ## Data protection
 

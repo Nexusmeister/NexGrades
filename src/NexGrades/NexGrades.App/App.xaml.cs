@@ -8,9 +8,9 @@ using Microsoft.Extensions.Logging;
 using NexGrades.App.Extensions;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Logging;
+using NexGrades.App.Updates;
 using NexGrades.Common.Storage;
 using NexGrades.Data.Diagnostics;
-using NexGrades.Data.Services;
 using NexGrades.Domain.Services;
 using NexGrades.ServiceDefaults;
 using Serilog.Extensions.Logging;
@@ -104,8 +104,8 @@ public partial class App : Application
             }
 
             await using var scope = host.Services.CreateAsyncScope();
-            var mig = scope.ServiceProvider.GetRequiredService<DatabaseMigrationService>();
-            await mig.RunAsync(CancellationToken.None);
+            // Backs up an existing database before migrating it; a failed backup stops the start with the data unchanged.
+            await scope.ServiceProvider.GetRequiredService<StartupDatabaseMigrator>().RunAsync(CancellationToken.None);
             await scope.ServiceProvider.GetRequiredService<SchoolYearService>().EnsureActiveYearAsync(CancellationToken.None);
 
             await host.StartAsync();
@@ -151,8 +151,9 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Ends the application with <paramref name="exitCode"/>. <see cref="Environment.ExitCode"/> is set as well,
-    /// because the generated <c>Main</c> discards the value <c>Run</c> returns.
+    /// Ends the application with <paramref name="exitCode"/>. <c>Shutdown</c> makes <c>Run</c> return the code, which
+    /// <c>Program.Main</c> returns. <see cref="Environment.ExitCode"/> is set as well, so the code also holds if the
+    /// process ends before <c>Main</c> returns.
     /// </summary>
     private void ExitWithCode(int exitCode)
     {
@@ -197,6 +198,10 @@ public partial class App : Application
     private async void OnExit(object sender, ExitEventArgs e)
     {
         var host = _host;
+
+        // First and before any await: the updater must be started while the app is still running normally.
+        ApplyPendingUpdate(host);
+
         if (host is null)
         {
             // The start failed before the host existed; only the file log, if any, needs closing.
@@ -220,6 +225,31 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Starts the installation of a downloaded update, which the updater carries out once this process has ended. A
+    /// failure is logged and the app exits normally without the update; the next start finds it again.
+    /// </summary>
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "The app is exiting; a failed update hand-off must not stop the host from shutting down cleanly.")]
+    private static void ApplyPendingUpdate(IHost? host)
+    {
+        if (host is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _ = host.Services.GetService<UpdateCoordinator>()?.ApplyPendingOnExit();
+        }
+        catch (Exception ex)
+        {
+            if (host.Services.GetService<ILogger<App>>() is { } logger)
+            {
+                LogApplyUpdateFailed(logger, ex);
+            }
+        }
+    }
+
+    /// <summary>
     /// Occurs when an exception is thrown by an application but not handled. It is only logged; <c>Handled</c>
     /// stays false, so the app's behaviour on a crash is unchanged.
     /// </summary>
@@ -228,6 +258,9 @@ public partial class App : Application
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Telemetry is disabled: {ExceptionType}")]
     private static partial void LogTelemetryDisabled(ILogger logger, string exceptionType);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "The downloaded update could not be handed to the updater")]
+    private static partial void LogApplyUpdateFailed(ILogger logger, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "The application host did not stop cleanly")]
     private static partial void LogStopFailed(ILogger logger, Exception exception);

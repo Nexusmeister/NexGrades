@@ -15,12 +15,14 @@ using NexGrades.App.Features.Students;
 using NexGrades.App.Features.Subjects;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Shell;
+using NexGrades.App.Updates;
 using NexGrades.Common.Services;
 using NexGrades.Common.Storage;
 using NexGrades.Data;
 using NexGrades.Data.Services;
 using NexGrades.Domain.Auditing;
 using NexGrades.Domain.Export;
+using NexGrades.Domain.Maintenance;
 using NexGrades.Domain.Services;
 using NexGrades.Domain.Time;
 using Wpf.Ui;
@@ -108,13 +110,15 @@ public static class HostBuilderExtensions
         // Views and ViewModels
         return services
             .AddViews()
-            .AddViewModels();
+            .AddViewModels()
+            .AddUpdateServices();
 
     }
 
     /// <summary>
-    /// Registers the database location, the pooled <c>DbContext</c> factory and the migration service. It does not
-    /// open the database: migrations run at startup, and only after the data folder has been prepared.
+    /// Registers the database location, the pooled <c>DbContext</c> factory, the migration service and the backup taken
+    /// before a migration. It does not open the database: migrations run at startup, and only after the data folder has
+    /// been prepared.
     /// </summary>
     /// <param name="builder">The host builder to configure.</param>
     public static HostApplicationBuilder AddDatabase(this HostApplicationBuilder builder)
@@ -129,6 +133,9 @@ public static class HostBuilderExtensions
                 .UseSqlite(location.ConnectionString)
                 .AddInterceptors(serviceProvider.GetRequiredService<ClosedYearAuditInterceptor>()));
         builder.Services.AddTransient<DatabaseMigrationService>();
+        builder.Services.AddSingleton(DatabaseBackupLocation.Resolve(builder.Configuration, location, paths));
+        builder.Services.AddTransient<DatabaseBackupService>();
+        builder.Services.AddTransient<StartupDatabaseMigrator>();
 
         return builder;
     }
@@ -186,5 +193,24 @@ public static class HostBuilderExtensions
             .AddTransient<StudentGradesViewModel>()
             .AddTransient<ClassViewModel>()
             .AddTransient<GradeSheetViewModel>();
+    }
+
+    /// <summary>
+    /// Registers the updater: the settings file, the feed options from the <c>Updates</c> section, the Velopack client,
+    /// the coordinator with its window notice and settings section, and the check shortly after startup. All are
+    /// singletons, so the notice and the settings page share one update state. Outside an installed app they resolve
+    /// but stay inert.
+    /// </summary>
+    private static IServiceCollection AddUpdateServices(this IServiceCollection services)
+    {
+        services.AddOptions<UpdateFeedOptions>().BindConfiguration(UpdateFeedOptions.SectionName);
+        services.AddSingleton<IUserSettingsStore, JsonUserSettingsStore>();
+        services.AddSingleton<IUpdateClient, VelopackUpdateClient>();
+        services.AddSingleton<UpdateCoordinator>();
+        services.AddSingleton<UpdateNoticeViewModel>();
+        services.AddSingleton<UpdateSettingsViewModel>();
+        services.AddSingleton<IAppShutdown, WpfAppShutdown>();
+        services.AddHostedService<UpdateStartupService>();
+        return services;
     }
 }
