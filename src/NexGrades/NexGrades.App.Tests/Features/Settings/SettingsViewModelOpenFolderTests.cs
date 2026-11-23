@@ -35,6 +35,7 @@ public sealed class SettingsViewModelOpenFolderTests : IDisposable
             new NoOpFolderOpener(),
             NullLogger<SettingsViewModel>.Instance,
             null!,
+            null!,
             null!);
         return (viewModel, fake);
     }

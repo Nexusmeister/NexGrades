@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Extensions;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.App.Logging;
 using NexGrades.App.Storage;
 using NexGrades.App.Theming;
@@ -92,6 +94,12 @@ public partial class App : Application
             InitializeTelemetrySafely(host);
 
             startup = NexGradesTelemetry.ActivitySource.StartActivity("App.Startup");
+
+            // Before anything formats a date or reads a text, and synchronously: the language applies to the whole
+            // process, including the window created later.
+            var language = host.Services.GetRequiredService<AppLanguageService>();
+            await language.InitializeAsync(CultureInfo.CurrentUICulture, CultureInfo.CurrentCulture);
+            UiCultureApplier.Apply(language.Cultures);
 
             var location = host.Services.GetRequiredService<DatabaseLocation>();
             if (!location.IsOverride)

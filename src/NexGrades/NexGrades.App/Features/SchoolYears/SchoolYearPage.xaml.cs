@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Windows.Markup;
 using Wpf.Ui.Abstractions.Controls;
 
 namespace NexGrades.App.Features.SchoolYears;
@@ -15,9 +13,6 @@ public partial class SchoolYearPage : INavigableView<SchoolYearViewModel>
     {
         ViewModel = vm;
         DataContext = this;
-
-        // XAML bindings format dates in en-US unless the element's language says otherwise.
-        Language = XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag);
 
         InitializeComponent();
     }

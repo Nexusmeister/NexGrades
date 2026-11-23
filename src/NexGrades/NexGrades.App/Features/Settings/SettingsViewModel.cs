@@ -21,6 +21,7 @@ namespace NexGrades.App.Features.Settings;
 /// <param name="logger">Records a failure to open the log folder.</param>
 /// <param name="updates">The update section of the page.</param>
 /// <param name="appearance">The appearance section of the page.</param>
+/// <param name="language">The language section of the page.</param>
 public partial class SettingsViewModel(
     IFileSystemDialogService dialogService,
     ISnackbarService snackbarService,
@@ -28,13 +29,17 @@ public partial class SettingsViewModel(
     IFolderOpener folderOpener,
     ILogger<SettingsViewModel> logger,
     UpdateSettingsViewModel updates,
-    AppearanceSettingsViewModel appearance) : ViewModel
+    AppearanceSettingsViewModel appearance,
+    LanguageSettingsViewModel language) : ViewModel
 {
     /// <summary>The update section: version, update preferences, "Check for updates now" and "Restart now".</summary>
     public UpdateSettingsViewModel Updates { get; } = updates;
 
     /// <summary>The appearance section: the colour theme.</summary>
     public AppearanceSettingsViewModel Appearance { get; } = appearance;
+
+    /// <summary>The language section: the app language, which applies after a restart.</summary>
+    public LanguageSettingsViewModel Language { get; } = language;
 
     [ObservableProperty]
     private bool _openedFolderPathVisibility;
@@ -49,6 +54,7 @@ public partial class SettingsViewModel(
         await base.OnNavigatedToAsync(parameter);
         await Updates.LoadAsync();
         await Appearance.LoadAsync();
+        await Language.LoadAsync();
     }
 
     /// <summary>

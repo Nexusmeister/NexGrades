@@ -1,3 +1,4 @@
+using NexGrades.App.Localization;
 using NexGrades.App.Theming;
 
 namespace NexGrades.App.Infrastructure;
@@ -16,6 +17,11 @@ public sealed record UserSettings
 
     /// <summary>The colour theme: follow Windows (the default), or always light or dark.</summary>
     public ThemePreference Theme { get; init; } = ThemePreference.System;
+
+    /// <summary>
+    /// The app language: follow Windows (the default), or always English or German. A change applies after a restart.
+    /// </summary>
+    public LanguagePreference Language { get; init; } = LanguagePreference.System;
 
     /// <summary>
     /// The app version that last started successfully against the default database, or <see langword="null"/> when

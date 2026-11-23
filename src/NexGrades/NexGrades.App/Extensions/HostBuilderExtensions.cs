@@ -14,6 +14,7 @@ using NexGrades.App.Features.Settings;
 using NexGrades.App.Features.Students;
 using NexGrades.App.Features.Subjects;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.App.Shell;
 using NexGrades.App.Storage;
 using NexGrades.App.Theming;
@@ -68,6 +69,7 @@ public static class HostBuilderExtensions
 
         return services
             .AddThemeServices()
+            .AddLanguageServices()
             .AddUpdateServices();
     }
 
@@ -148,6 +150,7 @@ public static class HostBuilderExtensions
         services.AddSingleton<SettingsPage>();
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<AppearanceSettingsViewModel>();
+        services.AddSingleton<LanguageSettingsViewModel>();
         services.AddSingleton<UpdateSettingsViewModel>();
 
         // Export
@@ -214,6 +217,16 @@ public static class HostBuilderExtensions
     {
         services.AddSingleton<IThemeApplier, WpfThemeApplier>();
         services.AddSingleton<AppThemeService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the language service that loads and saves the preference. It is a singleton, so the startup code and
+    /// the settings page share one state.
+    /// </summary>
+    private static IServiceCollection AddLanguageServices(this IServiceCollection services)
+    {
+        services.AddSingleton<AppLanguageService>();
         return services;
     }
 
