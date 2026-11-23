@@ -1,3 +1,4 @@
+using System.Resources;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Localization;
@@ -180,6 +181,50 @@ public sealed class StartupFailureHandlerTests
         Assert.Null(ex);
         Assert.Single(harness.Dialog.Messages);
         Assert.Equal([1], harness.ExitCodes);
+    }
+
+    public static TheoryData<Exception> LookupFailures =>
+    [
+        new InvalidOperationException("x"),
+        new MissingManifestResourceException("x"),
+        new MissingSatelliteAssemblyException("x"),
+        new FormatException("x"),
+    ];
+
+    [Theory]
+    [MemberData(nameof(LookupFailures))]
+    public void BuildMessageOrFallback_ReturnsFallback_WhenBuildThrowsLookupFailure(Exception failure)
+    {
+        var message = StartupFailureHandler.BuildMessageOrFallback(_failure, "logs", (_, _) => throw failure);
+
+        Assert.Equal(StartupFailureHandler.FallbackMessage, message);
+    }
+
+    [Fact]
+    public void BuildMessageOrFallback_ReturnsBuiltText_WhenBuildSucceeds()
+    {
+        var message = StartupFailureHandler.BuildMessageOrFallback(_failure, "logs", (_, dir) => "built " + dir);
+
+        Assert.Equal("built logs", message);
+    }
+
+    [Fact]
+    public void BuildMessageOrFallback_Propagates_WhenBuildThrowsOtherException()
+    {
+        Assert.Throws<NotSupportedException>(() =>
+            StartupFailureHandler.BuildMessageOrFallback(_failure, "logs", (_, _) => throw new NotSupportedException()));
+    }
+
+    [Fact]
+    public void FallbackMessage_HasNoPlaceholderOrPath()
+    {
+        var text = StartupFailureHandler.FallbackMessage;
+
+        Assert.False(string.IsNullOrWhiteSpace(text));
+        Assert.DoesNotContain("{", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("}", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("\\", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("/", text, StringComparison.Ordinal);
     }
 
     private sealed class Harness

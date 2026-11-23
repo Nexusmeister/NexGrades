@@ -99,7 +99,10 @@ public partial class App : Application
             // process, including the window created later.
             var language = host.Services.GetRequiredService<AppLanguageService>();
             await language.InitializeAsync(CultureInfo.CurrentUICulture, CultureInfo.CurrentCulture);
-            UiCultureApplier.Apply(language.Cultures);
+            if (!UiCultureApplier.Apply(language.Cultures))
+            {
+                LogLanguageOverrideFailed(host.Services.GetRequiredService<ILogger<App>>());
+            }
 
             var location = host.Services.GetRequiredService<DatabaseLocation>();
             if (!location.IsOverride)
@@ -268,6 +271,9 @@ public partial class App : Application
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Telemetry is disabled: {ExceptionType}")]
     private static partial void LogTelemetryDisabled(ILogger logger, string exceptionType);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The WPF language default could not be overridden; XAML-bound dates and numbers use en-US formatting")]
+    private static partial void LogLanguageOverrideFailed(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "The downloaded update could not be handed to the updater")]
     private static partial void LogApplyUpdateFailed(ILogger logger, Exception exception);

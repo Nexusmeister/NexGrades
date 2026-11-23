@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Resources;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Localization;
 
@@ -16,6 +17,12 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
 {
     /// <summary>The exit code of a process whose start failed.</summary>
     public const int FailureExitCode = 1;
+
+    /// <summary>
+    /// Shown when the localized text cannot be read. Deliberately English and constant: it carries no exception
+    /// text or path, and needs no resource lookup.
+    /// </summary>
+    internal const string FallbackMessage = "NexGrades could not start. Check the log files for details.";
 
     /// <summary>
     /// Logs <paramref name="exception"/>, shows the error dialog once and exits with <see cref="FailureExitCode"/>.
@@ -79,7 +86,7 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
 
         try
         {
-            dialog.Show(BuildMessage(exception, ResolveDirectory(logDirectory)));
+            dialog.Show(BuildMessageOrFallback(exception, ResolveDirectory(logDirectory), BuildMessage));
         }
         catch (Exception ex)
         {
@@ -117,6 +124,28 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
                 ? TextResources.Format("Infrastructure_Startup_Failed_WithLogFolder_Format", logDirectory)
                 : TextResources.Text("Infrastructure_Startup_Failed"),
         };
+    }
+
+    /// <summary>
+    /// Builds the dialog text with <paramref name="build"/> and falls back to <see cref="FallbackMessage"/> when the
+    /// text lookup fails (a missing key, a missing resource or a broken format string), so the error box is always
+    /// shown. It is a seam so a test can force the failure.
+    /// </summary>
+    /// <param name="exception">The startup failure.</param>
+    /// <param name="logDirectory">The log folder, or <see langword="null"/> when no file log exists.</param>
+    /// <param name="build">Produces the localized text; <see cref="BuildMessage"/> in production.</param>
+    /// <returns>The localized text, or the English fallback.</returns>
+    internal static string BuildMessageOrFallback(Exception exception, string? logDirectory, Func<Exception, string?, string> build)
+    {
+        try
+        {
+            return build(exception, logDirectory);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or MissingManifestResourceException or MissingSatelliteAssemblyException or FormatException)
+        {
+            Debug.WriteLine($"Building the startup error text failed: {ex.GetType().Name}");
+            return FallbackMessage;
+        }
     }
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "A folder that cannot be resolved is the same as no known folder; the dialog then omits it.")]

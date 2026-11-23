@@ -2,8 +2,8 @@
 
 The App shows English and German. All user-facing text lives in resource files and is looked up by key, in XAML
 and in C#. This page covers the file layout, the key scheme, how to add a string or an area, the culture rules and
-the startup order, the language setting, the Excel exports, the tests and how to translate. The rules that follow
-from it are in [AGENTS.md](../../AGENTS.md#ui-text-and-localization).
+the startup order, the language setting, the Excel exports, the tests and how to translate. This page holds the
+rules for user-facing text; [AGENTS.md](../../AGENTS.md#ui-text-and-localization) points here.
 
 ## Languages
 
@@ -67,6 +67,8 @@ The key must start with its area's name followed by an underscore. `ResourceFile
 
 ## Adding a string
 
+Never write literal UI text in XAML or C#. Add the English and German keys together, in the same change.
+
 1. Add the key to the English file of its area (`<Area>Strings.resx`). Add a `<comment>` if the key is a `_Format`
    key.
 2. Add the same key to the German file (`<Area>Strings.de.resx`), translated as described under
@@ -118,7 +120,8 @@ Further rules:
 - `TextResources.Format` reads the text in the UI culture and formats the arguments in the format culture.
 - Persisted and audit values use `CultureInfo.InvariantCulture`, as before. They are never shown as text.
 - Grade tokens such as `1+` and `2-` are culture-neutral and are never translated.
-- Log messages, exception messages and telemetry stay in English and never go through resources. See
+- Log messages, exception messages and telemetry stay in English and never go through resources. Exception messages
+  are diagnostic text and are not translated, so don't design UI that shows them verbatim. See
   [Startup, logging and data paths](startup-logging-and-data-paths.md#privacy).
 - Close readiness is reported as structured `CloseReadinessIssue` values. `ReadinessItemText.Format(issue, textCulture,
   formatCulture)` words them in the text culture (the UI culture on the page) and formats their numbers, such as a
