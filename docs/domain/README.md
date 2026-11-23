@@ -22,6 +22,7 @@ column.
 | [Startup, logging and data paths](startup-logging-and-data-paths.md) | Database location, startup order and failures, log files, telemetry, privacy | `IAppDataPaths`, `LegacyDatabaseRelocator`, `StartupFailureHandler`, `FileLogging` |
 | [Updates, backups and settings](updates-backups-and-settings.md) | The preferences file, the backup before a migration, self-update, the Velopack pack id | `JsonUserSettingsStore`, `DatabaseBackupService`, `UpdateCoordinator` |
 | [Navigation and leave guards](navigation-and-leave-guards.md) | Asking before unsaved input is lost: sidebar, back, window close; passing parameters between pages | `ViewModel`, `PageNavigator`, `LeaveGuard`, `DiscardChangesDialog`, `NavigationParameters` |
+| [Design system](design-system.md) | Shared WPF resources: spacing tokens, styles, the type ramp, semantic colours, icons, empty and status states | `Tokens.xaml`, `Styles.xaml`, `DesignSystem.xaml` |
 
 ## Glossary
 

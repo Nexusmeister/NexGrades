@@ -25,6 +25,13 @@
             <Setter Property="MinHeight" Value="{StaticResource Ng.Size.RowHeight}"/>
         </Style>
 
+        <!-- The displayed text of every cell. DataGridTextColumn applies its own text margin otherwise, which is what made
+             the rows about 50 px high; the cell padding above is the only spacing. -->
+        <Style x:Key="GradeSheetCellTextStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
         <!-- Style of every grade cell. DataGridColumnsBehavior derives from it and adds Tag (the cell's visual state)
              and a tooltip with its explanation. Marks are never colour only: a symbol and a border or fill change
              come with every colour, and the tooltip states the reason in words. -->

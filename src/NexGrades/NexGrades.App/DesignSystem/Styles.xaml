@@ -73,7 +73,7 @@
     </Style>
 
     <Style x:Key="Ng.FormPanel" TargetType="StackPanel">
-        <Setter Property="MaxWidth" Value="{StaticResource Ng.Size.FormMaxWidth}" />
+        <Setter Property="Width" Value="{StaticResource Ng.Size.FormMaxWidth}" />
         <Setter Property="HorizontalAlignment" Value="Left" />
     </Style>
 
@@ -131,6 +131,10 @@
         </Style.Triggers>
     </Style>
 
+    <Style x:Key="Ng.DataGridRow" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+        <Setter Property="Margin" Value="0" />
+    </Style>
+
     <Style x:Key="Ng.DataGrid" TargetType="ui:DataGrid" BasedOn="{StaticResource {x:Type ui:DataGrid}}">
         <Setter Property="AutoGenerateColumns" Value="False" />
         <Setter Property="IsReadOnly" Value="True" />
@@ -141,10 +145,18 @@
         <Setter Property="CanUserResizeRows" Value="False" />
         <Setter Property="HeadersVisibility" Value="Column" />
         <Setter Property="MinRowHeight" Value="{StaticResource Ng.Size.RowHeight}" />
+        <Setter Property="RowStyle" Value="{StaticResource Ng.DataGridRow}" />
+    </Style>
+
+    <!-- ElementStyle for DataGridTextColumns. The library gives the displayed text its own margin, which adds to the
+         cell padding and makes rows taller than Ng.Size.RowHeight; this replaces it with a horizontal inset that lines up with the header, and centres the text vertically. -->
+    <Style x:Key="Ng.DataGridText" TargetType="TextBlock">
+        <Setter Property="Margin" Value="{StaticResource Ng.Margin.CellText}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
     <!-- ElementStyle for numeric DataGridTextColumns. -->
-    <Style x:Key="Ng.DataGridText.Numeric" TargetType="TextBlock">
+    <Style x:Key="Ng.DataGridText.Numeric" TargetType="TextBlock" BasedOn="{StaticResource Ng.DataGridText}">
         <Setter Property="HorizontalAlignment" Value="Right" />
         <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
     </Style>

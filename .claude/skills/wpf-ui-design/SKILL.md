@@ -12,21 +12,21 @@ default (`App.xaml`). New UI must look like it belongs to that app and must work
 
 Every page follows the same skeleton, top to bottom:
 
-1. **Title**: `ui:TextBlock FontTypography="Title"`, the page's name as real text (e.g. "Classes").
+1. **Title**: the `Ng.PageHeader` style on a `HeaderedContentControl`, with the page's name as real text (e.g. "Classes"). See [design system](../../../docs/domain/design-system.md).
 2. **Action bar**: a horizontal row of `ui:Button`s with icons. The main action comes first and uses
    `Appearance="Primary"`; the others keep the default appearance.
 3. **Content**: grid, form or detail view.
 
-Use a `Grid` with `RowDefinitions` (`Auto`, `Auto`, `*`) as the page root, not a `StackPanel`. A
+Use a `Grid` with `RowDefinitions` (`Auto`, `Auto`, `*`) and the `Ng.PageRoot` style as the page root, not a `StackPanel`. A
 `DataGrid` inside a `StackPanel` gets unlimited height, so it can't scroll and loses virtualization.
 
 ## Layout and spacing
 
-- Use multiples of 4 for every margin and padding: 4, 8, 12, 16, 24. Use 24 for the page padding, 12
-  between sections, 8 between related controls and 4 inside groups. Existing pages still use 5; move
-  them to this scale when you touch them.
-- Forms are one column, at most about 480 px wide, with the label above the field. A `PlaceholderText` is
-  a hint, not a label.
+- Take every margin, padding and size from the tokens in `NexGrades.App/DesignSystem/Tokens.xaml`
+  (`Ng.Margin.*`, `Ng.Padding.*`, `Ng.Size.*`), not from literal numbers. The scale, the values and when to use
+  each are in [design system](../../../docs/domain/design-system.md).
+- Forms are one column, at most `Ng.Size.FormMaxWidth` wide (`Ng.FormPanel`), with the label above the field
+  (`Ng.FormField`). A `PlaceholderText` is a hint, not a label.
 - Detail pages for one entity (student, class, subject) use `ui:Card` or `ui:CardExpander` to group
   related fields.
 - Layouts must survive the window resized to about 900 × 600 without clipping.
@@ -41,14 +41,15 @@ Use only `FontTypography` values and don't set `FontSize` by hand:
 - `Body` for text
 - `Caption` for hints and metadata
 
-Secondary text uses `Appearance="Secondary"`.
+Secondary text uses `Appearance="Secondary"`. The step each element uses, and the tabular figures for numbers,
+are in [design system](../../../docs/domain/design-system.md).
 
 ## Controls
 
 - Prefer the WPF-UI controls: `ui:Button`, `ui:TextBox`, `ui:NumberBox`, `ui:AutoSuggestBox`,
   `ui:DataGrid`, `ui:Card`, `ui:InfoBar`, `ui:ToggleSwitch`, `ComboBox`, `DatePicker`.
-- Icons are `ui:SymbolIcon` from `SymbolRegular`, size 24 for new work (`Add24`, `Edit24`, `Save24`,
-  `Archive24`), one icon per meaning across the app.
+- Icons are `ui:SymbolIcon` from `SymbolRegular`, size 24 for buttons and page icons (`Add24`, `Edit24`, `Save24`,
+  `Archive24`), one icon per meaning across the app. The icons in use are listed in [design system](../../../docs/domain/design-system.md).
 - Overview grids: `ui:DataGrid` with `AutoGenerateColumns="False"`, `IsReadOnly="True"`,
   `SelectionMode="Single"` and explicit column headers in real text. Double-click or Enter on a row
   opens its detail page.
@@ -64,6 +65,7 @@ for confirmation in a dialog that says what happens and that it can be undone.
 
 ## Theming and color
 
+- The colour role of each state (error, voided, exempt, closed year, focus) is in [design system](../../../docs/domain/design-system.md).
 - Use theme brushes only, through `DynamicResource`: `TextFillColorPrimaryBrush`,
   `TextFillColorSecondaryBrush`, `CardBackgroundFillColorDefaultBrush`, `ControlStrokeColorDefaultBrush`,
   `SystemFillColorCriticalBrush` and so on. No hex colors.

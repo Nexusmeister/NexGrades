@@ -58,8 +58,8 @@
                      ItemsSource="{Binding ViewModel.Classes}"
                      SelectedItem="{Binding ViewModel.SelectedClass}">
             <ui:DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
-                <DataGridTextColumn Header="Cohort" Binding="{Binding CohortLabel}" />
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="Cohort" Binding="{Binding CohortLabel}" ElementStyle="{StaticResource Ng.DataGridText}" />
                 <DataGridTextColumn Header="Students" Binding="{Binding StudentCount}"
                                     ElementStyle="{StaticResource Ng.DataGridText.Numeric}" />
             </ui:DataGrid.Columns>

@@ -73,26 +73,30 @@
                         <ContentControl Content="No students are enrolled in this class."
                                         Style="{StaticResource Ng.EmptyState}"
                                         Visibility="{Binding ViewModel.HasNoStudents, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <ListView ItemsSource="{Binding ViewModel.ActiveStudents}" MaxHeight="360">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="Name" Width="260" DisplayMemberBinding="{Binding FullName}" />
-                                    <GridViewColumn Header="Joined" Width="160" DisplayMemberBinding="{Binding Period}" />
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
+                        <ui:DataGrid ItemsSource="{Binding ViewModel.ActiveStudents}"
+                                     Style="{StaticResource Ng.DataGrid}"
+                                     HorizontalAlignment="Left"
+                                     MaxHeight="360"
+                                     AutomationProperties.Name="Students in this class">
+                            <ui:DataGrid.Columns>
+                                <DataGridTextColumn Header="Name" Width="260" Binding="{Binding FullName}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                                <DataGridTextColumn Header="Joined" Width="160" Binding="{Binding Period}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                            </ui:DataGrid.Columns>
+                        </ui:DataGrid>
                         <StackPanel Visibility="{Binding ViewModel.HasLeftStudents, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <ui:TextBlock FontTypography="BodyStrong"
                                           Text="Left the class"
                                           Margin="0,16,0,8" />
-                            <ListView ItemsSource="{Binding ViewModel.LeftStudents}" MaxHeight="240">
-                                <ListView.View>
-                                    <GridView>
-                                        <GridViewColumn Header="Name" Width="260" DisplayMemberBinding="{Binding FullName}" />
-                                        <GridViewColumn Header="Enrolled" Width="220" DisplayMemberBinding="{Binding Period}" />
-                                    </GridView>
-                                </ListView.View>
-                            </ListView>
+                            <ui:DataGrid ItemsSource="{Binding ViewModel.LeftStudents}"
+                                         Style="{StaticResource Ng.DataGrid}"
+                                         HorizontalAlignment="Left"
+                                         MaxHeight="240"
+                                         AutomationProperties.Name="Students who left the class">
+                                <ui:DataGrid.Columns>
+                                    <DataGridTextColumn Header="Name" Width="260" Binding="{Binding FullName}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                                    <DataGridTextColumn Header="Enrolled" Width="220" Binding="{Binding Period}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                                </ui:DataGrid.Columns>
+                            </ui:DataGrid>
                         </StackPanel>
                     </StackPanel>
                 </HeaderedContentControl>
