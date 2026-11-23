@@ -31,4 +31,19 @@
   <data name="Settings_Updates_Checking_A11y" xml:space="preserve"><value>Es wird nach Updates gesucht</value></data>
   <data name="Settings_Updates_RestartNow" xml:space="preserve"><value>Jetzt neu starten</value></data>
   <data name="Settings_Updates_RestartNow_Tooltip" xml:space="preserve"><value>NexGrades schließen, das Update installieren und NexGrades erneut starten</value></data>
+  <data name="Settings_Theme_System" xml:space="preserve"><value>System</value></data>
+  <data name="Settings_Theme_Light" xml:space="preserve"><value>Hell</value></data>
+  <data name="Settings_Theme_Dark" xml:space="preserve"><value>Dunkel</value></data>
+  <data name="Settings_Theme_SaveFailed" xml:space="preserve"><value>Das Design konnte nicht gespeichert werden. Es gilt, bis Sie NexGrades schließen.</value></data>
+  <data name="Settings_SaveLocation_TooMany_Title" xml:space="preserve"><value>Zu viele Ordner</value></data>
+  <data name="Settings_SaveLocation_TooMany_Message" xml:space="preserve"><value>Wählen Sie einen einzelnen Ordner aus.</value></data>
+  <data name="Settings_SaveLocation_Missing_Title" xml:space="preserve"><value>Fehlende Einstellung</value></data>
+  <data name="Settings_SaveLocation_Missing_Message" xml:space="preserve"><value>Ein Speicherort muss ausgewählt werden. Es wird auf den Standardspeicherort in „Dokumente“ zurückgegriffen.</value></data>
+  <data name="Settings_Logs_OpenFailed" xml:space="preserve"><value>Der Protokollordner konnte nicht geöffnet werden.</value></data>
+  <data name="Settings_Updates_Version_Format" xml:space="preserve"><value>Version {0}</value><comment>{0} is the version number of the running app.</comment></data>
+  <data name="Settings_Updates_UpToDate" xml:space="preserve"><value>NexGrades ist auf dem neuesten Stand.</value></data>
+  <data name="Settings_Updates_Downloading_Format" xml:space="preserve"><value>Version {0} wird heruntergeladen.</value><comment>{0} is the version number of the update that is downloading.</comment></data>
+  <data name="Settings_Updates_Offline" xml:space="preserve"><value>NexGrades konnte nicht nach Updates suchen. Prüfen Sie Ihre Internetverbindung.</value></data>
+  <data name="Settings_Updates_NotInstalled" xml:space="preserve"><value>Updates sind nur in der installierten App verfügbar.</value></data>
+  <data name="Settings_Updates_SaveFailed" xml:space="preserve"><value>Die Update-Einstellung konnte nicht gespeichert werden.</value></data>
 </root>

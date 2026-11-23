@@ -82,4 +82,23 @@ public class ReadinessItemTextTests
     {
         Assert.Throws<ArgumentNullException>(() => ReadinessItemText.Format(null!, EnUs));
     }
+
+    [Fact]
+    public void Format_IsGermanWithDecimalComma_ForAllKinds()
+    {
+        var expected = new Dictionary<CloseReadinessIssueKind, string>
+        {
+            [CloseReadinessIssueKind.ClassStillActive] = "Die Klasse 5A wurde noch nicht in das nächste Schuljahr übernommen oder archiviert.",
+            [CloseReadinessIssueKind.SubjectWithoutGrades] = "Mathematik in Klasse 5A hat noch keine Noten.",
+            [CloseReadinessIssueKind.BucketWeightsNotHundred] = "Die Gewichte der Bewertungsbereiche von Mathematik in Klasse 5A ergeben 92,5 statt 100.",
+            [CloseReadinessIssueKind.StudentWithoutGrade] = "Muster, Max hat in Mathematik in Klasse 5A keine Note.",
+        };
+
+        foreach (var (kind, text) in expected)
+        {
+            var issue = new CloseReadinessIssue(kind, 1, "5A", 2, "Mathematik", 3, "Max", "Muster", 92.5m);
+
+            Assert.Equal(text, ReadinessItemText.Format(issue, DeDe));
+        }
+    }
 }

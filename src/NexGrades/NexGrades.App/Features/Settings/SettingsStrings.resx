@@ -31,4 +31,19 @@
   <data name="Settings_Updates_Checking_A11y" xml:space="preserve"><value>Checking for updates</value></data>
   <data name="Settings_Updates_RestartNow" xml:space="preserve"><value>Restart now</value></data>
   <data name="Settings_Updates_RestartNow_Tooltip" xml:space="preserve"><value>Close NexGrades, install the update and start it again</value></data>
+  <data name="Settings_Theme_System" xml:space="preserve"><value>System</value></data>
+  <data name="Settings_Theme_Light" xml:space="preserve"><value>Light</value></data>
+  <data name="Settings_Theme_Dark" xml:space="preserve"><value>Dark</value></data>
+  <data name="Settings_Theme_SaveFailed" xml:space="preserve"><value>The theme could not be saved. It applies until you close NexGrades.</value></data>
+  <data name="Settings_SaveLocation_TooMany_Title" xml:space="preserve"><value>Too many folders</value></data>
+  <data name="Settings_SaveLocation_TooMany_Message" xml:space="preserve"><value>Select a single folder.</value></data>
+  <data name="Settings_SaveLocation_Missing_Title" xml:space="preserve"><value>Missing setting</value></data>
+  <data name="Settings_SaveLocation_Missing_Message" xml:space="preserve"><value>Save location has to be selected. Rolling back to default save location in My Documents.</value></data>
+  <data name="Settings_Logs_OpenFailed" xml:space="preserve"><value>The log folder could not be opened.</value></data>
+  <data name="Settings_Updates_Version_Format" xml:space="preserve"><value>Version {0}</value><comment>{0} is the version number of the running app.</comment></data>
+  <data name="Settings_Updates_UpToDate" xml:space="preserve"><value>NexGrades is up to date.</value></data>
+  <data name="Settings_Updates_Downloading_Format" xml:space="preserve"><value>Version {0} is being downloaded.</value><comment>{0} is the version number of the update that is downloading.</comment></data>
+  <data name="Settings_Updates_Offline" xml:space="preserve"><value>NexGrades could not check for updates. Check your internet connection.</value></data>
+  <data name="Settings_Updates_NotInstalled" xml:space="preserve"><value>Updates are only available in the installed app.</value></data>
+  <data name="Settings_Updates_SaveFailed" xml:space="preserve"><value>The update setting could not be saved.</value></data>
 </root>

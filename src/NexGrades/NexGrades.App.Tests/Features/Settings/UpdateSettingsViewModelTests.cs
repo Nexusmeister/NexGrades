@@ -1,10 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NexGrades.App.Core;
 using NexGrades.App.Features.Settings;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.App.Tests.TestSupport;
 using NexGrades.App.Updates;
 
@@ -138,7 +140,7 @@ public class UpdateSettingsViewModelTests
 
         var viewModel = Create();
 
-        Assert.Equal(Fmt(UpdateSettingsViewModel.VersionFormat, "0.3.1"), viewModel.VersionText);
+        Assert.Equal(Fmt(TextResources.Text("Settings_Updates_Version_Format"), "0.3.1"), viewModel.VersionText);
         return Task.CompletedTask;
     });
 
@@ -149,7 +151,7 @@ public class UpdateSettingsViewModelTests
 
         var viewModel = Create();
 
-        Assert.Equal(Fmt(UpdateSettingsViewModel.VersionFormat, AppVersion.Current), viewModel.VersionText);
+        Assert.Equal(Fmt(TextResources.Text("Settings_Updates_Version_Format"), AppVersion.Current), viewModel.VersionText);
         return Task.CompletedTask;
     });
 
@@ -162,7 +164,7 @@ public class UpdateSettingsViewModelTests
         await viewModel.CheckNowCommand.ExecuteAsync(null);
 
         Assert.False(viewModel.IsUpdaterAvailable);
-        Assert.Equal(UpdateSettingsViewModel.NotInstalledText, viewModel.StatusText);
+        Assert.Equal(TextResources.Text("Settings_Updates_NotInstalled"), viewModel.StatusText);
         Assert.Empty(_client.Checks);
         Assert.False(viewModel.IsChecking);
     });
@@ -175,7 +177,7 @@ public class UpdateSettingsViewModelTests
         await viewModel.CheckNowCommand.ExecuteAsync(null);
 
         Assert.True(viewModel.IsUpdaterAvailable);
-        Assert.Equal(UpdateSettingsViewModel.UpToDateText, viewModel.StatusText);
+        Assert.Equal(TextResources.Text("Settings_Updates_UpToDate"), viewModel.StatusText);
         Assert.False(viewModel.IsReadyToInstall);
     });
 
@@ -187,7 +189,7 @@ public class UpdateSettingsViewModelTests
 
         await viewModel.CheckNowCommand.ExecuteAsync(null);
 
-        Assert.Equal(UpdateSettingsViewModel.OfflineText, viewModel.StatusText);
+        Assert.Equal(TextResources.Text("Settings_Updates_Offline"), viewModel.StatusText);
     });
 
     [Fact]
@@ -199,13 +201,13 @@ public class UpdateSettingsViewModelTests
 
         await viewModel.CheckNowCommand.ExecuteAsync(null);
 
-        Assert.Equal(Fmt(UpdateSettingsViewModel.DownloadingFormat, "0.2.0"), viewModel.StatusText);
+        Assert.Equal(Fmt(TextResources.Text("Settings_Updates_Downloading_Format"), "0.2.0"), viewModel.StatusText);
         Assert.False(viewModel.IsReadyToInstall);
 
         _client.DownloadGate.SetResult();
         await Coordinator.DownloadCompletion;
 
-        Assert.Equal(Fmt(UpdateSettingsViewModel.ReadyFormat, "0.2.0"), viewModel.StatusText);
+        Assert.Equal(Fmt(TextResources.Text("Shell_UpdateNotice_Ready_Format"), "0.2.0"), viewModel.StatusText);
         Assert.True(viewModel.IsReadyToInstall);
     });
 
@@ -235,7 +237,7 @@ public class UpdateSettingsViewModelTests
         await Coordinator.CheckOnStartupAsync();
 
         Assert.True(viewModel.IsReadyToInstall);
-        Assert.Equal(Fmt(UpdateSettingsViewModel.ReadyFormat, "0.2.0"), viewModel.StatusText);
+        Assert.Equal(Fmt(TextResources.Text("Shell_UpdateNotice_Ready_Format"), "0.2.0"), viewModel.StatusText);
     });
 
     [Fact]
@@ -271,7 +273,7 @@ public class UpdateSettingsViewModelTests
         await viewModel.CheckNowCommand.ExecuteAsync(null);
 
         Assert.False(viewModel.IsChecking);
-        Assert.Equal(UpdateSettingsViewModel.OfflineText, viewModel.StatusText);
+        Assert.Equal(TextResources.Text("Settings_Updates_Offline"), viewModel.StatusText);
     });
 
     [Fact]
@@ -282,5 +284,25 @@ public class UpdateSettingsViewModelTests
 
         Assert.Same(notice.RestartNowCommand, viewModel.RestartNowCommand);
         return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task StatusText_IsGerman_ForGermanUiCulture() => StaTestRunner.RunAsync(async () =>
+    {
+        var ui = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("de-DE");
+        try
+        {
+            _client.Installed = false;
+            var viewModel = Create();
+
+            await viewModel.CheckNowCommand.ExecuteAsync(null);
+
+            Assert.Equal("Updates sind nur in der installierten App verfügbar.", viewModel.StatusText);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = ui;
+        }
     });
 }

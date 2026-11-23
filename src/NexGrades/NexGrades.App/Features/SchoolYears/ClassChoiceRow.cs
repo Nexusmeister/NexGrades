@@ -1,6 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
+using NexGrades.App.Localization;
 using NexGrades.Data.Entities;
 using NexGrades.Domain.Services;
 
@@ -12,12 +13,6 @@ namespace NexGrades.App.Features.SchoolYears;
 /// </summary>
 public sealed partial class ClassChoiceRow : ObservableObject
 {
-    private static readonly CompositeFormat _carryOverOneFormat = CompositeFormat.Parse("{0} student carries over.");
-    private static readonly CompositeFormat _carryOverManyFormat = CompositeFormat.Parse("{0} students carry over.");
-    private static readonly CompositeFormat _rolledForwardFormat = CompositeFormat.Parse("Rolled forward as {0}.");
-    private const string ArchivedFormat = "Archived.";
-    private const string FailedFormat = "This class could not be rolled forward or archived. Check the new name, and that none of its students is already in a class of the next year.";
-
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsRollForwardChosen), nameof(IsArchiveChosen), nameof(IsRollForwardPending))]
     private ClassYearEndChoice _choice;
@@ -118,21 +113,21 @@ public sealed partial class ClassChoiceRow : ObservableObject
     }
 
     /// <summary>How many students carry over, as a sentence for the current UI culture.</summary>
-    public string CarryOverText => string.Format(
-        CultureInfo.CurrentCulture,
-        CarryOverStudentCount == 1 ? _carryOverOneFormat : _carryOverManyFormat,
+    public string CarryOverText => TextResources.Format(
+        CarryOverStudentCount == 1 ? "SchoolYears_Class_CarryOver_One_Format" : "SchoolYears_Class_CarryOver_Many_Format",
         CarryOverStudentCount);
 
     /// <summary>How a finished class ended, or empty while it is still pending.</summary>
     public string DoneText => Status switch
     {
-        ClassInstanceStatus.RolledForward => string.Format(CultureInfo.CurrentCulture, _rolledForwardFormat, SuccessorName),
-        ClassInstanceStatus.Archived => ArchivedFormat,
+        ClassInstanceStatus.RolledForward => TextResources.Format("SchoolYears_Class_RolledForward_Format", SuccessorName),
+        ClassInstanceStatus.Archived => TextResources.Text("SchoolYears_Class_Archived"),
         _ => string.Empty,
     };
 
     /// <summary>Explains a failed attempt for this class, without any technical detail.</summary>
-    public string FailedText { get; } = FailedFormat;
+    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound from XAML, which needs an instance property.")]
+    public string FailedText => TextResources.Text("SchoolYears_Class_Failed");
 
     /// <summary>Refreshes the stored facts from <paramref name="state"/> and keeps the unsaved choice and name.</summary>
     /// <param name="state">The freshly loaded state of the same class.</param>

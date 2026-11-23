@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using NexGrades.App.Core.YearLock;
+using NexGrades.App.Localization;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
@@ -47,8 +48,8 @@ public sealed partial class ClosedYearsViewModel(
         {
             LoadFailed = true;
             snackbar.Show(
-                "Error",
-                "The closed school years could not be loaded.",
+                TextResources.Text("Common_Error"),
+                TextResources.Text("SchoolYears_Closed_LoadFailed"),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.ErrorCircle24),
                 TimeSpan.FromSeconds(5));

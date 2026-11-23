@@ -62,4 +62,25 @@
   <data name="SchoolYears_Action_Continue" xml:space="preserve"><value>Weiter</value></data>
   <data name="SchoolYears_Action_Close" xml:space="preserve"><value>Schuljahr abschließen und nächstes aktivieren</value></data>
   <data name="SchoolYears_Action_GoToClasses" xml:space="preserve"><value>Zu den Klassen</value></data>
+  <data name="SchoolYears_Class_CarryOver_One_Format" xml:space="preserve"><value>{0} Schülerin / Schüler wird übernommen.</value><comment>{0} is the number of students that carry over, here exactly one.</comment></data>
+  <data name="SchoolYears_Class_CarryOver_Many_Format" xml:space="preserve"><value>{0} Schülerinnen und Schüler werden übernommen.</value><comment>{0} is the number of students that carry over, none or more than one.</comment></data>
+  <data name="SchoolYears_Class_RolledForward_Format" xml:space="preserve"><value>In das nächste Schuljahr übernommen als {0}.</value><comment>{0} is the name of the class in the next school year.</comment></data>
+  <data name="SchoolYears_Class_Archived" xml:space="preserve"><value>Archiviert.</value></data>
+  <data name="SchoolYears_Class_Failed" xml:space="preserve"><value>Diese Klasse konnte nicht in das nächste Schuljahr übernommen oder archiviert werden. Prüfen Sie den neuen Namen und dass keine Schülerin und kein Schüler dieser Klasse bereits in einer Klasse des nächsten Schuljahres ist.</value></data>
+  <data name="SchoolYears_Readiness_ClassStillActive_Format" xml:space="preserve"><value>Die Klasse {0} wurde noch nicht in das nächste Schuljahr übernommen oder archiviert.</value><comment>{0} is the class name.</comment></data>
+  <data name="SchoolYears_Readiness_SubjectWithoutGrades_Format" xml:space="preserve"><value>{1} in Klasse {0} hat noch keine Noten.</value><comment>{0} is the class name, {1} is the subject name.</comment></data>
+  <data name="SchoolYears_Readiness_WeightsNotHundred_Format" xml:space="preserve"><value>Die Gewichte der Bewertungsbereiche von {1} in Klasse {0} ergeben {2:0.##} statt 100.</value><comment>{0} is the class name, {1} is the subject name, {2} is the sum of the weights, a number shown with the decimal separator of the current culture.</comment></data>
+  <data name="SchoolYears_Readiness_StudentWithoutGrade_Format" xml:space="preserve"><value>{2}, {3} hat in {1} in Klasse {0} keine Note.</value><comment>{0} is the class name, {1} is the subject name, {2} is the student's last name, {3} is the student's first name.</comment></data>
+  <data name="SchoolYears_LoadFailed" xml:space="preserve"><value>Das Schuljahr konnte nicht geladen werden. Schließen Sie diese Seite und öffnen Sie sie erneut.</value></data>
+  <data name="SchoolYears_NextYear_CreateFailed" xml:space="preserve"><value>Das nächste Schuljahr konnte nicht angelegt werden. Prüfen Sie die Bezeichnung und die Daten und dass sie sich nicht mit einem anderen Schuljahr überschneiden.</value></data>
+  <data name="SchoolYears_Classes_Apply_Title" xml:space="preserve"><value>Klassenauswahl übernehmen</value></data>
+  <data name="SchoolYears_Classes_Apply_Message" xml:space="preserve"><value>Das Übernehmen in das nächste Schuljahr und das Archivieren lassen sich nicht rückgängig machen. Möchten Sie die Auswahl jetzt für alle Klassen übernehmen?</value></data>
+  <data name="SchoolYears_Classes_LoadFailed" xml:space="preserve"><value>Die Klassen konnten nicht geladen werden. Schließen Sie diese Seite und öffnen Sie sie erneut.</value></data>
+  <data name="SchoolYears_Classes_SomeFailed" xml:space="preserve"><value>Einige Klassen konnten nicht verarbeitet werden. Sie sind in der Liste markiert.</value></data>
+  <data name="SchoolYears_Classes_Processed" xml:space="preserve"><value>Die Klassen wurden verarbeitet.</value></data>
+  <data name="SchoolYears_Confirm_Summary_Format" xml:space="preserve"><value>{0} wird abgeschlossen und {1} wird das aktive Schuljahr. In das nächste Schuljahr übernommene Klassen: {2}. Archivierte Klassen: {3}.</value><comment>{0} is the label of the closing school year, {1} is the label of the next school year, {2} is the number of classes rolled forward, {3} is the number of classes archived.</comment></data>
+  <data name="SchoolYears_Close_Confirm_Message" xml:space="preserve"><value>Dies lässt sich nicht rückgängig machen. Das Schuljahr wird abgeschlossen und das nächste wird aktiv.</value></data>
+  <data name="SchoolYears_Close_Result_Format" xml:space="preserve"><value>{0} ist abgeschlossen. {1} ist jetzt das aktive Schuljahr.</value><comment>{0} is the label of the closed school year, {1} is the label of the new active school year.</comment></data>
+  <data name="SchoolYears_Close_Success" xml:space="preserve"><value>Das Schuljahr wurde abgeschlossen.</value></data>
+  <data name="SchoolYears_Close_Failed" xml:space="preserve"><value>Das Schuljahr konnte nicht beendet werden. Prüfen Sie die Schritte und versuchen Sie es erneut.</value></data>
 </root>

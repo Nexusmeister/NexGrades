@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
 using NexGrades.App.Features.Classes;
 using NexGrades.App.Features.Students;
+using NexGrades.App.Localization;
 using NexGrades.Data.Entities;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Services;
@@ -202,7 +203,7 @@ public sealed partial class SchoolYearViewModel(
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            ShowError("The school year could not be loaded. Close this page and open it again.");
+            ShowError(TextResources.Text("SchoolYears_LoadFailed"));
         }
         finally
         {
@@ -266,7 +267,7 @@ public sealed partial class SchoolYearViewModel(
 
     private static ReadinessItemRow ToRow(CloseReadinessIssue issue)
     {
-        var text = ReadinessItemText.Format(issue, CultureInfo.CurrentCulture);
+        var text = ReadinessItemText.Format(issue, CultureInfo.CurrentUICulture);
         return issue.Kind == CloseReadinessIssueKind.StudentWithoutGrade && issue.StudentId is { } studentId
             ? new ReadinessItemRow(text, ReadinessLinkTarget.Student, studentId)
             : new ReadinessItemRow(text, ReadinessLinkTarget.Class, issue.ClassInstanceId);
@@ -352,7 +353,7 @@ public sealed partial class SchoolYearViewModel(
 
             var created = await RunGuardedAsync(
                 async () => _ = await schoolYearService.CreateNextYearAsync(_activeYear.Id, new SchoolYearDraft(NextYearLabel, start, end)),
-                "The next school year could not be created. Check the label and the dates, and that they do not overlap another school year.");
+                TextResources.Text("SchoolYears_NextYear_CreateFailed"));
             if (!created)
             {
                 return;
@@ -382,9 +383,9 @@ public sealed partial class SchoolYearViewModel(
     private async Task ApplyClassChoicesAsync()
     {
         if (_nextYear is not { } nextYear || !await ConfirmAsync(
-                "Apply class choices",
-                "Rolling forward and archiving cannot be undone. Apply the choices for all classes now?",
-                "Apply"))
+                TextResources.Text("SchoolYears_Classes_Apply_Title"),
+                TextResources.Text("SchoolYears_Classes_Apply_Message"),
+                TextResources.Text("SchoolYears_Action_Apply")))
         {
             return;
         }
@@ -444,7 +445,7 @@ public sealed partial class SchoolYearViewModel(
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            ShowError("The classes could not be loaded. Close this page and open it again.");
+            ShowError(TextResources.Text("SchoolYears_Classes_LoadFailed"));
         }
     }
 
@@ -452,11 +453,11 @@ public sealed partial class SchoolYearViewModel(
     {
         if (Classes.Any(row => row.HasFailed))
         {
-            ShowError("Some classes could not be processed. They are marked in the list.");
+            ShowError(TextResources.Text("SchoolYears_Classes_SomeFailed"));
         }
         else
         {
-            ShowSuccess("The classes have been processed.");
+            ShowSuccess(TextResources.Text("SchoolYears_Classes_Processed"));
         }
     }
 
@@ -490,9 +491,8 @@ public sealed partial class SchoolYearViewModel(
     [RelayCommand(CanExecute = nameof(CanContinueToConfirm))]
     private void ContinueToConfirm()
     {
-        SummaryText = string.Format(
-            CultureInfo.CurrentCulture,
-            "{0} will be closed and {1} will become the active school year. Classes rolled forward: {2}. Classes archived: {3}.",
+        SummaryText = TextResources.Format(
+            "SchoolYears_Confirm_Summary_Format",
             ActiveYearLabel,
             NextYearLabel,
             Classes.Count(row => row.Status == ClassInstanceStatus.RolledForward),
@@ -507,9 +507,9 @@ public sealed partial class SchoolYearViewModel(
     private async Task RunCloseAsync()
     {
         if (_activeYear is not { } active || _nextYear is not { } next || !await ConfirmAsync(
-                "End school year",
-                "This cannot be undone. The school year will be closed and the next one becomes active.",
-                "End school year"))
+                TextResources.Text("SchoolYears_Action_EndYear"),
+                TextResources.Text("SchoolYears_Close_Confirm_Message"),
+                TextResources.Text("SchoolYears_Action_EndYear")))
         {
             return;
         }
@@ -522,10 +522,9 @@ public sealed partial class SchoolYearViewModel(
             return;
         }
 
-        ResultText = string.Format(
-            CultureInfo.CurrentCulture, "{0} is closed. {1} is now the active school year.", active.Label, next.Label);
+        ResultText = TextResources.Format("SchoolYears_Close_Result_Format", active.Label, next.Label);
         CurrentStep = EndYearStep.Result;
-        ShowSuccess("The school year has been closed.");
+        ShowSuccess(TextResources.Text("SchoolYears_Close_Success"));
         await ClosedYears.ReloadAsync();
     }
 
@@ -572,7 +571,7 @@ public sealed partial class SchoolYearViewModel(
         }
         catch (Exception ex) when (ex is InvariantViolationException or ClosedYearException or DbUpdateException)
         {
-            ShowError(errorMessage ?? "The school year could not be ended. Review the steps and try again.");
+            ShowError(errorMessage ?? TextResources.Text("SchoolYears_Close_Failed"));
             return false;
         }
         finally
@@ -589,15 +588,15 @@ public sealed partial class SchoolYearViewModel(
                 Title = title,
                 Content = content,
                 PrimaryButtonText = confirmText,
-                CloseButtonText = "Cancel",
+                CloseButtonText = TextResources.Text("Common_Cancel"),
             });
 
         return result == ContentDialogResult.Primary;
     }
 
     private void ShowError(string message) =>
-        snackbar.Show("Error", message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Error"), message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
 
     private void ShowSuccess(string message) =>
-        snackbar.Show("Success", message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Success"), message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
 }
