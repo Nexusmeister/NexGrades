@@ -11,5 +11,5 @@ public static class EnumerableExtensions
     /// Copies <paramref name="us"/> into a new <see cref="ObservableCollection{T}"/>. The copy is taken
     /// immediately, so later changes to the source sequence do not reach the returned collection.
     /// </summary>
-    public static ObservableCollection<T> ToObservableCollection<T>(this IEnumerable<T> us) => new(us);
+    public static ObservableCollection<T> ToObservableCollection<T>(this IEnumerable<T> us) => [.. us];
 }

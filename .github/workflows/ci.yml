@@ -15,7 +15,6 @@ on:
       - dev
 
 env:
-  DOTNET_VERSION: 10.x.x
   # The release notes; the create steps replace <version> with the version of the release.
   SMARTSCREEN_NOTE: |
     **Install:** download `NexGrades-<version>-win-x64-Setup.exe` and run it. It installs NexGrades for your Windows
@@ -43,7 +42,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
       - name: Restore dependencies
         run: dotnet restore
       # Zero-warning policy: any compiler or analyzer warning fails the build (also enforced by
@@ -63,7 +62,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
       - name: Restore dependencies
         run: dotnet restore
       # Zero-warning policy: build the whole solution (AppHost, ServiceDefaults and test projects
@@ -109,7 +108,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
       # Beta tags (v0.1.1-beta.4) are real tags with the v prefix, so MinVer would pick the newest one as its base
       # and yield 0.1.1-beta.4.1. Dropping them from this runner's clone only (nothing is pushed) leaves the stable
       # tags: version = latest stable + 1 patch, -beta.<height since that stable tag>.
@@ -219,7 +218,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
       - name: Decide the version
         id: version
         shell: pwsh

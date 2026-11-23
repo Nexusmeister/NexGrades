@@ -22,7 +22,7 @@ in PowerShell 5.1.
 4. Start the app and wait about 20 s. The working directory keeps the run out of the build folder.
 
    ```powershell
-   $p = Start-Process "<worktree>\src\NexGrades\NexGrades.App\bin\Debug\net10.0-windows\NexGrades.App.exe" -PassThru -WorkingDirectory "<temp folder>"
+   $p = Start-Process "<worktree>\src\NexGrades\NexGrades.App\bin\Debug\net11.0-windows\NexGrades.App.exe" -PassThru -WorkingDirectory "<temp folder>"
    ```
 
 5. Read all of today's `%LOCALAPPDATA%\NexGrades\logs\nexgrades-<yyyyMMdd>*.log` files. The folder is shared with

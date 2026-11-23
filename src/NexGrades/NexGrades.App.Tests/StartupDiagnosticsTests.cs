@@ -133,7 +133,7 @@ public class StartupDiagnosticsTests
 
     private sealed class CategoryLoggerFactory : ILoggerFactory
     {
-        public Dictionary<string, CapturingLogger<object>> Loggers { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, CapturingLogger<object>> Loggers { get; } = [with(StringComparer.Ordinal)];
 
         public void AddProvider(ILoggerProvider provider)
         {

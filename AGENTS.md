@@ -11,10 +11,10 @@ buckets and averages. Single user, local SQLite database, no server.
 
 ## Stack
 
-- .NET 10 (`net10.0`, App is `net10.0-windows`), C# with nullable reference types and implicit usings
+- .NET 11 (`net11.0`, App is `net11.0-windows`), C# with nullable reference types and implicit usings
 - WPF with [WPF-UI](https://wpfui.lepo.co/) 4.x (Fluent controls, navigation, snackbar, theming)
 - CommunityToolkit.Mvvm 8.x (`[ObservableProperty]`, `[RelayCommand]`)
-- EF Core 10 on SQLite
+- EF Core 11 on SQLite
 - .NET Aspire AppHost for local development only
 - Velopack 1.x for installing, updating and packing the app (`Directory.Packages.props`); the `vpk` tool in `.config/dotnet-tools.json` has the same version
 - xUnit for tests
@@ -51,6 +51,8 @@ dotnet ef migrations add <MigrationName> --project NexGrades.Data --startup-proj
 dotnet run --project Aspire/NexGrades.AppHost                        # run the app for development
 ```
 
+- The SDK is pinned by `global.json` at the repository root (11.0.100 or a later 11.0 feature band). CI installs the
+  SDK from that file.
 - **Zero warnings:** the build must produce no warnings. GitHub Actions sets `CI=true`, which makes
   `Directory.Build.props` set `TreatWarningsAsErrors`, and the workflow also passes `-warnaserror` explicitly to
   `dotnet build` and `dotnet test`, so any warning fails CI. CI also runs `dotnet format NexGrades.slnx
@@ -227,8 +229,8 @@ particular:
   `PackageReference` items in `.csproj` files carry no `Version`. Do not remove or downgrade the
   `SQLitePCLRaw.bundle_e_sqlite3` pin (security advisory, see the comment there).
 - **Package audit:** NuGet audit is on (`NuGetAuditMode=all`), and its warnings (NU1901-NU1904) are never
-  suppressed. Fix a vulnerable transitive package by pinning a patched version in `Directory.Packages.props`;
-  `CentralPackageTransitivePinningEnabled` is on for this (see the `MessagePack` pin). `nuget.config` maps
+  suppressed. Fix a vulnerable transitive package by adding a `PackageVersion` for it, without a `PackageReference`,
+  in `Directory.Packages.props`; `CentralPackageTransitivePinningEnabled` makes that version apply. `nuget.config` maps
   packages to sources, so a new feed needs a `packageSourceMapping` entry.
 - **Domain services:** `sealed` classes with primary constructors, async methods taking a
   `CancellationToken cancellationToken = default`. Violated business rules throw
