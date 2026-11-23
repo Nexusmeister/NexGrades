@@ -23,6 +23,7 @@ public static partial class ResourceFileTests
         "Settings_Language_System",
         "Settings_Language_English",
         "Settings_Language_German",
+        "Settings_Updates_Header",
         "Classes_Grid_Name_Header",
         "Subjects_Overview_Id_Header",
         "Subjects_Overview_Name_Header",

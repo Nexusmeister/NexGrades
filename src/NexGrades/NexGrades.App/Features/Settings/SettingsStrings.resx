@@ -12,4 +12,23 @@
   <data name="Settings_Language_RestartNotice" xml:space="preserve"><value>Restart NexGrades to use the new language.</value></data>
   <data name="Settings_Language_SaveFailed_Title" xml:space="preserve"><value>Error</value></data>
   <data name="Settings_Language_SaveFailed_Message" xml:space="preserve"><value>The language could not be saved.</value></data>
+  <data name="Settings_Page_Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings_SaveLocation_Header" xml:space="preserve"><value>Save location</value></data>
+  <data name="Settings_SaveLocation_Description" xml:space="preserve"><value>Select folder to save app data</value></data>
+  <data name="Settings_SaveLocation_Select" xml:space="preserve"><value>Select Folder</value></data>
+  <data name="Settings_Logs_Header" xml:space="preserve"><value>Log files</value></data>
+  <data name="Settings_Logs_Description" xml:space="preserve"><value>Opens the folder with the application's log files, for support.</value></data>
+  <data name="Settings_Logs_Open" xml:space="preserve"><value>Open log folder</value></data>
+  <data name="Settings_Logs_Open_Tooltip" xml:space="preserve"><value>Open the folder with the application's log files</value></data>
+  <data name="Settings_Theme_Header" xml:space="preserve"><value>Theme</value></data>
+  <data name="Settings_Theme_Description" xml:space="preserve"><value>Choose System to follow the Windows setting.</value></data>
+  <data name="Settings_Updates_Header" xml:space="preserve"><value>Updates</value></data>
+  <data name="Settings_Updates_AutoCheck" xml:space="preserve"><value>Automatically check for updates</value></data>
+  <data name="Settings_Updates_Beta" xml:space="preserve"><value>Receive beta updates</value></data>
+  <data name="Settings_Updates_BetaNote" xml:space="preserve"><value>Beta versions may contain unfinished features. Turning this off never reverts to an older version.</value></data>
+  <data name="Settings_Updates_CheckNow" xml:space="preserve"><value>Check for updates now</value></data>
+  <data name="Settings_Updates_CheckNow_Tooltip" xml:space="preserve"><value>Look for a newer version of NexGrades</value></data>
+  <data name="Settings_Updates_Checking_A11y" xml:space="preserve"><value>Checking for updates</value></data>
+  <data name="Settings_Updates_RestartNow" xml:space="preserve"><value>Restart now</value></data>
+  <data name="Settings_Updates_RestartNow_Tooltip" xml:space="preserve"><value>Close NexGrades, install the update and start it again</value></data>
 </root>

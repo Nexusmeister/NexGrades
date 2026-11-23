@@ -31,6 +31,8 @@ public static class TextResources
         ["Classes"] = "NexGrades.App.Features.Classes.ClassesStrings",
         ["Students"] = "NexGrades.App.Features.Students.StudentsStrings",
         ["Subjects"] = "NexGrades.App.Features.Subjects.SubjectsStrings",
+        ["Grades"] = "NexGrades.App.Features.Grades.GradesStrings",
+        ["SchoolYears"] = "NexGrades.App.Features.SchoolYears.SchoolYearsStrings",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     private static readonly ConcurrentDictionary<string, ResourceManager> _managers = new(StringComparer.Ordinal);

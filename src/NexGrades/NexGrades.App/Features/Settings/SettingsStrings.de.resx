@@ -12,4 +12,23 @@
   <data name="Settings_Language_RestartNotice" xml:space="preserve"><value>Starten Sie NexGrades neu, um die neue Sprache zu verwenden.</value></data>
   <data name="Settings_Language_SaveFailed_Title" xml:space="preserve"><value>Fehler</value></data>
   <data name="Settings_Language_SaveFailed_Message" xml:space="preserve"><value>Die Sprache konnte nicht gespeichert werden.</value></data>
+  <data name="Settings_Page_Title" xml:space="preserve"><value>Einstellungen</value></data>
+  <data name="Settings_SaveLocation_Header" xml:space="preserve"><value>Speicherort</value></data>
+  <data name="Settings_SaveLocation_Description" xml:space="preserve"><value>Ordner zum Speichern der App-Daten auswählen</value></data>
+  <data name="Settings_SaveLocation_Select" xml:space="preserve"><value>Ordner auswählen</value></data>
+  <data name="Settings_Logs_Header" xml:space="preserve"><value>Protokolldateien</value></data>
+  <data name="Settings_Logs_Description" xml:space="preserve"><value>Öffnet den Ordner mit den Protokolldateien der Anwendung, für den Support.</value></data>
+  <data name="Settings_Logs_Open" xml:space="preserve"><value>Protokollordner öffnen</value></data>
+  <data name="Settings_Logs_Open_Tooltip" xml:space="preserve"><value>Den Ordner mit den Protokolldateien der Anwendung öffnen</value></data>
+  <data name="Settings_Theme_Header" xml:space="preserve"><value>Design</value></data>
+  <data name="Settings_Theme_Description" xml:space="preserve"><value>Wählen Sie „System“, um der Windows-Einstellung zu folgen.</value></data>
+  <data name="Settings_Updates_Header" xml:space="preserve"><value>Updates</value></data>
+  <data name="Settings_Updates_AutoCheck" xml:space="preserve"><value>Automatisch nach Updates suchen</value></data>
+  <data name="Settings_Updates_Beta" xml:space="preserve"><value>Beta-Versionen erhalten</value></data>
+  <data name="Settings_Updates_BetaNote" xml:space="preserve"><value>Beta-Versionen können unfertige Funktionen enthalten. Wenn Sie diese Option ausschalten, wird nie auf eine ältere Version zurückgewechselt.</value></data>
+  <data name="Settings_Updates_CheckNow" xml:space="preserve"><value>Jetzt nach Updates suchen</value></data>
+  <data name="Settings_Updates_CheckNow_Tooltip" xml:space="preserve"><value>Nach einer neueren Version von NexGrades suchen</value></data>
+  <data name="Settings_Updates_Checking_A11y" xml:space="preserve"><value>Es wird nach Updates gesucht</value></data>
+  <data name="Settings_Updates_RestartNow" xml:space="preserve"><value>Jetzt neu starten</value></data>
+  <data name="Settings_Updates_RestartNow_Tooltip" xml:space="preserve"><value>NexGrades schließen, das Update installieren und NexGrades erneut starten</value></data>
 </root>

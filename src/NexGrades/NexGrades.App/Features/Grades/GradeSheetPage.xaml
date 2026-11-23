@@ -7,11 +7,12 @@
       xmlns:grades="clr-namespace:NexGrades.App.Features.Grades"
       xmlns:core="clr-namespace:NexGrades.App.Core"
       xmlns:yearLock="clr-namespace:NexGrades.App.Core.YearLock"
+      xmlns:loc="clr-namespace:NexGrades.App.Localization"
       xmlns:services="clr-namespace:NexGrades.Domain.Services;assembly=NexGrades.Domain"
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="900"
       d:DataContext="{d:DesignInstance grades:GradeSheetPage, IsDesignTimeCreatable=False}"
-      Title="Grade sheet">
+      Title="{loc:Text Grades_GradeSheet_Title}">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -182,18 +183,18 @@
                               Appearance="Secondary"
                               TextWrapping="Wrap"
                               MaxWidth="120"
-                              Text="Type 1–6 to override"
+                              Text="{loc:Text Grades_GradeSheet_Header_FinalGradeHint}"
                               Visibility="{Binding IsFinalGrade, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <StackPanel Orientation="Horizontal" Style="{StaticResource AssessmentColumnsOnlyStyle}">
                     <StackPanel Orientation="Horizontal"
                                 Visibility="{Binding IsVoided, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ui:SymbolIcon Symbol="DismissCircle16" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <ui:TextBlock FontTypography="Caption" Text="Voided" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <ui:TextBlock FontTypography="Caption" Text="{loc:Text Grades_GradeSheet_Header_Voided}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <ui:Button Appearance="Transparent"
                                    Padding="4"
                                    Icon="{ui:SymbolIcon ArrowUndo16}"
-                                   ToolTip="Restore this assessment"
-                                   AutomationProperties.Name="Restore assessment"
+                                   ToolTip="{loc:Text Grades_Assessment_Restore_Tooltip}"
+                                   AutomationProperties.Name="{loc:Text Grades_Assessment_Restore}"
                                    Command="{Binding DataContext.ViewModel.RestoreAssessmentCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                    CommandParameter="{Binding}"/>
                     </StackPanel>
@@ -212,15 +213,15 @@
                                    Padding="4"
                                    Margin="0,0,4,0"
                                    Icon="{ui:SymbolIcon Edit16}"
-                                   ToolTip="Edit this assessment's title and date"
-                                   AutomationProperties.Name="Edit assessment"
+                                   ToolTip="{loc:Text Grades_Assessment_Edit_Tooltip}"
+                                   AutomationProperties.Name="{loc:Text Grades_EditAssessment_Header}"
                                    Command="{Binding DataContext.ViewModel.BeginEditAssessmentCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                    CommandParameter="{Binding}"/>
                         <ui:Button Appearance="Transparent"
                                    Padding="4"
                                    Icon="{ui:SymbolIcon DismissCircle16}"
-                                   ToolTip="Void this assessment. It can be restored later."
-                                   AutomationProperties.Name="Void assessment"
+                                   ToolTip="{loc:Text Grades_Assessment_Void_Tooltip}"
+                                   AutomationProperties.Name="{loc:Text Grades_Assessment_Void}"
                                    Command="{Binding DataContext.ViewModel.VoidAssessmentCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                    CommandParameter="{Binding}"/>
                     </StackPanel>
@@ -254,29 +255,29 @@
                                 Style="{StaticResource Ng.PageHeader}">
             <ui:TextBlock FontTypography="Body"
                           Appearance="Secondary"
-                          Text="{Binding ViewModel.SchoolYearLabel, StringFormat='School year {0}'}"
+                          Text="{Binding ViewModel.SchoolYearLabel, StringFormat={loc:Text Grades_GradeSheet_SchoolYear_Format}}"
                           Visibility="{Binding ViewModel.HasSheet, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </HeaderedContentControl>
 
         <WrapPanel Grid.Row="1" Style="{StaticResource Ng.ActionBar}">
             <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                       Content="Back"
+                       Content="{loc:Text Common_Back}"
                        Icon="{ui:SymbolIcon ArrowLeft24}"
-                       ToolTip="Go back to the class"
-                       AutomationProperties.Name="Back to the class"
+                       ToolTip="{loc:Text Grades_GradeSheet_Back_Tooltip}"
+                       AutomationProperties.Name="{loc:Text Grades_GradeSheet_Back_A11y}"
                        Command="{Binding ViewModel.BackCommand}"/>
             <ui:ToggleSwitch Margin="{StaticResource Ng.Margin.ActionItem}"
                              VerticalAlignment="Center"
-                             Content="Show voided grades"
-                             ToolTip="Also show voided grades and assessments so they can be restored"
-                             AutomationProperties.Name="Show voided grades"
+                             Content="{loc:Text Grades_GradeSheet_ShowVoided}"
+                             ToolTip="{loc:Text Grades_GradeSheet_ShowVoided_Tooltip}"
+                             AutomationProperties.Name="{loc:Text Grades_GradeSheet_ShowVoided}"
                              IsChecked="{Binding ViewModel.ShowVoidedGrades}"
                              Visibility="{Binding ViewModel.HasSheet, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <ui:ProgressRing IsIndeterminate="True"
                              Margin="{StaticResource Ng.Margin.ActionItem}"
                              Width="24"
                              Height="24"
-                             AutomationProperties.Name="Loading the grade sheet"
+                             AutomationProperties.Name="{loc:Text Grades_GradeSheet_Loading_A11y}"
                              Visibility="{Binding ViewModel.IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </WrapPanel>
 
@@ -304,7 +305,7 @@
             <ui:InfoBar IsClosable="False"
                         IsOpen="True"
                         Severity="Informational"
-                        Title="Grade sheet not available"
+                        Title="{loc:Text Grades_GradeSheet_Unavailable_Title}"
                         Message="{Binding ViewModel.EmptyStateMessage}"/>
         </Grid>
 
@@ -323,7 +324,7 @@
                          MinHeight="160"
                          HorizontalScrollBarVisibility="Auto"
                          VerticalScrollBarVisibility="Auto"
-                         AutomationProperties.Name="Grade sheet. Type a grade such as 2- into a cell, press Enter to save, Escape to cancel. The last columns show the proposed final grade and the final grade, which you can type over the proposal."
+                         AutomationProperties.Name="{loc:Text Grades_GradeSheet_Grid_A11y}"
                          ItemsSource="{Binding ViewModel.Rows}"
                          grades:DataGridColumnsBehavior.Columns="{Binding ViewModel.Columns}"
                          grades:DataGridColumnsBehavior.SelectedCell="{Binding ViewModel.SelectedCell, Mode=OneWayToSource}"/>
@@ -331,7 +332,7 @@
             <ContentControl HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             IsHitTestVisible="False"
-                            Content="There are no students in this class yet."
+                            Content="{loc:Text Grades_GradeSheet_NoStudents}"
                             Style="{StaticResource Ng.EmptyState.WhenNoItems}"
                             Tag="{Binding ViewModel.Rows}"/>
         </Grid>
@@ -340,8 +341,8 @@
         <Expander Grid.Row="5"
                   Margin="0,16,0,0"
                   IsExpanded="True"
-                  Header="Grade details and assessments"
-                  AutomationProperties.Name="Grade details and assessments"
+                  Header="{loc:Text Grades_GradeSheet_Details_Header}"
+                  AutomationProperties.Name="{loc:Text Grades_GradeSheet_Details_Header}"
                   Visibility="{Binding ViewModel.HasSheet, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ScrollViewer MaxHeight="220"
                           Margin="0,8,0,0"
@@ -353,50 +354,50 @@
                     <ui:Card Style="{StaticResource ConditionalCardStyle}"
                              Visibility="{Binding ViewModel.HasDetail, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel IsEnabled="{Binding ViewModel.IsWritable}">
-                            <HeaderedContentControl Header="Grade details"
+                            <HeaderedContentControl Header="{loc:Text Grades_Detail_Header}"
                                                     Margin="{StaticResource Ng.Margin.Related}"
                                                     Style="{StaticResource Ng.Section}">
                                 <StackPanel>
-                                    <HeaderedContentControl Header="Date"
+                                    <HeaderedContentControl Header="{loc:Text Grades_Date_Header}"
                                                             Margin="{StaticResource Ng.Margin.Related}"
                                                             Style="{StaticResource Ng.FormField}">
-                                        <DatePicker AutomationProperties.Name="Date of the grade"
+                                        <DatePicker AutomationProperties.Name="{loc:Text Grades_Detail_Date_A11y}"
                                                     SelectedDate="{Binding ViewModel.DetailDate}"/>
                                     </HeaderedContentControl>
-                                    <HeaderedContentControl Header="Label"
+                                    <HeaderedContentControl Header="{loc:Text Grades_Detail_Label_Header}"
                                                             Margin="{StaticResource Ng.Margin.Related}"
                                                             Style="{StaticResource Ng.FormField}">
                                         <ui:TextBox MaxLength="{x:Static services:GradeService.MaxLabelLength}"
-                                                    AutomationProperties.Name="Label of the grade"
-                                                    PlaceholderText="For example Vocabulary test"
+                                                    AutomationProperties.Name="{loc:Text Grades_Detail_Label_A11y}"
+                                                    PlaceholderText="{loc:Text Grades_Detail_Label_Placeholder}"
                                                     Text="{Binding ViewModel.DetailLabel, UpdateSourceTrigger=PropertyChanged}"/>
                                     </HeaderedContentControl>
-                                    <HeaderedContentControl Header="Comment"
+                                    <HeaderedContentControl Header="{loc:Text Grades_Detail_Comment_Header}"
                                                             Margin="{StaticResource Ng.Margin.Related}"
                                                             Style="{StaticResource Ng.FormField}">
                                         <ui:TextBox Style="{StaticResource Ng.TextBox.Multiline}"
                                                     MaxLength="{x:Static services:GradeService.MaxCommentLength}"
-                                                    AutomationProperties.Name="Comment on the grade"
+                                                    AutomationProperties.Name="{loc:Text Grades_Detail_Comment_A11y}"
                                                     Text="{Binding ViewModel.DetailComment, UpdateSourceTrigger=PropertyChanged}"/>
                                     </HeaderedContentControl>
                                 </StackPanel>
                             </HeaderedContentControl>
                             <WrapPanel>
                                 <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                           Content="Save details"
+                                           Content="{loc:Text Grades_Detail_Save}"
                                            Appearance="Primary"
                                            Icon="{ui:SymbolIcon Save24}"
                                            Command="{Binding ViewModel.SaveDetailCommand}"/>
                                 <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                           Content="Discard"
+                                           Content="{loc:Text Grades_Detail_Discard}"
                                            Icon="{ui:SymbolIcon Dismiss24}"
-                                           ToolTip="Discard the changes and show the saved details"
+                                           ToolTip="{loc:Text Grades_Detail_Discard_Tooltip}"
                                            Command="{Binding ViewModel.DiscardDetailCommand}"/>
                             </WrapPanel>
-                            <ui:Button Content="Void grade"
+                            <ui:Button Content="{loc:Text Grades_Detail_Void}"
                                        Icon="{ui:SymbolIcon DismissCircle24}"
-                                       ToolTip="Void this grade. It stops counting in the averages and can be restored later."
-                                       AutomationProperties.Name="Void grade"
+                                       ToolTip="{loc:Text Grades_Detail_Void_Tooltip}"
+                                       AutomationProperties.Name="{loc:Text Grades_Detail_Void}"
                                        Command="{Binding ViewModel.VoidGradeCommand}"/>
                         </StackPanel>
                     </ui:Card>
@@ -412,7 +413,7 @@
                                 </Style.Triggers>
                             </Style>
                         </ui:Card.Style>
-                        <HeaderedContentControl Header="Voided grade"
+                        <HeaderedContentControl Header="{loc:Text Grades_Voided_Header}"
                                                 Margin="0"
                                                 Style="{StaticResource Ng.Section}">
                             <StackPanel>
@@ -420,8 +421,8 @@
                                               FontTypography="Body"
                                               Appearance="Secondary"
                                               TextWrapping="Wrap"
-                                              Text="This grade is voided and does not count in the averages. Restore it to use it again."/>
-                                <ui:Button Content="Restore grade"
+                                              Text="{loc:Text Grades_Voided_Description}"/>
+                                <ui:Button Content="{loc:Text Grades_Voided_Restore}"
                                            Appearance="Primary"
                                            Icon="{ui:SymbolIcon ArrowUndo24}"
                                            Command="{Binding ViewModel.RestoreGradeCommand}"/>
@@ -432,36 +433,36 @@
                     <!-- Edit assessment -->
                     <ui:Card Style="{StaticResource ConditionalCardStyle}"
                              Visibility="{Binding ViewModel.IsEditingAssessment, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <HeaderedContentControl Header="Edit assessment"
+                        <HeaderedContentControl Header="{loc:Text Grades_EditAssessment_Header}"
                                                 Margin="0"
                                                 Style="{StaticResource Ng.Section}">
                             <StackPanel>
-                                <HeaderedContentControl Header="Title"
+                                <HeaderedContentControl Header="{loc:Text Grades_Title_Header}"
                                                         Margin="{StaticResource Ng.Margin.Related}"
                                                         Style="{StaticResource Ng.FormField}">
                                     <ui:TextBox MaxLength="{x:Static services:AssessmentService.MaxTitleLength}"
-                                                AutomationProperties.Name="Assessment title"
+                                                AutomationProperties.Name="{loc:Text Grades_EditAssessment_Title_A11y}"
                                                 Text="{Binding ViewModel.EditAssessmentTitle, UpdateSourceTrigger=PropertyChanged}"/>
                                 </HeaderedContentControl>
-                                <HeaderedContentControl Header="Date"
+                                <HeaderedContentControl Header="{loc:Text Grades_Date_Header}"
                                                         Margin="{StaticResource Ng.Margin.Related}"
                                                         Style="{StaticResource Ng.FormField}">
-                                    <DatePicker AutomationProperties.Name="Assessment date"
+                                    <DatePicker AutomationProperties.Name="{loc:Text Grades_EditAssessment_Date_A11y}"
                                                 SelectedDate="{Binding ViewModel.EditAssessmentDate}"/>
                                 </HeaderedContentControl>
                                 <ui:TextBlock Margin="{StaticResource Ng.Margin.Related}"
                                               FontTypography="Caption"
                                               Appearance="Secondary"
                                               TextWrapping="Wrap"
-                                              Text="Enter a title, and a date inside the school year."/>
+                                              Text="{loc:Text Grades_EditAssessment_Hint}"/>
                                 <WrapPanel>
                                     <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                               Content="Save assessment"
+                                               Content="{loc:Text Grades_EditAssessment_Save}"
                                                Appearance="Primary"
                                                Icon="{ui:SymbolIcon Save24}"
                                                Command="{Binding ViewModel.SaveAssessmentEditCommand}"/>
                                     <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                               Content="Cancel"
+                                               Content="{loc:Text Common_Cancel}"
                                                Icon="{ui:SymbolIcon Dismiss24}"
                                                Command="{Binding ViewModel.CancelEditAssessmentCommand}"/>
                                 </WrapPanel>
@@ -472,39 +473,39 @@
                     <!-- Add assessment -->
                     <ui:Card Style="{StaticResource SectionCardStyle}">
                         <StackPanel IsEnabled="{Binding ViewModel.IsWritable}">
-                            <HeaderedContentControl Header="Add assessment"
+                            <HeaderedContentControl Header="{loc:Text Grades_AddAssessment_Header}"
                                                     Margin="0"
                                                     Style="{StaticResource Ng.Section}">
                                 <StackPanel>
-                                    <HeaderedContentControl Header="Bucket"
+                                    <HeaderedContentControl Header="{loc:Text Grades_AddAssessment_Category_Header}"
                                                             Margin="{StaticResource Ng.Margin.Related}"
                                                             Style="{StaticResource Ng.FormField}">
                                         <ComboBox HorizontalAlignment="Stretch"
-                                                  AutomationProperties.Name="Bucket of the new assessment"
+                                                  AutomationProperties.Name="{loc:Text Grades_AddAssessment_Category_A11y}"
                                                   ItemsSource="{Binding ViewModel.Buckets}"
                                                   DisplayMemberPath="Name"
                                                   SelectedItem="{Binding ViewModel.NewAssessmentBucket}"/>
                                     </HeaderedContentControl>
-                                    <HeaderedContentControl Header="Title"
+                                    <HeaderedContentControl Header="{loc:Text Grades_Title_Header}"
                                                             Margin="{StaticResource Ng.Margin.Related}"
                                                             Style="{StaticResource Ng.FormField}">
                                         <ui:TextBox MaxLength="{x:Static services:AssessmentService.MaxTitleLength}"
-                                                    AutomationProperties.Name="Title of the new assessment"
-                                                    PlaceholderText="For example Test 1"
+                                                    AutomationProperties.Name="{loc:Text Grades_AddAssessment_Title_A11y}"
+                                                    PlaceholderText="{loc:Text Grades_AddAssessment_Title_Placeholder}"
                                                     Text="{Binding ViewModel.NewAssessmentTitle, UpdateSourceTrigger=PropertyChanged}"/>
                                     </HeaderedContentControl>
-                                    <HeaderedContentControl Header="Date"
+                                    <HeaderedContentControl Header="{loc:Text Grades_Date_Header}"
                                                             Margin="{StaticResource Ng.Margin.Related}"
                                                             Style="{StaticResource Ng.FormField}">
-                                        <DatePicker AutomationProperties.Name="Date of the new assessment"
+                                        <DatePicker AutomationProperties.Name="{loc:Text Grades_AddAssessment_Date_A11y}"
                                                     SelectedDate="{Binding ViewModel.NewAssessmentDate}"/>
                                     </HeaderedContentControl>
                                     <ui:TextBlock Margin="{StaticResource Ng.Margin.Related}"
                                                   FontTypography="Caption"
                                                   Appearance="Secondary"
                                                   TextWrapping="Wrap"
-                                                  Text="Choose a bucket, enter a title, and pick a date inside the school year."/>
-                                    <ui:Button Content="Add assessment"
+                                                  Text="{loc:Text Grades_AddAssessment_Hint}"/>
+                                    <ui:Button Content="{loc:Text Grades_AddAssessment_Header}"
                                                Appearance="Primary"
                                                Icon="{ui:SymbolIcon Add24}"
                                                Command="{Binding ViewModel.AddAssessmentCommand}"/>
@@ -515,7 +516,7 @@
 
                     <!-- Assessments: the keyboard path to the actions in the column headers -->
                     <ui:Card Style="{StaticResource SectionCardStyle}">
-                        <HeaderedContentControl Header="Assessments"
+                        <HeaderedContentControl Header="{loc:Text Grades_Assessments_Header}"
                                                 Margin="0"
                                                 Style="{StaticResource Ng.Section}">
                             <ItemsControl ItemsSource="{Binding ViewModel.Columns}"
@@ -540,20 +541,20 @@
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <ui:Button Margin="0,0,4,0"
                                                            Icon="{ui:SymbolIcon Edit24}"
-                                                           ToolTip="Edit this assessment's title and date"
-                                                           AutomationProperties.Name="Edit assessment"
+                                                           ToolTip="{loc:Text Grades_Assessment_Edit_Tooltip}"
+                                                           AutomationProperties.Name="{loc:Text Grades_EditAssessment_Header}"
                                                            Command="{Binding DataContext.ViewModel.BeginEditAssessmentCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                            CommandParameter="{Binding}"
                                                            Visibility="{Binding IsVoided, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                                 <ui:Button Icon="{ui:SymbolIcon DismissCircle24}"
-                                                           ToolTip="Void this assessment. It can be restored later."
-                                                           AutomationProperties.Name="Void assessment"
+                                                           ToolTip="{loc:Text Grades_Assessment_Void_Tooltip}"
+                                                           AutomationProperties.Name="{loc:Text Grades_Assessment_Void}"
                                                            Command="{Binding DataContext.ViewModel.VoidAssessmentCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                            CommandParameter="{Binding}"
                                                            Visibility="{Binding IsVoided, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                                 <ui:Button Icon="{ui:SymbolIcon ArrowUndo24}"
-                                                           ToolTip="Restore this assessment"
-                                                           AutomationProperties.Name="Restore assessment"
+                                                           ToolTip="{loc:Text Grades_Assessment_Restore_Tooltip}"
+                                                           AutomationProperties.Name="{loc:Text Grades_Assessment_Restore}"
                                                            Command="{Binding DataContext.ViewModel.RestoreAssessmentCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                            CommandParameter="{Binding}"
                                                            Visibility="{Binding IsVoided, Converter={StaticResource BooleanToVisibilityConverter}}"/>

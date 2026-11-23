@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Grades_GradeSheet_Title" xml:space="preserve"><value>Grade sheet</value></data>
+  <data name="Grades_GradeSheet_SchoolYear_Format" xml:space="preserve"><value>School year {0}</value><comment>{0} is the school year label, for example 2026/27.</comment></data>
+  <data name="Grades_GradeSheet_Back_Tooltip" xml:space="preserve"><value>Go back to the class</value></data>
+  <data name="Grades_GradeSheet_Back_A11y" xml:space="preserve"><value>Back to the class</value></data>
+  <data name="Grades_GradeSheet_ShowVoided" xml:space="preserve"><value>Show voided grades</value></data>
+  <data name="Grades_GradeSheet_ShowVoided_Tooltip" xml:space="preserve"><value>Also show voided grades and assessments so they can be restored</value></data>
+  <data name="Grades_GradeSheet_Loading_A11y" xml:space="preserve"><value>Loading the grade sheet</value></data>
+  <data name="Grades_GradeSheet_Unavailable_Title" xml:space="preserve"><value>Grade sheet not available</value></data>
+  <data name="Grades_GradeSheet_Grid_A11y" xml:space="preserve"><value>Grade sheet. Type a grade such as 2- into a cell, press Enter to save, Escape to cancel. The last columns show the proposed final grade and the final grade, which you can type over the proposal.</value></data>
+  <data name="Grades_GradeSheet_NoStudents" xml:space="preserve"><value>There are no students in this class yet.</value></data>
+  <data name="Grades_GradeSheet_Details_Header" xml:space="preserve"><value>Grade details and assessments</value></data>
+  <data name="Grades_GradeSheet_Header_FinalGradeHint" xml:space="preserve"><value>Type 1–6 to override</value></data>
+  <data name="Grades_GradeSheet_Header_Voided" xml:space="preserve"><value>Voided</value></data>
+  <data name="Grades_Date_Header" xml:space="preserve"><value>Date</value></data>
+  <data name="Grades_Title_Header" xml:space="preserve"><value>Title</value></data>
+  <data name="Grades_Detail_Header" xml:space="preserve"><value>Grade details</value></data>
+  <data name="Grades_Detail_Date_A11y" xml:space="preserve"><value>Date of the grade</value></data>
+  <data name="Grades_Detail_Label_Header" xml:space="preserve"><value>Label</value></data>
+  <data name="Grades_Detail_Label_A11y" xml:space="preserve"><value>Label of the grade</value></data>
+  <data name="Grades_Detail_Label_Placeholder" xml:space="preserve"><value>For example Vocabulary test</value></data>
+  <data name="Grades_Detail_Comment_Header" xml:space="preserve"><value>Comment</value></data>
+  <data name="Grades_Detail_Comment_A11y" xml:space="preserve"><value>Comment on the grade</value></data>
+  <data name="Grades_Detail_Save" xml:space="preserve"><value>Save details</value></data>
+  <data name="Grades_Detail_Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="Grades_Detail_Discard_Tooltip" xml:space="preserve"><value>Discard the changes and show the saved details</value></data>
+  <data name="Grades_Detail_Void" xml:space="preserve"><value>Void grade</value></data>
+  <data name="Grades_Detail_Void_Tooltip" xml:space="preserve"><value>Void this grade. It stops counting in the averages and can be restored later.</value></data>
+  <data name="Grades_Voided_Header" xml:space="preserve"><value>Voided grade</value></data>
+  <data name="Grades_Voided_Description" xml:space="preserve"><value>This grade is voided and does not count in the averages. Restore it to use it again.</value></data>
+  <data name="Grades_Voided_Restore" xml:space="preserve"><value>Restore grade</value></data>
+  <data name="Grades_EditAssessment_Header" xml:space="preserve"><value>Edit assessment</value></data>
+  <data name="Grades_EditAssessment_Title_A11y" xml:space="preserve"><value>Assessment title</value></data>
+  <data name="Grades_EditAssessment_Date_A11y" xml:space="preserve"><value>Assessment date</value></data>
+  <data name="Grades_EditAssessment_Hint" xml:space="preserve"><value>Enter a title, and a date inside the school year.</value></data>
+  <data name="Grades_EditAssessment_Save" xml:space="preserve"><value>Save assessment</value></data>
+  <data name="Grades_AddAssessment_Header" xml:space="preserve"><value>Add assessment</value></data>
+  <data name="Grades_AddAssessment_Category_Header" xml:space="preserve"><value>Grade category</value></data>
+  <data name="Grades_AddAssessment_Category_A11y" xml:space="preserve"><value>Grade category of the new assessment</value></data>
+  <data name="Grades_AddAssessment_Title_A11y" xml:space="preserve"><value>Title of the new assessment</value></data>
+  <data name="Grades_AddAssessment_Title_Placeholder" xml:space="preserve"><value>For example Test 1</value></data>
+  <data name="Grades_AddAssessment_Date_A11y" xml:space="preserve"><value>Date of the new assessment</value></data>
+  <data name="Grades_AddAssessment_Hint" xml:space="preserve"><value>Choose a grade category, enter a title, and pick a date inside the school year.</value></data>
+  <data name="Grades_Assessments_Header" xml:space="preserve"><value>Assessments</value></data>
+  <data name="Grades_Assessment_Edit_Tooltip" xml:space="preserve"><value>Edit this assessment's title and date</value></data>
+  <data name="Grades_Assessment_Void" xml:space="preserve"><value>Void assessment</value></data>
+  <data name="Grades_Assessment_Void_Tooltip" xml:space="preserve"><value>Void this assessment. It can be restored later.</value></data>
+  <data name="Grades_Assessment_Restore" xml:space="preserve"><value>Restore assessment</value></data>
+  <data name="Grades_Assessment_Restore_Tooltip" xml:space="preserve"><value>Restore this assessment</value></data>
+</root>
