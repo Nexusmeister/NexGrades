@@ -7,4 +7,9 @@
   <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Common_Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="Common_KeepEditing" xml:space="preserve"><value>Keep editing</value></data>
+  <data name="Common_Success" xml:space="preserve"><value>Success</value></data>
+  <data name="Common_Error" xml:space="preserve"><value>Error</value></data>
+  <data name="Common_Info" xml:space="preserve"><value>Info</value></data>
 </root>

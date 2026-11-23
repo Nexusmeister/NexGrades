@@ -1,5 +1,5 @@
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Services;
 using NexGrades.Domain.Time;
 
@@ -26,15 +26,15 @@ public sealed partial class UnlockYearDialogViewModel(string schoolYearLabel, IC
     private DateTime? _customDate;
 
     /// <summary>The dialog title, naming the year being unlocked.</summary>
-    public string Title { get; } = string.Format(CultureInfo.CurrentCulture, "Unlock school year {0}", schoolYearLabel);
+    public string Title { get; } = TextResources.Format("Core_UnlockDialog_Title_Format", schoolYearLabel);
 
     /// <summary>The durations on offer, in display order, for a list the teacher picks from.</summary>
     public IReadOnlyList<UnlockDurationChoice> DurationChoices { get; } =
     [
-        new(UnlockDurationOption.OneHour, "1 hour"),
-        new(UnlockDurationOption.EndOfToday, "Until the end of today"),
-        new(UnlockDurationOption.OneWeek, "1 week"),
-        new(UnlockDurationOption.CustomDate, "Custom date"),
+        new(UnlockDurationOption.OneHour, TextResources.Text("Core_UnlockDialog_Duration_OneHour")),
+        new(UnlockDurationOption.EndOfToday, TextResources.Text("Core_UnlockDialog_Duration_EndOfToday")),
+        new(UnlockDurationOption.OneWeek, TextResources.Text("Core_UnlockDialog_Duration_OneWeek")),
+        new(UnlockDurationOption.CustomDate, TextResources.Text("Core_UnlockDialog_Duration_CustomDate")),
     ];
 
     /// <summary>True when the teacher picks the end date; the date picker is only shown then.</summary>
@@ -54,25 +54,23 @@ public sealed partial class UnlockYearDialogViewModel(string schoolYearLabel, IC
             var trimmed = Reason.Trim();
             if (trimmed.Length == 0)
             {
-                return "Enter a reason for unlocking the year.";
+                return TextResources.Text("Core_UnlockDialog_Reason_Required");
             }
 
             if (trimmed.Length > UnlockService.MaxReasonLength)
             {
-                return string.Format(
-                    CultureInfo.CurrentCulture, "The reason can be at most {0} characters.", UnlockService.MaxReasonLength);
+                return TextResources.Format("Core_UnlockDialog_Reason_TooLong_Format", UnlockService.MaxReasonLength);
             }
 
             var now = clock.Now;
             if (UnlockDuration.Resolve(SelectedDuration, CustomDate, now) is not { } until || until <= now)
             {
-                return "Choose an end date that is in the future.";
+                return TextResources.Text("Core_UnlockDialog_EndDate_NotFuture");
             }
 
             if (SelectedDuration == UnlockDurationOption.CustomDate && until.Date > CustomDateEnd)
             {
-                return string.Format(
-                    CultureInfo.CurrentCulture, "Choose an end date within the next {0} days.", UnlockDuration.MaxCustomDays);
+                return TextResources.Format("Core_UnlockDialog_EndDate_TooFar_Format", UnlockDuration.MaxCustomDays);
             }
 
             return null;

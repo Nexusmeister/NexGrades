@@ -1,11 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Text;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NexGrades.App.Core;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 
 namespace NexGrades.App.Updates;
 
@@ -16,11 +15,6 @@ namespace NexGrades.App.Updates;
 /// </summary>
 public sealed partial class UpdateNoticeViewModel : ObservableObject
 {
-    /// <summary>The notice text; <c>{0}</c> is the version.</summary>
-    public const string ReadyMessageFormat = "Version {0} will be installed when you close NexGrades.";
-
-    private static readonly CompositeFormat _readyMessage = CompositeFormat.Parse(ReadyMessageFormat);
-
     private readonly UpdateCoordinator _coordinator;
     private readonly PageNavigator _pageNavigator;
     private readonly IAppShutdown _shutdown;
@@ -81,7 +75,7 @@ public sealed partial class UpdateNoticeViewModel : ObservableObject
         var ready = _coordinator.State == UpdateState.ReadyToInstall && _coordinator.ReadyVersion is not null;
         if (ready)
         {
-            Message = string.Format(CultureInfo.CurrentCulture, _readyMessage, _coordinator.ReadyVersion);
+            Message = TextResources.Format("Shell_UpdateNotice_Ready_Format", _coordinator.ReadyVersion);
         }
 
         IsOpen = ready;

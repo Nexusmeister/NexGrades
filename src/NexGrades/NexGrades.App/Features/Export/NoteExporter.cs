@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.IO;
-using System.Text;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Export;
 
 namespace NexGrades.App.Features.Export;
@@ -13,8 +13,6 @@ namespace NexGrades.App.Features.Export;
 /// <param name="writer">Writes the table as an Excel workbook.</param>
 public sealed class NoteExporter(NoteExportService exportService, NoteExcelWriter writer)
 {
-    private static readonly CompositeFormat _fileNameFormat = CompositeFormat.Parse("Notes {0} {1} {2}–{3}");
-
     /// <summary>Collects the notes in the range; the table has no rows when nothing matches.</summary>
     /// <param name="studentId">The student whose notes are exported.</param>
     /// <param name="from">First day of the range.</param>
@@ -27,16 +25,20 @@ public sealed class NoteExporter(NoteExportService exportService, NoteExcelWrite
         exportService.BuildAsync(studentId, from, to, includeArchived, cancellationToken);
 
     /// <summary>
-    /// Suggests a file name such as "Notes Miller Anna 2025-08-01–2026-07-31.xlsx" (dates are always
-    /// yyyy-MM-dd). Characters that are invalid in file names are replaced.
+    /// Suggests a file name such as "Notes Miller Anna 2025-08-01–2026-07-31.xlsx". Only the leading word is
+    /// localized (German: "Notizen"); the dates are always yyyy-MM-dd. Characters that are invalid in file names
+    /// are replaced.
     /// </summary>
-    public static string SuggestFileName(NoteExportTable table)
+    /// <param name="table">The table to be saved.</param>
+    /// <param name="uiCulture">The language of the leading word.</param>
+    public static string SuggestFileName(NoteExportTable table, CultureInfo uiCulture)
     {
         ArgumentNullException.ThrowIfNull(table);
+        ArgumentNullException.ThrowIfNull(uiCulture);
 
         var name = string.Format(
             CultureInfo.InvariantCulture,
-            _fileNameFormat,
+            TextResources.Get("Export_Notes_FileName_Format", uiCulture),
             table.LastName,
             table.FirstName,
             table.From.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),

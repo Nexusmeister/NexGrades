@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 
 namespace NexGrades.App.Tests.Infrastructure;
 
@@ -10,14 +11,12 @@ public sealed class StartupFailureMessageTests
     private const string LogFolder = @"C:\Users\someone\AppData\Local\NexGrades\logs";
     private const string Secret = "secret-cause-Zebra42";
 
-    private static string Format(string format, params object[] args) => string.Format(CultureInfo.CurrentCulture, format, args);
-
     [Fact]
     public void BuildMessage_UsesBackupFailedText_WithLogFolder()
     {
         var message = StartupFailureHandler.BuildMessage(new DatabaseBackupFailedException(new IOException(Secret)), LogFolder);
 
-        Assert.Equal(Format(StartupFailureHandler.BackupFailedWithLogFolderFormat, LogFolder), message);
+        Assert.Equal(TextResources.Format("Infrastructure_Startup_BackupFailed_WithLogFolder_Format", LogFolder), message);
         Assert.Contains("data is unchanged", message, StringComparison.Ordinal);
     }
 
@@ -29,7 +28,7 @@ public sealed class StartupFailureMessageTests
     {
         var message = StartupFailureHandler.BuildMessage(new DatabaseBackupFailedException(new IOException(Secret)), logFolder);
 
-        Assert.Equal(StartupFailureHandler.BackupFailedWithoutLogFolder, message);
+        Assert.Equal(TextResources.Text("Infrastructure_Startup_BackupFailed"), message);
     }
 
     [Fact]
@@ -37,7 +36,7 @@ public sealed class StartupFailureMessageTests
     {
         var message = StartupFailureHandler.BuildMessage(new DatabaseMigrationFailedException(BackupPath, new InvalidOperationException(Secret)), LogFolder);
 
-        Assert.Equal(Format(StartupFailureHandler.MigrationFailedWithLogFolderFormat, BackupPath, LogFolder), message);
+        Assert.Equal(TextResources.Format("Infrastructure_Startup_MigrationFailed_WithLogFolder_Format", BackupPath, LogFolder), message);
         Assert.Contains(BackupPath, message, StringComparison.Ordinal);
         Assert.Contains(LogFolder, message, StringComparison.Ordinal);
     }
@@ -47,7 +46,7 @@ public sealed class StartupFailureMessageTests
     {
         var message = StartupFailureHandler.BuildMessage(new DatabaseMigrationFailedException(BackupPath, new InvalidOperationException(Secret)), null);
 
-        Assert.Equal(Format(StartupFailureHandler.MigrationFailedWithoutLogFolderFormat, BackupPath), message);
+        Assert.Equal(TextResources.Format("Infrastructure_Startup_MigrationFailed_Format", BackupPath), message);
         Assert.DoesNotContain(LogFolder, message, StringComparison.Ordinal);
     }
 
@@ -57,8 +56,28 @@ public sealed class StartupFailureMessageTests
         var withFolder = StartupFailureHandler.BuildMessage(new InvalidOperationException(Secret), LogFolder);
         var withoutFolder = StartupFailureHandler.BuildMessage(new InvalidOperationException(Secret), null);
 
-        Assert.Equal(Format(StartupFailureHandler.MessageWithLogFolderFormat, LogFolder), withFolder);
-        Assert.Equal(StartupFailureHandler.MessageWithoutLogFolder, withoutFolder);
+        Assert.Equal(TextResources.Format("Infrastructure_Startup_Failed_WithLogFolder_Format", LogFolder), withFolder);
+        Assert.Equal(TextResources.Text("Infrastructure_Startup_Failed"), withoutFolder);
+    }
+
+    [Fact]
+    public void BuildMessage_IsGerman_ForGermanUiCulture()
+    {
+        var previous = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("de-DE");
+        try
+        {
+            var message = StartupFailureHandler.BuildMessage(new DatabaseMigrationFailedException(BackupPath, new IOException(Secret)), LogFolder);
+
+            Assert.StartsWith("NexGrades konnte seine Datenbank nicht aktualisieren.", message, StringComparison.Ordinal);
+            Assert.Contains(BackupPath, message, StringComparison.Ordinal);
+            Assert.Contains(LogFolder, message, StringComparison.Ordinal);
+            Assert.DoesNotContain(Secret, message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = previous;
+        }
     }
 
     [Fact]
@@ -93,7 +112,7 @@ public sealed class StartupFailureMessageTests
 
         handler.Handle(new DatabaseMigrationFailedException(BackupPath, new IOException(Secret)), () => null, () => null, () => LogFolder);
 
-        Assert.Equal([Format(StartupFailureHandler.MigrationFailedWithLogFolderFormat, BackupPath, LogFolder)], messages);
+        Assert.Equal([TextResources.Format("Infrastructure_Startup_MigrationFailed_WithLogFolder_Format", BackupPath, LogFolder)], messages);
         Assert.Equal([StartupFailureHandler.FailureExitCode], exitCodes);
     }
 

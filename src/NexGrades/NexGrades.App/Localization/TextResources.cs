@@ -26,6 +26,8 @@ public static class TextResources
         ["Common"] = "NexGrades.App.Localization.CommonStrings",
         ["Core"] = "NexGrades.App.Core.CoreStrings",
         ["Home"] = "NexGrades.App.Features.Home.HomeStrings",
+        ["Infrastructure"] = "NexGrades.App.Infrastructure.InfrastructureStrings",
+        ["Export"] = "NexGrades.App.Features.Export.ExportStrings",
         ["Shell"] = "NexGrades.App.Shell.ShellStrings",
         ["Settings"] = "NexGrades.App.Features.Settings.SettingsStrings",
         ["Classes"] = "NexGrades.App.Features.Classes.ClassesStrings",

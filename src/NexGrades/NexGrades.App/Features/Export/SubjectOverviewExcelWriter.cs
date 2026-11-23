@@ -1,7 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Text;
 using ClosedXML.Excel;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Export;
 
 namespace NexGrades.App.Features.Export;
@@ -12,23 +13,15 @@ namespace NexGrades.App.Features.Export;
 /// </summary>
 public sealed class SubjectOverviewExcelWriter
 {
-    private const string StudentHeader = "Student";
-    private const string SubjectAverageHeader = "Subject average";
-    private const string FinalGradeHeader = "Final grade";
-    private const string FinalGradeOverriddenHeader = "Final grade set by teacher";
-    private const string OverriddenText = "Yes";
     private const string FinalGradeNumberFormat = "0";
     private const string AverageNumberFormat = "0.0";
     private const string TextNumberFormat = "@";
 
-    private readonly CompositeFormat _bucketGradesHeaderFormat = CompositeFormat.Parse("{0}");
-    private readonly CompositeFormat _bucketAverageHeaderFormat = CompositeFormat.Parse("{0} average");
-    private readonly CompositeFormat _leftStudentFormat = CompositeFormat.Parse("{0} (left on {1:d})");
-
     /// <summary>Writes the workbook for <paramref name="table"/> to <paramref name="output"/>.</summary>
     /// <param name="table">The table to write.</param>
     /// <param name="output">The stream that receives the .xlsx content.</param>
-    /// <param name="uiCulture">The culture for headers and the date in the "left on" marker.</param>
+    /// <param name="uiCulture">The culture for the language of headers and markers and for the date in the "left on" marker.</param>
+    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Resolved from DI as an instance, like the other exporters' collaborators.")]
     public void Write(SubjectOverviewTable table, Stream output, CultureInfo uiCulture)
     {
         using var workbook = new XLWorkbook();
@@ -61,14 +54,14 @@ public sealed class SubjectOverviewExcelWriter
                 {
                     if (row.IsFinalGradeOverridden)
                     {
-                        SetText(cell, OverriddenText);
+                        SetText(cell, TextResources.Get("Export_Overview_Overridden_Yes", uiCulture));
                     }
                 }
                 else if (value.Text is { } text)
                 {
                     if (c == 0 && row.LeftOn is { } leftOn)
                     {
-                        text = string.Format(uiCulture, _leftStudentFormat, text, leftOn);
+                        text = string.Format(uiCulture, TextResources.Get("Export_Overview_LeftStudent_Format", uiCulture), text, leftOn);
                     }
 
                     SetText(cell, text);
@@ -100,14 +93,15 @@ public sealed class SubjectOverviewExcelWriter
         cell.Value = (XLCellValue)text;
     }
 
-    private string HeaderFor(SubjectOverviewColumn column, CultureInfo uiCulture) => column.Kind switch
+    private static string HeaderFor(SubjectOverviewColumn column, CultureInfo uiCulture) => column.Kind switch
     {
-        SubjectOverviewColumnKind.Student => StudentHeader,
-        SubjectOverviewColumnKind.BucketGrades => string.Format(uiCulture, _bucketGradesHeaderFormat, column.BucketName),
-        SubjectOverviewColumnKind.BucketAverage => string.Format(uiCulture, _bucketAverageHeaderFormat, column.BucketName),
-        SubjectOverviewColumnKind.SubjectAverage => SubjectAverageHeader,
-        SubjectOverviewColumnKind.FinalGrade => FinalGradeHeader,
-        SubjectOverviewColumnKind.FinalGradeOverridden => FinalGradeOverriddenHeader,
+        SubjectOverviewColumnKind.Student => TextResources.Get("Export_Overview_Student_Header", uiCulture),
+        SubjectOverviewColumnKind.BucketGrades => column.BucketName ?? string.Empty,
+        SubjectOverviewColumnKind.BucketAverage => string.Format(
+            uiCulture, TextResources.Get("Export_Overview_BucketAverage_Header_Format", uiCulture), column.BucketName),
+        SubjectOverviewColumnKind.SubjectAverage => TextResources.Get("Export_Overview_SubjectAverage_Header", uiCulture),
+        SubjectOverviewColumnKind.FinalGrade => TextResources.Get("Export_Overview_FinalGrade_Header", uiCulture),
+        SubjectOverviewColumnKind.FinalGradeOverridden => TextResources.Get("Export_Overview_FinalGradeOverridden_Header", uiCulture),
         _ => throw new ArgumentOutOfRangeException(nameof(column), column.Kind, "Unknown column kind."),
     };
 }

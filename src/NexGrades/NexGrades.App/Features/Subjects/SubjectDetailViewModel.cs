@@ -1,8 +1,8 @@
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Services;
 using Wpf.Ui;
@@ -24,7 +24,7 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
     private string _loadedName = string.Empty;
     private string _loadedShortCode = string.Empty;
 
-    [ObservableProperty] private string _title = "Add subject";
+    [ObservableProperty] private string _title = TextResources.Text("Subjects_DetailPage_Add_Title");
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _shortCode = string.Empty;
 
@@ -59,7 +59,7 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
         var subject = await subjectService.FindSubjectAsync(id);
         if (subject is null)
         {
-            snackbar.Show("Error", "The subject could not be found. It may have been removed.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Error"), TextResources.Text("Subjects_DetailPage_NotFound"), ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
             return;
         }
 
@@ -74,7 +74,7 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
         _loadedShortCode = shortCode.Trim();
         Name = name;
         ShortCode = shortCode;
-        Title = subjectId is null ? "Add subject" : "Edit subject";
+        Title = TextResources.Text(subjectId is null ? "Subjects_DetailPage_Add_Title" : "Subjects_DetailPage_Edit_Title");
         OnPropertyChanged(nameof(IsEditing));
     }
 
@@ -92,13 +92,13 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
     {
         if (Name.Trim().Length > MaxNameLength)
         {
-            ShowError(string.Format(CultureInfo.CurrentCulture, "The subject name can be at most {0} characters.", MaxNameLength));
+            ShowError(TextResources.Format("Subjects_DetailPage_Name_TooLong_Format", MaxNameLength));
             return;
         }
 
         if (ShortCode.Trim().Length > MaxShortCodeLength)
         {
-            ShowError(string.Format(CultureInfo.CurrentCulture, "The short code can be at most {0} characters.", MaxShortCodeLength));
+            ShowError(TextResources.Format("Subjects_DetailPage_ShortCode_TooLong_Format", MaxShortCodeLength));
             return;
         }
 
@@ -115,18 +115,15 @@ public partial class SubjectDetailViewModel(INavigationService navigation, ISnac
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            ShowError(string.Format(
-                CultureInfo.CurrentCulture,
-                "The subject could not be saved. Enter a name of up to {0} characters and a short code of up to {1} characters.",
-                SubjectService.MaxNameLength,
-                SubjectService.MaxShortCodeLength));
+            ShowError(TextResources.Format(
+                "Subjects_DetailPage_Save_Failed_Format", SubjectService.MaxNameLength, SubjectService.MaxShortCodeLength));
             return;
         }
 
-        snackbar.Show("Success", "Subject has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Success"), TextResources.Text("Subjects_DetailPage_Saved"), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
         _leaveGuard.LeaveWithoutPrompt(navigation.GoBack);
     }
 
     private void ShowError(string message) =>
-        snackbar.Show("Error", message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Error"), message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
 }

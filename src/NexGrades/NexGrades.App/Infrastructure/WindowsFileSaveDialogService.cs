@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using NexGrades.App.Localization;
 
 namespace NexGrades.App.Infrastructure;
 
@@ -15,7 +16,7 @@ public sealed class WindowsFileSaveDialogService : IFileSaveDialogService
             DefaultExt = ".xlsx",
             AddExtension = true,
             OverwritePrompt = true,
-            Filter = "Excel workbook (*.xlsx)|*.xlsx",
+            Filter = TextResources.Text("Infrastructure_SaveDialog_ExcelFilter"),
         };
 
         return dialog.ShowDialog() == true ? dialog.FileName : null;

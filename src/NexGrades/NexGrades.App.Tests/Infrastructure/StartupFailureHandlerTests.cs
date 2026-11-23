@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.App.Tests.TestSupport;
 
 namespace NexGrades.App.Tests.Infrastructure;
@@ -128,7 +129,7 @@ public sealed class StartupFailureHandlerTests
         harness.Handler.Handle(_failure, () => null, () => null, () => logDirectory);
 
         var message = Assert.Single(harness.Dialog.Messages);
-        Assert.Equal(StartupFailureHandler.MessageWithoutLogFolder, message);
+        Assert.Equal(TextResources.Text("Infrastructure_Startup_Failed"), message);
         Assert.DoesNotContain(SecretText, message, StringComparison.Ordinal);
     }
 
@@ -144,7 +145,7 @@ public sealed class StartupFailureHandlerTests
             () => throw new InvalidOperationException("no paths")));
 
         Assert.Null(ex);
-        Assert.Equal([StartupFailureHandler.MessageWithoutLogFolder], harness.Dialog.Messages);
+        Assert.Equal([TextResources.Text("Infrastructure_Startup_Failed")], harness.Dialog.Messages);
         Assert.Equal([1], harness.ExitCodes);
     }
 

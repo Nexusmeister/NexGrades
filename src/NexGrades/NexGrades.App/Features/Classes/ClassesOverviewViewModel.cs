@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
+using NexGrades.App.Localization;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
 using Wpf.Ui;
@@ -32,7 +33,7 @@ public partial class ClassesOverviewViewModel(
     {
         if (SelectedClass is null)
         {
-            snackbarService.Show("", "Please select a class to edit.", ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info32), TimeSpan.FromSeconds(5));
+            snackbarService.Show(TextResources.Text("Common_Info"), TextResources.Text("Classes_Overview_SelectToEdit"), ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info32), TimeSpan.FromSeconds(5));
             return;
         }
 

@@ -14,4 +14,5 @@
   <data name="Shell_UpdateNotice_A11y" xml:space="preserve"><value>Update ready</value></data>
   <data name="Shell_UpdateNotice_Restart" xml:space="preserve"><value>Restart now</value></data>
   <data name="Shell_UpdateNotice_Restart_Tooltip" xml:space="preserve"><value>Close NexGrades, install the update and start it again</value></data>
+  <data name="Shell_UpdateNotice_Ready_Format" xml:space="preserve"><value>Version {0} will be installed when you close NexGrades.</value><comment>{0} is the version number of the downloaded update.</comment></data>
 </root>

@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Text;
 using Microsoft.Extensions.Logging;
+using NexGrades.App.Localization;
 
 namespace NexGrades.App.Infrastructure;
 
@@ -17,41 +16,6 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
 {
     /// <summary>The exit code of a process whose start failed.</summary>
     public const int FailureExitCode = 1;
-
-    /// <summary>Dialog text when the log folder is known.</summary>
-    public const string MessageWithLogFolderFormat =
-        "NexGrades could not start. Check that its data folder is writable.\n\nDetails were written to the log folder:\n{0}";
-
-    private static readonly CompositeFormat _withLogFolder = CompositeFormat.Parse(MessageWithLogFolderFormat);
-
-    /// <summary>Dialog text when no log folder is known.</summary>
-    public const string MessageWithoutLogFolder =
-        "NexGrades could not start. Check that its data folder is writable.";
-
-    /// <summary>Dialog text when the backup before a migration failed and the log folder is known.</summary>
-    public const string BackupFailedWithLogFolderFormat =
-        "NexGrades could not back up your data before updating the database, so the update was not applied and your data is unchanged. Check that the backup folder is writable and that the disk has enough free space.\n\nDetails were written to the log folder:\n{0}";
-
-    private static readonly CompositeFormat _backupFailedWithLogFolder = CompositeFormat.Parse(BackupFailedWithLogFolderFormat);
-
-    /// <summary>Dialog text when the backup before a migration failed and no log folder is known.</summary>
-    public const string BackupFailedWithoutLogFolder =
-        "NexGrades could not back up your data before updating the database, so the update was not applied and your data is unchanged. Check that the backup folder is writable and that the disk has enough free space.";
-
-    /// <summary>
-    /// Dialog text when the migration failed after a backup and the log folder is known. <c>{0}</c> is the backup file,
-    /// <c>{1}</c> the log folder.
-    /// </summary>
-    public const string MigrationFailedWithLogFolderFormat =
-        "NexGrades could not update its database. Your data was backed up before the update to:\n{0}\n\nDetails were written to the log folder:\n{1}";
-
-    private static readonly CompositeFormat _migrationFailedWithLogFolder = CompositeFormat.Parse(MigrationFailedWithLogFolderFormat);
-
-    /// <summary>Dialog text when the migration failed after a backup and no log folder is known. <c>{0}</c> is the backup file.</summary>
-    public const string MigrationFailedWithoutLogFolderFormat =
-        "NexGrades could not update its database. Your data was backed up before the update to:\n{0}";
-
-    private static readonly CompositeFormat _migrationFailedWithoutLogFolder = CompositeFormat.Parse(MigrationFailedWithoutLogFolderFormat);
 
     /// <summary>
     /// Logs <paramref name="exception"/>, shows the error dialog once and exits with <see cref="FailureExitCode"/>.
@@ -130,7 +94,8 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
     /// <summary>
     /// The dialog text for <paramref name="exception"/>: a failed pre-migration backup and a failed migration after a
     /// backup get their own text, every other failure the generic one. The log folder is mentioned when it is known.
-    /// Exception text is never part of it.
+    /// Exception text is never part of it. The text comes straight from <see cref="TextResources"/>, which needs no
+    /// host, so it works when host creation itself failed.
     /// </summary>
     /// <param name="exception">The startup failure; only its type and, after a backup, the backup path are used.</param>
     /// <param name="logDirectory">The log folder, or <see langword="null"/> when no file log exists.</param>
@@ -143,14 +108,14 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
         return exception switch
         {
             DatabaseBackupFailedException => hasLogFolder
-                ? string.Format(CultureInfo.CurrentCulture, _backupFailedWithLogFolder, logDirectory)
-                : BackupFailedWithoutLogFolder,
+                ? TextResources.Format("Infrastructure_Startup_BackupFailed_WithLogFolder_Format", logDirectory)
+                : TextResources.Text("Infrastructure_Startup_BackupFailed"),
             DatabaseMigrationFailedException migrationFailed => hasLogFolder
-                ? string.Format(CultureInfo.CurrentCulture, _migrationFailedWithLogFolder, migrationFailed.BackupFilePath, logDirectory)
-                : string.Format(CultureInfo.CurrentCulture, _migrationFailedWithoutLogFolder, migrationFailed.BackupFilePath),
+                ? TextResources.Format("Infrastructure_Startup_MigrationFailed_WithLogFolder_Format", migrationFailed.BackupFilePath, logDirectory)
+                : TextResources.Format("Infrastructure_Startup_MigrationFailed_Format", migrationFailed.BackupFilePath),
             _ => hasLogFolder
-                ? string.Format(CultureInfo.CurrentCulture, _withLogFolder, logDirectory)
-                : MessageWithoutLogFolder,
+                ? TextResources.Format("Infrastructure_Startup_Failed_WithLogFolder_Format", logDirectory)
+                : TextResources.Text("Infrastructure_Startup_Failed"),
         };
     }
 

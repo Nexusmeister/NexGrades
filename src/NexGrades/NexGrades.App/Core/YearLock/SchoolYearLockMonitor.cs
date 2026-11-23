@@ -1,6 +1,7 @@
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Services;
 using NexGrades.Domain.Time;
 using Wpf.Ui;
@@ -239,8 +240,8 @@ public sealed partial class SchoolYearLockMonitor
             if (announce)
             {
                 _snackbar.Show(
-                    "Unlock ended",
-                    "The unlock of a closed school year has ended. It is read-only again.",
+                    TextResources.Text("Core_YearLock_UnlockEnded_Title"),
+                    TextResources.Text("Core_YearLock_UnlockEnded_Message"),
                     ControlAppearance.Caution,
                     new SymbolIcon(SymbolRegular.LockClosed24),
                     TimeSpan.FromSeconds(8));

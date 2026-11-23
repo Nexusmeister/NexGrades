@@ -531,7 +531,7 @@ public partial class StudentViewModel(
                 return;
             }
 
-            var path = fileSaveDialog.SelectSaveFile(NoteExporter.SuggestFileName(table));
+            var path = fileSaveDialog.SelectSaveFile(NoteExporter.SuggestFileName(table, CultureInfo.CurrentUICulture));
             if (path is null)
             {
                 return;

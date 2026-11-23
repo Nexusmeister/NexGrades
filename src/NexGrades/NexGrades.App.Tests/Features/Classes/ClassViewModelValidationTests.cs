@@ -1,3 +1,4 @@
+using System.Globalization;
 using NexGrades.App.Features.Classes;
 using NexGrades.App.Tests.TestSupport;
 using NexGrades.Data;
@@ -58,6 +59,30 @@ public class ClassViewModelValidationTests
         using var env = new LockTestEnvironment(Now);
 
         Assert.Equal(ClassService.MaxNameLength, Create(env).MaxNameLength);
+    }
+
+    [Fact]
+    public void ClassValidationMessage_IsGerman_ForGermanUiCulture()
+    {
+        var previous = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("de-DE");
+        try
+        {
+            using var env = new LockTestEnvironment(Now);
+            var viewModel = Create(env);
+
+            Assert.Equal("Geben Sie einen Klassennamen ein.", viewModel.ClassValidationMessage);
+
+            viewModel.Name = new string('a', ClassService.MaxNameLength + 1);
+
+            Assert.Equal(
+                string.Format(CultureInfo.CurrentCulture, "Der Klassenname darf höchstens {0} Zeichen lang sein.", ClassService.MaxNameLength),
+                viewModel.ClassValidationMessage);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = previous;
+        }
     }
 
     [Fact]

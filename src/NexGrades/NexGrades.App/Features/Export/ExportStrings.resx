@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Export_Overview_Student_Header" xml:space="preserve"><value>Student</value></data>
+  <data name="Export_Overview_BucketAverage_Header_Format" xml:space="preserve"><value>{0} average</value><comment>{0} is the name of the grade category.</comment></data>
+  <data name="Export_Overview_SubjectAverage_Header" xml:space="preserve"><value>Subject average</value></data>
+  <data name="Export_Overview_FinalGrade_Header" xml:space="preserve"><value>Final grade</value></data>
+  <data name="Export_Overview_FinalGradeOverridden_Header" xml:space="preserve"><value>Final grade set by teacher</value></data>
+  <data name="Export_Overview_Overridden_Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Export_Overview_LeftStudent_Format" xml:space="preserve"><value>{0} (left on {1:d})</value><comment>{0} is the student name; {1} is the date the student left the class.</comment></data>
+  <data name="Export_Notes_SheetName" xml:space="preserve"><value>Notes</value></data>
+  <data name="Export_Notes_Student_Label" xml:space="preserve"><value>Student</value></data>
+  <data name="Export_Notes_Range_Label" xml:space="preserve"><value>Date range</value></data>
+  <data name="Export_Notes_Exported_Label" xml:space="preserve"><value>Exported on</value></data>
+  <data name="Export_Notes_Date_Header" xml:space="preserve"><value>Date</value></data>
+  <data name="Export_Notes_SchoolYear_Header" xml:space="preserve"><value>School year</value></data>
+  <data name="Export_Notes_Class_Header" xml:space="preserve"><value>Class</value></data>
+  <data name="Export_Notes_Category_Header" xml:space="preserve"><value>Category</value></data>
+  <data name="Export_Notes_Note_Header" xml:space="preserve"><value>Note</value></data>
+  <data name="Export_Notes_LastEdited_Header" xml:space="preserve"><value>Last edited</value></data>
+  <data name="Export_Notes_Archived_Header" xml:space="preserve"><value>Archived on</value></data>
+  <data name="Export_Notes_FileName_Format" xml:space="preserve"><value>Notes {0} {1} {2}–{3}</value><comment>{0} is the student's last name; {1} the first name; {2} the first day and {3} the last day of the range as yyyy-MM-dd.</comment></data>
+</root>

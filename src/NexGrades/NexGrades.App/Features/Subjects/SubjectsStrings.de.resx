@@ -16,4 +16,11 @@
   <data name="Subjects_DetailPage_Name_Header" xml:space="preserve"><value>Fachname</value></data>
   <data name="Subjects_DetailPage_ShortCode_Header" xml:space="preserve"><value>Kürzel</value></data>
   <data name="Subjects_DetailPage_ShortCode_Placeholder" xml:space="preserve"><value>Kürzel (z. B. MA)</value></data>
+  <data name="Subjects_DetailPage_Add_Title" xml:space="preserve"><value>Fach hinzufügen</value></data>
+  <data name="Subjects_DetailPage_Edit_Title" xml:space="preserve"><value>Fach bearbeiten</value></data>
+  <data name="Subjects_DetailPage_NotFound" xml:space="preserve"><value>Das Fach wurde nicht gefunden. Möglicherweise wurde es entfernt.</value></data>
+  <data name="Subjects_DetailPage_Name_TooLong_Format" xml:space="preserve"><value>Der Fachname darf höchstens {0} Zeichen lang sein.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Subjects_DetailPage_ShortCode_TooLong_Format" xml:space="preserve"><value>Das Kürzel darf höchstens {0} Zeichen lang sein.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Subjects_DetailPage_Save_Failed_Format" xml:space="preserve"><value>Das Fach konnte nicht gespeichert werden. Geben Sie einen Namen mit bis zu {0} Zeichen und ein Kürzel mit bis zu {1} Zeichen ein.</value><comment>{0} is the maximum length of the subject name; {1} is the maximum length of the short code.</comment></data>
+  <data name="Subjects_DetailPage_Saved" xml:space="preserve"><value>Das Fach wurde gespeichert.</value></data>
 </root>

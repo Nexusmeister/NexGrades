@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Services;
 using NexGrades.Domain.Time;
@@ -96,7 +98,7 @@ public sealed partial class YearLockViewModel : ObservableObject
 
     /// <summary>Tells the user when the year was closed, as one translatable sentence; empty when unknown.</summary>
     public string ClosedOnMessage =>
-        State?.ClosedOn is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, "Closed on {0}", ClosedOnText);
+        State?.ClosedOn is null ? string.Empty : TextResources.Format("Core_YearLock_ClosedOn_Format", ClosedOnText);
 
     /// <summary>When the unlock ends, formatted for the current culture; empty when the year is not unlocked.</summary>
     public string UnlockedUntilText =>
@@ -106,15 +108,11 @@ public sealed partial class YearLockViewModel : ObservableObject
     public string UnlockReason => IsUnlocked ? State?.UnlockReason ?? string.Empty : string.Empty;
 
     /// <summary>Explains a locked year to the user.</summary>
-    public string LockedMessage { get; } =
-        "This school year is closed and read-only. Unlock it to make corrections; every change is recorded in the audit log.";
+    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound from XAML, which needs an instance property.")]
+    public string LockedMessage => TextResources.Text("Core_YearLock_Locked_Message");
 
     /// <summary>Explains an unlocked year to the user, with the time the unlock ends.</summary>
-    public string UnlockedMessage =>
-        string.Format(
-            CultureInfo.CurrentCulture,
-            "This school year is closed but unlocked until {0}. Every change is recorded in the audit log.",
-            UnlockedUntilText);
+    public string UnlockedMessage => TextResources.Format("Core_YearLock_Unlocked_Message_Format", UnlockedUntilText);
 
     /// <summary>
     /// Follows another school year: clears the shown state at once, so the previous year's is never shown for the
@@ -151,7 +149,7 @@ public sealed partial class YearLockViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            ShowError("The school year state could not be refreshed.");
+            ShowError(TextResources.Text("Core_YearLock_Refresh_Failed"));
         }
     }
 
@@ -177,22 +175,18 @@ public sealed partial class YearLockViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            ShowError("The school year could not be unlocked. Try again.");
+            ShowError(TextResources.Text("Core_YearLock_Unlock_Failed"));
             return;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // The monitor reads the state again after unlocking; that read can fail although the unlock went through.
             LogLockChangeFailed(ex);
-            ShowError("The school year could not be unlocked, or its state could not be read afterwards. Check the school year and try again.");
+            ShowError(TextResources.Text("Core_YearLock_Unlock_StateFailed"));
             return;
         }
 
-        ShowSuccess(string.Format(
-            CultureInfo.CurrentCulture,
-            "{0} is unlocked until {1}.",
-            label,
-            request.Until.ToString("g", CultureInfo.CurrentCulture)));
+        ShowSuccess(TextResources.Format("Core_YearLock_Unlock_Success_Format", label, request.Until.ToString("g", CultureInfo.CurrentCulture)));
     }
 
     /// <summary>Locks the year again at once.</summary>
@@ -211,18 +205,18 @@ public sealed partial class YearLockViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            ShowError("The school year could not be locked again. Try again.");
+            ShowError(TextResources.Text("Core_YearLock_Relock_Failed"));
             return;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // The monitor reads the state again after locking; that read can fail although the lock went through.
             LogLockChangeFailed(ex);
-            ShowError("The school year could not be locked again, or its state could not be read afterwards. Check the school year and try again.");
+            ShowError(TextResources.Text("Core_YearLock_Relock_StateFailed"));
             return;
         }
 
-        ShowSuccess(string.Format(CultureInfo.CurrentCulture, "{0} is locked again.", label));
+        ShowSuccess(TextResources.Format("Core_YearLock_Relock_Success_Format", label));
     }
 
     private void OnStateChanged(SchoolYearLockState state)
@@ -264,10 +258,10 @@ public sealed partial class YearLockViewModel : ObservableObject
     }
 
     private void ShowSuccess(string message) =>
-        _snackbar.Show("Success", message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        _snackbar.Show(TextResources.Text("Common_Success"), message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
 
     private void ShowError(string message) =>
-        _snackbar.Show("Error", message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+        _snackbar.Show(TextResources.Text("Common_Error"), message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Changing the lock state of a school year failed unexpectedly.")]
     private partial void LogLockChangeFailed(Exception exception);

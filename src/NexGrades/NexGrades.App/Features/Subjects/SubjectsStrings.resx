@@ -16,4 +16,11 @@
   <data name="Subjects_DetailPage_Name_Header" xml:space="preserve"><value>Subject name</value></data>
   <data name="Subjects_DetailPage_ShortCode_Header" xml:space="preserve"><value>Short code</value></data>
   <data name="Subjects_DetailPage_ShortCode_Placeholder" xml:space="preserve"><value>Short code (e.g. MA)</value></data>
+  <data name="Subjects_DetailPage_Add_Title" xml:space="preserve"><value>Add subject</value></data>
+  <data name="Subjects_DetailPage_Edit_Title" xml:space="preserve"><value>Edit subject</value></data>
+  <data name="Subjects_DetailPage_NotFound" xml:space="preserve"><value>The subject could not be found. It may have been removed.</value></data>
+  <data name="Subjects_DetailPage_Name_TooLong_Format" xml:space="preserve"><value>The subject name can be at most {0} characters.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Subjects_DetailPage_ShortCode_TooLong_Format" xml:space="preserve"><value>The short code can be at most {0} characters.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Subjects_DetailPage_Save_Failed_Format" xml:space="preserve"><value>The subject could not be saved. Enter a name of up to {0} characters and a short code of up to {1} characters.</value><comment>{0} is the maximum length of the subject name; {1} is the maximum length of the short code.</comment></data>
+  <data name="Subjects_DetailPage_Saved" xml:space="preserve"><value>Subject has been saved.</value></data>
 </root>

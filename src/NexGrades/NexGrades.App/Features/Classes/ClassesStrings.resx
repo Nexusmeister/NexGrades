@@ -27,4 +27,17 @@
   <data name="Classes_ClassPage_Grades_Tooltip" xml:space="preserve"><value>Open the grade sheet of this subject</value></data>
   <data name="Classes_ClassPage_Export" xml:space="preserve"><value>Export to Excel</value></data>
   <data name="Classes_ClassPage_Export_Tooltip" xml:space="preserve"><value>Export the overview of this subject to an Excel file</value></data>
+  <data name="Classes_ClassPage_Add_Title" xml:space="preserve"><value>Add class</value></data>
+  <data name="Classes_ClassPage_Edit_Title" xml:space="preserve"><value>Edit class</value></data>
+  <data name="Classes_ClassPage_Name_Required" xml:space="preserve"><value>Enter a class name.</value></data>
+  <data name="Classes_ClassPage_Name_TooLong_Format" xml:space="preserve"><value>The class name can be at most {0} characters.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Classes_ClassPage_Export_Success_Format" xml:space="preserve"><value>Exported {0}.</value><comment>{0} is the name of the saved file.</comment></data>
+  <data name="Classes_ClassPage_Export_SaveFailed" xml:space="preserve"><value>The export could not be saved. Check that the file is not open and that you may write to the folder.</value></data>
+  <data name="Classes_ClassPage_Export_CreateFailed" xml:space="preserve"><value>The export could not be created. Check that the subject still exists and try again.</value></data>
+  <data name="Classes_ClassPage_Create_ClosedYear" xml:space="preserve"><value>The class could not be created because the school year is closed.</value></data>
+  <data name="Classes_ClassPage_Rename_ClosedYear" xml:space="preserve"><value>The class could not be renamed because its school year is closed.</value></data>
+  <data name="Classes_ClassPage_Create_Failed_Format" xml:space="preserve"><value>The class could not be created. Enter a name of at most {0} characters and make sure there is an active school year.</value><comment>{0} is the maximum number of characters of a class name.</comment></data>
+  <data name="Classes_ClassPage_Rename_Failed_Format" xml:space="preserve"><value>The class could not be renamed. Enter a name of at most {0} characters, and check that the class has not been rolled forward or archived.</value><comment>{0} is the maximum number of characters of a class name.</comment></data>
+  <data name="Classes_ClassPage_Saved" xml:space="preserve"><value>Class has been saved.</value></data>
+  <data name="Classes_Overview_SelectToEdit" xml:space="preserve"><value>Please select a class to edit.</value></data>
 </root>
