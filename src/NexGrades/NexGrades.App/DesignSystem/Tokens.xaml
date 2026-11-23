@@ -1,0 +1,39 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- Design tokens: values only, no styles. Keys start with "Ng.". Add a token here before using a new literal in a view. -->
+
+    <!-- Spacing scale (multiples of 4) -->
+    <sys:Double x:Key="Ng.Space.XS">4</sys:Double>
+    <sys:Double x:Key="Ng.Space.S">8</sys:Double>
+    <sys:Double x:Key="Ng.Space.M">16</sys:Double>
+    <sys:Double x:Key="Ng.Space.L">24</sys:Double>
+    <sys:Double x:Key="Ng.Space.XL">32</sys:Double>
+
+    <!-- Margins -->
+    <Thickness x:Key="Ng.Margin.Page">24</Thickness>
+    <Thickness x:Key="Ng.Margin.ActionBar">0,16,0,8</Thickness>
+    <Thickness x:Key="Ng.Margin.ActionItem">0,0,8,8</Thickness>
+    <Thickness x:Key="Ng.Margin.Block">0,0,0,16</Thickness>
+    <Thickness x:Key="Ng.Margin.Section">0,0,0,24</Thickness>
+    <Thickness x:Key="Ng.Margin.Related">0,0,0,8</Thickness>
+    <Thickness x:Key="Ng.Margin.Tight">0,0,0,4</Thickness>
+    <Thickness x:Key="Ng.Margin.InlineGap">0,0,8,0</Thickness>
+    <Thickness x:Key="Ng.Margin.ColumnStart">16,0,0,0</Thickness>
+
+    <!-- Paddings -->
+    <Thickness x:Key="Ng.Padding.Card">16</Thickness>
+    <Thickness x:Key="Ng.Padding.Cell">8,4</Thickness>
+
+    <!-- Shape and sizes -->
+    <CornerRadius x:Key="Ng.Radius.Control">4</CornerRadius>
+    <sys:Double x:Key="Ng.Size.RowHeight">32</sys:Double>
+    <sys:Double x:Key="Ng.Size.FormMaxWidth">480</sys:Double>
+    <sys:Double x:Key="Ng.Size.TileWidth">320</sys:Double>
+    <sys:Double x:Key="Ng.Size.MultilineMinHeight">72</sys:Double>
+    <sys:Double x:Key="Ng.Size.MultilineMaxHeight">120</sys:Double>
+
+    <!-- Same face as WPF-UI's ContentControlThemeFontFamily; a token so views never repeat the name. -->
+    <FontFamily x:Key="Ng.FontFamily">Segoe UI Variable Text, Segoe UI</FontFamily>
+</ResourceDictionary>

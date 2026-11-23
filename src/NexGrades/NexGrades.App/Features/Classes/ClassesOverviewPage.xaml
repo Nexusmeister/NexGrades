@@ -17,35 +17,52 @@
         </interactivity:EventTrigger>
     </interactivity:Interaction.Triggers>
 
-        <StackPanel Orientation="Vertical">
-        <ui:TextBlock 
-            Text="Classes" 
-            Appearance="Secondary"
-            FontTypography="Title" 
-            Margin="5,0,0,0"></ui:TextBlock>
-        <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
-            <ui:Button Margin="0,0,5,0" Content="Add class" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddClassCommand}"/>
-            <ui:Button Margin="0,0,5,0" Content="Edit class" Icon="{ui:SymbolIcon Edit32}" Command="{Binding ViewModel.EditClassCommand}"/>
-        </StackPanel>
-        <!--<ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
-            <ui:DropDownButton.Flyout>
-                <ContextMenu>
-                    <MenuItem Header="2024/25" />
-                    <MenuItem Header="2025/26" />
-                    <MenuItem Header="Send" />
-                    <MenuItem Header="Hello" />
-                </ContextMenu>
-            </ui:DropDownButton.Flyout>
-        </ui:DropDownButton>-->
-        <ui:DataGrid ItemsSource="{Binding ViewModel.Classes}" 
-                     SelectionMode="Single"
-                     AutoGenerateColumns="False"
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Style="{StaticResource Ng.PageRoot}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <HeaderedContentControl Grid.Row="0"
+                                Header="Classes"
+                                Style="{StaticResource Ng.PageHeader}" />
+
+        <WrapPanel Grid.Row="1" Style="{StaticResource Ng.ActionBar}">
+            <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}" Appearance="Primary"
+                       Content="Add class"
+                       Icon="{ui:SymbolIcon Add24}"
+                       Command="{Binding ViewModel.AddClassCommand}" />
+            <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                       Content="Edit class"
+                       Icon="{ui:SymbolIcon Edit24}"
+                       Command="{Binding ViewModel.EditClassCommand}" />
+        </WrapPanel>
+
+        <ContentControl Grid.Row="2"
+                        Content="No classes yet. Use Add class to create one."
+                        Tag="{Binding ViewModel.Classes}"
+                        Style="{StaticResource Ng.EmptyState.WhenNoItems}" />
+
+        <ui:DataGrid Grid.Row="3"
+                     Style="{StaticResource Ng.DataGrid}"
+                     ItemsSource="{Binding ViewModel.Classes}"
                      SelectedItem="{Binding ViewModel.SelectedClass}">
             <ui:DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
-                <DataGridTextColumn Header="Cohort" Binding="{Binding CohortLabel}"/>
-                <DataGridTextColumn Header="Students" Binding="{Binding StudentCount}"/>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
+                <DataGridTextColumn Header="Cohort" Binding="{Binding CohortLabel}" />
+                <DataGridTextColumn Header="Students" Binding="{Binding StudentCount}"
+                                    ElementStyle="{StaticResource Ng.DataGridText.Numeric}" />
             </ui:DataGrid.Columns>
         </ui:DataGrid>
-    </StackPanel>
+    </Grid>
 </Page>
