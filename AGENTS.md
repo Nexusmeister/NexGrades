@@ -229,9 +229,8 @@ particular:
   `PackageReference` items in `.csproj` files carry no `Version`. Do not remove or downgrade the
   `SQLitePCLRaw.bundle_e_sqlite3` pin (security advisory, see the comment there).
 - **Package audit:** NuGet audit is on (`NuGetAuditMode=all`), and its warnings (NU1901-NU1904) are never
-  suppressed. Fix a vulnerable transitive package by pinning a patched version in `Directory.Packages.props`;
-  `CentralPackageTransitivePinningEnabled` is on for this (see the `SQLitePCLRaw.bundle_e_sqlite3` pin, which raises a
-  package that EF Core pulls in transitively). `nuget.config` maps
+  suppressed. Fix a vulnerable transitive package by adding a `PackageVersion` for it, without a `PackageReference`,
+  in `Directory.Packages.props`; `CentralPackageTransitivePinningEnabled` makes that version apply. `nuget.config` maps
   packages to sources, so a new feed needs a `packageSourceMapping` entry.
 - **Domain services:** `sealed` classes with primary constructors, async methods taking a
   `CancellationToken cancellationToken = default`. Violated business rules throw
