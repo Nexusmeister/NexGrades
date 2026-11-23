@@ -126,10 +126,10 @@ the `Loaded` → `InvokeCommandAction` trigger used in `ClassesOverviewPage.xaml
 
 - Choose the lifetime from step 1 and register the pair with it. For an overview, use `AddSingleton` for both.
   For an add, edit or detail page, use `AddTransient` for both.
-- In `AddViews`, add the page: `.AddSingleton<<Name>Page>()` or `.AddTransient<<Name>Page>()`.
-- In `AddViewModels`, add the view model with the same lifetime: `.AddSingleton<<Name>ViewModel>()` or
-  `.AddTransient<<Name>ViewModel>()`.
-- Register any new Domain service in `AddGradeServices`.
+- In `AddFeatures`, register the page and its view model together, under the feature's folder block, with the
+  same lifetime: `services.AddSingleton<<Name>Page>()` and `services.AddSingleton<<Name>ViewModel>()`, or
+  `AddTransient` for both.
+- Register any new Domain service in `AddDomain`, with `AddTransient` like the other services there.
 
 ## 4. Wire up navigation
 

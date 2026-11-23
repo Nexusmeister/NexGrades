@@ -8,7 +8,7 @@ using Microsoft.Extensions.Hosting;
 using NexGrades.App.Extensions;
 using NexGrades.App.Features.Grades;
 using NexGrades.App.Logging;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 using Wpf.Ui.Markup;
 
 namespace NexGrades.App.Tests;
@@ -46,7 +46,7 @@ public class GradeSheetColumnHeaderTemplateTests
             });
             using var logFolder = new TempFolder();
             builder.AddAppLogging(new AppDataPaths(logFolder.Path));
-            builder.Services.AddGradeServices().AddFrontendServices();
+            builder.Services.AddShell().AddDomain().AddFeatures();
             builder.AddDatabase();
             using var host = builder.Build();
 

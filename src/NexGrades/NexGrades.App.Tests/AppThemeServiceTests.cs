@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Storage;
 using NexGrades.App.Theming;
 
 namespace NexGrades.App.Tests;
@@ -59,7 +60,7 @@ public sealed class AppThemeServiceTests : IDisposable
     [Fact]
     public async Task InitializeAsync_FallsBackToSystem_WhenFileHoldsNumericValueOutsideTheEnum()
     {
-        var paths = new NexGrades.Common.Storage.AppDataPaths(Path.Combine(_folder.Path, "data"));
+        var paths = new AppDataPaths(Path.Combine(_folder.Path, "data"));
         using var store = new JsonUserSettingsStore(paths, new CapturingLogger<JsonUserSettingsStore>());
         _ = Directory.CreateDirectory(paths.DataDirectory);
         await File.WriteAllTextAsync(paths.SettingsFilePath, "{\"theme\": 99}");

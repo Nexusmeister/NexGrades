@@ -17,7 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NexGrades.Common\NexGrades.Common.csproj" />
     <ProjectReference Include="..\NexGrades.Data\NexGrades.Data.csproj" />
     <ProjectReference Include="..\NexGrades.Domain\NexGrades.Domain.csproj" />
   </ItemGroup>

@@ -1,8 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.App.Features.Settings;
 using NexGrades.App.Infrastructure;
-using NexGrades.Common.Services;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 
 namespace NexGrades.App.Tests;
 

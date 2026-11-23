@@ -15,10 +15,9 @@ using NexGrades.App.Features.Students;
 using NexGrades.App.Features.Subjects;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Shell;
+using NexGrades.App.Storage;
 using NexGrades.App.Theming;
 using NexGrades.App.Updates;
-using NexGrades.Common.Services;
-using NexGrades.Common.Storage;
 using NexGrades.Data;
 using NexGrades.Data.Services;
 using NexGrades.Domain.Auditing;
@@ -40,11 +39,12 @@ namespace NexGrades.App.Extensions;
 public static class HostBuilderExtensions
 {
     /// <summary>
-    /// Registers the shell, the domain services, the clock and the dialog and snackbar services. Domain services
-    /// are transient, so each one opens its own short-lived <c>DbContext</c>.
+    /// Registers the shell: the main window and its navigation, the dialog, snackbar and file services, the year
+    /// lock, and the theme and update services. The application host service is registered first, so it stays the
+    /// first hosted service and the main window shows before the update check is scheduled.
     /// </summary>
     /// <param name="services">The service collection to add the registrations to.</param>
-    public static IServiceCollection AddGradeServices(this IServiceCollection services)
+    public static IServiceCollection AddShell(this IServiceCollection services)
     {
         _ = services
             .AddNavigationViewPageProvider()
@@ -52,13 +52,33 @@ public static class HostBuilderExtensions
             .AddSingleton<IThemeService, ThemeService>()
             .AddSingleton<INavigationService, NavigationService>()
             .AddSingleton<INavigationWindow, MainWindow>()
-            .AddSingleton<MainWindowViewModel>();
+            .AddSingleton<MainWindowViewModel>()
+            .AddSingleton<PageNavigator>()
+            .AddSingleton<ISnackbarService, SnackbarService>()
+            .AddSingleton<IContentDialogService, ContentDialogService>();
 
-        // TaskBar manipulation
-        //_ = services.AddSingleton<ITaskBarService, TaskBarService>();
+        services.AddSingleton<IUserService, UserService>();
+        services.AddTransient<IFileSystemDialogService, WindowsFileSystemDialogService>();
+        services.AddSingleton<IFileSaveDialogService, WindowsFileSaveDialogService>();
+        services.AddSingleton<IFolderOpener, ExplorerFolderOpener>();
 
-        // Domain: time, closed-year auditing, and the business services ported from the GradeTracker
-        // architecture spike. IClock is a singleton (see its remarks); the interceptor
+        services.AddSingleton<SchoolYearLockMonitor>();
+        services.AddSingleton<IUnlockYearDialogService, UnlockYearDialogService>();
+        services.AddSingleton<YearLockViewModelFactory>();
+
+        return services
+            .AddThemeServices()
+            .AddUpdateServices();
+    }
+
+    /// <summary>
+    /// Registers the Domain: the clock, the closed-year audit interceptor and the business services. The services are
+    /// transient, so each one opens its own short-lived <c>DbContext</c>.
+    /// </summary>
+    /// <param name="services">The service collection to add the registrations to.</param>
+    public static IServiceCollection AddDomain(this IServiceCollection services)
+    {
+        // IClock is a singleton (see its remarks); the interceptor
         // is also a singleton — EF Core shares one interceptor instance across every DbContext it creates and
         // the interceptor itself is stateless per-context (state lives in a ConditionalWeakTable keyed by
         // DbContext instance).
@@ -78,43 +98,65 @@ public static class HostBuilderExtensions
         services.AddTransient<StudentService>();
         services.AddTransient<SubjectService>();
         services.AddTransient<SubjectOverviewExportService>();
-        services.AddTransient<SubjectOverviewExcelWriter>();
-        services.AddTransient<SubjectOverviewExporter>();
         services.AddTransient<NoteExportService>();
-        services.AddTransient<NoteExcelWriter>();
-        services.AddTransient<NoteExporter>();
-
-        // Configuration
-        //_ = services.Configure<AppConfig>(context.Configuration.GetSection(nameof(AppConfig)));
-
-        services.AddSingleton<IUserService, UserService>();
-        services.AddTransient<IFileSystemDialogService, WindowsFileSystemDialogService>();
-        services.AddSingleton<IFileSaveDialogService, WindowsFileSaveDialogService>();
-        services.AddSingleton<IFolderOpener, ExplorerFolderOpener>();
-        services.AddSingleton<ISnackbarService, SnackbarService>();
-        services.AddSingleton<IContentDialogService, ContentDialogService>();
-        services.AddSingleton<SchoolYearLockMonitor>();
-        services.AddSingleton<IUnlockYearDialogService, UnlockYearDialogService>();
-        services.AddSingleton<IExportNotesDialogService, ExportNotesDialogService>();
-        services.AddSingleton<YearLockViewModelFactory>();
-        services.AddSingleton<ClosedYearsViewModel>();
         return services;
     }
 
     /// <summary>
-    /// Registers the pages and view models. WPF-UI navigation resolves them from the root provider, so they are
-    /// registered here rather than created by hand.
+    /// Registers the pages and view models of every feature folder. WPF-UI navigation resolves them from the root
+    /// provider, so they are registered here rather than created by hand. Lifetime rule: overview roots (Home,
+    /// Classes, Students, Subjects, School year, Settings) are singletons; add/edit/detail pairs are transient so
+    /// every visit starts fresh. Parameters travel through <c>PageNavigator</c>.
     /// </summary>
     /// <param name="services">The service collection to add the registrations to.</param>
-    public static IServiceCollection AddFrontendServices(this IServiceCollection services)
+    public static IServiceCollection AddFeatures(this IServiceCollection services)
     {
-        // Views and ViewModels
-        return services
-            .AddViews()
-            .AddViewModels()
-            .AddUpdateServices()
-            .AddThemeServices();
+        // Home
+        services.AddSingleton<HomePage>();
+        services.AddSingleton<HomeViewModel>();
 
+        // Classes
+        services.AddSingleton<ClassesOverviewPage>();
+        services.AddSingleton<ClassesOverviewViewModel>();
+        services.AddTransient<ClassPage>();
+        services.AddTransient<ClassViewModel>();
+
+        // Students
+        services.AddSingleton<StudentsOverviewPage>();
+        services.AddSingleton<StudentsOverviewViewModel>();
+        services.AddTransient<StudentPage>();
+        services.AddTransient<StudentViewModel>();
+        services.AddTransient<StudentGradesViewModel>();
+        services.AddSingleton<IExportNotesDialogService, ExportNotesDialogService>();
+
+        // Subjects
+        services.AddSingleton<SubjectsOverviewPage>();
+        services.AddSingleton<SubjectsOverviewViewModel>();
+        services.AddTransient<SubjectDetailPage>();
+        services.AddTransient<SubjectDetailViewModel>();
+
+        // Grades
+        services.AddTransient<GradeSheetPage>();
+        services.AddTransient<GradeSheetViewModel>();
+
+        // School years
+        services.AddSingleton<SchoolYearPage>();
+        services.AddSingleton<SchoolYearViewModel>();
+        services.AddSingleton<ClosedYearsViewModel>();
+
+        // Settings
+        services.AddSingleton<SettingsPage>();
+        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<AppearanceSettingsViewModel>();
+        services.AddSingleton<UpdateSettingsViewModel>();
+
+        // Export
+        services.AddTransient<SubjectOverviewExcelWriter>();
+        services.AddTransient<SubjectOverviewExporter>();
+        services.AddTransient<NoteExcelWriter>();
+        services.AddTransient<NoteExporter>();
+
+        return services;
     }
 
     /// <summary>
@@ -164,56 +206,21 @@ public static class HostBuilderExtensions
         return new DatabaseLocation(connection.ToString(), IsOverride: false);
     }
 
-    private static IServiceCollection AddViews(this IServiceCollection services)
-    {
-        return services.AddSingleton<HomePage>()
-            .AddSingleton<ClassesOverviewPage>()
-            .AddSingleton<StudentsOverviewPage>()
-            .AddSingleton<SubjectsOverviewPage>()
-            .AddTransient<StudentPage>()
-            .AddTransient<SubjectDetailPage>()
-            .AddTransient<ClassPage>()
-            .AddTransient<GradeSheetPage>()
-            .AddSingleton<SchoolYearPage>()
-            .AddSingleton<SettingsPage>();
-    }
-
-    private static IServiceCollection AddViewModels(this IServiceCollection services)
-    {
-        // Lifetime rule: overview roots (Home, Classes, Students, Subjects, School year, Settings) are singletons; add/edit/detail
-        // pairs are transient so every visit starts fresh. Parameters travel through PageNavigator.
-        return services
-            .AddSingleton<PageNavigator>()
-            .AddSingleton<HomeViewModel>()
-            .AddSingleton<ClassesOverviewViewModel>()
-            .AddSingleton<StudentsOverviewViewModel>()
-            .AddSingleton<SubjectsOverviewViewModel>()
-            .AddSingleton<SchoolYearViewModel>()
-            .AddSingleton<SettingsViewModel>()
-            .AddTransient<SubjectDetailViewModel>()
-            .AddTransient<StudentViewModel>()
-            .AddTransient<StudentGradesViewModel>()
-            .AddTransient<ClassViewModel>()
-            .AddTransient<GradeSheetViewModel>();
-    }
-
     /// <summary>
-    /// Registers the colour theme: the WPF applier, the service that loads, applies and saves the preference, and the
-    /// settings section. All are singletons, so the window and the settings page share one state.
+    /// Registers the colour theme: the WPF applier and the service that loads, applies and saves the preference. Both
+    /// are singletons, so the window and the settings page share one state.
     /// </summary>
     private static IServiceCollection AddThemeServices(this IServiceCollection services)
     {
         services.AddSingleton<IThemeApplier, WpfThemeApplier>();
         services.AddSingleton<AppThemeService>();
-        services.AddSingleton<AppearanceSettingsViewModel>();
         return services;
     }
 
     /// <summary>
     /// Registers the updater: the settings file, the feed options from the <c>Updates</c> section, the Velopack client,
-    /// the coordinator with its window notice and settings section, and the check shortly after startup. All are
-    /// singletons, so the notice and the settings page share one update state. Outside an installed app they resolve
-    /// but stay inert.
+    /// the coordinator with its window notice, and the check shortly after startup. All are singletons, so the notice
+    /// and the settings page share one update state. Outside an installed app they resolve but stay inert.
     /// </summary>
     private static IServiceCollection AddUpdateServices(this IServiceCollection services)
     {
@@ -222,7 +229,6 @@ public static class HostBuilderExtensions
         services.AddSingleton<IUpdateClient, VelopackUpdateClient>();
         services.AddSingleton<UpdateCoordinator>();
         services.AddSingleton<UpdateNoticeViewModel>();
-        services.AddSingleton<UpdateSettingsViewModel>();
         services.AddSingleton<IAppShutdown, WpfAppShutdown>();
         services.AddHostedService<UpdateStartupService>();
         return services;

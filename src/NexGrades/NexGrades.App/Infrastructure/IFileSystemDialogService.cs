@@ -1,4 +1,4 @@
-namespace NexGrades.Common.Services;
+namespace NexGrades.App.Infrastructure;
 
 /// <summary>
 /// Opens a folder picker. It is an interface so that view models can be tested without a Windows dialog;

@@ -25,10 +25,9 @@ All code lives under `src/NexGrades/` (solution: `NexGrades.slnx`).
 
 | Project | Role | References |
 |---|---|---|
-| `NexGrades.App` | WPF shell, pages, view models, DI wiring, host setup, file logging (`Logging/`), self-update (`Updates/`) | Common, Data, Domain, ServiceDefaults |
+| `NexGrades.App` | WPF shell, pages, view models, DI wiring, host setup, file logging (`Logging/`), self-update (`Updates/`) | Data, Domain, ServiceDefaults |
 | `NexGrades.Domain` | Business rules: services, grading, closed-year auditing, `IClock` | Data |
 | `NexGrades.Data` | EF Core `AppDbContext`, entities, entity configurations, migrations | — |
-| `NexGrades.Common` | Small cross-cutting helpers and service interfaces | — |
 | `NexGrades.Tests` | xUnit tests for Domain and Data | Data, Domain |
 | `NexGrades.App.Tests` | xUnit tests for the App's DI composition and XAML loading (Windows only) | App |
 | `Aspire/NexGrades.AppHost` | Dev-time orchestration (SQLite + SQLite Web) | App |

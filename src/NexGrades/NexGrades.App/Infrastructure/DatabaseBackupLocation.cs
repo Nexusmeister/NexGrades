@@ -1,7 +1,7 @@
 using System.IO;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 
 namespace NexGrades.App.Infrastructure;
 

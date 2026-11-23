@@ -1,7 +1,7 @@
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using NexGrades.App.Infrastructure;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 
 namespace NexGrades.App.Tests;
 

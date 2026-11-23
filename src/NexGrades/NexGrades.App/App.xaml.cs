@@ -8,9 +8,9 @@ using Microsoft.Extensions.Logging;
 using NexGrades.App.Extensions;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Logging;
+using NexGrades.App.Storage;
 using NexGrades.App.Theming;
 using NexGrades.App.Updates;
-using NexGrades.Common.Storage;
 using NexGrades.Data.Diagnostics;
 using NexGrades.Domain.Services;
 using NexGrades.ServiceDefaults;
@@ -45,8 +45,7 @@ public partial class App : Application
         // OpenTelemetry logs, metrics and traces. Exported only when OTEL_EXPORTER_OTLP_ENDPOINT is set (Aspire).
         _ = host.AddServiceDefaults(NexGradesTelemetry.Name);
 
-        host.Services.AddGradeServices()
-            .AddFrontendServices();
+        host.Services.AddShell().AddDomain().AddFeatures();
         host.AddDatabase();
 
         return host.Build();

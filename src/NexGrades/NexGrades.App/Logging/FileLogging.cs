@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using Microsoft.Extensions.Configuration;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 using Serilog;
 using Serilog.Core;
 

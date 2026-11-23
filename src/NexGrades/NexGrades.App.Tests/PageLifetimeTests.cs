@@ -29,7 +29,7 @@ public class PageLifetimeTests
     ];
 
     [Fact]
-    public void AddFrontendServices_RegistersPageAndViewModel_WithSameLifetime()
+    public void AddFeatures_RegistersPageAndViewModel_WithSameLifetime()
     {
         var services = BuildServices();
 
@@ -45,7 +45,7 @@ public class PageLifetimeTests
     }
 
     [Fact]
-    public void AddFrontendServices_RegistersRootPages_AsSingleton()
+    public void AddFeatures_RegistersRootPages_AsSingleton()
     {
         var services = BuildServices();
 
@@ -63,7 +63,7 @@ public class PageLifetimeTests
     }
 
     [Fact]
-    public void AddFrontendServices_RegistersNonRootPages_AsTransient()
+    public void AddFeatures_RegistersNonRootPages_AsTransient()
     {
         var services = BuildServices();
 
@@ -131,7 +131,7 @@ public class PageLifetimeTests
     private static ServiceCollection BuildServices()
     {
         var services = new ServiceCollection();
-        _ = services.AddFrontendServices();
+        _ = services.AddFeatures();
 
         return services;
     }

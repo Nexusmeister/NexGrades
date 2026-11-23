@@ -1,4 +1,4 @@
-namespace NexGrades.Common.Services;
+namespace NexGrades.App.Infrastructure;
 
 /// <summary>
 /// Provides the name of the person using the app, for the greeting on the home page. It is an interface so

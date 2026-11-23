@@ -1,4 +1,4 @@
-namespace NexGrades.Common.Storage;
+namespace NexGrades.App.Storage;
 
 /// <summary>
 /// The per-user folder where NexGrades keeps everything that must survive app updates (database and

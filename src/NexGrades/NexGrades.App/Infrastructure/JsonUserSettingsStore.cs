@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 
 namespace NexGrades.App.Infrastructure;
 

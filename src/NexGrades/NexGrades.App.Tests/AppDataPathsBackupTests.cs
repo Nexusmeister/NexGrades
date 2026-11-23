@@ -1,6 +1,7 @@
-using NexGrades.Common.Storage;
+using System.IO;
+using NexGrades.App.Storage;
 
-namespace NexGrades.Tests;
+namespace NexGrades.App.Tests;
 
 public sealed class AppDataPathsBackupTests : IDisposable
 {

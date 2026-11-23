@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Logging;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 
 namespace NexGrades.App.Tests;
 

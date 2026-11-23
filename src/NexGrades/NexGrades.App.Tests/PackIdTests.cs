@@ -1,6 +1,6 @@
 using System.IO;
 using System.Reflection;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 
 namespace NexGrades.App.Tests;
 

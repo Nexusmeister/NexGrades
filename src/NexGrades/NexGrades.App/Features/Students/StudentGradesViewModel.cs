@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Core;
 using NexGrades.App.Core.YearLock;
-using NexGrades.Common;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Grading;
 using NexGrades.Domain.Services;

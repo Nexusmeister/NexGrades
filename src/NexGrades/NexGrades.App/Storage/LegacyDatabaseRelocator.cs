@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 
-namespace NexGrades.Common.Storage;
+namespace NexGrades.App.Storage;
 
 /// <summary>
 /// One-time migration of an <c>app.db</c> that older versions created next to the executable (or in the

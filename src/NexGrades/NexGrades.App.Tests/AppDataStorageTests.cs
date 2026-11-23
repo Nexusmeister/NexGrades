@@ -1,7 +1,9 @@
+using System.IO;
 using Microsoft.EntityFrameworkCore;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
+using NexGrades.Data;
 
-namespace NexGrades.Tests;
+namespace NexGrades.App.Tests;
 
 public sealed class AppDataStorageTests : IDisposable
 {
@@ -209,15 +211,19 @@ public sealed class AppDataStorageTests : IDisposable
     {
         var legacy = NewDir("legacy");
         var target = Db(Path.Combine(_root, "data"));
-        using (var db = new SqliteTestDatabase())
+        var source = Db(NewDir("source"));
+        var sourceOptions = new DbContextOptionsBuilder<AppDbContext>().UseSqlite($"Data Source={source};Pooling=False").Options;
+        await using (var seed = new AppDbContext(sourceOptions))
         {
-            File.Copy(db.DbPath, Db(legacy));
+            await seed.Database.MigrateAsync();
         }
+
+        File.Copy(source, Db(legacy));
 
         new LegacyDatabaseRelocator().Relocate([legacy], target);
 
-        var options = new DbContextOptionsBuilder<NexGrades.Data.AppDbContext>().UseSqlite(SqliteTestDatabase.ConnectionStringFor(target)).Options;
-        await using var context = new NexGrades.Data.AppDbContext(options);
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite($"Data Source={target};Pooling=False").Options;
+        await using var context = new AppDbContext(options);
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
     }
 }
