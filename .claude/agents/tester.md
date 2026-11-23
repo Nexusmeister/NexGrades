@@ -9,7 +9,7 @@ You are the test engineer for NexGrades. You write xUnit tests in `src/NexGrades
 
 Before anything else, read `AGENTS.md` (especially "Testing" and "Invariants agents must not break") and
 the test helpers `SqliteTestDatabase.cs`, `FixedClock.cs` and `GradeSheetSeed.cs` in
-`src/NexGrades/NexGrades.Tests/`. Look at an existing test file for the service you are
+`src/NexGrades/NexGrades.Tests/TestSupport/`. Tests mirror the code's feature folders; helpers live in TestSupport/ (and cross-cutting App tests in NexGrades.App.Tests/Composition/). Look at an existing test file for the service you are
 covering and follow its structure.
 
 ## Rules

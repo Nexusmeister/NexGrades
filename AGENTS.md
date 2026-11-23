@@ -319,7 +319,7 @@ localized later without a rewrite:
 - Tests live in `NexGrades.Tests` and cover Domain and Data. There are no UI tests; `NexGrades.App.Tests`
   only checks that the App's DI graph resolves, so it picks up new pages and services automatically. It also holds pure App-side unit tests, such as UI text formatting. `XamlLoadTests` creates each view on an STA thread to catch XAML that compiles but throws when loaded.
 - Use `SqliteTestDatabase` (a real, migrated SQLite file — never the EF in-memory provider) and
-  `FixedClock` for anything time-dependent. They are in `SqliteTestDatabase.cs` and `FixedClock.cs` (`NexGrades.Tests/`); `GradeSheetSeed.cs` builds grade sheet data. Construct Domain services with
+  `FixedClock` for anything time-dependent. They are in `SqliteTestDatabase.cs` and `FixedClock.cs` (`NexGrades.Tests/TestSupport/`); `GradeSheetSeed.cs` builds grade sheet data. Construct Domain services with
   `db.CreateContextFactory()`, and assert through a fresh `db.CreateContext()`: the context that seeded the
   data still tracks the old values.
 - Name tests `Method_Outcome_Condition`, e.g. `RecordGradeAsync_Throws_ForIllegalGradeValue`.
