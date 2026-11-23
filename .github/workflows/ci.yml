@@ -100,7 +100,7 @@ jobs:
       BETAS_TO_KEEP: 10
     steps:
       # Full history and tags: MinVer derives the version from them. The token is not persisted; every step
-      # that talks to GitHub gets GH_TOKEN itself, and git only reads (the public repo fetches unauthenticated).
+      # that talks to GitHub gets GH_TOKEN itself, and a git command that must authenticate passes it for that call only.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -116,14 +116,21 @@ jobs:
         shell: pwsh
         run: |
           git tag --list 'v*-beta.*' | ForEach-Object { git tag -d $_ }
+      # Only the tip of dev is published, so a re-run or a late run of an older push never publishes after a newer one.
       # A stable tag on the dev tip (e.g. after merging main back) makes MinVer yield a version without pre-release
       # part. That commit is already released from main; there is no beta to publish.
-      - name: Check for a stable tag
+      - name: Check the dev tip and stable tags
         id: check
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          $tip = ./.github/scripts/Get-BranchTip.ps1 -Branch dev
           $stableTags = @(git tag --points-at $env:RELEASE_SHA | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' })
-          if ($stableTags.Count -gt 0) {
+          if ($tip -ne $env:RELEASE_SHA) {
+            Write-Host "::notice::$env:RELEASE_SHA is no longer the tip of dev; the newer push publishes its beta instead."
+            "build=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } elseif ($stableTags.Count -gt 0) {
             Write-Host "::notice::dev tip carries the stable tag $($stableTags -join ', '); no beta published."
             "build=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           } else {
@@ -163,6 +170,14 @@ jobs:
 
           $files = @(Get-ChildItem -LiteralPath $env:ASSETS_DIR -File | ForEach-Object FullName)
           if ($files.Count -eq 0) { throw "No release assets in $env:ASSETS_DIR." }
+
+          # dev may have moved while the assets were built; checking the tip again right before the release is
+          # created keeps the window in which an older commit could publish after a newer one small.
+          $tip = ./.github/scripts/Get-BranchTip.ps1 -Branch dev
+          if ($tip -ne $env:RELEASE_SHA) {
+            Write-Host "::notice::$env:RELEASE_SHA is no longer the tip of dev; the newer push publishes its beta instead."
+            exit 0
+          }
           gh release create $tag @files --draft --prerelease --latest=false --target $env:RELEASE_SHA `
             --title "NexGrades $env:VERSION" --generate-notes --notes ($env:SMARTSCREEN_NOTE.Replace('<version>', $env:VERSION))
           if ($LASTEXITCODE -ne 0) { throw 'gh release create failed.' }
@@ -227,39 +242,32 @@ jobs:
         run: |
           # Only the tip of main is ever released. A re-run or a late run of an older push would otherwise
           # publish older code under a higher version number.
-          $tip = (git ls-remote origin refs/heads/main) -split '\s+' | Select-Object -First 1
-          if ($LASTEXITCODE -ne 0 -or -not $tip) { throw 'git ls-remote failed.' }
+          $tip = ./.github/scripts/Get-BranchTip.ps1 -Branch main
           if ($tip -ne $env:RELEASE_SHA) {
             Write-Host "::notice::$env:RELEASE_SHA is no longer the tip of main; the newer push releases instead."
             "build=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
             exit 0
           }
 
-          git fetch --tags --force
+          # The checkout does not persist its token, and a private repository needs it to fetch. It is passed as a
+          # header for this one command, as the checkout does, and masked in the log.
+          $basic = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("x-access-token:$env:GH_TOKEN"))
+          Write-Host "::add-mask::$basic"
+          git -c "http.$env:GITHUB_SERVER_URL/.extraheader=AUTHORIZATION: basic $basic" fetch --tags --force
           if ($LASTEXITCODE -ne 0) { throw 'git fetch --tags failed.' }
 
           # Beta tags (v0.1.1-beta.3) would make MinVer build on them; drop them from this clone (nothing is pushed).
           git tag --list 'v*-beta.*' | ForEach-Object { git tag -d $_ }
 
-          # Stable tags (vX.Y.Z) reachable from this commit only; tags on other branches or later commits do not count.
-          $stable = @(git tag --list 'v[0-9]*' --merged $env:RELEASE_SHA |
-            Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } |
-            Sort-Object { [version]$_.Substring(1) })
-          $onHead = @(git tag --points-at $env:RELEASE_SHA | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' })
-
-          if ($onHead.Count -gt 0) {
-            # The owner pushed a tag together with this commit: release exactly that version.
-            $tag = $onHead | Sort-Object { [version]$_.Substring(1) } | Select-Object -Last 1
-            $createTag = 'false'
-          } elseif ($stable.Count -eq 0) {
-            $tag = 'v0.1.0'
-            $createTag = 'true'
-          } else {
-            $latest = [version]($stable | Select-Object -Last 1).Substring(1)
-            $tag = "v$($latest.Major).$($latest.Minor).$($latest.Build + 1)"
-            $createTag = 'true'
+          # A tag on this commit is released as it is; otherwise the next free patch after the highest stable tag
+          # reachable from it (v0.1.0 if there is none). A version already tagged outside main is skipped, not a failure.
+          $selection = ./.github/scripts/Get-StableReleaseTag.ps1 -Commit $env:RELEASE_SHA
+          $tag = $selection.Tag
+          $createTag = if ($selection.CreateTag) { 'true' } else { 'false' }
+          $startTag = $selection.StartTag
+          if ($selection.SkippedTags.Count -gt 0) {
+            Write-Host "::warning::Skipped $($selection.SkippedTags -join ', '): already tagged on a commit outside the history of main. Releasing $tag instead."
           }
-          $startTag = if ($stable.Count -gt 0) { ($stable | Where-Object { $_ -ne $tag } | Select-Object -Last 1) } else { '' }
 
           # A draft is left over from a run that failed before publishing. It counts as not released; the create step
           # replaces it.
