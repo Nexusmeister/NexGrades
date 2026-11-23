@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Extensions;
 using NexGrades.App.Logging;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 using NexGrades.Data.Diagnostics;
 using NexGrades.ServiceDefaults;
 using Wpf.Ui.Markup;
@@ -44,7 +44,7 @@ public class ServiceRegistrationTests
             using var logFolder = new TempFolder();
             builder.AddAppLogging(new AppDataPaths(logFolder.Path));
             builder.AddServiceDefaults(NexGradesTelemetry.Name);
-            builder.Services.AddGradeServices().AddFrontendServices();
+            builder.Services.AddShell().AddDomain().AddFeatures();
             builder.AddDatabase();
 
             var appServiceTypes = builder.Services

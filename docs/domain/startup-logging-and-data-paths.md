@@ -22,7 +22,8 @@ startup fails, and how telemetry and privacy fit in.
 `App.xaml.cs` (`OnStartup`) runs every step inside one `try`:
 
 1. Create the host. File logging and the crash handlers come first (`AddAppLogging`), then the OpenTelemetry
-   providers (`AddServiceDefaults`), then the services and the database registration (`AddDatabase`).
+   providers (`AddServiceDefaults`), then the services (`AddShell`, `AddDomain`, `AddFeatures`) and the database
+   registration (`AddDatabase`).
 2. Write the startup lines to the log, then create the telemetry listeners. A failure to set telemetry up is
    logged and the App runs without it; it is not a startup failure.
 3. Relocate a legacy database, when there is no database override.
@@ -85,14 +86,15 @@ See [Rules by area](../../AGENTS.md#rules-by-area) in `AGENTS.md`.
 
 ## Code
 
-- `NexGrades.Common/Storage/IAppDataPaths.cs`
-- `NexGrades.Common/Storage/AppDataPaths.cs`
-- `NexGrades.Common/Storage/LegacyDatabaseRelocator.cs`
+- `NexGrades.App/Storage/IAppDataPaths.cs`
+- `NexGrades.App/Storage/AppDataPaths.cs`
+- `NexGrades.App/Storage/LegacyDatabaseRelocator.cs`
 - `NexGrades.App/App.xaml.cs`
 - `NexGrades.App/Extensions/HostBuilderExtensions.cs`
 - `NexGrades.App/Infrastructure/StartupFailureHandler.cs`
 - `NexGrades.App/Logging/FileLogging.cs`
 - `NexGrades.App/Logging/FileLoggingOptions.cs`
+- `NexGrades.App/Shell/ApplicationHostService.cs`
 - `NexGrades.Data/Services/DatabaseMigrationService.cs`
 - `Aspire/NexGrades.ServiceDefaults/ServiceDefaultsExtensions.cs`
 

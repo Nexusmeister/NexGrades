@@ -1,4 +1,6 @@
-namespace NexGrades.Common.Storage;
+using System.IO;
+
+namespace NexGrades.App.Storage;
 
 /// <summary>
 /// Default <see cref="IAppDataPaths"/>. The root is a constructor argument so tests can use a temp folder.

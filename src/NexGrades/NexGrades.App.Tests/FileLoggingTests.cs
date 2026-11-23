@@ -4,7 +4,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using NexGrades.App.Logging;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 using NexGrades.Domain.Exceptions;
 using Serilog.Events;
 using Serilog.Parsing;

@@ -60,7 +60,6 @@ Paths are relative to `src/NexGrades/`. The dependency direction is App → Doma
 | `NexGrades.App` | WPF shell, pages, view models, DI setup, file logging, updates |
 | `NexGrades.Domain` | Business rules: services, grading, closed-year auditing |
 | `NexGrades.Data` | EF Core context, entities, entity configurations, migrations |
-| `NexGrades.Common` | Small shared helpers and service interfaces |
 | `NexGrades.Tests` | xUnit tests for Domain and Data |
 | `NexGrades.App.Tests` | xUnit tests for the App's DI composition (Windows only) |
 | `Aspire/NexGrades.AppHost` | Development-only orchestration (SQLite and SQLite Web) |

@@ -1,6 +1,6 @@
 ---
 name: csharp-coder
-description: Implements C# changes in NexGrades.Domain, NexGrades.Data, NexGrades.Common and view models in NexGrades.App, following an agreed plan. Use for feature and bug-fix implementation work; hand XAML layout to ui-designer and tests to tester.
+description: Implements C# changes in NexGrades.Domain, NexGrades.Data and the non-XAML code in NexGrades.App, following an agreed plan. Use for feature and bug-fix implementation work; hand XAML layout to ui-designer and tests to tester.
 tools: Read, Edit, Write, Glob, Grep, Bash, PowerShell
 model: sonnet
 ---

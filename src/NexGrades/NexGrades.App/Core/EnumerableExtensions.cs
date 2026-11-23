@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-namespace NexGrades.Common;
+namespace NexGrades.App.Core;
 
 /// <summary>
 /// Helpers that turn query results into collections that WPF can bind to.

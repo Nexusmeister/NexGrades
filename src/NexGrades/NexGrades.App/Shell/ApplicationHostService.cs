@@ -2,15 +2,14 @@ using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexGrades.App.Features.Home;
-using NexGrades.App.Shell;
 using NexGrades.App.Theming;
 using Wpf.Ui;
 
-namespace NexGrades.App;
+namespace NexGrades.App.Shell;
 
 /// <summary>
 /// Hosted service that shows the main window and opens the home page when the host starts, unless a main window
-/// is already open. Registered by <c>AddGradeServices</c>.
+/// is already open. Registered by <c>AddShell</c>.
 /// </summary>
 /// <param name="serviceProvider">Resolves the navigation window and its pages from DI.</param>
 public class ApplicationHostService(IServiceProvider serviceProvider) : IHostedService

@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
-using NexGrades.Common;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
 using Wpf.Ui;

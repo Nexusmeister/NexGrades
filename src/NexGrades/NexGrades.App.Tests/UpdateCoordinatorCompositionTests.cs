@@ -25,7 +25,7 @@ public class UpdateCoordinatorCompositionTests
             // A feed that would fail loudly if anything contacted it.
             ["Updates:Repository"] = "https://invalid.invalid/nobody/nothing",
         });
-        builder.Services.AddGradeServices().AddFrontendServices();
+        builder.Services.AddShell().AddDomain().AddFeatures();
         builder.AddDatabase();
         using var host = builder.Build();
 

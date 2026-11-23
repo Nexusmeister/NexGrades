@@ -8,7 +8,7 @@ using NexGrades.App.Extensions;
 using NexGrades.App.Features.Classes;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Logging;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 using NexGrades.Data.Diagnostics;
 using NexGrades.Data.Services;
 using NexGrades.ServiceDefaults;
@@ -194,7 +194,7 @@ public sealed class AppLoggingTests : IDisposable
         {
             ["sqlite"] = $"Data Source={Path.Combine(_folder.Path, "app.db")};Pooling=False",
         });
-        builder.Services.AddGradeServices().AddFrontendServices();
+        builder.Services.AddShell().AddDomain().AddFeatures();
         builder.AddDatabase();
         using (var host = builder.Build())
         {
@@ -216,7 +216,7 @@ public sealed class AppLoggingTests : IDisposable
             ["ConnectionStrings:sqlite"] = $"Data Source={Path.Combine(_folder.Path, "app.db")};Pooling=False",
         });
         _ = builder.AddServiceDefaults(NexGradesTelemetry.Name);
-        builder.Services.AddGradeServices().AddFrontendServices();
+        builder.Services.AddShell().AddDomain().AddFeatures();
         builder.AddDatabase();
 
         using var host = builder.Build();

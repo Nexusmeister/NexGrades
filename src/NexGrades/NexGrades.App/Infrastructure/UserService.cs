@@ -1,4 +1,4 @@
-namespace NexGrades.Common.Services;
+namespace NexGrades.App.Infrastructure;
 
 /// <summary>
 /// Reads the name of the logged-in Windows user from <c>Environment.UserName</c>.

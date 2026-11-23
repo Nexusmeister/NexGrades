@@ -1,4 +1,4 @@
-namespace NexGrades.Common.Storage;
+namespace NexGrades.App.Storage;
 
 /// <summary>Outcome of <see cref="LegacyDatabaseRelocator.Relocate"/>.</summary>
 public enum LegacyRelocationResult

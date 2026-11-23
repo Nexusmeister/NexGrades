@@ -9,7 +9,7 @@ using NexGrades.App.Features.Home;
 using NexGrades.App.Features.Students;
 using NexGrades.App.Logging;
 using NexGrades.App.Shell;
-using NexGrades.Common.Storage;
+using NexGrades.App.Storage;
 using Wpf.Ui.Abstractions.Controls;
 using Wpf.Ui.Controls;
 using Wpf.Ui.Markup;
@@ -66,7 +66,7 @@ public class XamlLoadTests
             });
             using var logFolder = new TempFolder();
             builder.AddAppLogging(new AppDataPaths(logFolder.Path));
-            builder.Services.AddGradeServices().AddFrontendServices();
+            builder.Services.AddShell().AddDomain().AddFeatures();
             builder.AddDatabase();
 
             using var host = builder.Build();

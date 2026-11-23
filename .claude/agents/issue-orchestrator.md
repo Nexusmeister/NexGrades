@@ -54,8 +54,8 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    spans projects. Skip it for trivial or mechanical issues. You decide the plan's open questions yourself,
    using `AGENTS.md` and the issue, and record the decisions for the PR body. Stop with `BLOCKED` only when
    a decision would change another issue's scope or needs the user.
-4. **Implement: `csharp-coder` and `ui-designer`.** `csharp-coder` takes Domain, Data, Common and
-   view-model code. `ui-designer` takes XAML, after the view-model surface exists. Run them one after the
+4. **Implement: `csharp-coder` and `ui-designer`.** `csharp-coder` takes Domain, Data and App (non-XAML)
+   code. `ui-designer` takes XAML, after the view-model surface exists. Run them one after the
    other when their files overlap.
 5. **Tests and docs: `tester` and `docs-writer`.** `tester` only changes `NexGrades.Tests`. `docs-writer`
    covers `README.md`, `AGENTS.md`, XML docs, `docs/domain` and `docs/decisions`. Run them in
