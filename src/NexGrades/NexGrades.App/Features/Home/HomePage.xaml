@@ -10,7 +10,31 @@
       d:DesignHeight="450" d:DesignWidth="800"
       Title="Home">
 
-    <StackPanel>
-        <ui:Card Content="{Binding WelcomeMessage}"></ui:Card>
-    </StackPanel>
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Style="{StaticResource Ng.PageRoot}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <HeaderedContentControl Grid.Row="0"
+                                Header="Home"
+                                Style="{StaticResource Ng.PageHeader}" />
+
+        <ui:Card Grid.Row="1"
+                 VerticalAlignment="Top"
+                 Margin="{StaticResource Ng.Margin.ActionBar}"
+                 Style="{StaticResource Ng.Card}">
+            <ui:TextBlock Text="{Binding WelcomeMessage}"
+                          FontTypography="Body"
+                          TextWrapping="Wrap" />
+        </ui:Card>
+    </Grid>
 </Page>

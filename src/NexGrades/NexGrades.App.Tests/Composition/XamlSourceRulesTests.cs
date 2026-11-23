@@ -147,6 +147,74 @@ public class XamlSourceRulesTests
         Assert.True(offenders.Count == 0, string.Join(Environment.NewLine, offenders));
     }
 
+    [Fact]
+    public void TextBoxes_UpdateOnEveryKeystroke_InFilesWithDefaultOrCancelButtons()
+    {
+        var offenders = FindLostFocusTextBoxOffenders(LoadXamlFiles());
+
+        Assert.True(offenders.Count == 0, string.Join(Environment.NewLine, offenders));
+    }
+
+    [Fact]
+    public void FindLostFocusTextBoxOffenders_Flags_TextBindingWithoutPropertyChanged()
+    {
+        var doc = Parse("""
+            <Grid>
+                <ui:Button IsDefault="True"/>
+                <ui:TextBox Text="{Binding ViewModel.Name}"/>
+            </Grid>
+            """);
+
+        Assert.Single(FindLostFocusTextBoxOffenders([("bad.xaml", doc)]));
+    }
+
+    [Fact]
+    public void FindLostFocusTextBoxOffenders_Allows_PropertyChangedBindingAndFilesWithoutDefaultButton()
+    {
+        var withTrigger = Parse("""
+            <Grid>
+                <ui:Button IsCancel="True"/>
+                <ui:TextBox Text="{Binding ViewModel.Name, UpdateSourceTrigger=PropertyChanged}"/>
+            </Grid>
+            """);
+        var withoutButton = Parse("""<ui:TextBox Text="{Binding ViewModel.Name}"/>""");
+
+        Assert.Empty(FindLostFocusTextBoxOffenders([("ok.xaml", withTrigger), ("ok2.xaml", withoutButton)]));
+    }
+
+    /// <summary>
+    /// Enter and Escape fire <c>IsDefault</c> and <c>IsCancel</c> buttons before a text box loses focus, so a
+    /// default-trigger text binding hands the command a stale value; such files must bind on every keystroke.
+    /// </summary>
+    private static List<string> FindLostFocusTextBoxOffenders(IReadOnlyList<(string Path, XDocument Document)> files)
+    {
+        var offenders = new List<string>();
+
+        foreach (var (path, doc) in files)
+        {
+            var hasDefaultOrCancel = doc.Descendants().Any(e =>
+                e.Name.LocalName == "Button"
+                && ((string?)e.Attribute("IsDefault") == "True" || (string?)e.Attribute("IsCancel") == "True"));
+            if (!hasDefaultOrCancel)
+            {
+                continue;
+            }
+
+            foreach (var box in doc.Descendants().Where(e => e.Name.LocalName == "TextBox"))
+            {
+                var text = (string?)box.Attribute("Text");
+                if (text is not null
+                    && text.Contains("{Binding", StringComparison.Ordinal)
+                    && !text.Contains("UpdateSourceTrigger=PropertyChanged", StringComparison.Ordinal))
+                {
+                    offenders.Add($"{path}: TextBox Text binding '{text}' lacks UpdateSourceTrigger=PropertyChanged");
+                }
+            }
+        }
+
+        return offenders;
+    }
+
     private static XDocument Parse(string body) =>
         XDocument.Parse(
             $"""<Root xmlns="{_presentation}" xmlns:x="{_xaml}" xmlns:ui="{_wpfUi}">{body}</Root>""");

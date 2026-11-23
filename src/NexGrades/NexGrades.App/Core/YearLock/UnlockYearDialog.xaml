@@ -9,47 +9,50 @@
                   DefaultButton="Primary"
                   IsPrimaryButtonEnabled="{Binding IsValid}">
 
-    <!-- Page-local, like the pages: the dialog must build without App.xaml's resources. -->
+    <!-- Merged here because the dialog must build without the application resources. -->
     <ui:ContentDialog.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </ui:ContentDialog.Resources>
 
     <StackPanel MinWidth="360" MaxWidth="480">
-        <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Reason"/>
-        <ui:TextBox MinHeight="72"
-                    MaxHeight="120"
-                    AcceptsReturn="True"
-                    TextWrapping="Wrap"
-                    VerticalScrollBarVisibility="Auto"
-                    MaxLength="{x:Static services:UnlockService.MaxReasonLength}"
-                    AutomationProperties.Name="Reason for unlocking the school year"
-                    PlaceholderText="Why does this school year need to be changed?"
-                    Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}"/>
+        <HeaderedContentControl Header="Reason"
+                                Style="{StaticResource Ng.FormField}">
+            <ui:TextBox Style="{StaticResource Ng.TextBox.Multiline}"
+                        MaxLength="{x:Static services:UnlockService.MaxReasonLength}"
+                        AutomationProperties.Name="Reason for unlocking the school year"
+                        PlaceholderText="Why does this school year need to be changed?"
+                        Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" />
+        </HeaderedContentControl>
 
-        <ui:TextBlock Margin="0,12,0,4" FontTypography="BodyStrong" Text="Unlock for"/>
-        <ComboBox HorizontalAlignment="Stretch"
-                  AutomationProperties.Name="How long to unlock the school year"
-                  ItemsSource="{Binding DurationChoices}"
-                  DisplayMemberPath="Label"
-                  SelectedValuePath="Option"
-                  SelectedValue="{Binding SelectedDuration}"/>
+        <HeaderedContentControl Header="Unlock for"
+                                Style="{StaticResource Ng.FormField}">
+            <ComboBox HorizontalAlignment="Stretch"
+                      AutomationProperties.Name="How long to unlock the school year"
+                      ItemsSource="{Binding DurationChoices}"
+                      DisplayMemberPath="Label"
+                      SelectedValuePath="Option"
+                      SelectedValue="{Binding SelectedDuration}" />
+        </HeaderedContentControl>
 
-        <StackPanel Margin="0,12,0,0"
-                    Visibility="{Binding IsCustomDate, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="End date"/>
+        <HeaderedContentControl Header="End date"
+                                Style="{StaticResource Ng.FormField}"
+                                Visibility="{Binding IsCustomDate, Converter={StaticResource BooleanToVisibilityConverter}}">
             <DatePicker HorizontalAlignment="Stretch"
                         AutomationProperties.Name="Date the unlock ends"
                         DisplayDateStart="{Binding CustomDateStart, Mode=OneWay}"
                         DisplayDateEnd="{Binding CustomDateEnd, Mode=OneWay}"
-                        SelectedDate="{Binding CustomDate}"/>
-        </StackPanel>
+                        SelectedDate="{Binding CustomDate}" />
+        </HeaderedContentControl>
 
         <!-- Why Unlock is disabled -->
-        <ui:TextBlock Margin="0,12,0,0"
-                      FontTypography="Caption"
+        <ui:TextBlock FontTypography="Caption"
                       Appearance="Secondary"
                       TextWrapping="Wrap"
                       Text="{Binding ValidationMessage}"
-                      Visibility="{Binding HasValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                      Visibility="{Binding HasValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}" />
     </StackPanel>
 </ui:ContentDialog>

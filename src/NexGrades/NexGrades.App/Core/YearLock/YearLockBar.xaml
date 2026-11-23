@@ -8,6 +8,14 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance yearLock:YearLockViewModel, IsDesignTimeCreatable=False}">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <!-- A closed InfoBar takes no space, so the control collapses when the year is neither locked nor unlocked. -->
     <StackPanel>
         <ui:InfoBar IsClosable="False"

@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:core="clr-namespace:NexGrades.App.Core">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- Entry point: every view merges this one file into its own root Resources. -->
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <core:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+    <core:NonEmptyStringToVisibilityConverter x:Key="NonEmptyStringToVisibilityConverter" />
+</ResourceDictionary>

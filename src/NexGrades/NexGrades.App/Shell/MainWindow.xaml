@@ -17,10 +17,19 @@
         mc:Ignorable="d"
         ExtendsContentIntoTitleBar="True"
         Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+        FontFamily="{DynamicResource Ng.FontFamily}"
         WindowBackdropType="Mica"
         WindowCornerPreference="Round"
         WindowStartupLocation="CenterScreen"
         Title="NexGrades" d:DesignHeight="450" d:DesignWidth="800">
+
+    <ui:FluentWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </ui:FluentWindow.Resources>
 
     <ui:FluentWindow.InputBindings>
         <KeyBinding
@@ -42,7 +51,7 @@
 
         <!-- Update notice: closing only hides it; it opens again when another update is ready. -->
         <ui:InfoBar Grid.Row="1"
-                    Margin="12,0,12,8"
+                    Margin="16,0,16,8"
                     Severity="Informational"
                     IsClosable="True"
                     IsOpen="{Binding ViewModel.UpdateNotice.IsOpen, Mode=TwoWay}"
@@ -80,7 +89,7 @@
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem Content="Students" TargetPageType="{x:Type students:StudentsOverviewPage}">
                     <ui:NavigationViewItem.Icon>
-                        <ui:SymbolIcon Symbol="HatGraduation24" />
+                        <ui:SymbolIcon Symbol="People24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem Content="Classes" TargetPageType="{x:Type classes:ClassesOverviewPage}">

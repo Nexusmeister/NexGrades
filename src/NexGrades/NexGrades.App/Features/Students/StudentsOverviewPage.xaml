@@ -17,41 +17,57 @@
         </b:EventTrigger>
     </b:Interaction.Triggers>
 
-    <StackPanel Orientation="Vertical">
-        <ui:TextBlock 
-            Text="Students" 
-            Appearance="Secondary"
-            FontTypography="Title" 
-            Margin="5,0,0,0"></ui:TextBlock>
-        <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
-            <ui:Button Margin="0,0,5,0" Content="Add student" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddStudentCommand}"/>
-            <ui:Button Margin="0,0,5,0" Content="Edit student" Icon="{ui:SymbolIcon Edit24}" Command="{Binding ViewModel.EditStudentCommand}"/>
-        </StackPanel>
-        <!--<ui:DropDownButton Content="Hello" Icon="{ui:SymbolIcon Fluent24}">
-        <ui:DropDownButton.Flyout>
-            <ContextMenu>
-                <MenuItem Header="2024/25" />
-                <MenuItem Header="2025/26" />
-                <MenuItem Header="Send" />
-                <MenuItem Header="Hello" />
-            </ContextMenu>
-        </ui:DropDownButton.Flyout>
-    </ui:DropDownButton>-->
-        <ui:DataGrid ItemsSource="{Binding ViewModel.Students}" 
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Style="{StaticResource Ng.PageRoot}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <HeaderedContentControl Grid.Row="0"
+                                Header="Students"
+                                Style="{StaticResource Ng.PageHeader}" />
+
+        <WrapPanel Grid.Row="1" Style="{StaticResource Ng.ActionBar}">
+            <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}" Appearance="Primary"
+                       Content="Add student"
+                       Icon="{ui:SymbolIcon Add24}"
+                       Command="{Binding ViewModel.AddStudentCommand}" />
+            <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                       Content="Edit student"
+                       Icon="{ui:SymbolIcon Edit24}"
+                       Command="{Binding ViewModel.EditStudentCommand}" />
+        </WrapPanel>
+
+        <ContentControl Grid.Row="2"
+                        Content="No students yet. Use Add student to create one."
+                        Tag="{Binding ViewModel.Students}"
+                        Style="{StaticResource Ng.EmptyState.WhenNoItems}" />
+
+        <ui:DataGrid Grid.Row="3"
+                     Style="{StaticResource Ng.DataGrid}"
+                     ItemsSource="{Binding ViewModel.Students}"
                      SelectedItem="{Binding ViewModel.SelectedStudent, Mode=TwoWay}"
-                     SelectionMode="Single"
-                     IsReadOnly="True"
-                     AutoGenerateColumns="False"
                      MouseDoubleClick="OnStudentsGridMouseDoubleClick">
             <ui:DataGrid.InputBindings>
-                <KeyBinding Key="Enter" Command="{Binding ViewModel.EditStudentCommand}"/>
+                <KeyBinding Key="Enter" Command="{Binding ViewModel.EditStudentCommand}" />
             </ui:DataGrid.InputBindings>
             <ui:DataGrid.Columns>
-                <DataGridTextColumn Header="Id" Binding="{Binding Id}"/>
-                <DataGridTextColumn Header="Last name" Binding="{Binding LastName}"/>
-                <DataGridTextColumn Header="First name" Binding="{Binding FirstName}"/>
-                <DataGridTextColumn Header="Class" Binding="{Binding ClassName}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Id" Binding="{Binding Id}"
+                                    ElementStyle="{StaticResource Ng.DataGridText.Numeric}" />
+                <DataGridTextColumn Header="Last name" Binding="{Binding LastName}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="First name" Binding="{Binding FirstName}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="Class" Binding="{Binding ClassName}" ElementStyle="{StaticResource Ng.DataGridText}" />
             </ui:DataGrid.Columns>
         </ui:DataGrid>
-    </StackPanel>
+    </Grid>
 </Page>

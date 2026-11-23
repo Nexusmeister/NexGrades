@@ -8,43 +8,46 @@
                   DefaultButton="Primary"
                   IsPrimaryButtonEnabled="{Binding IsValid}">
 
-    <!-- Page-local, like the pages: the dialog must build without App.xaml's resources. -->
+    <!-- Merged here because the dialog must build without the application resources. -->
     <ui:ContentDialog.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </ui:ContentDialog.Resources>
 
     <StackPanel MinWidth="360"
                 MaxWidth="480"
                 FocusManager.FocusedElement="{Binding ElementName=FromPicker}">
-        <ui:TextBlock Margin="0,0,0,4"
-                      FontTypography="BodyStrong"
-                      Text="From"/>
-        <DatePicker x:Name="FromPicker"
-                    HorizontalAlignment="Stretch"
-                    TabIndex="0"
-                    DisplayDateEnd="{Binding DisplayDateEnd, Mode=OneWay}"
-                    AutomationProperties.Name="From: first day of the exported notes"
-                    SelectedDate="{Binding From}"/>
+        <HeaderedContentControl Header="From"
+                                Style="{StaticResource Ng.FormField}">
+            <DatePicker x:Name="FromPicker"
+                        HorizontalAlignment="Stretch"
+                        TabIndex="0"
+                        DisplayDateEnd="{Binding DisplayDateEnd, Mode=OneWay}"
+                        AutomationProperties.Name="From: first day of the exported notes"
+                        SelectedDate="{Binding From}" />
+        </HeaderedContentControl>
 
-        <ui:TextBlock Margin="0,12,0,4"
-                      FontTypography="BodyStrong"
-                      Text="To"/>
-        <DatePicker HorizontalAlignment="Stretch"
-                    TabIndex="1"
-                    DisplayDateEnd="{Binding DisplayDateEnd, Mode=OneWay}"
-                    AutomationProperties.Name="To: last day of the exported notes"
-                    SelectedDate="{Binding To}"/>
+        <HeaderedContentControl Header="To"
+                                Style="{StaticResource Ng.FormField}">
+            <DatePicker HorizontalAlignment="Stretch"
+                        TabIndex="1"
+                        DisplayDateEnd="{Binding DisplayDateEnd, Mode=OneWay}"
+                        AutomationProperties.Name="To: last day of the exported notes"
+                        SelectedDate="{Binding To}" />
+        </HeaderedContentControl>
 
-        <CheckBox Margin="0,12,0,0"
+        <CheckBox Margin="{StaticResource Ng.Margin.Block}"
                   TabIndex="2"
                   Content="Include archived notes"
-                  IsChecked="{Binding IncludeArchived}"/>
+                  IsChecked="{Binding IncludeArchived}" />
 
-        <ui:TextBlock Margin="0,12,0,0"
-                      FontTypography="Caption"
+        <ui:TextBlock FontTypography="Caption"
                       Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                       TextWrapping="Wrap"
                       Text="{Binding ValidationMessage}"
-                      Visibility="{Binding HasValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                      Visibility="{Binding HasValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}" />
     </StackPanel>
 </ui:ContentDialog>

@@ -33,6 +33,9 @@ public static class DataGridColumnsBehavior
     /// <summary>Resource key of the header <c>DataTemplate</c>; its data is the <see cref="GradeSheetColumn"/>.</summary>
     public const string HeaderTemplateKey = "GradeSheetColumnHeaderTemplate";
 
+    /// <summary>Resource key of the <c>TextBlock</c> style of a displayed cell; it keeps the library's cell text margin from adding to the row height.</summary>
+    public const string CellTextStyleKey = "GradeSheetCellTextStyle";
+
     /// <summary>The columns to show; the grid's columns are rebuilt from them.</summary>
     public static readonly DependencyProperty ColumnsProperty = DependencyProperty.RegisterAttached(
         "Columns",
@@ -119,6 +122,7 @@ public static class DataGridColumnsBehavior
         var headerTemplate = grid.TryFindResource(HeaderTemplateKey) as DataTemplate;
         var gradeStyle = grid.TryFindResource(GradeCellStyleKey) as Style;
         var readOnlyStyle = grid.TryFindResource(ReadOnlyCellStyleKey) as Style;
+        var textStyle = grid.TryFindResource(CellTextStyleKey) as Style;
 
         foreach (var column in columns)
         {
@@ -128,6 +132,7 @@ public static class DataGridColumnsBehavior
                 IsReadOnly = !column.IsEditable,
                 CanUserSort = false,
                 CanUserReorder = false,
+                ElementStyle = textStyle,
                 CellStyle = column.IsEditable ? CreateGradeCellStyle(gradeStyle, column) : readOnlyStyle,
             };
 

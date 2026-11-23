@@ -17,25 +17,49 @@
         </b:EventTrigger>
     </b:Interaction.Triggers>
 
-    <StackPanel Orientation="Vertical">
-        <ui:TextBlock 
-            Text="Subjects" 
-            Appearance="Secondary"
-            FontTypography="Title" 
-            Margin="5,0,0,0"></ui:TextBlock>
-        <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
-            <ui:Button Margin="0,0,5,0" Content="Add subject" Icon="{ui:SymbolIcon AddCircle32}" Command="{Binding ViewModel.AddSubjectCommand}"/>
-        </StackPanel>
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
 
-        <ui:DataGrid ItemsSource="{Binding ViewModel.Subjects}" 
-                     SelectionMode="Single"
-                     IsReadOnly="True"
-                     AutoGenerateColumns="False"
+    <Grid Style="{StaticResource Ng.PageRoot}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <HeaderedContentControl Grid.Row="0"
+                                Header="Subjects"
+                                Style="{StaticResource Ng.PageHeader}" />
+
+        <WrapPanel Grid.Row="1" Style="{StaticResource Ng.ActionBar}">
+            <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}" Appearance="Primary"
+                       Content="Add subject"
+                       Icon="{ui:SymbolIcon Add24}"
+                       Command="{Binding ViewModel.AddSubjectCommand}" />
+        </WrapPanel>
+
+        <ContentControl Grid.Row="2"
+                        Content="No subjects yet. Use Add subject to create one."
+                        Tag="{Binding ViewModel.Subjects}"
+                        Style="{StaticResource Ng.EmptyState.WhenNoItems}" />
+
+        <ui:DataGrid Grid.Row="3"
+                     Style="{StaticResource Ng.DataGrid}"
+                     ItemsSource="{Binding ViewModel.Subjects}"
                      MouseDoubleClick="OnSubjectsGridMouseDoubleClick">
             <ui:DataGrid.Columns>
-                <DataGridTextColumn Header="Id" Binding="{Binding Id}"/>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
-                <DataGridTextColumn Header="Code" Binding="{Binding ShortCode}"/>
+                <DataGridTextColumn Header="Id" Binding="{Binding Id}"
+                                    ElementStyle="{StaticResource Ng.DataGridText.Numeric}" />
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}"
+                                    ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="Code" Binding="{Binding ShortCode}"
+                                    ElementStyle="{StaticResource Ng.DataGridText}" />
                 <DataGridTemplateColumn Header="Actions">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -43,11 +67,11 @@
                                        ToolTip="Edit subject"
                                        AutomationProperties.Name="Edit subject"
                                        Command="{Binding DataContext.ViewModel.EditSubjectCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                       CommandParameter="{Binding}"/>
+                                       CommandParameter="{Binding}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </ui:DataGrid.Columns>
         </ui:DataGrid>
-    </StackPanel>
+    </Grid>
 </Page>
