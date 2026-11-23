@@ -1,5 +1,6 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using NexGrades.App.Localization;
 
 namespace NexGrades.App.Features.Grades;
 
@@ -79,12 +80,12 @@ public sealed partial class FinalGradeCellViewModel : ObservableObject, IGradeSh
     /// <summary>A short whole-sentence explanation of the cell's state for a tooltip or screen reader.</summary>
     public string Description => VisualState switch
     {
-        GradeCellVisualState.Error => "This final grade is not saved. Enter a whole grade from 1 to 6, or clear the cell.",
-        GradeCellVisualState.Exempt => "The student is exempt from this subject.",
+        GradeCellVisualState.Error => TextResources.Text("Grades_FinalCell_Error_Description"),
+        GradeCellVisualState.Exempt => TextResources.Text("Grades_Cell_Exempt_Description"),
         GradeCellVisualState.Override => Proposal is { } proposal
-            ? string.Format(CultureInfo.CurrentCulture, "This final grade overrides the proposal of {0}.", FormatGrade(proposal))
-            : "This final grade overrides the proposal. There is no proposal yet.",
-        _ => "No override. The proposal is used.",
+            ? TextResources.Format("Grades_FinalCell_Override_Description_Format", FormatGrade(proposal))
+            : TextResources.Text("Grades_FinalCell_OverrideNoProposal_Description"),
+        _ => TextResources.Text("Grades_FinalCell_NoOverride_Description"),
     };
 
     /// <summary>True while a save of this cell runs; the owner serializes saves per cell with it.</summary>

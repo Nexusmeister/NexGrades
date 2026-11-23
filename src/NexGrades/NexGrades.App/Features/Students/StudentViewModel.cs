@@ -10,6 +10,7 @@ using NexGrades.App.Core;
 using NexGrades.App.Core.YearLock;
 using NexGrades.App.Features.Export;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
 using NexGrades.Domain.Exceptions;
@@ -81,7 +82,7 @@ public partial class StudentViewModel(
     [NotifyCanExecuteChangedFor(nameof(SaveStudentCommand))]
     private ClassInstanceOption? _selectedClass;
 
-    [ObservableProperty] private string _title = "Add student";
+    [ObservableProperty] private string _title = TextResources.Text("Students_StudentPage_Add_Title");
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasNoNotes))]
@@ -144,17 +145,17 @@ public partial class StudentViewModel(
         {
             if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName))
             {
-                return "Enter a first name and a last name.";
+                return TextResources.Text("Students_StudentPage_Name_Required");
             }
 
             if (FirstName.Trim().Length > MaxNameLength)
             {
-                return string.Format(CultureInfo.CurrentCulture, "The first name can be at most {0} characters.", MaxNameLength);
+                return TextResources.Format("Students_StudentPage_FirstName_TooLong_Format", MaxNameLength);
             }
 
             if (LastName.Trim().Length > MaxNameLength)
             {
-                return string.Format(CultureInfo.CurrentCulture, "The last name can be at most {0} characters.", MaxNameLength);
+                return TextResources.Format("Students_StudentPage_LastName_TooLong_Format", MaxNameLength);
             }
 
             if (IsExistingStudent)
@@ -164,10 +165,10 @@ public partial class StudentViewModel(
 
             if (Classes.Count == 0)
             {
-                return "There is no class in the active school year to add the student to.";
+                return TextResources.Text("Students_StudentPage_NoClass_Available");
             }
 
-            return SelectedClass is null ? "Select a class for the student." : null;
+            return SelectedClass is null ? TextResources.Text("Students_StudentPage_Class_Required") : null;
         }
     }
 
@@ -177,10 +178,10 @@ public partial class StudentViewModel(
     /// <summary>Explains an empty notes list, depending on why it is empty and whether notes can be added.</summary>
     public string EmptyNotesMessage =>
         NoteYears.Count == 0
-            ? "This student is not enrolled in any school year yet, so there are no notes. Notes can be added once the student is enrolled in a class."
+            ? TextResources.Text("Students_StudentPage_Notes_Empty_NotEnrolled")
             : IsSelectedYearWritable
-                ? "No notes for this school year yet. Write a note above to add one."
-                : "No notes for this school year.";
+                ? TextResources.Text("Students_StudentPage_Notes_Empty_Writable")
+                : TextResources.Text("Students_StudentPage_Notes_Empty_ReadOnly");
 
     /// <summary>
     /// True when leaving the page would lose input: changed names, a class picked for a new student, or a
@@ -210,7 +211,7 @@ public partial class StudentViewModel(
     public StudentGradesViewModel Grades { get; } = grades;
 
     /// <summary>Label of the note editor, which serves both adding and editing.</summary>
-    public string NoteEditorLabel => IsEditingNote ? "Edit note" : "New note";
+    public string NoteEditorLabel => IsEditingNote ? TextResources.Text("Students_StudentPage_NoteEditor_Edit") : TextResources.Text("Students_StudentPage_NoteEditor_New");
 
     /// <summary>True while the note editor holds an existing note rather than a new one.</summary>
     public bool IsEditingNote => EditingNoteId is not null;
@@ -284,7 +285,7 @@ public partial class StudentViewModel(
         _loadedLastName = student.LastName;
         FirstName = student.FirstName;
         LastName = student.LastName;
-        Title = "Edit student";
+        Title = TextResources.Text("Students_StudentPage_Edit_Title");
         IsExistingStudent = true;
 
         await LoadNoteYearsAsync(studentId);
@@ -387,8 +388,8 @@ public partial class StudentViewModel(
         if (SelectedClass is null)
         {
             snackbar.Show(
-                "Missing class",
-                "Select a class for the student before saving.",
+                TextResources.Text("Students_StudentPage_Save_MissingClass_Title"),
+                TextResources.Text("Students_StudentPage_Save_MissingClass_Message"),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.ErrorCircle24),
                 TimeSpan.FromSeconds(5));
@@ -401,11 +402,11 @@ public partial class StudentViewModel(
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            snackbar.Show("Error", "The student could not be saved. Check the selected class and try again.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Error"), TextResources.Text("Students_StudentPage_Create_Failed"), ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
             return;
         }
 
-        snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Success"), TextResources.Text("Students_StudentPage_Save_Success"), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
         LeaveWithoutPrompt();
     }
 
@@ -414,9 +415,9 @@ public partial class StudentViewModel(
     {
         var pendingMessage = (HasPendingNoteInput, Grades.HasPendingInput) switch
         {
-            (true, true) => "The note and the grade you are entering have not been saved. Save the student and discard them?",
-            (true, false) => "The note you are writing has not been saved. Save the student and discard the note?",
-            (false, true) => "The grade you are entering has not been saved. Save the student and discard the grade?",
+            (true, true) => TextResources.Text("Students_StudentPage_Leave_Both"),
+            (true, false) => TextResources.Text("Students_StudentPage_Leave_NoteOnly"),
+            (false, true) => TextResources.Text("Students_StudentPage_Leave_GradeOnly"),
             _ => null,
         };
         if (pendingMessage is not null && !await ConfirmDiscardAsync(pendingMessage, cancellationToken))
@@ -431,11 +432,11 @@ public partial class StudentViewModel(
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            snackbar.Show("Error", "The student could not be saved.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Error"), TextResources.Text("Students_StudentPage_Save_Failed"), ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
             return;
         }
 
-        snackbar.Show("Success", "Student has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Success"), TextResources.Text("Students_StudentPage_Save_Success"), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
         LeaveWithoutPrompt();
     }
 
@@ -445,7 +446,7 @@ public partial class StudentViewModel(
     {
         if (HasUnsavedChanges
             && !await ConfirmDiscardAsync(
-                "You have unsaved changes on this page. Leave the page and discard them?", cancellationToken))
+                TextResources.Text("Core_DiscardChanges_Message"), cancellationToken))
         {
             return;
         }
@@ -465,7 +466,7 @@ public partial class StudentViewModel(
         }
 
         return await ConfirmDiscardAsync(
-            "You have unsaved changes on this page. Leave the page and discard them?", cancellationToken);
+            TextResources.Text("Core_DiscardChanges_Message"), cancellationToken);
     }
 
     /// <summary>Goes back without the leave guard asking a second time; re-arms the guard if going back fails.</summary>
@@ -484,10 +485,10 @@ public partial class StudentViewModel(
         var confirmation = await contentDialogService.ShowSimpleDialogAsync(
             new SimpleContentDialogCreateOptions
             {
-                Title = "Discard changes",
+                Title = TextResources.Text("Core_DiscardChanges_Title"),
                 Content = content,
-                PrimaryButtonText = "Discard",
-                CloseButtonText = "Keep editing",
+                PrimaryButtonText = TextResources.Text("Common_Discard"),
+                CloseButtonText = TextResources.Text("Common_KeepEditing"),
             },
             cancellationToken);
 
@@ -514,7 +515,7 @@ public partial class StudentViewModel(
             var yearDates = await LoadYearDatesAsync(year.Id, cancellationToken);
             if (yearDates is null)
             {
-                ShowExportError("The notes could not be exported. Check that the student still exists and try again.");
+                ShowExportError(TextResources.Text("Students_StudentPage_Export_Failed"));
                 return;
             }
 
@@ -527,7 +528,7 @@ public partial class StudentViewModel(
             var table = await noteExporter.BuildAsync(studentId, request.From, request.To, request.IncludeArchived, cancellationToken);
             if (table.NoteCount == 0)
             {
-                snackbar.Show("No notes", "No notes in this date range", ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(5));
+                snackbar.Show(TextResources.Text("Students_StudentPage_Export_NoNotes_Title"), TextResources.Text("Students_StudentPage_Export_NoNotes_Message"), ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(5));
                 return;
             }
 
@@ -538,7 +539,7 @@ public partial class StudentViewModel(
             }
 
             await noteExporter.WriteAsync(table, path, cancellationToken);
-            snackbar.Show("Success", string.Format(CultureInfo.CurrentCulture, "Exported {0}.", Path.GetFileName(path)), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Success"), TextResources.Format("Students_StudentPage_Export_Success_Format", Path.GetFileName(path)), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
         }
         catch (OperationCanceledException)
         {
@@ -546,12 +547,12 @@ public partial class StudentViewModel(
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            ShowExportError("The export could not be saved. Check that the file is not open and that you may write to the folder.");
+            ShowExportError(TextResources.Text("Students_StudentPage_Export_SaveFailed"));
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbException)
         {
             LogNotesExportFailed(ex);
-            ShowExportError("The notes could not be exported. Check that the student still exists and try again.");
+            ShowExportError(TextResources.Text("Students_StudentPage_Export_Failed"));
         }
         finally
         {
@@ -573,7 +574,7 @@ public partial class StudentViewModel(
     }
 
     private void ShowExportError(string message) =>
-        snackbar.Show("Error", message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Error"), message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Exporting the notes of a student failed.")]
     private partial void LogNotesExportFailed(Exception exception);
@@ -601,9 +602,9 @@ public partial class StudentViewModel(
         var text = NoteText;
         var succeeded = await RunNoteOperationAsync(
             () => noteService.AddNoteAsync(studentId, year.Id, text, null, cancellationToken),
-            "Note has been added.",
-            "The note could not be saved.",
-            "The note could not be saved because the school year is closed.");
+            TextResources.Text("Students_StudentPage_Note_Add_Success"),
+            TextResources.Text("Students_StudentPage_Note_Save_Failed"),
+            TextResources.Text("Students_StudentPage_Note_Save_ClosedYear"));
 
         if (succeeded)
         {
@@ -640,9 +641,9 @@ public partial class StudentViewModel(
         var category = _editingNoteCategory;
         var succeeded = await RunNoteOperationAsync(
             () => noteService.EditNoteAsync(noteId, text, category, cancellationToken),
-            "Note has been saved.",
-            "The note could not be saved.",
-            "The note could not be saved because the school year is closed.");
+            TextResources.Text("Students_StudentPage_Note_Save_Success"),
+            TextResources.Text("Students_StudentPage_Note_Save_Failed"),
+            TextResources.Text("Students_StudentPage_Note_Save_ClosedYear"));
 
         if (succeeded)
         {
@@ -669,10 +670,10 @@ public partial class StudentViewModel(
         var confirmation = await contentDialogService.ShowSimpleDialogAsync(
             new SimpleContentDialogCreateOptions
             {
-                Title = "Archive note",
-                Content = "Archive this note? Archived notes are hidden from the list. You can show and restore them at any time.",
-                PrimaryButtonText = "Archive",
-                CloseButtonText = "Cancel",
+                Title = TextResources.Text("Students_StudentPage_Note_Archive_Title"),
+                Content = TextResources.Text("Students_StudentPage_Note_Archive_Message"),
+                PrimaryButtonText = TextResources.Text("Students_StudentPage_Note_Archive_Confirm"),
+                CloseButtonText = TextResources.Text("Common_Cancel"),
             },
             cancellationToken);
 
@@ -683,9 +684,9 @@ public partial class StudentViewModel(
 
         var succeeded = await RunNoteOperationAsync(
             () => noteService.ArchiveNoteAsync(note.Id, cancellationToken),
-            "Note has been archived.",
-            "The note could not be archived.",
-            "The note could not be archived because the school year is closed.");
+            TextResources.Text("Students_StudentPage_Note_Archive_Success"),
+            TextResources.Text("Students_StudentPage_Note_Archive_Failed"),
+            TextResources.Text("Students_StudentPage_Note_Archive_ClosedYear"));
 
         if (succeeded)
         {
@@ -703,9 +704,9 @@ public partial class StudentViewModel(
     {
         var succeeded = await RunNoteOperationAsync(
             () => noteService.RestoreNoteAsync(note.Id, cancellationToken),
-            "Note has been restored.",
-            "The note could not be restored.",
-            "The note could not be restored because the school year is closed.");
+            TextResources.Text("Students_StudentPage_Note_Restore_Success"),
+            TextResources.Text("Students_StudentPage_Note_Restore_Failed"),
+            TextResources.Text("Students_StudentPage_Note_Restore_ClosedYear"));
 
         if (succeeded)
         {
@@ -724,12 +725,12 @@ public partial class StudentViewModel(
         try
         {
             await operation();
-            snackbar.Show("Success", successMessage, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Success"), successMessage, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
             return true;
         }
         catch (ClosedYearException)
         {
-            snackbar.Show("Error", closedYearMessage, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Error"), closedYearMessage, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
 
             // The year was locked while the page was open (e.g. its unlock expired): refresh the lock state so the
             // page turns read-only instead of offering edits that will fail again. The editor text stays, so the
@@ -740,7 +741,7 @@ public partial class StudentViewModel(
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
-            snackbar.Show("Error", failureMessage, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Error"), failureMessage, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
             return false;
         }
         finally
@@ -775,7 +776,7 @@ public partial class StudentViewModel(
         {
             if (version == _notesReloadVersion)
             {
-                snackbar.Show("Error", "The notes could not be loaded.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+                snackbar.Show(TextResources.Text("Common_Error"), TextResources.Text("Students_StudentPage_Notes_LoadFailed"), ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
             }
 
             return;
@@ -793,9 +794,9 @@ public partial class StudentViewModel(
                 n.Text,
                 n.Category,
                 n.CreatedOn.ToString("g", culture),
-                n.LastEditedOn is { } edited ? string.Format(culture, "Edited {0}", edited.ToString("g", culture)) : null,
+                n.LastEditedOn is { } edited ? TextResources.Format("Students_StudentPage_Note_Edited_Format", edited.ToString("g", culture)) : null,
                 n.IsArchived,
-                n.ArchivedOn is { } archived ? string.Format(culture, "Archived {0}", archived.ToString("g", culture)) : null))
+                n.ArchivedOn is { } archived ? TextResources.Format("Students_StudentPage_Note_Archived_Format", archived.ToString("g", culture)) : null))
             .ToObservableCollection();
         StartEditNoteCommand.NotifyCanExecuteChanged();
         ArchiveNoteCommand.NotifyCanExecuteChanged();

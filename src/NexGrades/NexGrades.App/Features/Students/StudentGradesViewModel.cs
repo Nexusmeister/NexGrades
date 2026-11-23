@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Core;
 using NexGrades.App.Core.YearLock;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Grading;
 using NexGrades.Domain.Services;
@@ -35,8 +36,6 @@ public sealed partial class StudentGradesViewModel(
     IClock clock,
     ILogger<StudentGradesViewModel> logger) : ViewModel
 {
-    private const string NoAssessmentText = "No assessment (single grade)";
-
     private readonly ILogger<StudentGradesViewModel> _logger = logger;
 
     private YearLockViewModel? _yearLock;
@@ -113,10 +112,10 @@ public sealed partial class StudentGradesViewModel(
     /// <summary>Explains an empty list, depending on why it is empty.</summary>
     public string EmptyMessage =>
         _loadFailed
-            ? "The grades could not be loaded."
+            ? TextResources.Text("Students_Grades_LoadFailed")
             : _schoolYearId is null
-                ? "This student is not enrolled in any school year yet, so there are no grades."
-                : "This student has no subjects in this school year.";
+                ? TextResources.Text("Students_Grades_Empty_NotEnrolled")
+                : TextResources.Text("Students_Grades_Empty_NoSubjects");
 
     /// <summary>Whether grades may be added or changed in the shown year right now; follows the page's year lock.</summary>
     public bool IsWritable => _schoolYearId is not null && _yearLock is { IsWritable: true };
@@ -149,21 +148,21 @@ public sealed partial class StudentGradesViewModel(
         {
             if (!string.IsNullOrWhiteSpace(GradeText) && !GradingScale.TryParseToken(GradeText, out _))
             {
-                return "Enter a grade from 1+ to 6, such as 2-.";
+                return TextResources.Text("Students_Grades_Grade_Invalid");
             }
 
             if (GradeDate is null)
             {
-                return "Pick a date for the grade.";
+                return TextResources.Text("Students_Grades_Date_Required");
             }
 
             if (GradeLabel.Trim().Length > GradeService.MaxLabelLength)
             {
-                return string.Format(CultureInfo.CurrentCulture, "The label can have at most {0} characters.", GradeService.MaxLabelLength);
+                return TextResources.Format("Students_Grades_Label_TooLong_Format", GradeService.MaxLabelLength);
             }
 
             return GradeComment.Trim().Length > GradeService.MaxCommentLength
-                ? string.Format(CultureInfo.CurrentCulture, "The comment can have at most {0} characters.", GradeService.MaxCommentLength)
+                ? TextResources.Format("Students_Grades_Comment_TooLong_Format", GradeService.MaxCommentLength)
                 : null;
         }
     }
@@ -322,14 +321,14 @@ public sealed partial class StudentGradesViewModel(
 
         _editorBucketId = bucket.BucketId;
         EditorBucketName = bucket.Name;
-        EditorTitle = "New grade";
+        EditorTitle = TextResources.Text("Students_Grades_Editor_New_Title");
 
         var culture = CultureInfo.CurrentCulture;
         var alreadyGraded = bucket.Grades
             .Where(g => g.AssessmentId is not null && !g.IsVoided)
             .Select(g => g.AssessmentId)
             .ToHashSet();
-        var choices = new List<AssessmentChoice> { new(null, NoAssessmentText, null) };
+        var choices = new List<AssessmentChoice> { new(null, TextResources.Text("Students_Grades_NoAssessment"), null) };
         choices.AddRange(bucket.Assessments
             .Where(a => !alreadyGraded.Contains(a.Id) && IsWithinEnrollment(a.Date))
             .Select(a => new AssessmentChoice(
@@ -361,7 +360,7 @@ public sealed partial class StudentGradesViewModel(
         _editingAssessmentId = grade.AssessmentId;
         EditingAssessmentTitle = grade.AssessmentId is null ? null : grade.AssessmentTitle ?? string.Empty;
         EditorBucketName = string.Empty;
-        EditorTitle = "Edit grade";
+        EditorTitle = TextResources.Text("Students_Grades_Editor_Edit_Title");
 
         _originalGradeText = grade.Token;
         _originalDate = grade.RecordedOn.ToDateTime(TimeOnly.MinValue);
@@ -404,9 +403,9 @@ public sealed partial class StudentGradesViewModel(
 
         var succeeded = await RunWriteAsync(
             save,
-            "Grade has been saved.",
-            "The grade could not be saved. Check the grade and the date and try again.",
-            "The grade could not be saved because the school year is closed.",
+            TextResources.Text("Students_Grades_Save_Success"),
+            TextResources.Text("Students_Grades_Save_Failed"),
+            TextResources.Text("Students_Grades_Save_ClosedYear"),
             isStaleAfterReload: null);
 
         if (succeeded)
@@ -430,9 +429,9 @@ public sealed partial class StudentGradesViewModel(
     {
         var succeeded = await RunWriteAsync(
             () => gradeService.VoidGradeAsync(grade.Id, cancellationToken),
-            "Grade has been voided.",
-            "The grade could not be voided.",
-            "The grade could not be voided because the school year is closed.",
+            TextResources.Text("Students_Grades_Void_Success"),
+            TextResources.Text("Students_Grades_Void_Failed"),
+            TextResources.Text("Students_Grades_Void_ClosedYear"),
             () => FindGrade(grade.Id) is not { IsVoided: false });
 
         if (succeeded)
@@ -456,9 +455,9 @@ public sealed partial class StudentGradesViewModel(
     {
         var succeeded = await RunWriteAsync(
             () => gradeService.RestoreGradeAsync(grade.Id, cancellationToken),
-            "Grade has been restored.",
-            "The grade could not be restored. Its assessment may have been voided or graded again.",
-            "The grade could not be restored because the school year is closed.",
+            TextResources.Text("Students_Grades_Restore_Success"),
+            TextResources.Text("Students_Grades_Restore_Failed"),
+            TextResources.Text("Students_Grades_Restore_ClosedYear"),
             () => FindGrade(grade.Id) is not { CanRestore: true });
 
         if (succeeded)
@@ -511,7 +510,7 @@ public sealed partial class StudentGradesViewModel(
             // voided or graded again) are the operation's own failure.
             IsBusy = false;
             await ReloadAsync();
-            ShowError(isStaleAfterReload() ? StaleGradeMessage : failureMessage);
+            ShowError(isStaleAfterReload() ? TextResources.Text("Students_Grades_Stale") : failureMessage);
             return false;
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
@@ -531,8 +530,6 @@ public sealed partial class StudentGradesViewModel(
             IsBusy = false;
         }
     }
-
-    private const string StaleGradeMessage = "This grade changed in the meantime, the list was refreshed.";
 
     /// <summary>The row of a grade in the current list, or null when it is not listed (for example a voided one that is hidden).</summary>
     private StudentGradeRow? FindGrade(int gradeId) =>
@@ -570,7 +567,7 @@ public sealed partial class StudentGradesViewModel(
                     _loadFailed = true;
                     Subjects = [];
                     OnPropertyChanged(nameof(EmptyMessage));
-                    ShowError("The grades could not be loaded.");
+                    ShowError(TextResources.Text("Students_Grades_LoadFailed"));
                 }
 
                 return;
@@ -666,10 +663,10 @@ public sealed partial class StudentGradesViewModel(
     }
 
     private void ShowSuccess(string message) =>
-        snackbar.Show("Success", message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Success"), message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
 
     private void ShowError(string message) =>
-        snackbar.Show("Error", message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Error"), message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Loading the student's grades failed.")]
     private partial void LogLoadFailed(Exception exception);

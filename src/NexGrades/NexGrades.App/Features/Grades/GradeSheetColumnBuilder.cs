@@ -1,4 +1,5 @@
 using System.Globalization;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Grading;
 
 namespace NexGrades.App.Features.Grades;
@@ -20,7 +21,7 @@ public static class GradeSheetColumnBuilder
         var culture = CultureInfo.CurrentCulture;
         var columns = new List<GradeSheetColumn>
         {
-            new() { Kind = GradeSheetColumnKind.Student, Header = "Student" },
+            new() { Kind = GradeSheetColumnKind.Student, Header = TextResources.Text("Grades_Column_Student") },
         };
 
         var cellIndex = 0;
@@ -50,7 +51,7 @@ public static class GradeSheetColumnBuilder
                 columns.Add(new GradeSheetColumn
                 {
                     Kind = GradeSheetColumnKind.OtherGrades,
-                    Header = string.Format(culture, "{0}: other grades", bucket.Name),
+                    Header = TextResources.Format("Grades_Column_OtherGrades_Format", bucket.Name),
                     BucketName = bucket.Name,
                     BucketId = bucket.Id,
                     BucketIndex = bucketIndex,
@@ -60,16 +61,16 @@ public static class GradeSheetColumnBuilder
             columns.Add(new GradeSheetColumn
             {
                 Kind = GradeSheetColumnKind.BucketAverage,
-                Header = string.Format(culture, "{0}: average", bucket.Name),
+                Header = TextResources.Format("Grades_Column_CategoryAverage_Format", bucket.Name),
                 BucketName = bucket.Name,
                 BucketId = bucket.Id,
                 BucketIndex = bucketIndex,
             });
         }
 
-        columns.Add(new GradeSheetColumn { Kind = GradeSheetColumnKind.SubjectAverage, Header = "Average" });
-        columns.Add(new GradeSheetColumn { Kind = GradeSheetColumnKind.ProposedFinalGrade, Header = "Proposal" });
-        columns.Add(new GradeSheetColumn { Kind = GradeSheetColumnKind.FinalGrade, Header = "Final grade" });
+        columns.Add(new GradeSheetColumn { Kind = GradeSheetColumnKind.SubjectAverage, Header = TextResources.Text("Grades_Column_Average") });
+        columns.Add(new GradeSheetColumn { Kind = GradeSheetColumnKind.ProposedFinalGrade, Header = TextResources.Text("Grades_Column_Proposal") });
+        columns.Add(new GradeSheetColumn { Kind = GradeSheetColumnKind.FinalGrade, Header = TextResources.Text("Grades_Column_FinalGrade") });
         return columns;
     }
 }

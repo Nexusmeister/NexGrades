@@ -1,5 +1,5 @@
-using System.Globalization;
 using NexGrades.App.Features.Grades;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Grading;
 
 namespace NexGrades.App.Features.Students;
@@ -56,14 +56,13 @@ public sealed class StudentSubjectRow
         var finalGrade = GradeAverageFormatter.FormatFinalGrade(subject.FinalGrade);
         if (subject.FinalGradeOverride is null)
         {
-            return string.Format(CultureInfo.CurrentCulture, "Final grade: {0}", finalGrade);
+            return TextResources.Format("Students_StudentPage_FinalGrade_Format", finalGrade);
         }
 
         return subject.ProposedFinalGrade is null
-            ? string.Format(CultureInfo.CurrentCulture, "Final grade: {0} (set by teacher, no proposal)", finalGrade)
-            : string.Format(
-                CultureInfo.CurrentCulture,
-                "Final grade: {0} (set by teacher, proposal {1})",
+            ? TextResources.Format("Students_Grades_FinalGrade_OverrideNoProposal_Format", finalGrade)
+            : TextResources.Format(
+                "Students_Grades_FinalGrade_Override_Format",
                 finalGrade,
                 GradeAverageFormatter.FormatFinalGrade(subject.ProposedFinalGrade));
     }

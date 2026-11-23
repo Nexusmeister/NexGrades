@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using NexGrades.App.Localization;
 
 namespace NexGrades.App.Features.Students;
 
@@ -32,15 +33,15 @@ public sealed partial class ExportNotesDialogViewModel(DateOnly defaultFrom, Dat
         {
             if (From is null || To is null)
             {
-                return "Enter a start date and an end date.";
+                return TextResources.Text("Students_ExportDialog_Dates_Required");
             }
 
             if (To > DisplayDateEnd)
             {
-                return "The end date is too far in the future.";
+                return TextResources.Text("Students_ExportDialog_End_TooFar");
             }
 
-            return From > To ? "The start date must not be after the end date." : null;
+            return From > To ? TextResources.Text("Students_ExportDialog_Range_Reversed") : null;
         }
     }
 

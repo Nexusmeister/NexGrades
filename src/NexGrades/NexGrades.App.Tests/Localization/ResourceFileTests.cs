@@ -29,6 +29,8 @@ public static partial class ResourceFileTests
         "Subjects_Overview_Name_Header",
         "Students_Overview_Id_Header",
         "Students_StudentPage_Comment_Placeholder",
+        "Grades_GradeSheet_PageTitle_Format",
+        "Grades_Row_StudentName_Format",
     ];
 
     private static readonly CultureInfo _german = CultureInfo.GetCultureInfo("de");

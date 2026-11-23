@@ -52,4 +52,60 @@
   <data name="Grades_Assessment_Void_Tooltip" xml:space="preserve"><value>Diesen Leistungsnachweis streichen. Er lässt sich später wiederherstellen.</value></data>
   <data name="Grades_Assessment_Restore" xml:space="preserve"><value>Leistungsnachweis wiederherstellen</value></data>
   <data name="Grades_Assessment_Restore_Tooltip" xml:space="preserve"><value>Diesen Leistungsnachweis wiederherstellen</value></data>
+  <data name="Grades_GradeSheet_NotFound" xml:space="preserve"><value>Diese Notenübersicht konnte nicht gefunden werden.</value></data>
+  <data name="Grades_GradeSheet_LoadFailed" xml:space="preserve"><value>Die Notenübersicht konnte nicht geladen werden.</value></data>
+  <data name="Grades_GradeSheet_PageTitle_Format" xml:space="preserve"><value>{0}, {1}</value><comment>{0} is the subject name, {1} is the class name.</comment></data>
+  <data name="Grades_GradeSheet_Leave_Message" xml:space="preserve"><value>Sie haben Noten oder Details, die nicht gespeichert sind. Möchten Sie die Seite verlassen und sie verwerfen?</value></data>
+  <data name="Grades_GradeSheet_Reload_Message" xml:space="preserve"><value>Sie haben Noten oder Details, die nicht gespeichert sind. Beim erneuten Laden der Notenübersicht gehen sie verloren. Möchten Sie fortfahren?</value></data>
+  <data name="Grades_GradeSheet_ReloadFailed" xml:space="preserve"><value>Die Notenübersicht konnte nicht neu geladen werden. Sie ist möglicherweise veraltet, bis Sie sie neu laden.</value></data>
+  <data name="Grades_GradeSheet_MaybeOutdated" xml:space="preserve"><value>Die Notenübersicht ist möglicherweise veraltet, bis Sie sie neu laden.</value></data>
+  <data name="Grades_Detail_Save_Failed" xml:space="preserve"><value>Die Notendetails konnten nicht gespeichert werden. Prüfen Sie, ob das Datum im Schuljahr liegt und ob die Schülerin / der Schüler an diesem Tag zugeordnet und nicht befreit war.</value></data>
+  <data name="Grades_Detail_Save_ClosedYear" xml:space="preserve"><value>Die Notendetails konnten nicht gespeichert werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Grades_Detail_Save_Success" xml:space="preserve"><value>Die Notendetails wurden gespeichert.</value></data>
+  <data name="Grades_Grade_Void_Failed" xml:space="preserve"><value>Die Note konnte nicht gestrichen werden.</value></data>
+  <data name="Grades_Grade_Void_ClosedYear" xml:space="preserve"><value>Die Note konnte nicht gestrichen werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Grades_Grade_Void_Success" xml:space="preserve"><value>Die Note wurde gestrichen.</value></data>
+  <data name="Grades_Grade_Restore_Failed" xml:space="preserve"><value>Die Note konnte nicht wiederhergestellt werden. Prüfen Sie, ob die Schülerin / der Schüler für diesen Leistungsnachweis keine andere Note hat und zu dessen Datum zugeordnet war.</value></data>
+  <data name="Grades_Grade_Restore_ClosedYear" xml:space="preserve"><value>Die Note konnte nicht wiederhergestellt werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Grades_Grade_Restore_Success" xml:space="preserve"><value>Die Note wurde wiederhergestellt.</value></data>
+  <data name="Grades_Assessment_Add_Failed" xml:space="preserve"><value>Der Leistungsnachweis konnte nicht hinzugefügt werden. Geben Sie einen Titel und ein Datum innerhalb des Schuljahres ein.</value></data>
+  <data name="Grades_Assessment_Add_ClosedYear" xml:space="preserve"><value>Der Leistungsnachweis konnte nicht hinzugefügt werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Grades_Assessment_Add_Success" xml:space="preserve"><value>Der Leistungsnachweis wurde hinzugefügt.</value></data>
+  <data name="Grades_Assessment_Change_Failed" xml:space="preserve"><value>Der Leistungsnachweis konnte nicht geändert werden. Geben Sie einen Titel und ein Datum innerhalb des Schuljahres ein, prüfen Sie, ob alle benoteten Schülerinnen und Schüler am neuen Datum zugeordnet und nicht befreit waren, und ob der Leistungsnachweis nicht gestrichen ist.</value></data>
+  <data name="Grades_Assessment_Change_ClosedYear" xml:space="preserve"><value>Der Leistungsnachweis konnte nicht geändert werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Grades_Assessment_Change_Success" xml:space="preserve"><value>Der Leistungsnachweis wurde geändert.</value></data>
+  <data name="Grades_Assessment_Void_Confirm_Message" xml:space="preserve"><value>Die Noten dieses Leistungsnachweises zählen nicht mehr für Durchschnitte, solange er gestrichen ist. Sie können ihn später wiederherstellen. Möchten Sie den Leistungsnachweis streichen?</value></data>
+  <data name="Grades_Assessment_Void_Confirm_MessageUnsaved" xml:space="preserve"><value>Die Noten dieses Leistungsnachweises zählen nicht mehr für Durchschnitte, solange er gestrichen ist. Sie können ihn später wiederherstellen. Beim Streichen wird die Notenübersicht neu geladen, und nicht gespeicherte Noten oder Details gehen verloren. Möchten Sie den Leistungsnachweis streichen?</value></data>
+  <data name="Grades_Assessment_Void_Confirm_Primary" xml:space="preserve"><value>Streichen</value></data>
+  <data name="Grades_Assessment_Void_Failed" xml:space="preserve"><value>Der Leistungsnachweis konnte nicht gestrichen werden.</value></data>
+  <data name="Grades_Assessment_Void_ClosedYear" xml:space="preserve"><value>Der Leistungsnachweis konnte nicht gestrichen werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Grades_Assessment_Void_Success" xml:space="preserve"><value>Der Leistungsnachweis wurde gestrichen.</value></data>
+  <data name="Grades_Assessment_Restore_Failed" xml:space="preserve"><value>Der Leistungsnachweis konnte nicht wiederhergestellt werden.</value></data>
+  <data name="Grades_Assessment_Restore_ClosedYear" xml:space="preserve"><value>Der Leistungsnachweis konnte nicht wiederhergestellt werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Grades_Assessment_Restore_Success" xml:space="preserve"><value>Der Leistungsnachweis wurde wiederhergestellt.</value></data>
+  <data name="Grades_Cell_Save_Unexpected" xml:space="preserve"><value>Die Note konnte wegen eines unerwarteten Problems nicht gespeichert werden.</value></data>
+  <data name="Grades_Cell_Save_Failed" xml:space="preserve"><value>Die Note konnte nicht gespeichert werden. Prüfen Sie, ob die Schülerin / der Schüler zum Datum des Leistungsnachweises zugeordnet und nicht befreit war.</value></data>
+  <data name="Grades_Cell_Save_ClosedYear" xml:space="preserve"><value>Die Note konnte nicht gespeichert werden, weil ihr Schuljahr abgeschlossen ist.</value></data>
+  <data name="Grades_FinalGrade_Save_Unexpected" xml:space="preserve"><value>Die Zeugnisnote konnte wegen eines unerwarteten Problems nicht gespeichert werden.</value></data>
+  <data name="Grades_FinalGrade_Save_Failed" xml:space="preserve"><value>Die Zeugnisnote konnte nicht gespeichert werden. Geben Sie eine ganze Note von 1 bis 6 ein, und prüfen Sie, ob die Schülerin / der Schüler zugeordnet und nicht befreit ist.</value></data>
+  <data name="Grades_FinalGrade_Save_ClosedYear" xml:space="preserve"><value>Die Zeugnisnote konnte nicht gespeichert werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Grades_FinalGrade_Override_Removed" xml:space="preserve"><value>Die manuelle Festlegung wurde entfernt. Der Vorschlag wird wieder verwendet.</value></data>
+  <data name="Grades_Column_Student" xml:space="preserve"><value>Schülerin / Schüler</value></data>
+  <data name="Grades_Column_OtherGrades_Format" xml:space="preserve"><value>{0}: weitere Noten</value><comment>{0} is the grade category name.</comment></data>
+  <data name="Grades_Column_CategoryAverage_Format" xml:space="preserve"><value>{0}: Durchschnitt</value><comment>{0} is the grade category name.</comment></data>
+  <data name="Grades_Column_Average" xml:space="preserve"><value>Durchschnitt</value></data>
+  <data name="Grades_Column_Proposal" xml:space="preserve"><value>Vorschlag</value></data>
+  <data name="Grades_Column_FinalGrade" xml:space="preserve"><value>Zeugnisnote</value></data>
+  <data name="Grades_Row_StudentName_Format" xml:space="preserve"><value>{0}, {1}</value><comment>{0} is the last name, {1} is the first name.</comment></data>
+  <data name="Grades_Row_Exempt" xml:space="preserve"><value>Von diesem Fach befreit.</value></data>
+  <data name="Grades_Row_Left_Format" xml:space="preserve"><value>Ausgetreten am {0:d}.</value><comment>{0} is the date the student left the class.</comment></data>
+  <data name="Grades_Cell_Error_Description" xml:space="preserve"><value>Diese Note ist nicht gespeichert. Geben Sie eine Note von 1+ bis 6 ein, oder leeren Sie die Zelle.</value></data>
+  <data name="Grades_Cell_Exempt_Description" xml:space="preserve"><value>Die Schülerin / der Schüler ist von diesem Fach befreit.</value></data>
+  <data name="Grades_Cell_NotEnrolled_Description" xml:space="preserve"><value>Die Schülerin / der Schüler war an diesem Datum der Klasse nicht zugeordnet.</value></data>
+  <data name="Grades_Cell_AssessmentVoided_Description" xml:space="preserve"><value>Dieser Leistungsnachweis ist gestrichen.</value></data>
+  <data name="Grades_Cell_Voided_Description" xml:space="preserve"><value>Diese Note ist gestrichen.</value></data>
+  <data name="Grades_FinalCell_Error_Description" xml:space="preserve"><value>Diese Zeugnisnote ist nicht gespeichert. Geben Sie eine ganze Note von 1 bis 6 ein, oder leeren Sie die Zelle.</value></data>
+  <data name="Grades_FinalCell_Override_Description_Format" xml:space="preserve"><value>Diese Zeugnisnote überschreibt den Vorschlag {0}.</value><comment>{0} is the proposed final grade.</comment></data>
+  <data name="Grades_FinalCell_OverrideNoProposal_Description" xml:space="preserve"><value>Diese Zeugnisnote überschreibt den Vorschlag. Es gibt noch keinen Vorschlag.</value></data>
+  <data name="Grades_FinalCell_NoOverride_Description" xml:space="preserve"><value>Keine Überschreibung. Der Vorschlag wird verwendet.</value></data>
 </root>

@@ -52,4 +52,60 @@
   <data name="Grades_Assessment_Void_Tooltip" xml:space="preserve"><value>Void this assessment. It can be restored later.</value></data>
   <data name="Grades_Assessment_Restore" xml:space="preserve"><value>Restore assessment</value></data>
   <data name="Grades_Assessment_Restore_Tooltip" xml:space="preserve"><value>Restore this assessment</value></data>
+  <data name="Grades_GradeSheet_NotFound" xml:space="preserve"><value>This grade sheet could not be found.</value></data>
+  <data name="Grades_GradeSheet_LoadFailed" xml:space="preserve"><value>The grade sheet could not be loaded.</value></data>
+  <data name="Grades_GradeSheet_PageTitle_Format" xml:space="preserve"><value>{0}, {1}</value><comment>{0} is the subject name, {1} is the class name.</comment></data>
+  <data name="Grades_GradeSheet_Leave_Message" xml:space="preserve"><value>You have grades or details that are not saved. Leave the page and discard them?</value></data>
+  <data name="Grades_GradeSheet_Reload_Message" xml:space="preserve"><value>You have grades or details that are not saved. Reloading the sheet discards them. Continue?</value></data>
+  <data name="Grades_GradeSheet_ReloadFailed" xml:space="preserve"><value>The grade sheet could not be reloaded. It may be out of date until you reload it.</value></data>
+  <data name="Grades_GradeSheet_MaybeOutdated" xml:space="preserve"><value>The sheet may be out of date until you reload it.</value></data>
+  <data name="Grades_Detail_Save_Failed" xml:space="preserve"><value>The grade details could not be saved. Check that the date lies in the school year and that the student was enrolled and not exempt on that date.</value></data>
+  <data name="Grades_Detail_Save_ClosedYear" xml:space="preserve"><value>The grade details could not be saved because the school year is closed.</value></data>
+  <data name="Grades_Detail_Save_Success" xml:space="preserve"><value>The grade details have been saved.</value></data>
+  <data name="Grades_Grade_Void_Failed" xml:space="preserve"><value>The grade could not be voided.</value></data>
+  <data name="Grades_Grade_Void_ClosedYear" xml:space="preserve"><value>The grade could not be voided because the school year is closed.</value></data>
+  <data name="Grades_Grade_Void_Success" xml:space="preserve"><value>The grade has been voided.</value></data>
+  <data name="Grades_Grade_Restore_Failed" xml:space="preserve"><value>The grade could not be restored. Check that the student has no other grade for this assessment and was enrolled on its date.</value></data>
+  <data name="Grades_Grade_Restore_ClosedYear" xml:space="preserve"><value>The grade could not be restored because the school year is closed.</value></data>
+  <data name="Grades_Grade_Restore_Success" xml:space="preserve"><value>The grade has been restored.</value></data>
+  <data name="Grades_Assessment_Add_Failed" xml:space="preserve"><value>The assessment could not be added. Enter a title and a date within the school year.</value></data>
+  <data name="Grades_Assessment_Add_ClosedYear" xml:space="preserve"><value>The assessment could not be added because the school year is closed.</value></data>
+  <data name="Grades_Assessment_Add_Success" xml:space="preserve"><value>The assessment has been added.</value></data>
+  <data name="Grades_Assessment_Change_Failed" xml:space="preserve"><value>The assessment could not be changed. Enter a title and a date within the school year, check that every graded student was enrolled and not exempt on the new date, and that the assessment is not voided.</value></data>
+  <data name="Grades_Assessment_Change_ClosedYear" xml:space="preserve"><value>The assessment could not be changed because the school year is closed.</value></data>
+  <data name="Grades_Assessment_Change_Success" xml:space="preserve"><value>The assessment has been changed.</value></data>
+  <data name="Grades_Assessment_Void_Confirm_Message" xml:space="preserve"><value>The grades of this assessment no longer count towards any average while it is voided. You can restore it later. Void the assessment?</value></data>
+  <data name="Grades_Assessment_Void_Confirm_MessageUnsaved" xml:space="preserve"><value>The grades of this assessment no longer count towards any average while it is voided. You can restore it later. Voiding reloads the sheet and discards the grades or details that are not saved. Void the assessment?</value></data>
+  <data name="Grades_Assessment_Void_Confirm_Primary" xml:space="preserve"><value>Void</value></data>
+  <data name="Grades_Assessment_Void_Failed" xml:space="preserve"><value>The assessment could not be voided.</value></data>
+  <data name="Grades_Assessment_Void_ClosedYear" xml:space="preserve"><value>The assessment could not be voided because the school year is closed.</value></data>
+  <data name="Grades_Assessment_Void_Success" xml:space="preserve"><value>The assessment has been voided.</value></data>
+  <data name="Grades_Assessment_Restore_Failed" xml:space="preserve"><value>The assessment could not be restored.</value></data>
+  <data name="Grades_Assessment_Restore_ClosedYear" xml:space="preserve"><value>The assessment could not be restored because the school year is closed.</value></data>
+  <data name="Grades_Assessment_Restore_Success" xml:space="preserve"><value>The assessment has been restored.</value></data>
+  <data name="Grades_Cell_Save_Unexpected" xml:space="preserve"><value>The grade could not be saved because of an unexpected problem.</value></data>
+  <data name="Grades_Cell_Save_Failed" xml:space="preserve"><value>The grade could not be saved. Check that the student was enrolled on the assessment's date and is not exempt.</value></data>
+  <data name="Grades_Cell_Save_ClosedYear" xml:space="preserve"><value>The grade could not be saved because its school year is closed.</value></data>
+  <data name="Grades_FinalGrade_Save_Unexpected" xml:space="preserve"><value>The final grade could not be saved because of an unexpected problem.</value></data>
+  <data name="Grades_FinalGrade_Save_Failed" xml:space="preserve"><value>The final grade could not be saved. Enter a whole grade from 1 to 6 for a student who is enrolled and not exempt.</value></data>
+  <data name="Grades_FinalGrade_Save_ClosedYear" xml:space="preserve"><value>The final grade could not be saved because the school year is closed.</value></data>
+  <data name="Grades_FinalGrade_Override_Removed" xml:space="preserve"><value>The override has been removed. The proposal is used again.</value></data>
+  <data name="Grades_Column_Student" xml:space="preserve"><value>Student</value></data>
+  <data name="Grades_Column_OtherGrades_Format" xml:space="preserve"><value>{0}: other grades</value><comment>{0} is the grade category name.</comment></data>
+  <data name="Grades_Column_CategoryAverage_Format" xml:space="preserve"><value>{0}: average</value><comment>{0} is the grade category name.</comment></data>
+  <data name="Grades_Column_Average" xml:space="preserve"><value>Average</value></data>
+  <data name="Grades_Column_Proposal" xml:space="preserve"><value>Proposal</value></data>
+  <data name="Grades_Column_FinalGrade" xml:space="preserve"><value>Final grade</value></data>
+  <data name="Grades_Row_StudentName_Format" xml:space="preserve"><value>{0}, {1}</value><comment>{0} is the last name, {1} is the first name.</comment></data>
+  <data name="Grades_Row_Exempt" xml:space="preserve"><value>Exempt from this subject.</value></data>
+  <data name="Grades_Row_Left_Format" xml:space="preserve"><value>Left the class on {0:d}.</value><comment>{0} is the date the student left the class.</comment></data>
+  <data name="Grades_Cell_Error_Description" xml:space="preserve"><value>This grade is not saved. Enter a grade from 1+ to 6, or clear the cell.</value></data>
+  <data name="Grades_Cell_Exempt_Description" xml:space="preserve"><value>The student is exempt from this subject.</value></data>
+  <data name="Grades_Cell_NotEnrolled_Description" xml:space="preserve"><value>The student was not enrolled in the class on this date.</value></data>
+  <data name="Grades_Cell_AssessmentVoided_Description" xml:space="preserve"><value>This assessment is voided.</value></data>
+  <data name="Grades_Cell_Voided_Description" xml:space="preserve"><value>This grade is voided.</value></data>
+  <data name="Grades_FinalCell_Error_Description" xml:space="preserve"><value>This final grade is not saved. Enter a whole grade from 1 to 6, or clear the cell.</value></data>
+  <data name="Grades_FinalCell_Override_Description_Format" xml:space="preserve"><value>This final grade overrides the proposal of {0}.</value><comment>{0} is the proposed final grade.</comment></data>
+  <data name="Grades_FinalCell_OverrideNoProposal_Description" xml:space="preserve"><value>This final grade overrides the proposal. There is no proposal yet.</value></data>
+  <data name="Grades_FinalCell_NoOverride_Description" xml:space="preserve"><value>No override. The proposal is used.</value></data>
 </root>

@@ -1,5 +1,5 @@
-using System.Globalization;
 using NexGrades.App.Features.Grades;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Grading;
 
 namespace NexGrades.App.Features.Students;
@@ -17,7 +17,7 @@ public sealed class StudentBucketRow
         BucketId = bucket.BucketId;
         Name = bucket.Name;
         IsExempt = isExempt;
-        WeightText = string.Format(CultureInfo.CurrentCulture, "Weight {0:0.##}%", bucket.Weight);
+        WeightText = TextResources.Format("Students_Grades_Weight_Format", bucket.Weight);
         AverageText = GradeAverageFormatter.Format(bucket.Average);
         Assessments = bucket.Assessments;
         Grades = [.. bucket.Grades.Select(g => new StudentGradeRow(g, isExempt))];

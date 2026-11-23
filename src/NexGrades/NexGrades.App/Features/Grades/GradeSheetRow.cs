@@ -1,5 +1,6 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Grading;
 
 namespace NexGrades.App.Features.Grades;
@@ -37,11 +38,11 @@ public sealed partial class GradeSheetRow : ObservableObject
         HasLeft = student.LeftOn is not null;
 
         var culture = CultureInfo.CurrentCulture;
-        StudentName = string.Format(culture, "{0}, {1}", student.LastName, student.FirstName);
+        StudentName = TextResources.Format("Grades_Row_StudentName_Format", student.LastName, student.FirstName);
         StatusText = student.IsExempt
-            ? "Exempt from this subject."
+            ? TextResources.Text("Grades_Row_Exempt")
             : student.LeftOn is { } left
-                ? string.Format(culture, "Left the class on {0:d}.", left)
+                ? TextResources.Format("Grades_Row_Left_Format", left)
                 : string.Empty;
 
         var assessments = buckets.SelectMany(b => b.Assessments).ToDictionary(a => a.Id);
