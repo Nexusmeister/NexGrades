@@ -4,6 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:subjects="clr-namespace:NexGrades.App.Features.Subjects"
+      xmlns:ds="clr-namespace:NexGrades.App.DesignSystem"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       d:DataContext="{d:DesignInstance subjects:SubjectDetailPage, IsDesignTimeCreatable=False}"
       mc:Ignorable="d" 
@@ -44,7 +45,7 @@
         </WrapPanel>
 
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <StackPanel Style="{StaticResource Ng.FormPanel}">
+            <ds:FormPanel Style="{StaticResource Ng.FormPanel}">
                 <HeaderedContentControl Header="Subject name"
                                         Style="{StaticResource Ng.FormField}">
                     <ui:TextBox ClearButtonEnabled="True"
@@ -52,7 +53,7 @@
                                 PlaceholderEnabled="True"
                                 AutomationProperties.Name="Subject name"
                                 MaxLength="{Binding ViewModel.MaxNameLength, Mode=OneTime}"
-                                Text="{Binding ViewModel.Name}" />
+                                Text="{Binding ViewModel.Name, UpdateSourceTrigger=PropertyChanged}" />
                 </HeaderedContentControl>
                 <HeaderedContentControl Header="Short code"
                                         Style="{StaticResource Ng.FormField}">
@@ -61,9 +62,9 @@
                                 PlaceholderEnabled="True"
                                 AutomationProperties.Name="Short code"
                                 MaxLength="{Binding ViewModel.MaxShortCodeLength, Mode=OneTime}"
-                                Text="{Binding ViewModel.ShortCode}" />
+                                Text="{Binding ViewModel.ShortCode, UpdateSourceTrigger=PropertyChanged}" />
                 </HeaderedContentControl>
-            </StackPanel>
+            </ds:FormPanel>
         </ScrollViewer>
     </Grid>
 </Page>

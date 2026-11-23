@@ -25,7 +25,7 @@ Use a `Grid` with `RowDefinitions` (`Auto`, `Auto`, `*`) and the `Ng.PageRoot` s
 - Take every margin, padding and size from the tokens in `NexGrades.App/DesignSystem/Tokens.xaml`
   (`Ng.Margin.*`, `Ng.Padding.*`, `Ng.Size.*`), not from literal numbers. The scale, the values and when to use
   each are in [design system](../../../docs/domain/design-system.md).
-- Forms are one column, at most `Ng.Size.FormMaxWidth` wide (`Ng.FormPanel`), with the label above the field
+- Forms are one column, at most `Ng.Size.FormMaxWidth` wide (`Ng.FormPanel`, which shrinks in narrow containers), with the label above the field
   (`Ng.FormField`). A `PlaceholderText` is a hint, not a label.
 - Detail pages for one entity (student, class, subject) use `ui:Card` or `ui:CardExpander` to group
   related fields.
@@ -50,9 +50,9 @@ are in [design system](../../../docs/domain/design-system.md).
   `ui:DataGrid`, `ui:Card`, `ui:InfoBar`, `ui:ToggleSwitch`, `ComboBox`, `DatePicker`.
 - Icons are `ui:SymbolIcon` from `SymbolRegular`, size 24 for buttons and page icons (`Add24`, `Edit24`, `Save24`,
   `Archive24`), one icon per meaning across the app. The icons in use are listed in [design system](../../../docs/domain/design-system.md).
-- Overview grids: `ui:DataGrid` with `AutoGenerateColumns="False"`, `IsReadOnly="True"`,
-  `SelectionMode="Single"` and explicit column headers in real text. Double-click or Enter on a row
-  opens its detail page.
+- Overview grids: `ui:DataGrid` with `Style="{StaticResource Ng.DataGrid}"` and `Ng.DataGridText` (or
+  `Ng.DataGridText.Numeric`) as the `ElementStyle` of every `DataGridTextColumn`, with column headers in real
+  text. Double-click or Enter on a row opens its detail page.
 - Use `ui:NumberBox` for numeric input like weights. Grades are typed as tokens ("2-", "1+") and
   validated with `GradingScale.TryParseToken`; they are not picked from `GradingScale.LegalValues` and not
   typed as decimals.

@@ -48,8 +48,8 @@ a view gets these keys only from its own merge. The reasons:
   WPF-UI theme, the WPF-UI control styles and `ShellControlStyles.xaml`, but never `DesignSystem.xaml`. The
   application is created once and shared by the tests of the run. `StudentPage` notes that the page must build
   without the `App.xaml` resources.
-- Pages are hosted in a `Frame`, and resource lookup through the frame does not reach the application resources
-  the views need. This is the reason recorded in the design's plan.
+- Views stay self-contained. A page that merges its own dictionary builds the same way wherever it is hosted and
+  does not depend on what `App.xaml` happens to hold.
 
 A missing `StaticResource` throws while the view loads. `XamlLoadTests` therefore fails for a view that uses a key
 it does not merge.
@@ -82,10 +82,11 @@ it does not merge.
 | `Ng.Margin.Related` | 0,0,0,8 | Between related controls, and below a heading |
 | `Ng.Margin.Tight` | 0,0,0,4 | Between a label and its field, and below a page title |
 | `Ng.Margin.InlineGap` | 0,0,8,0 | Between controls side by side |
+| `Ng.Margin.Tile` | 0,0,16,16 | The gap after a tile card (`Ng.Card.Tile`) |
 | `Ng.Margin.ColumnStart` | 16,0,0,0 | The left edge of a second column |
 | `Ng.Padding.Card` | 16 | Inside a card or an item surface |
 | `Ng.Padding.Cell` | 8,4 | Inside a grade sheet cell |
-| `Ng.Margin.CellText` | 12,0 | The text inset of a data grid cell (`Ng.DataGridText`); 12 lines it up with the WPF-UI column header, so it is the one value off the 4/8 grid |
+| `Ng.Margin.CellText` | 12,0 | The text inset of a data grid cell (`Ng.DataGridText`); 12 lines it up with the WPF-UI column header. It is on the 4 grid (`DesignSystemRulesTests` enforces multiples of 4) but off the 8 grid |
 | `Ng.Radius.Control` | 4 | The corner radius of an item surface |
 | `Ng.Size.RowHeight` | 32 | The minimum height of a data grid row and a grade cell |
 | `Ng.Size.FormMaxWidth` | 480 | The widest form (`Ng.FormPanel`) |
@@ -93,7 +94,7 @@ it does not merge.
 | `Ng.Size.MultilineMinHeight`, `MultilineMaxHeight` | 72, 120 | The height range of a multi-line text box |
 | `Ng.FontFamily` | Segoe UI Variable Text, Segoe UI | The font face, used by `Ng.PageRoot`. The file's comment says it matches the WPF-UI content font. |
 
-The scale has no step of 12. Use the keys above, not a literal number, and add a token when you need a value that
+The `Ng.Space.*` scale has no step of 12 (it runs 4, 8, 16, 24, 32), although 12 is a valid multiple of 4. Use the keys above, not a literal number, and add a token when you need a value that
 is not here (see [When to add a token or a style](#when-to-add-a-token-or-a-style)).
 
 ## Type ramp
@@ -220,14 +221,14 @@ All keys are defined in `Styles.xaml`.
 | `Ng.PageHeader` | `HeaderedContentControl` | The page title in `Title`, and an optional caption | Not a tab stop |
 | `Ng.ActionBar` | `WrapPanel` | A horizontal row of buttons with the action bar margin | Buttons inside use `Ng.Margin.ActionItem` |
 | `Ng.Card` | `ui:Card` | 16 padding and a 16 bottom margin | Groups related fields |
-| `Ng.Card.Tile` | `ui:Card` | A fixed-width card (320) with a 16 right and bottom margin | Extends `Ng.Card`. The grade sheet uses it as a base. |
+| `Ng.Card.Tile` | `ui:Card` | A fixed-width card (320) with the `Ng.Margin.Tile` margin (16 right and bottom) | Extends `Ng.Card`. The grade sheet uses it as a base. |
 | `Ng.Section` | `HeaderedContentControl` | A `Subtitle` heading above the content, with a 24 bottom margin | Not a tab stop |
-| `Ng.FormPanel` | `StackPanel` | 480 wide (`Ng.Size.FormMaxWidth`), left aligned | A `StackPanel` shrinks to its content, so the width is fixed to make fields fill the column. Needs about 520 free; do not use it in a narrower container |
+| `Ng.FormPanel` | `ds:FormPanel` (a `StackPanel`, `NexGrades.App/DesignSystem/FormPanel.cs`) | Fills the width it gets up to `Ng.Size.FormMaxWidth` (480), left aligned, and shrinks below that | A plain left-aligned `StackPanel` shrinks to its content (a tiny text box) and a fixed width overflows narrow containers, so `FormPanel` measures against the smaller of the container width and 480. Use `<ds:FormPanel Style="{StaticResource Ng.FormPanel}">` with `xmlns:ds="clr-namespace:NexGrades.App.DesignSystem"` |
 | `Ng.FormField` | `HeaderedContentControl` | A `Body` label above the field, with a 16 bottom margin | The label is not a tab stop; the field inside is |
 | `Ng.TextBox.Multiline` | `ui:TextBox` | Wraps, accepts Enter, scrolls, and is 72 to 120 high | Used for comments and notes |
 | `Ng.EmptyState` | `ContentControl` | A secondary `Body` message | Not a tab stop |
 | `Ng.EmptyState.WhenNoItems` | `ContentControl` | Shows the message while the collection in `Tag` is empty | Extends `Ng.EmptyState` |
-| `Ng.DataGrid` | `ui:DataGrid` | Read-only, single row selection, 32 row height, no add, delete or resize | Overview grids and the grade sheet extend it |
+| `Ng.DataGrid` | `ui:DataGrid` | Read-only, single row selection, 32 row height, no add, delete or row resizing (columns can still be resized) | Overview grids and the grade sheet extend it |
 | `Ng.DataGridText` | `TextBlock` (element style) | Horizontal margin `Ng.Margin.CellText`, vertically centred | For every `DataGridTextColumn`; the library margin otherwise makes rows taller than 32 |
 | `Ng.DataGridText.Numeric` | `TextBlock` (element style) | Extends `Ng.DataGridText`; right aligned, with tabular figures | For numeric columns |
 | `Ng.Surface.Item` | `Border` | A bordered item surface with 16 padding and a corner radius of 4 | Used by a school year row |
@@ -329,8 +330,8 @@ the student page have.
 
 | Check | What it enforces |
 |---|---|
-| `XamlLoadTests` (`NexGrades.App.Tests/Composition`) | Creates every page and the shared views on an STA thread, with every resource read. A view that uses an unmerged key, or a `DynamicResource` in `BasedOn`, fails. |
-| `XamlSourceRulesTests` (`NexGrades.App.Tests/Composition`) | Scans every App XAML file. It fails for a style that sets `Visibility` on a `ui:TextBlock`, and for a page title that equals its class name. It fails if no `ui:TextBlock` is found, so the rule cannot pass without checking anything. |
+| `XamlLoadTests` (`NexGrades.App.Tests/Composition`) | Creates every page and the shared views on an STA thread, with every resource read. A view that uses an unmerged key, or a `DynamicResource` in `BasedOn`, fails. Keys used only inside item, data or cell templates are not instantiated by the test, so they are not checked. |
+| `XamlSourceRulesTests` (`NexGrades.App.Tests/Composition`) | Scans every App XAML file. It fails for a style that sets `Visibility` on a `ui:TextBlock`, and for a page title that equals its class name. It fails if no `ui:TextBlock` is found, so the rule cannot pass without checking anything. It also fails for a file with an `IsDefault` or `IsCancel` button that has a `TextBox` whose `Text` binding lacks `UpdateSourceTrigger=PropertyChanged` (Enter and Escape would act on a stale value). |
 | `DesignSystemRulesTests` (`NexGrades.App.Tests/Composition`) | Scans every App XAML file outside `obj` and `bin`. It fails for three rules: a view (`Page`, `UserControl`, `ContentDialog` or `FluentWindow` root) that does not merge `DesignSystem.xaml` in its resources; a `Margin` or `Padding`, as an attribute, a setter or a `Thickness` resource, whose value is not a multiple of 4; and a hex colour in any attribute value or text. A markup extension such as `{StaticResource ...}` is not checked for spacing. |
 | `GradeSheetColumnHeaderTemplateTests` | The "Type 1–6 to override" hint shows only on the final grade column. |
 
@@ -390,3 +391,5 @@ The rules above are the target. These places do not follow them yet:
 5. The comment on `Ng.PageRoot` describes a five-row page. The pages use three to six rows, with the content in the
    `*` row.
 6. The action bars of the grade sheet and other pages do not all disable while a load runs.
+7. The overview pages show their `Ng.EmptyState.WhenNoItems` message briefly before the list loads, because the
+   collections start empty and are filled when the page loads. The view models expose no loaded flag to wait for.

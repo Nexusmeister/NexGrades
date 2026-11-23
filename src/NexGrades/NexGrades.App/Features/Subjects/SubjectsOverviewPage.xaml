@@ -56,8 +56,10 @@
             <ui:DataGrid.Columns>
                 <DataGridTextColumn Header="Id" Binding="{Binding Id}"
                                     ElementStyle="{StaticResource Ng.DataGridText.Numeric}" />
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
-                <DataGridTextColumn Header="Code" Binding="{Binding ShortCode}" />
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}"
+                                    ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="Code" Binding="{Binding ShortCode}"
+                                    ElementStyle="{StaticResource Ng.DataGridText}" />
                 <DataGridTemplateColumn Header="Actions">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

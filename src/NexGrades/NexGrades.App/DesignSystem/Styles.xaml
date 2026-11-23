@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                    xmlns:ds="clr-namespace:NexGrades.App.DesignSystem">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/Tokens.xaml" />
     </ResourceDictionary.MergedDictionaries>
@@ -24,7 +25,8 @@
                 <ControlTemplate TargetType="HeaderedContentControl">
                     <StackPanel>
                         <ui:TextBlock Text="{TemplateBinding Header}"
-                                      FontTypography="Title" />
+                                      FontTypography="Title"
+                                      TextTrimming="CharacterEllipsis" />
                         <ContentPresenter x:Name="Caption"
                                           Margin="{StaticResource Ng.Margin.Tight}"
                                           TextElement.Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -51,7 +53,7 @@
 
     <Style x:Key="Ng.Card.Tile" TargetType="ui:Card" BasedOn="{StaticResource Ng.Card}">
         <Setter Property="Width" Value="{StaticResource Ng.Size.TileWidth}" />
-        <Setter Property="Margin" Value="0,0,16,16" />
+        <Setter Property="Margin" Value="{StaticResource Ng.Margin.Tile}" />
     </Style>
 
     <Style x:Key="Ng.Section" TargetType="HeaderedContentControl">
@@ -72,8 +74,9 @@
         </Setter>
     </Style>
 
-    <Style x:Key="Ng.FormPanel" TargetType="StackPanel">
-        <Setter Property="Width" Value="{StaticResource Ng.Size.FormMaxWidth}" />
+    <!-- Fills the width it gets up to Ng.Size.FormMaxWidth, left aligned. Use as <ds:FormPanel Style="{StaticResource Ng.FormPanel}">. -->
+    <Style x:Key="Ng.FormPanel" TargetType="ds:FormPanel">
+        <Setter Property="MaxFormWidth" Value="{StaticResource Ng.Size.FormMaxWidth}" />
         <Setter Property="HorizontalAlignment" Value="Left" />
     </Style>
 

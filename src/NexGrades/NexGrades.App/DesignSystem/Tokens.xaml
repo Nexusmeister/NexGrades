@@ -20,6 +20,7 @@
     <Thickness x:Key="Ng.Margin.Related">0,0,0,8</Thickness>
     <Thickness x:Key="Ng.Margin.Tight">0,0,0,4</Thickness>
     <Thickness x:Key="Ng.Margin.InlineGap">0,0,8,0</Thickness>
+    <Thickness x:Key="Ng.Margin.Tile">0,0,16,16</Thickness>
     <Thickness x:Key="Ng.Margin.ColumnStart">16,0,0,0</Thickness>
 
     <!-- Horizontal inset of data grid cell text; 12 (not on the 4/8 grid) because it must line up with the WPF-UI column header text. -->
