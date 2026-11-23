@@ -1,9 +1,8 @@
 # German glossary
 
-Status: **draft for owner review.** No German UI string has been translated yet. The terms below are proposals.
-Items marked **(choice n)** are decisions the owner must confirm or change; they are listed in
-[Choices for the owner](#choices-for-the-owner). Once confirmed, this page is the source for the German
-resource strings of issue #26.
+The terms below are confirmed by the owner. The choices the owner settled are listed in
+[Confirmed choices](#confirmed-choices); items marked **(choice n)** refer to them. This page is the source for the
+German resource strings of issue #26.
 
 Each row gives the English UI text as it is today (or as planned, where the screen does not exist yet), the German
 proposal, and notes. The English column is quoted from the code where it exists.
@@ -35,7 +34,7 @@ proposal, and notes. The English column is quoted from the code where it exists.
 | English UI term | German term | Notes and alternatives |
 |---|---|---|
 | Home | Startseite | |
-| Students | Schülerinnen und Schüler | Sidebar label. Singular "Schüler/in" in forms (choice 1). |
+| Students | Schülerinnen und Schüler | Sidebar label. Singular in forms is "Schülerin / Schüler" (choice 1). |
 | Classes | Klassen | |
 | Subjects | Fächer | |
 | School year | Schuljahr | |
@@ -96,7 +95,7 @@ proposal, and notes. The English column is quoted from the code where it exists.
 | students in this class | Schülerinnen und Schüler dieser Klasse | Section heading. |
 | joined | eingetreten am | Enrollment start date, for example "eingetreten am 01.08.2026". |
 | enrolled | zugeordnet | Current membership. Alternative: "eingeschrieben" (sounds administrative). |
-| left the class | hat die Klasse verlassen | Enrollment end. Used with a date: "(hat die Klasse verlassen am 01.12.2025)". See also Excel exports. |
+| left the class | ausgetreten | Enrollment end. Used with a date: "(ausgetreten am 01.12.2025)". See also Excel exports. |
 | not enrolled | nicht zugeordnet | Student has no class in this year. |
 | roll forward | in das nächste Schuljahr übernehmen | Not "versetzen": that means promoting a pupil to the next grade (choice 6). |
 | rolled forward as | übernommen als | For example "übernommen als 6A". |
@@ -174,7 +173,7 @@ proposal, and notes. The English column is quoted from the code where it exists.
 | final grade | Zeugnisnote | Column header. Same term as the UI (choice 2). |
 | final grade set by teacher | Zeugnisnote von der Lehrkraft festgelegt | Column header. |
 | Yes | Ja | Cell value for the "set by teacher" column. |
-| "(left on {date})" (format) | (hat die Klasse verlassen am {0:d}) | Appended to a student name. One format string. |
+| "(left on {date})" (format) | (ausgetreten am {0:d}) | Appended to a student name. One format string. |
 | exported on | exportiert am | Label in the notes export. |
 | category | Bewertungsbereich | Column header. Same term as the UI (choice 4). |
 | last edited | zuletzt bearbeitet | Column header in the notes export. |
@@ -237,23 +236,22 @@ proposal, and notes. The English column is quoted from the code where it exists.
 | backup folder | Sicherungsordner | |
 | log folder | Protokollordner | Same term as "open log folder". |
 
-## Choices for the owner
+## Confirmed choices
 
-These are proposals made by the orchestrator. Confirm each one or name the alternative. Each choice is
-referenced by number in the tables above.
+The owner confirmed each choice below. Each choice is referenced by number in the tables above.
 
-1. **Gender form for students.** Proposal: "Schülerin / Schüler" for the singular label, and
-   "Schülerinnen und Schüler" for the plural. Alternatives: the generic "Schüler", a gender star ("Schüler*innen"),
+1. **Gender form for students.** Decided: "Schülerin / Schüler" for the singular label, and
+   "Schülerinnen und Schüler" for the plural. Not used: the generic "Schüler", a gender star ("Schüler*innen"),
    or "Lernende".
-2. **Final grade.** Proposal: "Zeugnisnote". Alternative: "Endnote".
-3. **Void.** Proposal: "streichen" and "gestrichen". Alternative: "ungültig setzen".
-4. **Bucket.** Proposal: "Bewertungsbereich". Alternative: "Leistungsbereich". The English UI will be unified to
+2. **Final grade.** Decided: "Zeugnisnote". Not used: "Endnote".
+3. **Void.** Decided: "streichen" and "gestrichen". Not used: "ungültig setzen".
+4. **Bucket.** Decided: "Bewertungsbereich". Not used: "Leistungsbereich". The English UI will be unified to
    "grade category" in the same change, so the German term matches it.
-5. **Assessment.** Proposal: "Leistungsnachweis".
-6. **Roll forward.** Proposal: "in das nächste Schuljahr übernehmen". Not "versetzen", which means promoting a pupil.
-7. **Cohort.** Proposal: "Klassenverband".
-8. **Readiness check.** Proposal: "Abschlusskontrolle". "Abschlussprüfung" is wrong because it means a final exam,
+5. **Assessment.** Decided: "Leistungsnachweis".
+6. **Roll forward.** Decided: "in das nächste Schuljahr übernehmen". Not "versetzen", which means promoting a pupil.
+7. **Cohort.** Decided: "Klassenverband".
+8. **Readiness check.** Decided: "Abschlusskontrolle". "Abschlussprüfung" is not used because it means a final exam,
    and "Prüfung" in general also reads as exam.
 
-Terms not listed as choices but still open for review: "theme" (Design), "log files" (Protokolldateien), and the
-Settings and startup-box wording.
+All terms on this page, including "theme" (Design), "log files" (Protokolldateien), and the Settings and
+startup-box wording, are confirmed by the owner. The German strings themselves are still reviewed before merge.
