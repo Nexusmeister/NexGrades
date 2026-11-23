@@ -16,13 +16,18 @@ public static partial class ResourceFileTests
 {
     private const string FormatSuffix = "_Format";
 
-    // Keys whose German text is the same as the English one on purpose: the names of the languages and "System" are
+    // Keys whose German text is the same as the English one on purpose: the names of the languages, "System" and a few loan words (Id, Name, Optional) are
     // the same in both languages.
     private static readonly HashSet<string> _sameInGerman =
     [
         "Settings_Language_System",
         "Settings_Language_English",
         "Settings_Language_German",
+        "Classes_Grid_Name_Header",
+        "Subjects_Overview_Id_Header",
+        "Subjects_Overview_Name_Header",
+        "Students_Overview_Id_Header",
+        "Students_StudentPage_Comment_Placeholder",
     ];
 
     private static readonly CultureInfo _german = CultureInfo.GetCultureInfo("de");

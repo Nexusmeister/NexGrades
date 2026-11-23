@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Shell_Navigation_Home" xml:space="preserve"><value>Startseite</value></data>
+  <data name="Shell_Navigation_Students" xml:space="preserve"><value>Schülerinnen und Schüler</value></data>
+  <data name="Shell_Navigation_Classes" xml:space="preserve"><value>Klassen</value></data>
+  <data name="Shell_Navigation_Subjects" xml:space="preserve"><value>Fächer</value></data>
+  <data name="Shell_Navigation_SchoolYear" xml:space="preserve"><value>Schuljahr</value></data>
+  <data name="Shell_Navigation_Settings" xml:space="preserve"><value>Einstellungen</value></data>
+  <data name="Shell_Search_Placeholder" xml:space="preserve"><value>Suchen</value></data>
+  <data name="Shell_UpdateNotice_A11y" xml:space="preserve"><value>Update bereit</value></data>
+  <data name="Shell_UpdateNotice_Restart" xml:space="preserve"><value>Jetzt neu starten</value></data>
+  <data name="Shell_UpdateNotice_Restart_Tooltip" xml:space="preserve"><value>NexGrades schließen, das Update installieren und NexGrades erneut starten</value></data>
+</root>

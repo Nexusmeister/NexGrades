@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Students_Overview_Title" xml:space="preserve"><value>Schülerinnen und Schüler</value></data>
+  <data name="Students_Overview_Add" xml:space="preserve"><value>Schülerin / Schüler hinzufügen</value></data>
+  <data name="Students_Overview_Edit" xml:space="preserve"><value>Schülerin / Schüler bearbeiten</value></data>
+  <data name="Students_Overview_Empty" xml:space="preserve"><value>Noch keine Schülerinnen und Schüler vorhanden. Verwenden Sie „Schülerin / Schüler hinzufügen“, um einen Eintrag anzulegen.</value></data>
+  <data name="Students_Overview_Id_Header" xml:space="preserve"><value>Id</value></data>
+  <data name="Students_Overview_LastName_Header" xml:space="preserve"><value>Nachname</value></data>
+  <data name="Students_Overview_FirstName_Header" xml:space="preserve"><value>Vorname</value></data>
+  <data name="Students_Overview_Class_Header" xml:space="preserve"><value>Klasse</value></data>
+  <data name="Students_ExportDialog_Title" xml:space="preserve"><value>Notizen exportieren</value></data>
+  <data name="Students_ExportDialog_Export" xml:space="preserve"><value>Exportieren</value></data>
+  <data name="Students_ExportDialog_From_Header" xml:space="preserve"><value>Von</value></data>
+  <data name="Students_ExportDialog_From_A11y" xml:space="preserve"><value>Von: erster Tag der exportierten Notizen</value></data>
+  <data name="Students_ExportDialog_To_Header" xml:space="preserve"><value>Bis</value></data>
+  <data name="Students_ExportDialog_To_A11y" xml:space="preserve"><value>Bis: letzter Tag der exportierten Notizen</value></data>
+  <data name="Students_ExportDialog_IncludeArchived" xml:space="preserve"><value>Archivierte Notizen einbeziehen</value></data>
+  <data name="Students_StudentPage_Title" xml:space="preserve"><value>Schülerin / Schüler</value></data>
+  <data name="Students_StudentPage_FirstName_Header" xml:space="preserve"><value>Vorname</value></data>
+  <data name="Students_StudentPage_LastName_Header" xml:space="preserve"><value>Nachname</value></data>
+  <data name="Students_StudentPage_Class_Header" xml:space="preserve"><value>Klasse</value></data>
+  <data name="Students_StudentPage_SchoolYear_Header" xml:space="preserve"><value>Schuljahr</value></data>
+  <data name="Students_StudentPage_ShowVoided" xml:space="preserve"><value>Gestrichene Noten anzeigen</value></data>
+  <data name="Students_StudentPage_ShowVoided_Tooltip" xml:space="preserve"><value>Gestrichene Noten ebenfalls anzeigen, damit sie wiederhergestellt werden können</value></data>
+  <data name="Students_StudentPage_ShowArchived" xml:space="preserve"><value>Archivierte Notizen anzeigen</value></data>
+  <data name="Students_StudentPage_Grades_Tab" xml:space="preserve"><value>Noten</value></data>
+  <data name="Students_StudentPage_Notes_Tab" xml:space="preserve"><value>Notizen</value></data>
+  <data name="Students_StudentPage_Assessment_Header" xml:space="preserve"><value>Leistungsnachweis</value></data>
+  <data name="Students_StudentPage_Grade_Header" xml:space="preserve"><value>Note</value></data>
+  <data name="Students_StudentPage_Grade_Placeholder" xml:space="preserve"><value>Zum Beispiel 2-</value></data>
+  <data name="Students_StudentPage_Date_Header" xml:space="preserve"><value>Datum</value></data>
+  <data name="Students_StudentPage_Label_Header" xml:space="preserve"><value>Bezeichnung</value></data>
+  <data name="Students_StudentPage_Label_Placeholder" xml:space="preserve"><value>Optional, zum Beispiel Mündliche Mitarbeit</value></data>
+  <data name="Students_StudentPage_Comment_Header" xml:space="preserve"><value>Kommentar</value></data>
+  <data name="Students_StudentPage_Comment_Placeholder" xml:space="preserve"><value>Optional</value></data>
+  <data name="Students_StudentPage_SaveGrade" xml:space="preserve"><value>Note speichern</value></data>
+  <data name="Students_StudentPage_CancelGrade_Tooltip" xml:space="preserve"><value>Eingabe verwerfen und Editor schließen</value></data>
+  <data name="Students_StudentPage_Grades_Loading_A11y" xml:space="preserve"><value>Noten werden geladen</value></data>
+  <data name="Students_StudentPage_Grades_List_A11y" xml:space="preserve"><value>Noten nach Fach</value></data>
+  <data name="Students_StudentPage_Exempt" xml:space="preserve"><value>Befreit</value></data>
+  <data name="Students_StudentPage_FinalGrade_Format" xml:space="preserve"><value>Zeugnisnote: {0}</value><comment>{0} is the final grade token or value.</comment></data>
+  <data name="Students_StudentPage_Average_Format" xml:space="preserve"><value>Durchschnitt: {0}</value><comment>{0} is the average, already formatted for the current culture.</comment></data>
+  <data name="Students_StudentPage_AddGrade" xml:space="preserve"><value>Note hinzufügen</value></data>
+  <data name="Students_StudentPage_AddGrade_Tooltip" xml:space="preserve"><value>Note zu diesem Bewertungsbereich hinzufügen</value></data>
+  <data name="Students_StudentPage_NoGrades" xml:space="preserve"><value>Keine Noten</value></data>
+  <data name="Students_StudentPage_EditGrade_Tooltip" xml:space="preserve"><value>Note bearbeiten</value></data>
+  <data name="Students_StudentPage_VoidGrade_Tooltip" xml:space="preserve"><value>Note streichen</value></data>
+  <data name="Students_StudentPage_RestoreGrade_Tooltip" xml:space="preserve"><value>Note wiederherstellen</value></data>
+  <data name="Students_StudentPage_ExportNotes" xml:space="preserve"><value>Notizen exportieren ...</value></data>
+  <data name="Students_StudentPage_ExportNotes_Tooltip" xml:space="preserve"><value>Notizen dieser Schülerin / dieses Schülers in eine Excel-Datei exportieren</value></data>
+  <data name="Students_StudentPage_ExportNotes_A11y" xml:space="preserve"><value>Notizen exportieren</value></data>
+  <data name="Students_StudentPage_Note_Placeholder" xml:space="preserve"><value>Notiz zu dieser Schülerin / diesem Schüler schreiben</value></data>
+  <data name="Students_StudentPage_AddNote" xml:space="preserve"><value>Notiz hinzufügen</value></data>
+  <data name="Students_StudentPage_SaveNote" xml:space="preserve"><value>Notiz speichern</value></data>
+  <data name="Students_StudentPage_CancelNote_Tooltip" xml:space="preserve"><value>Text verwerfen und Bearbeitung beenden</value></data>
+  <data name="Students_StudentPage_EditNote_Tooltip" xml:space="preserve"><value>Notiz bearbeiten</value></data>
+  <data name="Students_StudentPage_ArchiveNote_Tooltip" xml:space="preserve"><value>Notiz archivieren</value></data>
+  <data name="Students_StudentPage_RestoreNote_Tooltip" xml:space="preserve"><value>Notiz wiederherstellen</value></data>
+</root>

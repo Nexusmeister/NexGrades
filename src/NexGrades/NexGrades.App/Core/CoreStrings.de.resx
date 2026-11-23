@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Core_YearLock_Closed_Title" xml:space="preserve"><value>Abgeschlossenes Schuljahr</value></data>
+  <data name="Core_YearLock_Unlock" xml:space="preserve"><value>Schuljahr entsperren ...</value></data>
+  <data name="Core_YearLock_Unlock_Tooltip" xml:space="preserve"><value>Dieses Schuljahr vorübergehend entsperren, um Korrekturen vorzunehmen</value></data>
+  <data name="Core_YearLock_Unlock_A11y" xml:space="preserve"><value>Dieses Schuljahr entsperren</value></data>
+  <data name="Core_YearLock_Unlocked_Title" xml:space="preserve"><value>Abgeschlossenes Schuljahr, entsperrt</value></data>
+  <data name="Core_YearLock_Relock" xml:space="preserve"><value>Wieder sperren</value></data>
+  <data name="Core_YearLock_Relock_Tooltip" xml:space="preserve"><value>Dieses Schuljahr jetzt wieder sperren, sodass es nur lesbar ist</value></data>
+  <data name="Core_YearLock_Relock_A11y" xml:space="preserve"><value>Dieses Schuljahr wieder sperren</value></data>
+  <data name="Core_UnlockDialog_Unlock" xml:space="preserve"><value>Entsperren</value></data>
+  <data name="Core_UnlockDialog_Reason_Header" xml:space="preserve"><value>Grund</value></data>
+  <data name="Core_UnlockDialog_Reason_A11y" xml:space="preserve"><value>Grund für das Entsperren des Schuljahrs</value></data>
+  <data name="Core_UnlockDialog_Reason_Placeholder" xml:space="preserve"><value>Warum muss dieses Schuljahr geändert werden?</value></data>
+  <data name="Core_UnlockDialog_Duration_Header" xml:space="preserve"><value>Entsperren für</value></data>
+  <data name="Core_UnlockDialog_Duration_A11y" xml:space="preserve"><value>Wie lange das Schuljahr entsperrt bleibt</value></data>
+  <data name="Core_UnlockDialog_EndDate_Header" xml:space="preserve"><value>Enddatum</value></data>
+  <data name="Core_UnlockDialog_EndDate_A11y" xml:space="preserve"><value>Datum, an dem die Entsperrung endet</value></data>
+</root>

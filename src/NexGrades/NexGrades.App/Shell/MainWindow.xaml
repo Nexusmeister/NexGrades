@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loc="clr-namespace:NexGrades.App.Localization"
         xmlns:classes="clr-namespace:NexGrades.App.Features.Classes"
         xmlns:pages="clr-namespace:NexGrades.App.Features.Home"
         xmlns:schoolYears="clr-namespace:NexGrades.App.Features.SchoolYears"
@@ -56,11 +57,11 @@
                     IsClosable="True"
                     IsOpen="{Binding ViewModel.UpdateNotice.IsOpen, Mode=TwoWay}"
                     Message="{Binding ViewModel.UpdateNotice.Message}"
-                    AutomationProperties.Name="Update ready">
-            <ui:Button Content="Restart now"
+                    AutomationProperties.Name="{loc:Text Shell_UpdateNotice_A11y}">
+            <ui:Button Content="{loc:Text Shell_UpdateNotice_Restart}"
                        Appearance="Primary"
-                       AutomationProperties.Name="Restart now"
-                       ToolTip="Close NexGrades, install the update and start it again"
+                       AutomationProperties.Name="{loc:Text Shell_UpdateNotice_Restart}"
+                       ToolTip="{loc:Text Shell_UpdateNotice_Restart_Tooltip}"
                        Command="{Binding ViewModel.UpdateNotice.RestartNowCommand}"/>
         </ui:InfoBar>
 
@@ -68,7 +69,7 @@
             x:Name="RootNavigation"
             Grid.Row="2">
             <ui:NavigationView.AutoSuggestBox>
-                <ui:AutoSuggestBox x:Name="AutoSuggestBox" PlaceholderText="Search">
+                <ui:AutoSuggestBox x:Name="AutoSuggestBox" PlaceholderText="{loc:Text Shell_Search_Placeholder}">
                     <ui:AutoSuggestBox.Icon>
                         <ui:IconSourceElement>
                             <ui:SymbolIconSource Symbol="Search24" />
@@ -82,34 +83,34 @@
                 </Grid>
             </ui:NavigationView.ContentOverlay>
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem Content="Home" TargetPageType="{x:Type pages:HomePage}">
+                <ui:NavigationViewItem Content="{loc:Text Shell_Navigation_Home}" TargetPageType="{x:Type pages:HomePage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Home24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="Students" TargetPageType="{x:Type students:StudentsOverviewPage}">
+                <ui:NavigationViewItem Content="{loc:Text Shell_Navigation_Students}" TargetPageType="{x:Type students:StudentsOverviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="People24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="Classes" TargetPageType="{x:Type classes:ClassesOverviewPage}">
+                <ui:NavigationViewItem Content="{loc:Text Shell_Navigation_Classes}" TargetPageType="{x:Type classes:ClassesOverviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="HatGraduation24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="Subjects" TargetPageType="{x:Type subjects:SubjectsOverviewPage}">
+                <ui:NavigationViewItem Content="{loc:Text Shell_Navigation_Subjects}" TargetPageType="{x:Type subjects:SubjectsOverviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Glasses24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="School year" TargetPageType="{x:Type schoolYears:SchoolYearPage}">
+                <ui:NavigationViewItem Content="{loc:Text Shell_Navigation_SchoolYear}" TargetPageType="{x:Type schoolYears:SchoolYearPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="CalendarLtr24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
             <ui:NavigationView.FooterMenuItems>
-                <ui:NavigationViewItem Content="Settings" TargetPageType="{x:Type settings:SettingsPage}">
+                <ui:NavigationViewItem Content="{loc:Text Shell_Navigation_Settings}" TargetPageType="{x:Type settings:SettingsPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Settings24" />
                     </ui:NavigationViewItem.Icon>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Classes_Overview_Title" xml:space="preserve"><value>Klassen</value></data>
+  <data name="Classes_Overview_Add" xml:space="preserve"><value>Klasse hinzufügen</value></data>
+  <data name="Classes_Overview_Edit" xml:space="preserve"><value>Klasse bearbeiten</value></data>
+  <data name="Classes_Overview_Empty" xml:space="preserve"><value>Noch keine Klassen vorhanden. Verwenden Sie „Klasse hinzufügen“, um eine anzulegen.</value></data>
+  <data name="Classes_Grid_Name_Header" xml:space="preserve"><value>Name</value></data>
+  <data name="Classes_Overview_Cohort_Header" xml:space="preserve"><value>Klassenverband</value></data>
+  <data name="Classes_Overview_Students_Header" xml:space="preserve"><value>Schülerinnen und Schüler</value></data>
+  <data name="Classes_ClassPage_Title" xml:space="preserve"><value>Klasse</value></data>
+  <data name="Classes_ClassPage_Name_Header" xml:space="preserve"><value>Klassenname</value></data>
+  <data name="Classes_ClassPage_Name_Placeholder" xml:space="preserve"><value>Klassenname</value></data>
+  <data name="Classes_ClassPage_Students_Header" xml:space="preserve"><value>Schülerinnen und Schüler</value></data>
+  <data name="Classes_ClassPage_Students_Empty" xml:space="preserve"><value>Dieser Klasse sind keine Schülerinnen und Schüler zugeordnet.</value></data>
+  <data name="Classes_ClassPage_Students_A11y" xml:space="preserve"><value>Schülerinnen und Schüler dieser Klasse</value></data>
+  <data name="Classes_ClassPage_Joined_Header" xml:space="preserve"><value>Eingetreten am</value></data>
+  <data name="Classes_ClassPage_Left_Header" xml:space="preserve"><value>Ausgetreten</value></data>
+  <data name="Classes_ClassPage_Left_A11y" xml:space="preserve"><value>Ausgetretene Schülerinnen und Schüler</value></data>
+  <data name="Classes_ClassPage_Enrolled_Header" xml:space="preserve"><value>Zugeordnet</value></data>
+  <data name="Classes_ClassPage_Subjects_Header" xml:space="preserve"><value>Fächer</value></data>
+  <data name="Classes_ClassPage_Subjects_Empty" xml:space="preserve"><value>In dieser Klasse werden keine Fächer unterrichtet.</value></data>
+  <data name="Classes_ClassPage_Grades" xml:space="preserve"><value>Noten</value></data>
+  <data name="Classes_ClassPage_Grades_Tooltip" xml:space="preserve"><value>Notenübersicht dieses Fachs öffnen</value></data>
+  <data name="Classes_ClassPage_Export" xml:space="preserve"><value>Nach Excel exportieren</value></data>
+  <data name="Classes_ClassPage_Export_Tooltip" xml:space="preserve"><value>Übersicht dieses Fachs in eine Excel-Datei exportieren</value></data>
+</root>

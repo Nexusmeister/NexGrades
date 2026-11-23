@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Subjects_Overview_Title" xml:space="preserve"><value>Fächer</value></data>
+  <data name="Subjects_Overview_Add" xml:space="preserve"><value>Fach hinzufügen</value></data>
+  <data name="Subjects_Overview_Empty" xml:space="preserve"><value>Noch keine Fächer vorhanden. Verwenden Sie „Fach hinzufügen“, um eines anzulegen.</value></data>
+  <data name="Subjects_Overview_Id_Header" xml:space="preserve"><value>Id</value></data>
+  <data name="Subjects_Overview_Name_Header" xml:space="preserve"><value>Name</value></data>
+  <data name="Subjects_Overview_Code_Header" xml:space="preserve"><value>Kürzel</value></data>
+  <data name="Subjects_Overview_Actions_Header" xml:space="preserve"><value>Aktionen</value></data>
+  <data name="Subjects_Overview_Edit_Tooltip" xml:space="preserve"><value>Fach bearbeiten</value></data>
+  <data name="Subjects_DetailPage_Title" xml:space="preserve"><value>Fach</value></data>
+  <data name="Subjects_DetailPage_Name_Header" xml:space="preserve"><value>Fachname</value></data>
+  <data name="Subjects_DetailPage_ShortCode_Header" xml:space="preserve"><value>Kürzel</value></data>
+  <data name="Subjects_DetailPage_ShortCode_Placeholder" xml:space="preserve"><value>Kürzel (z. B. MA)</value></data>
+</root>

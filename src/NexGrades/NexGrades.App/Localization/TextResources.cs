@@ -24,7 +24,13 @@ public static class TextResources
     private static readonly FrozenDictionary<string, string> _baseNames = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Common"] = "NexGrades.App.Localization.CommonStrings",
+        ["Core"] = "NexGrades.App.Core.CoreStrings",
+        ["Home"] = "NexGrades.App.Features.Home.HomeStrings",
+        ["Shell"] = "NexGrades.App.Shell.ShellStrings",
         ["Settings"] = "NexGrades.App.Features.Settings.SettingsStrings",
+        ["Classes"] = "NexGrades.App.Features.Classes.ClassesStrings",
+        ["Students"] = "NexGrades.App.Features.Students.StudentsStrings",
+        ["Subjects"] = "NexGrades.App.Features.Subjects.SubjectsStrings",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     private static readonly ConcurrentDictionary<string, ResourceManager> _managers = new(StringComparer.Ordinal);

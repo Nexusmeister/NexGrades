@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Students_Overview_Title" xml:space="preserve"><value>Students</value></data>
+  <data name="Students_Overview_Add" xml:space="preserve"><value>Add student</value></data>
+  <data name="Students_Overview_Edit" xml:space="preserve"><value>Edit student</value></data>
+  <data name="Students_Overview_Empty" xml:space="preserve"><value>No students yet. Use Add student to create one.</value></data>
+  <data name="Students_Overview_Id_Header" xml:space="preserve"><value>Id</value></data>
+  <data name="Students_Overview_LastName_Header" xml:space="preserve"><value>Last name</value></data>
+  <data name="Students_Overview_FirstName_Header" xml:space="preserve"><value>First name</value></data>
+  <data name="Students_Overview_Class_Header" xml:space="preserve"><value>Class</value></data>
+  <data name="Students_ExportDialog_Title" xml:space="preserve"><value>Export notes</value></data>
+  <data name="Students_ExportDialog_Export" xml:space="preserve"><value>Export</value></data>
+  <data name="Students_ExportDialog_From_Header" xml:space="preserve"><value>From</value></data>
+  <data name="Students_ExportDialog_From_A11y" xml:space="preserve"><value>From: first day of the exported notes</value></data>
+  <data name="Students_ExportDialog_To_Header" xml:space="preserve"><value>To</value></data>
+  <data name="Students_ExportDialog_To_A11y" xml:space="preserve"><value>To: last day of the exported notes</value></data>
+  <data name="Students_ExportDialog_IncludeArchived" xml:space="preserve"><value>Include archived notes</value></data>
+  <data name="Students_StudentPage_Title" xml:space="preserve"><value>Student</value></data>
+  <data name="Students_StudentPage_FirstName_Header" xml:space="preserve"><value>First name</value></data>
+  <data name="Students_StudentPage_LastName_Header" xml:space="preserve"><value>Last name</value></data>
+  <data name="Students_StudentPage_Class_Header" xml:space="preserve"><value>Class</value></data>
+  <data name="Students_StudentPage_SchoolYear_Header" xml:space="preserve"><value>School year</value></data>
+  <data name="Students_StudentPage_ShowVoided" xml:space="preserve"><value>Show voided grades</value></data>
+  <data name="Students_StudentPage_ShowVoided_Tooltip" xml:space="preserve"><value>Also list voided grades so they can be restored</value></data>
+  <data name="Students_StudentPage_ShowArchived" xml:space="preserve"><value>Show archived notes</value></data>
+  <data name="Students_StudentPage_Grades_Tab" xml:space="preserve"><value>Grades</value></data>
+  <data name="Students_StudentPage_Notes_Tab" xml:space="preserve"><value>Notes</value></data>
+  <data name="Students_StudentPage_Assessment_Header" xml:space="preserve"><value>Assessment</value></data>
+  <data name="Students_StudentPage_Grade_Header" xml:space="preserve"><value>Grade</value></data>
+  <data name="Students_StudentPage_Grade_Placeholder" xml:space="preserve"><value>For example 2-</value></data>
+  <data name="Students_StudentPage_Date_Header" xml:space="preserve"><value>Date</value></data>
+  <data name="Students_StudentPage_Label_Header" xml:space="preserve"><value>Label</value></data>
+  <data name="Students_StudentPage_Label_Placeholder" xml:space="preserve"><value>Optional, for example Oral quiz</value></data>
+  <data name="Students_StudentPage_Comment_Header" xml:space="preserve"><value>Comment</value></data>
+  <data name="Students_StudentPage_Comment_Placeholder" xml:space="preserve"><value>Optional</value></data>
+  <data name="Students_StudentPage_SaveGrade" xml:space="preserve"><value>Save grade</value></data>
+  <data name="Students_StudentPage_CancelGrade_Tooltip" xml:space="preserve"><value>Discard the input and close the editor</value></data>
+  <data name="Students_StudentPage_Grades_Loading_A11y" xml:space="preserve"><value>Loading grades</value></data>
+  <data name="Students_StudentPage_Grades_List_A11y" xml:space="preserve"><value>Grades by subject</value></data>
+  <data name="Students_StudentPage_Exempt" xml:space="preserve"><value>Exempt</value></data>
+  <data name="Students_StudentPage_FinalGrade_Format" xml:space="preserve"><value>Final grade: {0}</value><comment>{0} is the final grade token or value.</comment></data>
+  <data name="Students_StudentPage_Average_Format" xml:space="preserve"><value>Average: {0}</value><comment>{0} is the average, already formatted for the current culture.</comment></data>
+  <data name="Students_StudentPage_AddGrade" xml:space="preserve"><value>Add grade</value></data>
+  <data name="Students_StudentPage_AddGrade_Tooltip" xml:space="preserve"><value>Add a grade to this grade category</value></data>
+  <data name="Students_StudentPage_NoGrades" xml:space="preserve"><value>No grades</value></data>
+  <data name="Students_StudentPage_EditGrade_Tooltip" xml:space="preserve"><value>Edit grade</value></data>
+  <data name="Students_StudentPage_VoidGrade_Tooltip" xml:space="preserve"><value>Void grade</value></data>
+  <data name="Students_StudentPage_RestoreGrade_Tooltip" xml:space="preserve"><value>Restore grade</value></data>
+  <data name="Students_StudentPage_ExportNotes" xml:space="preserve"><value>Export notes…</value></data>
+  <data name="Students_StudentPage_ExportNotes_Tooltip" xml:space="preserve"><value>Export this student's notes to an Excel file</value></data>
+  <data name="Students_StudentPage_ExportNotes_A11y" xml:space="preserve"><value>Export notes</value></data>
+  <data name="Students_StudentPage_Note_Placeholder" xml:space="preserve"><value>Write a note about this student</value></data>
+  <data name="Students_StudentPage_AddNote" xml:space="preserve"><value>Add note</value></data>
+  <data name="Students_StudentPage_SaveNote" xml:space="preserve"><value>Save note</value></data>
+  <data name="Students_StudentPage_CancelNote_Tooltip" xml:space="preserve"><value>Discard the text and stop editing</value></data>
+  <data name="Students_StudentPage_EditNote_Tooltip" xml:space="preserve"><value>Edit note</value></data>
+  <data name="Students_StudentPage_ArchiveNote_Tooltip" xml:space="preserve"><value>Archive note</value></data>
+  <data name="Students_StudentPage_RestoreNote_Tooltip" xml:space="preserve"><value>Restore note</value></data>
+</root>
