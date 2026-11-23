@@ -31,7 +31,7 @@ public partial class <Name>ViewModel(
     ISnackbarService snackbar,
     IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {
-    [ObservableProperty] private string _title = "<Real page title>";
+    [ObservableProperty] private string _title = TextResources.Text("<Area>_<Context>_Title");
 
     [RelayCommand]
     private async Task LoadAsync(CancellationToken cancellationToken = default)
@@ -78,7 +78,7 @@ public override async Task<bool> CanLeaveAsync(CancellationToken cancellationTok
     }
 
     return await ConfirmDiscardAsync(
-        "You have unsaved changes on this page. Leave the page and discard them?", cancellationToken);
+        TextResources.Text("<Area>_<Context>_UnsavedChanges_Question"), cancellationToken);
 }
 
 // Goes back without the guard asking again; re-arms the guard if going back fails.
@@ -122,7 +122,22 @@ public partial class <Name>Page : INavigableView<<Name>ViewModel>
 `{Binding ViewModel.X}`. Load data either in an override of `OnNavigatedToAsync` in the view model or with
 the `Loaded` → `InvokeCommandAction` trigger used in `ClassesOverviewPage.xaml`.
 
-## 3. Register in `NexGrades.App/Extensions/HostBuilderExtensions.cs`
+## 3. Add English and German resx keys, no literal text
+
+Every piece of text the page shows comes from the area's resource files. Write no literal UI text in the XAML or the
+C#, not even a title or a button.
+
+- Add each key to `NexGrades.App/Features/<Area>/<Area>Strings.resx` in English, and to `<Area>Strings.de.resx` in
+  German, in the same change. Create the pair if the area has none, and register it in `TextResources` (see
+  [UI text and localization](../../../docs/domain/ui-text-and-localization.md#adding-an-area)).
+- Key names are `<Area>_<Context>_<Name>[_Role]`. A text with `{n}` placeholders is a `_Format` key, with a
+  `<comment>` that names each placeholder.
+- In XAML use `{loc:Text <Key>}`, with `xmlns:loc="clr-namespace:NexGrades.App.Localization"`. In C# use
+  `TextResources.Text("<Key>")` or `TextResources.Format("<Key>", args)`.
+- Translate with [the German glossary](../../../docs/domain/german-glossary.md). Check that the German text fits the
+  layout, as German is about 30% longer.
+
+## 4. Register in `NexGrades.App/Extensions/HostBuilderExtensions.cs`
 
 - Choose the lifetime from step 1 and register the pair with it. For an overview, use `AddSingleton` for both.
   For an add, edit or detail page, use `AddTransient` for both.
@@ -131,7 +146,7 @@ the `Loaded` → `InvokeCommandAction` trigger used in `ClassesOverviewPage.xaml
   `AddTransient` for both.
 - Register any new Domain service in `AddDomain`, with `AddTransient` like the other services there.
 
-## 4. Wire up navigation
+## 5. Wire up navigation
 
 - **Overview page:** add a `ui:NavigationViewItem` with real text and a `SymbolIcon` (size 24) to
   `MenuItems` in `NexGrades.App/Shell/MainWindow.xaml`, with `TargetPageType="{x:Type <area>:<Name>Page}"`.
@@ -141,10 +156,10 @@ the `Loaded` → `InvokeCommandAction` trigger used in `ClassesOverviewPage.xaml
   `navigator.NavigateWithHierarchy<<Name>Page>()` for the Add flow. The target view model reads the value in
   `OnNavigatedToAsync` (step 2). Do not add a singleton request or mailbox class for this.
 
-## 5. Verify
+## 6. Verify
 
 From `src/NexGrades/`, run `dotnet build NexGrades.App/NexGrades.App.csproj` and `dotnet test`. Check by hand that
-the page and view model are registered with the same lifetime. `PageLifetimeTests` in `NexGrades.App.Tests`
+the page and view model are registered with the same lifetime. `ResourceFileTests` checks the German keys, and `ResourceKeyUsageTests` fails for a key that is typed wrongly or not used. `PageLifetimeTests` in `NexGrades.App.Tests`
 checks this, but only for pages that implement `INavigableView<TViewModel>`, so the page must implement it. Then tell the
 user what to check by hand: the page opens from its entry point, data loads, both themes look right, and
-the Back button returns to the right place.
+the Back button returns to the right place, and the German text fits (set Settings > Language to Deutsch and restart).

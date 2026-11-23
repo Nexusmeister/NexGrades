@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using Microsoft.Extensions.Configuration;
@@ -35,12 +36,18 @@ public class XamlLoadTests
         typeof(ExportNotesDialog),
     ];
 
-    public static TheoryData<string> ViewNames()
+    // The UI languages: a {loc:Text} key missing from a resource or a throwing markup extension fails in either.
+    private static readonly string[] _cultures = ["en-US", "de-DE"];
+
+    public static TheoryData<string, string> ViewNames()
     {
-        var data = new TheoryData<string>();
+        var data = new TheoryData<string, string>();
         foreach (var type in FindViewTypes())
         {
-            data.Add(type.Name);
+            foreach (var culture in _cultures)
+            {
+                data.Add(type.Name, culture);
+            }
         }
 
         return data;
@@ -48,41 +55,60 @@ public class XamlLoadTests
 
     [Theory]
     [MemberData(nameof(ViewNames))]
-    public void InitializeComponent_LoadsXaml_ForView(string viewName)
+    public void InitializeComponent_LoadsXaml_ForView(string viewName, string cultureName)
     {
         var viewType = FindViewTypes().Single(t => t.Name == viewName);
+        var culture = CultureInfo.GetCultureInfo(cultureName);
 
         SharedStaThread.Run(() =>
         {
-            EnsureApplicationResources();
-
-            var dbPath = Path.Combine(Path.GetTempPath(), $"nexgrades-xaml-test-{Guid.NewGuid():N}.db");
-            var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
-            {
-                EnvironmentName = Environments.Development,
-            });
-            builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:sqlite"] = $"Data Source={dbPath}",
-            });
-            using var logFolder = new TempFolder();
-            builder.AddAppLogging(new AppDataPaths(logFolder.Path));
-            builder.Services.AddShell().AddDomain().AddFeatures();
-            builder.AddDatabase();
-
-            using var host = builder.Build();
-
-            var view = CreateView(host.Services, viewType);
+            var thread = Thread.CurrentThread;
+            var previousUiCulture = thread.CurrentUICulture;
+            var previousCulture = thread.CurrentCulture;
+            thread.CurrentUICulture = culture;
+            thread.CurrentCulture = culture;
             try
             {
-                Assert.NotNull(view);
-                RealizeResources(view);
+                LoadView(viewType);
             }
             finally
             {
-                (view as Window)?.Close();
+                thread.CurrentUICulture = previousUiCulture;
+                thread.CurrentCulture = previousCulture;
             }
         });
+    }
+
+    private static void LoadView(Type viewType)
+    {
+        EnsureApplicationResources();
+
+        var dbPath = Path.Combine(Path.GetTempPath(), $"nexgrades-xaml-test-{Guid.NewGuid():N}.db");
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+        {
+            EnvironmentName = Environments.Development,
+        });
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:sqlite"] = $"Data Source={dbPath}",
+        });
+        using var logFolder = new TempFolder();
+        builder.AddAppLogging(new AppDataPaths(logFolder.Path));
+        builder.Services.AddShell().AddDomain().AddFeatures();
+        builder.AddDatabase();
+
+        using var host = builder.Build();
+
+        var view = CreateView(host.Services, viewType);
+        try
+        {
+            Assert.NotNull(view);
+            RealizeResources(view);
+        }
+        finally
+        {
+            (view as Window)?.Close();
+        }
     }
 
     /// <summary>

@@ -43,6 +43,7 @@ server.
 - Excel export: **Export to Excel** on the class page writes the overview of one subject. **Export notes…** on the
   Notes tab writes a student's notes for a date range, with or without archived notes.
 - **Settings** > **Open log folder** opens the folder with the log files.
+- The app is available in English and German. Choose the language under **Settings** > **Language**; it applies after a restart.
 
 ## Install
 
@@ -92,7 +93,7 @@ address bar of File Explorer.
   day and keeps up to 14 files. The app itself does not log pupil names, grades or notes. File paths in the logs
   include your Windows user name, and some error text from system components can contain values. Treat the log
   folder like the database. See [0003](docs/decisions/0003-application-logging.md).
-- `settings.json`: the update and theme preferences.
+- `settings.json`: the update, theme and language preferences.
 
 Uninstalling the Setup.exe install removes the app folder `%LOCALAPPDATA%\NexGrades.App`. It keeps
 `%LOCALAPPDATA%\NexGrades`, so your data stays.

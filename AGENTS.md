@@ -299,25 +299,24 @@ particular:
 
 ## UI text and localization
 
-The UI is English first; multi-language support (German first) is planned. Write new UI code so it can be
-localized later without a rewrite:
+The UI is localized in English and German. Keys, files, culture rules and translation are in
+[UI text and localization](docs/domain/ui-text-and-localization.md).
 
-- All user-facing text is English.
+- Every user-facing string comes from the `<Area>Strings.resx` files, through `{loc:Text Key}` in XAML and
+  `TextResources` in C#. Never write literal UI text, and add the English and German keys together.
 - Never build a sentence by concatenating fragments; use a single format string with placeholders, since
   word order differs between languages.
 - Format numbers, grade averages and dates for display with the current UI culture (German uses `2,3`,
   not `2.3`). Persisted and audit values use `CultureInfo.InvariantCulture`, as
   `ClosedYearAuditInterceptor` does.
 - Grade tokens ("1+", "2-") are culture-neutral.
-- Exception messages are diagnostic text and will not be translated; don't design UI that depends on
-  showing them verbatim.
-- Some existing pages show identifiers such as `AddClass` or `ClassName` instead of real text. Don't copy
-  that pattern for new UI.
+- Exception messages, log templates and telemetry stay English and never go through the resources; don't design
+  UI that depends on showing exception messages verbatim.
 
 ## Testing
 
 - Tests live in `NexGrades.Tests` and cover Domain and Data. There are no UI tests; `NexGrades.App.Tests`
-  only checks that the App's DI graph resolves, so it picks up new pages and services automatically. It also holds pure App-side unit tests, such as UI text formatting. `XamlLoadTests` creates each view on an STA thread to catch XAML that compiles but throws when loaded.
+  only checks that the App's DI graph resolves, so it picks up new pages and services automatically. It also holds pure App-side unit tests, such as UI text formatting. `XamlLoadTests` creates each view on an STA thread, under en-US and de-DE, to catch XAML that compiles but throws when loaded. `ResourceKeyUsageTests` and `XamlSourceRulesTests` fail on an unknown or unused `{loc:Text}` key and on literal UI text (see [UI text and localization](docs/domain/ui-text-and-localization.md#tests)).
 - Use `SqliteTestDatabase` (a real, migrated SQLite file — never the EF in-memory provider) and
   `FixedClock` for anything time-dependent. They are in `SqliteTestDatabase.cs` and `FixedClock.cs` (`NexGrades.Tests/TestSupport/`); `GradeSheetSeed.cs` builds grade sheet data. Construct Domain services with
   `db.CreateContextFactory()`, and assert through a fresh `db.CreateContext()`: the context that seeded the

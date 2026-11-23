@@ -2,7 +2,8 @@
 
 The terms below are confirmed by the owner. The choices the owner settled are listed in
 [Confirmed choices](#confirmed-choices); items marked **(choice n)** refer to them. This page is the source for the
-German resource strings of issue #26.
+German resource strings of issue #26. How the strings are stored, keyed and checked is in
+[UI text and localization](ui-text-and-localization.md), which also describes how to translate with this page.
 
 Each row gives the English UI text as it is today (or as planned, where the screen does not exist yet), the German
 proposal, and notes. The English column is quoted from the code where it exists.

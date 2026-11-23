@@ -23,6 +23,7 @@ column.
 | [Updates, backups and settings](updates-backups-and-settings.md) | The preferences file, the backup before a migration, self-update, the Velopack pack id | `JsonUserSettingsStore`, `DatabaseBackupService`, `UpdateCoordinator` |
 | [Navigation and leave guards](navigation-and-leave-guards.md) | Asking before unsaved input is lost: sidebar, back, window close; passing parameters between pages | `ViewModel`, `PageNavigator`, `LeaveGuard`, `DiscardChangesDialog`, `NavigationParameters` |
 | [Design system](design-system.md) | Shared WPF resources: spacing tokens, styles, the type ramp, semantic colours, icons, empty and status states | `Tokens.xaml`, `Styles.xaml`, `DesignSystem.xaml` |
+| [UI text and localization](ui-text-and-localization.md) | English and German resource files, the key scheme, culture rules, the language setting, translating | `TextResources`, `TextExtension`, `AppLanguageService`, `UiCultureResolver`, `UiCultureApplier` |
 
 ## Glossary
 

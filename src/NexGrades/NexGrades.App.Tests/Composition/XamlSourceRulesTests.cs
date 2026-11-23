@@ -1,5 +1,8 @@
+using System.Globalization;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using NexGrades.App.Localization;
 
 namespace NexGrades.App.Tests.Composition;
 
@@ -9,7 +12,7 @@ namespace NexGrades.App.Tests.Composition;
 /// <c>Visibility</c> directly instead. Not covered: styles applied by type (an implicit style or a keyed style
 /// reached only through <c>TargetType</c>), and styles set from code or through a <c>BasedOn</c> chain.
 /// </summary>
-public class XamlSourceRulesTests
+public partial class XamlSourceRulesTests
 {
     private static readonly XNamespace _presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
     private static readonly XNamespace _xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
@@ -126,26 +129,200 @@ public class XamlSourceRulesTests
     public void PageTitle_IsNotAnIdentifier_InAnyPage()
     {
         var offenders = new List<string>();
+        var checkedTitles = 0;
 
         foreach (var (path, doc) in LoadXamlFiles())
         {
             var root = doc.Root!;
             var className = (string?)root.Attribute(_xaml + "Class");
-            var title = (string?)root.Attribute("Title");
+            var title = ResolveTitle((string?)root.Attribute("Title"));
             if (className is null || title is null)
             {
                 continue;
             }
 
+            checkedTitles++;
             var shortName = className[(className.LastIndexOf('.') + 1)..];
             if (string.Equals(title, shortName, StringComparison.OrdinalIgnoreCase))
             {
                 offenders.Add($"{path}: Title '{title}' equals the class name");
             }
+            else if (IsIdentifierLike(title) && !_allowedLiteralTexts.Contains(title))
+            {
+                offenders.Add($"{path}: Title '{title}' looks like an identifier");
+            }
         }
 
+        Assert.True(checkedTitles > 0, "No page title was found, so the rule would pass vacuously.");
         Assert.True(offenders.Count == 0, string.Join(Environment.NewLine, offenders));
     }
+
+    [Fact]
+    public void ResolveTitle_ReadsTheNeutralEnglishText_OfALocalizedTitle() =>
+        Assert.Equal(TextResources.Get("Common_Save", CultureInfo.InvariantCulture), ResolveTitle("{loc:Text Common_Save}"));
+
+    [Fact]
+    public void ResolveTitle_ReturnsALiteralTitleAsItIs() =>
+        Assert.Equal("Students", ResolveTitle("Students"));
+
+    [Theory]
+    [InlineData("ClassPage")]
+    [InlineData("Class_Page")]
+    [InlineData("studentViewModel")]
+    [InlineData("Settings_Language_Header")]
+    public void IsIdentifierLike_Flags_IdentifierShapedText(string text) =>
+        Assert.True(IsIdentifierLike(text));
+
+    [Theory]
+    [InlineData("Students")]
+    [InlineData("Add class")]
+    [InlineData("School year")]
+    [InlineData("Klassen")]
+    [InlineData("")]
+    public void IsIdentifierLike_Accepts_PlainText(string text) =>
+        Assert.False(IsIdentifierLike(text));
+
+    private static string? ResolveTitle(string? title)
+    {
+        if (title is null)
+        {
+            return null;
+        }
+
+        var match = LocTextPattern().Match(title);
+        return match.Success ? TextResources.Get(match.Groups["key"].Value, CultureInfo.InvariantCulture) : title;
+    }
+
+    private static bool IsIdentifierLike(string text) =>
+        text.Length > 0 && IdentifierPattern().IsMatch(text);
+
+    [GeneratedRegex(@"^\{loc:Text\s+(?:Key=)?(?<key>\w+)\s*\}$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex LocTextPattern();
+
+    // One word without spaces that is PascalCase/camelCase with at least two humps, or contains an underscore.
+    [GeneratedRegex(@"^(?:[A-Za-z0-9]+_[A-Za-z0-9_]*|[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)+|[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+)$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex IdentifierPattern();
+
+    // ----- UI text is never a literal in XAML -----
+
+    private static readonly HashSet<string> _textAttributes =
+    [
+        "Content", "Header", "Text", "ToolTip", "ToolTipService.ToolTip", "PlaceholderText", "Title", "Message",
+        "PrimaryButtonText", "SecondaryButtonText", "CloseButtonText", "AutomationProperties.Name", "AutomationProperties.HelpText",
+    ];
+
+    // Literal values that are allowed: the brand name is not translated.
+    private static readonly HashSet<string> _allowedLiteralTexts =
+    [
+        "NexGrades",
+    ];
+
+    [GeneratedRegex(@"StringFormat\s*=\s*(?:'(?<value>[^']*)'|(?<value>[^,}]*))", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex StringFormatPattern();
+
+    [GeneratedRegex(@"\{[^{}]*\}", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex BracesPattern();
+
+    [Fact]
+    public void XamlUiText_IsNotALiteral_InAnyXamlFile()
+    {
+        var files = LoadXamlFiles();
+
+        var offenders = FindLiteralUiTextOffenders(files);
+
+        Assert.True(files.SelectMany(f => f.Document.Descendants().Attributes()).Any(a => (string?)a is { } v && v.StartsWith("{loc:Text", StringComparison.Ordinal)),
+            "No {loc:Text} was found, so the rule would pass vacuously.");
+        Assert.True(offenders.Count == 0, string.Join(Environment.NewLine, offenders));
+    }
+
+    [Fact]
+    public void FindLiteralUiTextOffenders_Flags_LiteralTextInUiAttributes()
+    {
+        var doc = Parse("""
+            <Grid>
+                <ui:Button Content="Save" ToolTip="Saves it" AutomationProperties.Name="Save button"/>
+                <ui:TextBox PlaceholderText="Name" ToolTipService.ToolTip="Hint"/>
+                <ui:TextBlock Text="{Binding X, StringFormat='Average: {0:N1}'}"/>
+            </Grid>
+            """);
+
+        var offenders = FindLiteralUiTextOffenders([("bad.xaml", doc)]);
+
+        Assert.Equal(6, offenders.Count);
+        Assert.Contains(offenders, o => o.Contains("Content=\"Save\"", StringComparison.Ordinal));
+        Assert.Contains(offenders, o => o.Contains("StringFormat", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void FindLiteralUiTextOffenders_Allows_BindingsLocalizedTextDesignTimeValuesSymbolsAndTheBrand()
+    {
+        var doc = Parse("""
+            <Grid xmlns:d="http://schemas.microsoft.com/expression/blend/2008">
+                <ui:Button Content="{loc:Text Common_Save}" ToolTip="{Binding Tip}" d:Content="Design time text"/>
+                <ui:TextBlock Text="{Binding X, StringFormat={loc:Text Common_Format}}"/>
+                <ui:TextBlock Text="{Binding X, StringFormat='{}{0:N1}'}"/>
+                <ui:TextBlock Text="+" Title="NexGrades"/>
+                <ui:TextBlock Text="12 / 34" Name="NotUiText" Tag="Plain tag"/>
+            </Grid>
+            """);
+
+        Assert.Empty(FindLiteralUiTextOffenders([("ok.xaml", doc)]));
+    }
+
+    private static List<string> FindLiteralUiTextOffenders(IReadOnlyList<(string Path, XDocument Document)> files)
+    {
+        var offenders = new List<string>();
+
+        foreach (var (path, doc) in files)
+        {
+            foreach (var attribute in doc.Descendants().Attributes())
+            {
+                var value = attribute.Value;
+                if (attribute.Name.Namespace != XNamespace.None || value.StartsWith('{') && !value.StartsWith("{}", StringComparison.Ordinal))
+                {
+                    // Design-time (d:) attributes and markup extensions are not literals; a binding's StringFormat is checked below.
+                    if (attribute.Name.Namespace == XNamespace.None && _textAttributes.Contains(attribute.Name.LocalName))
+                    {
+                        AddStringFormatOffenders(offenders, path, attribute, value);
+                    }
+
+                    continue;
+                }
+
+                if (!_textAttributes.Contains(attribute.Name.LocalName) || _allowedLiteralTexts.Contains(value))
+                {
+                    continue;
+                }
+
+                if (HasLetter(value))
+                {
+                    offenders.Add($"{path}: {attribute.Name.LocalName}=\"{value}\" is a literal; use {{loc:Text Key}}");
+                }
+            }
+        }
+
+        return offenders;
+    }
+
+    private static void AddStringFormatOffenders(List<string> offenders, string path, XAttribute attribute, string value)
+    {
+        foreach (Match match in StringFormatPattern().Matches(value))
+        {
+            var format = match.Groups["value"].Value.Trim();
+            if (format.StartsWith('{') && !format.StartsWith("{}", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var text = format.StartsWith("{}", StringComparison.Ordinal) ? format[2..] : format;
+            if (HasLetter(BracesPattern().Replace(text, string.Empty)))
+            {
+                offenders.Add($"{path}: {attribute.Name.LocalName} StringFormat '{format}' holds literal text; use a localized format string");
+            }
+        }
+    }
+
+    private static bool HasLetter(string text) => text.Any(char.IsLetter);
 
     [Fact]
     public void TextBoxes_UpdateOnEveryKeystroke_InFilesWithDefaultOrCancelButtons()
