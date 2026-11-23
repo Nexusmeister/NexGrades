@@ -13,22 +13,27 @@
       d:DataContext="{d:DesignInstance grades:GradeSheetPage, IsDesignTimeCreatable=False}"
       Title="Grade sheet">
 
-    <!-- Page-local, like ClassPage: the page must build without App.xaml's resources (see NexGrades.App.Tests). -->
     <Page.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <core:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml"/>
+        </ResourceDictionary.MergedDictionaries>
+
+        <!-- Shared by both cell styles: the design-system cell padding and row height. -->
+        <Style x:Key="GradeSheetCellBase" TargetType="DataGridCell">
+            <Setter Property="Padding" Value="{StaticResource Ng.Padding.Cell}"/>
+            <Setter Property="MinHeight" Value="{StaticResource Ng.Size.RowHeight}"/>
+        </Style>
 
         <!-- Style of every grade cell. DataGridColumnsBehavior derives from it and adds Tag (the cell's visual state)
              and a tooltip with its explanation. Marks are never colour only: a symbol and a border or fill change
              come with every colour, and the tooltip states the reason in words. -->
-        <Style x:Key="GradeSheetGradeCellStyle" TargetType="DataGridCell">
+        <Style x:Key="GradeSheetGradeCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource GradeSheetCellBase}">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
-            <Setter Property="Padding" Value="8,4"/>
             <Setter Property="MinWidth" Value="88"/>
-            <Setter Property="MinHeight" Value="36"/>
             <Setter Property="Focusable" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -103,13 +108,11 @@
 
         <!-- Student name, other grades and averages. The student's row note (exempt, left) is a tooltip, and
              italic text marks such a row, so the mark is not colour only. -->
-        <Style x:Key="GradeSheetReadOnlyCellStyle" TargetType="DataGridCell">
+        <Style x:Key="GradeSheetReadOnlyCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource GradeSheetCellBase}">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="MinHeight" Value="36"/>
             <Setter Property="Focusable" Value="True"/>
             <Setter Property="ToolTip" Value="{Binding StatusText}"/>
             <Setter Property="Template">
@@ -144,6 +147,16 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Visible only for assessment columns (not student, average or final grade columns). -->
+        <Style x:Key="AssessmentColumnsOnlyStyle" TargetType="FrameworkElement">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Kind}" Value="{x:Static grades:GradeSheetColumnKind.Assessment}">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Column header: bucket, title, date, and the assessment actions (edit, void, restore). The same actions
              are in the "Assessments" card below the grid, which is the keyboard path. -->
         <DataTemplate x:Key="GradeSheetColumnHeaderTemplate" DataType="{x:Type grades:GradeSheetColumn}">
@@ -164,17 +177,7 @@
                               MaxWidth="120"
                               Text="Type 1–6 to override"
                               Visibility="{Binding IsFinalGrade, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                <StackPanel Orientation="Horizontal">
-                    <StackPanel.Style>
-                        <Style TargetType="StackPanel">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Kind}" Value="{x:Static grades:GradeSheetColumnKind.Assessment}">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </StackPanel.Style>
+                <StackPanel Orientation="Horizontal" Style="{StaticResource AssessmentColumnsOnlyStyle}">
                     <StackPanel Orientation="Horizontal"
                                 Visibility="{Binding IsVoided, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ui:SymbolIcon Symbol="DismissCircle16" Margin="0,0,4,0" VerticalAlignment="Center"/>
@@ -218,9 +221,7 @@
             </StackPanel>
         </DataTemplate>
 
-        <Style x:Key="SectionCardStyle" TargetType="ui:Card">
-            <Setter Property="Width" Value="300"/>
-            <Setter Property="Margin" Value="0,0,12,12"/>
+        <Style x:Key="SectionCardStyle" TargetType="ui:Card" BasedOn="{StaticResource Ng.Card.Tile}">
             <Setter Property="VerticalAlignment" Value="Top"/>
         </Style>
 
@@ -228,9 +229,10 @@
         <Style x:Key="ConditionalCardStyle" TargetType="ui:Card" BasedOn="{StaticResource SectionCardStyle}">
             <Setter Property="Visibility" Value="Collapsed"/>
         </Style>
+        </ResourceDictionary>
     </Page.Resources>
 
-    <Grid Margin="24">
+    <Grid Style="{StaticResource Ng.PageRoot}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -240,27 +242,23 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Title -->
-        <StackPanel Grid.Row="0">
-            <ui:TextBlock FontTypography="Title"
-                          Appearance="Secondary"
-                          TextTrimming="CharacterEllipsis"
-                          Text="{Binding ViewModel.Title}"/>
-            <ui:TextBlock FontTypography="Caption"
+        <HeaderedContentControl Grid.Row="0"
+                                Header="{Binding ViewModel.Title}"
+                                Style="{StaticResource Ng.PageHeader}">
+            <ui:TextBlock FontTypography="Body"
                           Appearance="Secondary"
                           Text="{Binding ViewModel.SchoolYearLabel, StringFormat='School year {0}'}"
                           Visibility="{Binding ViewModel.HasSheet, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-        </StackPanel>
+        </HeaderedContentControl>
 
-        <!-- Action bar -->
-        <StackPanel Grid.Row="1" Margin="0,12" Orientation="Horizontal">
-            <ui:Button Margin="0,0,16,0"
+        <WrapPanel Grid.Row="1" Style="{StaticResource Ng.ActionBar}">
+            <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                        Content="Back"
                        Icon="{ui:SymbolIcon ArrowLeft24}"
                        ToolTip="Go back to the class"
                        AutomationProperties.Name="Back to the class"
                        Command="{Binding ViewModel.BackCommand}"/>
-            <ui:ToggleSwitch Margin="0,0,16,0"
+            <ui:ToggleSwitch Margin="{StaticResource Ng.Margin.ActionItem}"
                              VerticalAlignment="Center"
                              Content="Show voided grades"
                              ToolTip="Also show voided grades and assessments so they can be restored"
@@ -268,19 +266,20 @@
                              IsChecked="{Binding ViewModel.ShowVoidedGrades}"
                              Visibility="{Binding ViewModel.HasSheet, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <ui:ProgressRing IsIndeterminate="True"
+                             Margin="{StaticResource Ng.Margin.ActionItem}"
                              Width="24"
                              Height="24"
                              AutomationProperties.Name="Loading the grade sheet"
                              Visibility="{Binding ViewModel.IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-        </StackPanel>
+        </WrapPanel>
 
         <!-- Year state -->
         <yearLock:YearLockBar Grid.Row="2"
-                              Margin="0,0,0,12"
+                              Margin="{StaticResource Ng.Margin.Related}"
                               DataContext="{Binding ViewModel.YearLock}"/>
 
         <!-- Empty or error state, shown only when the load finished without a sheet -->
-        <Grid Grid.Row="3" Margin="0,0,0,12">
+        <Grid Grid.Row="3" Margin="{StaticResource Ng.Margin.Related}">
             <Grid.Style>
                 <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -306,16 +305,13 @@
         <Grid Grid.Row="4"
               Visibility="{Binding ViewModel.HasSheet, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ui:DataGrid x:Name="SheetGrid"
-                         AutoGenerateColumns="False"
-                         CanUserAddRows="False"
-                         CanUserDeleteRows="False"
+                         Style="{StaticResource Ng.DataGrid}"
+                         IsReadOnly="False"
                          CanUserReorderColumns="False"
-                         CanUserResizeRows="False"
                          CanUserSortColumns="False"
-                         SelectionMode="Single"
                          SelectionUnit="Cell"
-                         HeadersVisibility="Column"
                          GridLinesVisibility="None"
+                         Typography.NumeralAlignment="Tabular"
                          EnableRowVirtualization="True"
                          MinHeight="160"
                          HorizontalScrollBarVisibility="Auto"
@@ -325,29 +321,17 @@
                          grades:DataGridColumnsBehavior.Columns="{Binding ViewModel.Columns}"
                          grades:DataGridColumnsBehavior.SelectedCell="{Binding ViewModel.SelectedCell, Mode=OneWayToSource}"/>
 
-            <!-- The style sits on a plain Grid: WPF-UI replaces the style of a ui:TextBlock, so it would never apply there. -->
-            <Grid HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  IsHitTestVisible="False">
-                <Grid.Style>
-                    <Style TargetType="Grid">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ViewModel.Rows.Count}" Value="0">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Grid.Style>
-                <ui:TextBlock Appearance="Secondary"
-                              TextWrapping="Wrap"
-                              Text="There are no students in this class yet."/>
-            </Grid>
+            <ContentControl HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            IsHitTestVisible="False"
+                            Content="There are no students in this class yet."
+                            Style="{StaticResource Ng.EmptyState.WhenNoItems}"
+                            Tag="{Binding ViewModel.Rows}"/>
         </Grid>
 
         <!-- Details and assessments. The cards wrap and the panel scrolls, so nothing is clipped at 900 x 600. -->
         <Expander Grid.Row="5"
-                  Margin="0,12,0,0"
+                  Margin="0,16,0,0"
                   IsExpanded="True"
                   Header="Grade details and assessments"
                   AutomationProperties.Name="Grade details and assessments"
@@ -362,40 +346,47 @@
                     <ui:Card Style="{StaticResource ConditionalCardStyle}"
                              Visibility="{Binding ViewModel.HasDetail, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel IsEnabled="{Binding ViewModel.IsWritable}">
-                            <ui:TextBlock Margin="0,0,0,8" FontTypography="Subtitle" Text="Grade details"/>
-                            <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Date"/>
-                            <DatePicker Margin="0,0,0,8"
-                                        AutomationProperties.Name="Date of the grade"
-                                        SelectedDate="{Binding ViewModel.DetailDate}"/>
-                            <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Label"/>
-                            <ui:TextBox Margin="0,0,0,8"
-                                        MaxLength="{x:Static services:GradeService.MaxLabelLength}"
-                                        AutomationProperties.Name="Label of the grade"
-                                        PlaceholderText="For example Vocabulary test"
-                                        Text="{Binding ViewModel.DetailLabel, UpdateSourceTrigger=PropertyChanged}"/>
-                            <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Comment"/>
-                            <ui:TextBox Margin="0,0,0,8"
-                                        MinHeight="56"
-                                        MaxHeight="96"
-                                        AcceptsReturn="True"
-                                        TextWrapping="Wrap"
-                                        VerticalScrollBarVisibility="Auto"
-                                        MaxLength="{x:Static services:GradeService.MaxCommentLength}"
-                                        AutomationProperties.Name="Comment on the grade"
-                                        Text="{Binding ViewModel.DetailComment, UpdateSourceTrigger=PropertyChanged}"/>
-                            <StackPanel Orientation="Horizontal">
-                                <ui:Button Margin="0,0,8,0"
+                            <HeaderedContentControl Header="Grade details"
+                                                    Margin="{StaticResource Ng.Margin.Related}"
+                                                    Style="{StaticResource Ng.Section}">
+                                <StackPanel>
+                                    <HeaderedContentControl Header="Date"
+                                                            Margin="{StaticResource Ng.Margin.Related}"
+                                                            Style="{StaticResource Ng.FormField}">
+                                        <DatePicker AutomationProperties.Name="Date of the grade"
+                                                    SelectedDate="{Binding ViewModel.DetailDate}"/>
+                                    </HeaderedContentControl>
+                                    <HeaderedContentControl Header="Label"
+                                                            Margin="{StaticResource Ng.Margin.Related}"
+                                                            Style="{StaticResource Ng.FormField}">
+                                        <ui:TextBox MaxLength="{x:Static services:GradeService.MaxLabelLength}"
+                                                    AutomationProperties.Name="Label of the grade"
+                                                    PlaceholderText="For example Vocabulary test"
+                                                    Text="{Binding ViewModel.DetailLabel, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </HeaderedContentControl>
+                                    <HeaderedContentControl Header="Comment"
+                                                            Margin="{StaticResource Ng.Margin.Related}"
+                                                            Style="{StaticResource Ng.FormField}">
+                                        <ui:TextBox Style="{StaticResource Ng.TextBox.Multiline}"
+                                                    MaxLength="{x:Static services:GradeService.MaxCommentLength}"
+                                                    AutomationProperties.Name="Comment on the grade"
+                                                    Text="{Binding ViewModel.DetailComment, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </HeaderedContentControl>
+                                </StackPanel>
+                            </HeaderedContentControl>
+                            <WrapPanel>
+                                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                                            Content="Save details"
                                            Appearance="Primary"
                                            Icon="{ui:SymbolIcon Save24}"
                                            Command="{Binding ViewModel.SaveDetailCommand}"/>
-                                <ui:Button Content="Discard"
+                                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                                           Content="Discard"
                                            Icon="{ui:SymbolIcon Dismiss24}"
                                            ToolTip="Discard the changes and show the saved details"
                                            Command="{Binding ViewModel.DiscardDetailCommand}"/>
-                            </StackPanel>
-                            <ui:Button Margin="0,8,0,0"
-                                       Content="Void grade"
+                            </WrapPanel>
+                            <ui:Button Content="Void grade"
                                        Icon="{ui:SymbolIcon DismissCircle24}"
                                        ToolTip="Void this grade. It stops counting in the averages and can be restored later."
                                        AutomationProperties.Name="Void grade"
@@ -414,108 +405,122 @@
                                 </Style.Triggers>
                             </Style>
                         </ui:Card.Style>
-                        <StackPanel>
-                            <ui:TextBlock Margin="0,0,0,8" FontTypography="Subtitle" Text="Voided grade"/>
-                            <ui:TextBlock Margin="0,0,0,8"
-                                          Appearance="Secondary"
-                                          TextWrapping="Wrap"
-                                          Text="This grade is voided and does not count in the averages. Restore it to use it again."/>
-                            <ui:Button Content="Restore grade"
-                                       Appearance="Primary"
-                                       Icon="{ui:SymbolIcon ArrowUndo24}"
-                                       Command="{Binding ViewModel.RestoreGradeCommand}"/>
-                        </StackPanel>
+                        <HeaderedContentControl Header="Voided grade"
+                                                Margin="0"
+                                                Style="{StaticResource Ng.Section}">
+                            <StackPanel>
+                                <ui:TextBlock Margin="{StaticResource Ng.Margin.Related}"
+                                              FontTypography="Body"
+                                              Appearance="Secondary"
+                                              TextWrapping="Wrap"
+                                              Text="This grade is voided and does not count in the averages. Restore it to use it again."/>
+                                <ui:Button Content="Restore grade"
+                                           Appearance="Primary"
+                                           Icon="{ui:SymbolIcon ArrowUndo24}"
+                                           Command="{Binding ViewModel.RestoreGradeCommand}"/>
+                            </StackPanel>
+                        </HeaderedContentControl>
                     </ui:Card>
 
                     <!-- Edit assessment -->
                     <ui:Card Style="{StaticResource ConditionalCardStyle}"
                              Visibility="{Binding ViewModel.IsEditingAssessment, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <StackPanel>
-                            <ui:TextBlock Margin="0,0,0,8" FontTypography="Subtitle" Text="Edit assessment"/>
-                            <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Title"/>
-                            <ui:TextBox Margin="0,0,0,8"
-                                        MaxLength="{x:Static services:AssessmentService.MaxTitleLength}"
-                                        AutomationProperties.Name="Assessment title"
-                                        Text="{Binding ViewModel.EditAssessmentTitle, UpdateSourceTrigger=PropertyChanged}"/>
-                            <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Date"/>
-                            <DatePicker Margin="0,0,0,8"
-                                        AutomationProperties.Name="Assessment date"
-                                        SelectedDate="{Binding ViewModel.EditAssessmentDate}"/>
-                            <ui:TextBlock Margin="0,0,0,8"
-                                          FontTypography="Caption"
-                                          Appearance="Secondary"
-                                          TextWrapping="Wrap"
-                                          Text="Enter a title, and a date inside the school year."/>
-                            <StackPanel Orientation="Horizontal">
-                                <ui:Button Margin="0,0,8,0"
-                                           Content="Save assessment"
-                                           Appearance="Primary"
-                                           Icon="{ui:SymbolIcon Save24}"
-                                           Command="{Binding ViewModel.SaveAssessmentEditCommand}"/>
-                                <ui:Button Content="Cancel"
-                                           Icon="{ui:SymbolIcon Prohibited24}"
-                                           Command="{Binding ViewModel.CancelEditAssessmentCommand}"/>
+                        <HeaderedContentControl Header="Edit assessment"
+                                                Margin="0"
+                                                Style="{StaticResource Ng.Section}">
+                            <StackPanel>
+                                <HeaderedContentControl Header="Title"
+                                                        Margin="{StaticResource Ng.Margin.Related}"
+                                                        Style="{StaticResource Ng.FormField}">
+                                    <ui:TextBox MaxLength="{x:Static services:AssessmentService.MaxTitleLength}"
+                                                AutomationProperties.Name="Assessment title"
+                                                Text="{Binding ViewModel.EditAssessmentTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                                </HeaderedContentControl>
+                                <HeaderedContentControl Header="Date"
+                                                        Margin="{StaticResource Ng.Margin.Related}"
+                                                        Style="{StaticResource Ng.FormField}">
+                                    <DatePicker AutomationProperties.Name="Assessment date"
+                                                SelectedDate="{Binding ViewModel.EditAssessmentDate}"/>
+                                </HeaderedContentControl>
+                                <ui:TextBlock Margin="{StaticResource Ng.Margin.Related}"
+                                              FontTypography="Caption"
+                                              Appearance="Secondary"
+                                              TextWrapping="Wrap"
+                                              Text="Enter a title, and a date inside the school year."/>
+                                <WrapPanel>
+                                    <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                                               Content="Save assessment"
+                                               Appearance="Primary"
+                                               Icon="{ui:SymbolIcon Save24}"
+                                               Command="{Binding ViewModel.SaveAssessmentEditCommand}"/>
+                                    <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                                               Content="Cancel"
+                                               Icon="{ui:SymbolIcon Dismiss24}"
+                                               Command="{Binding ViewModel.CancelEditAssessmentCommand}"/>
+                                </WrapPanel>
                             </StackPanel>
-                        </StackPanel>
+                        </HeaderedContentControl>
                     </ui:Card>
 
                     <!-- Add assessment -->
                     <ui:Card Style="{StaticResource SectionCardStyle}">
                         <StackPanel IsEnabled="{Binding ViewModel.IsWritable}">
-                            <ui:TextBlock Margin="0,0,0,8" FontTypography="Subtitle" Text="Add assessment"/>
-                            <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Bucket"/>
-                            <ComboBox Margin="0,0,0,8"
-                                      HorizontalAlignment="Stretch"
-                                      AutomationProperties.Name="Bucket of the new assessment"
-                                      ItemsSource="{Binding ViewModel.Buckets}"
-                                      DisplayMemberPath="Name"
-                                      SelectedItem="{Binding ViewModel.NewAssessmentBucket}"/>
-                            <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Title"/>
-                            <ui:TextBox Margin="0,0,0,8"
-                                        MaxLength="{x:Static services:AssessmentService.MaxTitleLength}"
-                                        AutomationProperties.Name="Title of the new assessment"
-                                        PlaceholderText="For example Test 1"
-                                        Text="{Binding ViewModel.NewAssessmentTitle, UpdateSourceTrigger=PropertyChanged}"/>
-                            <ui:TextBlock Margin="0,0,0,4" FontTypography="BodyStrong" Text="Date"/>
-                            <DatePicker Margin="0,0,0,8"
-                                        AutomationProperties.Name="Date of the new assessment"
-                                        SelectedDate="{Binding ViewModel.NewAssessmentDate}"/>
-                            <ui:TextBlock Margin="0,0,0,8"
-                                          FontTypography="Caption"
-                                          Appearance="Secondary"
-                                          TextWrapping="Wrap"
-                                          Text="Choose a bucket, enter a title, and pick a date inside the school year."/>
-                            <ui:Button Content="Add assessment"
-                                       Appearance="Primary"
-                                       Icon="{ui:SymbolIcon Add24}"
-                                       Command="{Binding ViewModel.AddAssessmentCommand}"/>
+                            <HeaderedContentControl Header="Add assessment"
+                                                    Margin="0"
+                                                    Style="{StaticResource Ng.Section}">
+                                <StackPanel>
+                                    <HeaderedContentControl Header="Bucket"
+                                                            Margin="{StaticResource Ng.Margin.Related}"
+                                                            Style="{StaticResource Ng.FormField}">
+                                        <ComboBox HorizontalAlignment="Stretch"
+                                                  AutomationProperties.Name="Bucket of the new assessment"
+                                                  ItemsSource="{Binding ViewModel.Buckets}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedItem="{Binding ViewModel.NewAssessmentBucket}"/>
+                                    </HeaderedContentControl>
+                                    <HeaderedContentControl Header="Title"
+                                                            Margin="{StaticResource Ng.Margin.Related}"
+                                                            Style="{StaticResource Ng.FormField}">
+                                        <ui:TextBox MaxLength="{x:Static services:AssessmentService.MaxTitleLength}"
+                                                    AutomationProperties.Name="Title of the new assessment"
+                                                    PlaceholderText="For example Test 1"
+                                                    Text="{Binding ViewModel.NewAssessmentTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </HeaderedContentControl>
+                                    <HeaderedContentControl Header="Date"
+                                                            Margin="{StaticResource Ng.Margin.Related}"
+                                                            Style="{StaticResource Ng.FormField}">
+                                        <DatePicker AutomationProperties.Name="Date of the new assessment"
+                                                    SelectedDate="{Binding ViewModel.NewAssessmentDate}"/>
+                                    </HeaderedContentControl>
+                                    <ui:TextBlock Margin="{StaticResource Ng.Margin.Related}"
+                                                  FontTypography="Caption"
+                                                  Appearance="Secondary"
+                                                  TextWrapping="Wrap"
+                                                  Text="Choose a bucket, enter a title, and pick a date inside the school year."/>
+                                    <ui:Button Content="Add assessment"
+                                               Appearance="Primary"
+                                               Icon="{ui:SymbolIcon Add24}"
+                                               Command="{Binding ViewModel.AddAssessmentCommand}"/>
+                                </StackPanel>
+                            </HeaderedContentControl>
                         </StackPanel>
                     </ui:Card>
 
                     <!-- Assessments: the keyboard path to the actions in the column headers -->
                     <ui:Card Style="{StaticResource SectionCardStyle}">
-                        <StackPanel>
-                            <ui:TextBlock Margin="0,0,0,8" FontTypography="Subtitle" Text="Assessments"/>
+                        <HeaderedContentControl Header="Assessments"
+                                                Margin="0"
+                                                Style="{StaticResource Ng.Section}">
                             <ItemsControl ItemsSource="{Binding ViewModel.Columns}"
                                           KeyboardNavigation.TabNavigation="Continue">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type grades:GradeSheetColumn}">
-                                        <Grid Margin="0,0,0,4">
-                                            <Grid.Style>
-                                                <Style TargetType="Grid">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Kind}" Value="{x:Static grades:GradeSheetColumnKind.Assessment}">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Grid.Style>
+                                        <Grid Margin="{StaticResource Ng.Margin.Tight}" Style="{StaticResource AssessmentColumnsOnlyStyle}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="{StaticResource Ng.Margin.InlineGap}">
                                                 <ui:TextBlock TextTrimming="CharacterEllipsis" Text="{Binding Header}"/>
                                                 <ui:TextBlock FontTypography="Caption"
                                                               Appearance="Secondary"
@@ -550,7 +555,7 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                        </StackPanel>
+                        </HeaderedContentControl>
                     </ui:Card>
                 </WrapPanel>
             </ScrollViewer>

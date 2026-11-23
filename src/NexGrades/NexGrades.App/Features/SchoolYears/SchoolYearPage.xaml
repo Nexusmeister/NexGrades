@@ -4,7 +4,6 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:core="clr-namespace:NexGrades.App.Core"
       xmlns:yearLock="clr-namespace:NexGrades.App.Core.YearLock"
       xmlns:schoolYears="clr-namespace:NexGrades.App.Features.SchoolYears"
       d:DataContext="{d:DesignInstance schoolYears:SchoolYearPage, IsDesignTimeCreatable=False}"
@@ -13,10 +12,11 @@
       d:DesignWidth="900"
       Title="School year">
 
-    <!-- Page-local, like ClassPage: the page must build without App.xaml's resources (see NexGrades.App.Tests). -->
     <Page.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <core:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml"/>
+        </ResourceDictionary.MergedDictionaries>
 
         <!-- One row of the readiness lists: the finding and, when it links somewhere, an Open button. -->
         <DataTemplate x:Key="ReadinessItemTemplate" DataType="{x:Type schoolYears:ReadinessItemRow}">
@@ -27,7 +27,7 @@
                 </Grid.ColumnDefinitions>
                 <ui:TextBlock Grid.Column="0"
                               VerticalAlignment="Center"
-                              Margin="0,0,12,0"
+                              Margin="{StaticResource Ng.Margin.InlineGap}"
                               FontTypography="Body"
                               TextWrapping="Wrap"
                               Text="{Binding Text}"/>
@@ -54,11 +54,8 @@
 
         <!-- One class of the classes step. -->
         <DataTemplate x:Key="ClassRowTemplate" DataType="{x:Type schoolYears:ClassChoiceRow}">
-            <Border Margin="0,0,0,8"
-                    Padding="12"
-                    CornerRadius="4"
-                    BorderThickness="1"
-                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+            <Border Margin="{StaticResource Ng.Margin.Related}"
+                    Style="{StaticResource Ng.Surface.Item}">
                 <StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -90,18 +87,17 @@
                                          IsChecked="{Binding IsArchiveChosen, Mode=TwoWay}"/>
                         </StackPanel>
                         <StackPanel Margin="0,8,0,0"
-                                    MaxWidth="480"
-                                    HorizontalAlignment="Left"
+                                    Style="{StaticResource Ng.FormPanel}"
                                     Visibility="{Binding IsRollForwardPending, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <ui:TextBlock FontTypography="Caption"
-                                          Appearance="Secondary"
-                                          Margin="0,0,0,4"
-                                          Text="Name in the next school year"/>
-                            <ui:TextBox Width="240"
-                                        HorizontalAlignment="Left"
-                                        AutomationProperties.Name="Name of the class in the next school year"
-                                        MaxLength="{Binding MaxNameLength, Mode=OneTime}"
-                                        Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"/>
+                            <HeaderedContentControl Header="Name in the next school year"
+                                                    Margin="0"
+                                                    Style="{StaticResource Ng.FormField}">
+                                <ui:TextBox Width="240"
+                                            HorizontalAlignment="Left"
+                                            AutomationProperties.Name="Name of the class in the next school year"
+                                            MaxLength="{Binding MaxNameLength, Mode=OneTime}"
+                                            Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"/>
+                            </HeaderedContentControl>
                         </StackPanel>
                         <CheckBox Margin="0,8,0,0"
                                   Content="End this class"
@@ -113,9 +109,9 @@
                                     Margin="0,8,0,0"
                                     Visibility="{Binding HasFailed, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <ui:SymbolIcon Symbol="Warning24"
-                                           Margin="0,0,8,0"
+                                           Margin="{StaticResource Ng.Margin.InlineGap}"
                                            VerticalAlignment="Top"
-                                           Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
+                                           Style="{StaticResource Ng.Icon.Caution}"/>
                             <ui:TextBlock MaxWidth="560"
                                           FontTypography="Body"
                                           TextWrapping="Wrap"
@@ -128,8 +124,8 @@
                                 Margin="0,8,0,0"
                                 Visibility="{Binding IsDone, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ui:SymbolIcon Symbol="CheckmarkCircle24"
-                                       Margin="0,0,8,0"
-                                       Foreground="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                       Margin="{StaticResource Ng.Margin.InlineGap}"
+                                       Style="{StaticResource Ng.Icon.Success}"/>
                         <ui:TextBlock FontTypography="Body"
                                       Text="{Binding DoneText}"/>
                     </StackPanel>
@@ -157,7 +153,7 @@
                 <StackPanel Grid.Column="2"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
-                            Margin="0,0,12,0">
+                            Margin="{StaticResource Ng.Margin.InlineGap}">
                     <ui:SymbolIcon Symbol="LockClosed24"
                                    Margin="0,0,8,0"
                                    Visibility="{Binding IsLocked, Converter={StaticResource BooleanToVisibilityConverter}}"/>
@@ -188,9 +184,10 @@
                 </Grid>
             </Grid>
         </DataTemplate>
+        </ResourceDictionary>
     </Page.Resources>
 
-    <Grid Margin="24">
+    <Grid Style="{StaticResource Ng.PageRoot}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -198,13 +195,13 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ui:TextBlock Grid.Row="0"
-                      FontTypography="Title"
-                      Text="School year"/>
+        <HeaderedContentControl Grid.Row="0"
+                                Header="School year"
+                                Style="{StaticResource Ng.PageHeader}"/>
 
         <!-- Empty state: nothing to end. -->
         <StackPanel Grid.Row="1" Grid.RowSpan="3"
-                    Margin="0,12,0,0"
+                    Margin="0,16,0,0"
                     Visibility="{Binding ViewModel.HasActiveYear, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
             <ui:InfoBar IsOpen="True"
                         IsClosable="False"
@@ -215,7 +212,7 @@
 
         <!-- Step header. -->
         <StackPanel Grid.Row="1"
-                    Margin="0,12,0,0"
+                    Margin="0,8,0,0"
                     Visibility="{Binding ViewModel.HasActiveYear, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ui:TextBlock FontTypography="Subtitle"
                           Appearance="Secondary"
@@ -245,7 +242,7 @@
 
         <!-- Step content. -->
         <ScrollViewer Grid.Row="2"
-                      Margin="0,12,0,0"
+                      Margin="0,16,0,0"
                       VerticalScrollBarVisibility="Auto"
                       Visibility="{Binding ViewModel.HasActiveYear, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid>
@@ -258,7 +255,7 @@
 
                 <!-- Overview: the active year, then the closed years -->
                 <StackPanel Visibility="{Binding ViewModel.IsOverviewStep, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ui:Card>
+                <ui:Card Style="{StaticResource Ng.Card}">
                     <StackPanel>
                         <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Text="Active school year"/>
                         <ui:TextBlock FontTypography="Subtitle" Margin="0,4,0,0" Text="{Binding ViewModel.ActiveYearLabel}"/>
@@ -266,7 +263,7 @@
                                       Text="{Binding ViewModel.ActiveYearStart, StringFormat='Starts on {0:d}'}"/>
                         <ui:TextBlock FontTypography="Body" Margin="0,4,0,0"
                                       Text="{Binding ViewModel.ActiveYearEnd, StringFormat='Ends on {0:d}'}"/>
-                        <ui:InfoBar Margin="0,12,0,0"
+                        <ui:InfoBar Margin="0,16,0,0"
                                     IsOpen="True"
                                     IsClosable="False"
                                     Severity="Informational"
@@ -277,51 +274,52 @@
                 </ui:Card>
 
                 <!-- Closed school years: unlock or lock again. -->
-                <ui:Card Margin="0,12,0,0">
+                <HeaderedContentControl Header="Closed school years"
+                                        Margin="0"
+                                        Style="{StaticResource Ng.Section}">
                     <StackPanel>
-                        <ui:TextBlock FontTypography="Subtitle" Text="Closed school years"/>
-                        <ui:TextBlock Margin="0,8,0,0"
-                                      Appearance="Secondary"
-                                      TextWrapping="Wrap"
-                                      Text="No school year has been closed yet."
-                                      Visibility="{Binding ViewModel.ClosedYears.ShowNoClosedYears, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <ui:TextBlock Margin="0,8,0,0"
-                                      Appearance="Secondary"
-                                      TextWrapping="Wrap"
-                                      Text="The closed school years could not be loaded."
-                                      Visibility="{Binding ViewModel.ClosedYears.LoadFailed, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <ItemsControl Margin="0,8,0,0"
-                                      AutomationProperties.Name="Closed school years"
+                        <ContentControl Content="No school year has been closed yet."
+                                        Style="{StaticResource Ng.EmptyState}"
+                                        Visibility="{Binding ViewModel.ClosedYears.ShowNoClosedYears, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <ContentControl Content="The closed school years could not be loaded."
+                                        Style="{StaticResource Ng.EmptyState}"
+                                        Visibility="{Binding ViewModel.ClosedYears.LoadFailed, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <ItemsControl AutomationProperties.Name="Closed school years"
                                       ItemsSource="{Binding ViewModel.ClosedYears.Years}"
                                       ItemTemplate="{StaticResource ClosedYearRowTemplate}"
                                       KeyboardNavigation.TabNavigation="Continue"/>
                     </StackPanel>
-                </ui:Card>
+                </HeaderedContentControl>
                 </StackPanel>
 
                 <!-- Next year -->
-                <ui:Card Visibility="{Binding ViewModel.IsNextYearStep, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel MaxWidth="480" HorizontalAlignment="Left">
-                        <ui:TextBlock FontTypography="BodyStrong" Text="Next school year"/>
-                        <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Margin="0,8,0,4" Text="Label"/>
-                        <ui:TextBox AutomationProperties.Name="Label of the next school year"
-                                    IsReadOnly="{Binding ViewModel.IsNextYearCreated}"
-                                    Text="{Binding ViewModel.NextYearLabel, UpdateSourceTrigger=PropertyChanged}"/>
-                        <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Margin="0,12,0,4" Text="First day"/>
-                        <DatePicker AutomationProperties.Name="First day of the next school year"
-                                    IsEnabled="{Binding ViewModel.IsNextYearEditable}"
-                                    SelectedDate="{Binding ViewModel.NextYearStart}"/>
-                        <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Margin="0,12,0,4" Text="Last day"/>
-                        <DatePicker AutomationProperties.Name="Last day of the next school year"
-                                    IsEnabled="{Binding ViewModel.IsNextYearEditable}"
-                                    SelectedDate="{Binding ViewModel.NextYearEnd}"/>
+                <ui:Card Style="{StaticResource Ng.Card}" Visibility="{Binding ViewModel.IsNextYearStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Style="{StaticResource Ng.FormPanel}">
+                        <ui:TextBlock FontTypography="BodyStrong"
+                                      Margin="{StaticResource Ng.Margin.Related}"
+                                      Text="Next school year"/>
+                        <HeaderedContentControl Header="Label" Style="{StaticResource Ng.FormField}">
+                            <ui:TextBox AutomationProperties.Name="Label of the next school year"
+                                        IsReadOnly="{Binding ViewModel.IsNextYearCreated}"
+                                        Text="{Binding ViewModel.NextYearLabel, UpdateSourceTrigger=PropertyChanged}"/>
+                        </HeaderedContentControl>
+                        <HeaderedContentControl Header="First day" Style="{StaticResource Ng.FormField}">
+                            <DatePicker AutomationProperties.Name="First day of the next school year"
+                                        IsEnabled="{Binding ViewModel.IsNextYearEditable}"
+                                        SelectedDate="{Binding ViewModel.NextYearStart}"/>
+                        </HeaderedContentControl>
+                        <HeaderedContentControl Header="Last day" Margin="0" Style="{StaticResource Ng.FormField}">
+                            <DatePicker AutomationProperties.Name="Last day of the next school year"
+                                        IsEnabled="{Binding ViewModel.IsNextYearEditable}"
+                                        SelectedDate="{Binding ViewModel.NextYearEnd}"/>
+                        </HeaderedContentControl>
                     </StackPanel>
                 </ui:Card>
 
                 <!-- Classes -->
-                <ui:Card Visibility="{Binding ViewModel.IsClassesStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ui:Card Style="{StaticResource Ng.Card}" Visibility="{Binding ViewModel.IsClassesStep, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
-                        <ui:TextBlock FontTypography="BodyStrong" Margin="0,0,0,8" Text="Decide what happens to each class"/>
+                        <ui:TextBlock FontTypography="BodyStrong" Margin="{StaticResource Ng.Margin.Related}" Text="Decide what happens to each class"/>
                         <ItemsControl ItemsSource="{Binding ViewModel.Classes}"
                                       ItemTemplate="{StaticResource ClassRowTemplate}"
                                       KeyboardNavigation.TabNavigation="Continue"/>
@@ -329,7 +327,7 @@
                 </ui:Card>
 
                 <!-- Readiness -->
-                <ui:Card Visibility="{Binding ViewModel.IsReadinessStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ui:Card Style="{StaticResource Ng.Card}" Visibility="{Binding ViewModel.IsReadinessStep, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
                         <ui:InfoBar IsOpen="True"
                                     IsClosable="False"
@@ -341,7 +339,7 @@
                                       ItemsSource="{Binding ViewModel.BlockingItems}"
                                       ItemTemplate="{StaticResource ReadinessItemTemplate}"/>
 
-                        <ui:InfoBar Margin="0,12,0,0"
+                        <ui:InfoBar Margin="0,16,0,0"
                                     IsOpen="True"
                                     IsClosable="False"
                                     Severity="Warning"
@@ -375,8 +373,8 @@
                                 </Style>
                             </StackPanel.Style>
                             <ui:SymbolIcon Symbol="CheckmarkCircle24"
-                                           Margin="0,0,8,0"
-                                           Foreground="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                           Margin="{StaticResource Ng.Margin.InlineGap}"
+                                           Style="{StaticResource Ng.Icon.Success}"/>
                             <ui:TextBlock FontTypography="Body"
                                           VerticalAlignment="Center"
                                           Text="Nothing is blocking the close and there are no warnings."/>
@@ -385,12 +383,12 @@
                 </ui:Card>
 
                 <!-- Confirm -->
-                <ui:Card Visibility="{Binding ViewModel.IsConfirmStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ui:Card Style="{StaticResource Ng.Card}" Visibility="{Binding ViewModel.IsConfirmStep, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
                         <ui:TextBlock FontTypography="Body"
                                       TextWrapping="Wrap"
                                       Text="{Binding ViewModel.SummaryText}"/>
-                        <ui:InfoBar Margin="0,12,0,0"
+                        <ui:InfoBar Margin="0,16,0,0"
                                     IsOpen="True"
                                     IsClosable="False"
                                     Severity="Warning"
@@ -400,12 +398,12 @@
                 </ui:Card>
 
                 <!-- Result -->
-                <ui:Card Visibility="{Binding ViewModel.IsResultStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ui:Card Style="{StaticResource Ng.Card}" Visibility="{Binding ViewModel.IsResultStep, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel Orientation="Horizontal">
                         <ui:SymbolIcon Symbol="CheckmarkCircle24"
-                                       Margin="0,0,8,0"
+                                       Margin="{StaticResource Ng.Margin.InlineGap}"
                                        VerticalAlignment="Top"
-                                       Foreground="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                       Style="{StaticResource Ng.Icon.Success}"/>
                         <ui:TextBlock FontTypography="Body"
                                       TextWrapping="Wrap"
                                       Text="{Binding ViewModel.ResultText}"/>
@@ -416,80 +414,91 @@
 
         <!-- Action bar: one set of buttons per step. -->
         <Grid Grid.Row="3"
-              Margin="0,12,0,0"
               Visibility="{Binding ViewModel.HasActiveYear, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel Orientation="Horizontal"
+            <WrapPanel Style="{StaticResource Ng.ActionBar}"
+                        Margin="0,16,0,0"
                         Visibility="{Binding ViewModel.IsOverviewStep, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ui:Button Content="End school year"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                           Content="End school year"
                            Appearance="Primary"
                            IsDefault="True"
                            Icon="{ui:SymbolIcon CalendarCancel24}"
                            Command="{Binding ViewModel.StartCommand}"/>
-            </StackPanel>
+            </WrapPanel>
 
-            <StackPanel Orientation="Horizontal"
+            <WrapPanel Style="{StaticResource Ng.ActionBar}"
+                        Margin="0,16,0,0"
                         Visibility="{Binding ViewModel.IsNextYearStep, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ui:Button Margin="0,0,8,0"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                            Content="Create next year"
                            Appearance="Primary"
                            IsDefault="True"
                            Icon="{ui:SymbolIcon CalendarAdd24}"
                            Command="{Binding ViewModel.CreateNextYearCommand}"/>
-                <ui:Button Content="Back"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                           Content="Back"
                            Icon="{ui:SymbolIcon ArrowLeft24}"
                            Command="{Binding ViewModel.BackCommand}"/>
-            </StackPanel>
+            </WrapPanel>
 
-            <StackPanel Orientation="Horizontal"
+            <WrapPanel Style="{StaticResource Ng.ActionBar}"
+                        Margin="0,16,0,0"
                         Visibility="{Binding ViewModel.IsClassesStep, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ui:Button Margin="0,0,8,0"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                            Content="Apply"
                            Appearance="Primary"
                            Icon="{ui:SymbolIcon Checkmark24}"
                            ToolTip="Apply the choices for all classes that are still waiting"
                            Command="{Binding ViewModel.ApplyClassChoicesCommand}"/>
-                <ui:Button Margin="0,0,8,0"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                            Content="Continue"
                            Icon="{ui:SymbolIcon ArrowRight24}"
                            Command="{Binding ViewModel.ContinueToReadinessCommand}"/>
-                <ui:Button Content="Back"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                           Content="Back"
                            Icon="{ui:SymbolIcon ArrowLeft24}"
                            Command="{Binding ViewModel.BackCommand}"/>
-            </StackPanel>
+            </WrapPanel>
 
-            <StackPanel Orientation="Horizontal"
+            <WrapPanel Style="{StaticResource Ng.ActionBar}"
+                        Margin="0,16,0,0"
                         Visibility="{Binding ViewModel.IsReadinessStep, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ui:Button Margin="0,0,8,0"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                            Content="Continue"
                            Appearance="Primary"
                            IsDefault="True"
                            Icon="{ui:SymbolIcon ArrowRight24}"
                            Command="{Binding ViewModel.ContinueToConfirmCommand}"/>
-                <ui:Button Content="Back"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                           Content="Back"
                            Icon="{ui:SymbolIcon ArrowLeft24}"
                            Command="{Binding ViewModel.BackCommand}"/>
-            </StackPanel>
+            </WrapPanel>
 
-            <StackPanel Orientation="Horizontal"
+            <WrapPanel Style="{StaticResource Ng.ActionBar}"
+                        Margin="0,16,0,0"
                         Visibility="{Binding ViewModel.IsConfirmStep, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ui:Button Margin="0,0,8,0"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                            Content="Close school year and activate next"
                            Appearance="Primary"
                            Icon="{ui:SymbolIcon LockClosed24}"
                            Command="{Binding ViewModel.RunCloseCommand}"/>
-                <ui:Button Content="Back"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                           Content="Back"
                            Icon="{ui:SymbolIcon ArrowLeft24}"
                            Command="{Binding ViewModel.BackCommand}"/>
-            </StackPanel>
+            </WrapPanel>
 
-            <StackPanel Orientation="Horizontal"
+            <WrapPanel Style="{StaticResource Ng.ActionBar}"
+                        Margin="0,16,0,0"
                         Visibility="{Binding ViewModel.IsResultStep, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ui:Button Content="Go to classes"
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                           Content="Go to classes"
                            Appearance="Primary"
                            IsDefault="True"
                            Icon="{ui:SymbolIcon HatGraduation24}"
                            Command="{Binding ViewModel.GoToClassesCommand}"/>
-            </StackPanel>
+            </WrapPanel>
         </Grid>
     </Grid>
 </Page>
