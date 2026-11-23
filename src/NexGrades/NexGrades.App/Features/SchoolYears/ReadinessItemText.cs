@@ -10,23 +10,24 @@ namespace NexGrades.App.Features.SchoolYears;
 /// </summary>
 public static class ReadinessItemText
 {
-    /// <summary>Formats <paramref name="issue"/> for display with <paramref name="culture"/>.</summary>
+    /// <summary>Formats <paramref name="issue"/> for display.</summary>
     /// <param name="issue">The finding from the close-readiness check.</param>
-    /// <param name="culture">The culture for the wording and the numbers; normally the current UI culture.</param>
-    public static string Format(CloseReadinessIssue issue, CultureInfo culture)
+    /// <param name="textCulture">The culture for the wording; normally the current UI culture.</param>
+    /// <param name="formatCulture">The culture for the numbers; normally the current (regional format) culture.</param>
+    public static string Format(CloseReadinessIssue issue, CultureInfo textCulture, CultureInfo formatCulture)
     {
         ArgumentNullException.ThrowIfNull(issue);
 
         return issue.Kind switch
         {
             CloseReadinessIssueKind.ClassStillActive =>
-                string.Format(culture, TextResources.Get("SchoolYears_Readiness_ClassStillActive_Format", culture), issue.ClassName),
+                string.Format(formatCulture, TextResources.Get("SchoolYears_Readiness_ClassStillActive_Format", textCulture), issue.ClassName),
             CloseReadinessIssueKind.SubjectWithoutGrades =>
-                string.Format(culture, TextResources.Get("SchoolYears_Readiness_SubjectWithoutGrades_Format", culture), issue.ClassName, issue.SubjectName),
+                string.Format(formatCulture, TextResources.Get("SchoolYears_Readiness_SubjectWithoutGrades_Format", textCulture), issue.ClassName, issue.SubjectName),
             CloseReadinessIssueKind.BucketWeightsNotHundred =>
-                string.Format(culture, TextResources.Get("SchoolYears_Readiness_WeightsNotHundred_Format", culture), issue.ClassName, issue.SubjectName, issue.WeightTotal),
+                string.Format(formatCulture, TextResources.Get("SchoolYears_Readiness_WeightsNotHundred_Format", textCulture), issue.ClassName, issue.SubjectName, issue.WeightTotal),
             CloseReadinessIssueKind.StudentWithoutGrade =>
-                string.Format(culture, TextResources.Get("SchoolYears_Readiness_StudentWithoutGrade_Format", culture), issue.ClassName, issue.SubjectName, issue.StudentLastName, issue.StudentFirstName),
+                string.Format(formatCulture, TextResources.Get("SchoolYears_Readiness_StudentWithoutGrade_Format", textCulture), issue.ClassName, issue.SubjectName, issue.StudentLastName, issue.StudentFirstName),
             _ => throw new ArgumentOutOfRangeException(nameof(issue)),
         };
     }

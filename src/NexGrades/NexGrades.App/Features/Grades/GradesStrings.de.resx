@@ -15,7 +15,7 @@
   <data name="Grades_GradeSheet_Grid_A11y" xml:space="preserve"><value>Notenübersicht. Geben Sie eine Note wie 2- in eine Zelle ein, drücken Sie zum Speichern die Eingabetaste und zum Abbrechen die Escape-Taste. Die letzten Spalten zeigen die vorgeschlagene Zeugnisnote und die Zeugnisnote, die Sie anstelle des Vorschlags eingeben können.</value></data>
   <data name="Grades_GradeSheet_NoStudents" xml:space="preserve"><value>In dieser Klasse gibt es noch keine Schülerinnen und Schüler.</value></data>
   <data name="Grades_GradeSheet_Details_Header" xml:space="preserve"><value>Notendetails und Leistungsnachweise</value></data>
-  <data name="Grades_GradeSheet_Header_FinalGradeHint" xml:space="preserve"><value>1–6 eingeben zum Überschreiben</value></data>
+  <data name="Grades_GradeSheet_Header_FinalGradeHint" xml:space="preserve"><value>Zum Überschreiben 1–6 eingeben</value></data>
   <data name="Grades_GradeSheet_Header_Voided" xml:space="preserve"><value>Gestrichen</value></data>
   <data name="Grades_Date_Header" xml:space="preserve"><value>Datum</value></data>
   <data name="Grades_Title_Header" xml:space="preserve"><value>Titel</value></data>

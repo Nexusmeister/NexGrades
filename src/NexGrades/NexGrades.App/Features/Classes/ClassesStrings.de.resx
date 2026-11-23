@@ -32,7 +32,7 @@
   <data name="Classes_ClassPage_Name_Required" xml:space="preserve"><value>Geben Sie einen Klassennamen ein.</value></data>
   <data name="Classes_ClassPage_Name_TooLong_Format" xml:space="preserve"><value>Der Klassenname darf höchstens {0} Zeichen lang sein.</value><comment>{0} is the maximum number of characters.</comment></data>
   <data name="Classes_ClassPage_Export_Success_Format" xml:space="preserve"><value>{0} wurde exportiert.</value><comment>{0} is the name of the saved file.</comment></data>
-  <data name="Classes_ClassPage_Export_SaveFailed" xml:space="preserve"><value>Der Export konnte nicht gespeichert werden. Kontrollieren Sie, ob die Datei nicht geöffnet ist und ob Sie in den Ordner schreiben dürfen.</value></data>
+  <data name="Classes_ClassPage_Export_SaveFailed" xml:space="preserve"><value>Der Export konnte nicht gespeichert werden. Prüfen Sie, ob die Datei geöffnet ist und ob Sie in den Ordner schreiben dürfen.</value></data>
   <data name="Classes_ClassPage_Export_CreateFailed" xml:space="preserve"><value>Der Export konnte nicht erstellt werden. Kontrollieren Sie, ob das Fach noch vorhanden ist, und versuchen Sie es erneut.</value></data>
   <data name="Classes_ClassPage_Create_ClosedYear" xml:space="preserve"><value>Die Klasse konnte nicht angelegt werden, weil das Schuljahr abgeschlossen ist.</value></data>
   <data name="Classes_ClassPage_Rename_ClosedYear" xml:space="preserve"><value>Die Klasse konnte nicht umbenannt werden, weil ihr Schuljahr abgeschlossen ist.</value></data>

@@ -14,7 +14,7 @@
   <data name="Core_YearLock_Relock_A11y" xml:space="preserve"><value>Dieses Schuljahr wieder sperren</value></data>
   <data name="Core_UnlockDialog_Unlock" xml:space="preserve"><value>Entsperren</value></data>
   <data name="Core_UnlockDialog_Reason_Header" xml:space="preserve"><value>Grund</value></data>
-  <data name="Core_UnlockDialog_Reason_A11y" xml:space="preserve"><value>Grund für das Entsperren des Schuljahrs</value></data>
+  <data name="Core_UnlockDialog_Reason_A11y" xml:space="preserve"><value>Grund für das Entsperren des Schuljahres</value></data>
   <data name="Core_UnlockDialog_Reason_Placeholder" xml:space="preserve"><value>Warum muss dieses Schuljahr geändert werden?</value></data>
   <data name="Core_UnlockDialog_Duration_Header" xml:space="preserve"><value>Entsperren für</value></data>
   <data name="Core_UnlockDialog_Duration_A11y" xml:space="preserve"><value>Wie lange das Schuljahr entsperrt bleibt</value></data>

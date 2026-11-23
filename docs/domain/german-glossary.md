@@ -19,8 +19,10 @@ proposal, and notes. The English column is quoted from the code where it exists.
 - Use a trailing "..." only for actions that open a dialog or a page that asks something first (for example
   "Schuljahr abschließen ..."). Actions that run at once get no dots.
 - Grade tokens ("1+", "2-") are culture-neutral and are never translated.
-- Format numbers, averages and dates with the current UI culture. German uses the decimal comma (`2,3`) and dates
-  such as `01.12.2025`. Persisted and audit values stay invariant.
+- Texts come from the UI language (`CultureInfo.CurrentUICulture`). Format numbers, averages and dates with the format
+  culture (`CultureInfo.CurrentCulture`), which follows the Windows regional format when it has the language chosen.
+  German uses the decimal comma (`2,3`) and dates such as `01.12.2025`. Persisted and audit values stay invariant. See
+  [Culture rules](ui-text-and-localization.md#culture-rules).
 - Never build a sentence from fragments. Use one format string with placeholders such as `{0}` and `{1:d}`, because
   word order differs between languages.
 - **False friend:** the English **Note** (a written remark about a pupil) is **Notiz**. In German, **Note** means a
@@ -176,7 +178,7 @@ proposal, and notes. The English column is quoted from the code where it exists.
 | Yes | Ja | Cell value for the "set by teacher" column. |
 | "(left on {date})" (format) | (ausgetreten am {0:d}) | Appended to a student name. One format string. |
 | exported on | exportiert am | Label in the notes export. |
-| category | Bewertungsbereich | Column header. Same term as the UI (choice 4). |
+| note category | Kategorie | Column header in the notes export; not the grade category. |
 | last edited | zuletzt bearbeitet | Column header in the notes export. |
 | archived on | archiviert am | Column header. |
 | Excel workbook | Excel-Arbeitsmappe | Used in messages such as "Exportiert als Excel-Arbeitsmappe". |

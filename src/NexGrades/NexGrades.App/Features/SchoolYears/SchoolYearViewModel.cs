@@ -267,7 +267,7 @@ public sealed partial class SchoolYearViewModel(
 
     private static ReadinessItemRow ToRow(CloseReadinessIssue issue)
     {
-        var text = ReadinessItemText.Format(issue, CultureInfo.CurrentUICulture);
+        var text = ReadinessItemText.Format(issue, CultureInfo.CurrentUICulture, CultureInfo.CurrentCulture);
         return issue.Kind == CloseReadinessIssueKind.StudentWithoutGrade && issue.StudentId is { } studentId
             ? new ReadinessItemRow(text, ReadinessLinkTarget.Student, studentId)
             : new ReadinessItemRow(text, ReadinessLinkTarget.Class, issue.ClassInstanceId);

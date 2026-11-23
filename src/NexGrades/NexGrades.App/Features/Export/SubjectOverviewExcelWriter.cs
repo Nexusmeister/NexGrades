@@ -20,10 +20,13 @@ public sealed class SubjectOverviewExcelWriter
     /// <summary>Writes the workbook for <paramref name="table"/> to <paramref name="output"/>.</summary>
     /// <param name="table">The table to write.</param>
     /// <param name="output">The stream that receives the .xlsx content.</param>
-    /// <param name="uiCulture">The culture for the language of headers and markers and for the date in the "left on" marker.</param>
+    /// <param name="uiCulture">The culture for the language of headers and markers.</param>
+    /// <param name="formatCulture">The culture for the date in the "left on" marker; the current culture when <see langword="null"/>.</param>
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Resolved from DI as an instance, like the other exporters' collaborators.")]
-    public void Write(SubjectOverviewTable table, Stream output, CultureInfo uiCulture)
+    public void Write(SubjectOverviewTable table, Stream output, CultureInfo uiCulture, CultureInfo? formatCulture = null)
     {
+        formatCulture ??= CultureInfo.CurrentCulture;
+
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add(
             ExcelSheetName.Sanitize(table.SubjectName, table.ClassName, table.SchoolYearLabel));
@@ -61,7 +64,7 @@ public sealed class SubjectOverviewExcelWriter
                 {
                     if (c == 0 && row.LeftOn is { } leftOn)
                     {
-                        text = string.Format(uiCulture, TextResources.Get("Export_Overview_LeftStudent_Format", uiCulture), text, leftOn);
+                        text = string.Format(formatCulture, TextResources.Get("Export_Overview_LeftStudent_Format", uiCulture), text, leftOn);
                     }
 
                     SetText(cell, text);

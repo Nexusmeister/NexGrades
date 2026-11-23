@@ -120,8 +120,9 @@ Further rules:
 - Grade tokens such as `1+` and `2-` are culture-neutral and are never translated.
 - Log messages, exception messages and telemetry stay in English and never go through resources. See
   [Startup, logging and data paths](startup-logging-and-data-paths.md#privacy).
-- Close readiness is reported as structured `CloseReadinessIssue` values. `ReadinessItemText.Format` words them in the
-  UI culture.
+- Close readiness is reported as structured `CloseReadinessIssue` values. `ReadinessItemText.Format(issue, textCulture,
+  formatCulture)` words them in the text culture (the UI culture on the page) and formats their numbers, such as a
+  weight total, in the format culture.
 
 ## Startup order
 
@@ -155,17 +156,24 @@ bindings format in the format culture. That replacement can happen only once, so
 
 ## Excel exports
 
-The exports take the UI culture when they are written. `NoteExporter` and `SubjectOverviewExporter` pass
-`CultureInfo.CurrentUICulture`, and the writers use it for:
+The exports take their cultures when they are written. Text comes from the UI culture. Numbers and dates come from the
+format culture, with the exceptions noted below.
 
-- the column headers, and the marker `Yes` in the "Final grade set by teacher" column;
-- for the notes export, the sheet name and the labels above the table;
-- the "left on" marker that is appended to a student's name, with the date formatted in that culture;
-- the suggested file name (`NoteExporter.SuggestFileName`).
+- The class overview. `SubjectOverviewExporter.ExportAsync` passes `CultureInfo.CurrentUICulture` and
+  `CultureInfo.CurrentCulture` to `SubjectOverviewExcelWriter.Write(table, output, uiCulture, formatCulture = null)`.
+  The writer takes from the UI culture the column headers and the `Yes` marker in the "Final grade set by teacher"
+  column. It formats the date in the "left on" marker, which is appended to a student's name, in the format culture;
+  `null` means `CultureInfo.CurrentCulture`. The sheet name is built from the subject, class and school year and is
+  not translated.
+- The notes export. `NoteExporter.WriteAsync` passes `CultureInfo.CurrentUICulture` to
+  `NoteExcelWriter.Write(table, output, uiCulture)`. The writer takes the sheet name, the labels above the table and
+  the headers from the UI culture. It has no format culture: its dates are Excel dates, see below.
+- The suggested file names. `NoteExporter.SuggestFileName(table, uiCulture)` localizes only its leading word; its dates
+  are always `yyyy-MM-dd`. `SubjectOverviewExporter.SuggestFileName` is not localized.
 
-The dates of the notes export and the date range are written as Excel dates with Excel's built-in date formats. Excel
-shows them in the locale of the Excel installation, not in the app's format culture. Grades and averages are written
-as numbers with a fixed format (`0` for the final grade, `0.0` for the averages), and Excel shows their decimal
+The dates of the notes export and the date range are written as Excel dates with Excel's built-in short date formats.
+Excel shows them in the locale of the Excel installation, not in the app's format culture. Grades and averages are
+written as numbers with a fixed format (`0` for the final grade, `0.0` for the averages), and Excel shows their decimal
 separator in its own locale too. See [Exports](exports.md).
 
 ## Tests

@@ -32,10 +32,10 @@ public class SubjectOverviewExcelWriterTests
             ],
             leftOn);
 
-    private static XLWorkbook Write(SubjectOverviewTable table, CultureInfo? culture = null)
+    private static XLWorkbook Write(SubjectOverviewTable table, CultureInfo? culture = null, CultureInfo? formatCulture = null)
     {
         using var stream = new MemoryStream();
-        new SubjectOverviewExcelWriter().Write(table, stream, culture ?? EnUs);
+        new SubjectOverviewExcelWriter().Write(table, stream, culture ?? EnUs, formatCulture ?? culture ?? EnUs);
         stream.Position = 0;
         return new XLWorkbook(stream);
     }
@@ -140,6 +140,18 @@ public class SubjectOverviewExcelWriterTests
         var deText = de.Worksheet(1).Cell(2, 1).GetString();
         Assert.NotEqual(enText, deText);
         Assert.Equal("Alpha, Test (ausgetreten am 01.12.2025)", deText);
+    }
+
+    [Fact]
+    public void Write_FormatsLeftMarkerDate_ByFormatCulture_NotByUiCulture()
+    {
+        var table = TableOf(RowOf("Alpha, Test", "2", 2.0m, new DateOnly(2025, 12, 1)));
+
+        using var enGb = Write(table, EnUs, CultureInfo.GetCultureInfo("en-GB"));
+        using var deCh = Write(table, DeDe, CultureInfo.GetCultureInfo("de-CH"));
+
+        Assert.Equal("Alpha, Test (left on 01/12/2025)", enGb.Worksheet(1).Cell(2, 1).GetString());
+        Assert.Equal("Alpha, Test (ausgetreten am 01.12.2025)", deCh.Worksheet(1).Cell(2, 1).GetString());
     }
 
     [Fact]

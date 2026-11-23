@@ -306,9 +306,10 @@ The UI is localized in English and German. Keys, files, culture rules and transl
   `TextResources` in C#. Never write literal UI text, and add the English and German keys together.
 - Never build a sentence by concatenating fragments; use a single format string with placeholders, since
   word order differs between languages.
-- Format numbers, grade averages and dates for display with the current UI culture (German uses `2,3`,
-  not `2.3`). Persisted and audit values use `CultureInfo.InvariantCulture`, as
-  `ClosedYearAuditInterceptor` does.
+- Texts come from the UI language (`CultureInfo.CurrentUICulture`). Numbers, grade averages and dates are formatted
+  with the format culture (`CultureInfo.CurrentCulture`), which follows the Windows regional format when it has the
+  language chosen (German uses `2,3`, not `2.3`). See [UI text and localization](docs/domain/ui-text-and-localization.md#culture-rules).
+  Persisted and audit values use `CultureInfo.InvariantCulture`, as `ClosedYearAuditInterceptor` does.
 - Grade tokens ("1+", "2-") are culture-neutral.
 - Exception messages, log templates and telemetry stay English and never go through the resources; don't design
   UI that depends on showing exception messages verbatim.

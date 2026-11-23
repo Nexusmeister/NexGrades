@@ -106,7 +106,7 @@ public sealed class NoteExcelWriter
     private static void WriteHeaderBlock(IXLWorksheet sheet, NoteExportTable table, CultureInfo uiCulture)
     {
         SetLabel(sheet.Cell(1, 1), TextResources.Get("Export_Notes_Student_Label", uiCulture));
-        SetText(sheet.Cell(1, 2), string.Format(uiCulture, "{0}, {1}", table.LastName, table.FirstName));
+        SetText(sheet.Cell(1, 2), string.Format(CultureInfo.InvariantCulture, "{0}, {1}", table.LastName, table.FirstName));
 
         SetLabel(sheet.Cell(2, 1), TextResources.Get("Export_Notes_Range_Label", uiCulture));
         SetDate(sheet.Cell(2, 2), table.From.ToDateTime(TimeOnly.MinValue));

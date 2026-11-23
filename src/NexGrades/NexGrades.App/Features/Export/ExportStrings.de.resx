@@ -18,7 +18,7 @@
   <data name="Export_Notes_Date_Header" xml:space="preserve"><value>Datum</value></data>
   <data name="Export_Notes_SchoolYear_Header" xml:space="preserve"><value>Schuljahr</value></data>
   <data name="Export_Notes_Class_Header" xml:space="preserve"><value>Klasse</value></data>
-  <data name="Export_Notes_Category_Header" xml:space="preserve"><value>Bewertungsbereich</value></data>
+  <data name="Export_Notes_Category_Header" xml:space="preserve"><value>Kategorie</value></data>
   <data name="Export_Notes_Note_Header" xml:space="preserve"><value>Notiz</value></data>
   <data name="Export_Notes_LastEdited_Header" xml:space="preserve"><value>Zuletzt bearbeitet</value></data>
   <data name="Export_Notes_Archived_Header" xml:space="preserve"><value>Archiviert am</value></data>

@@ -39,7 +39,7 @@ public class NoteExcelWriterTests
         Assert.Equal(new DateTime(2025, 8, 1), sheet.Cell(2, 2).GetDateTime());
         Assert.Equal("Exportiert am", sheet.Cell(3, 1).GetString());
         Assert.Equal(
-            ["Datum", "Schuljahr", "Klasse", "Bewertungsbereich", "Notiz", "Zuletzt bearbeitet", "Archiviert am"],
+            ["Datum", "Schuljahr", "Klasse", "Kategorie", "Notiz", "Zuletzt bearbeitet", "Archiviert am"],
             Enumerable.Range(1, 7).Select(c => sheet.Cell(5, c).GetString()));
         Assert.Equal(archivedOn, sheet.Cell(6, 7).GetDateTime());
     }
