@@ -1,6 +1,6 @@
 ---
 name: wpf-ui-design
-description: UI design rules for NexGrades (WPF + WPF-UI 4 Fluent), covering page structure, layout and spacing, typography, controls, theming, feedback, grade display, closed-year states, localization readiness and accessibility. Use when designing, building or reviewing any XAML page or dialog.
+description: UI design rules for NexGrades (WPF + WPF-UI 4 Fluent), covering page structure, layout and spacing, typography, controls, theming, feedback, grade display, closed-year states, English and German localization and accessibility. Use when designing, building or reviewing any XAML page or dialog.
 ---
 
 # NexGrades UI design rules
@@ -104,10 +104,13 @@ Use the shared year lock described in `AGENTS.md` under "Year-scoped editing pag
 creates the `YearLock`, write commands bind to `IsWritable`, and `<yearLock:YearLockBar>` shows the closed-year
 banner and the unlock action (code in `NexGrades.App/Core/YearLock`). `StudentPage` is the reference.
 
-## Localization readiness
+## Localization
 
-The UI is English now, and German comes next.
+The UI is in English and German. The keys, files and culture rules are in
+[UI text and localization](../../../docs/domain/ui-text-and-localization.md).
 
+- Add English and German resx keys, no literal text. Each text is a key read with `{loc:Text Key}` in XAML or
+  `TextResources` in C#, and the English and German keys are added in the same change.
 - Write all text as whole phrases. No sentences assembled in code or XAML from pieces.
 - Allow about 30% extra width for German text. No fixed-width buttons or columns that only fit English.
 - Format numbers and dates with the current culture. Never hard-code a decimal separator.

@@ -5,11 +5,12 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:loc="clr-namespace:NexGrades.App.Localization"
       xmlns:students="clr-namespace:NexGrades.App.Features.Students"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance students:StudentsOverviewPage, IsDesignTimeCreatable=False}"
-      Title="Students">
+      Title="{loc:Text Students_Overview_Title}">
 
     <b:Interaction.Triggers>
         <b:EventTrigger EventName="Loaded">
@@ -34,22 +35,22 @@
         </Grid.RowDefinitions>
 
         <HeaderedContentControl Grid.Row="0"
-                                Header="Students"
+                                Header="{loc:Text Students_Overview_Title}"
                                 Style="{StaticResource Ng.PageHeader}" />
 
         <WrapPanel Grid.Row="1" Style="{StaticResource Ng.ActionBar}">
             <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}" Appearance="Primary"
-                       Content="Add student"
+                       Content="{loc:Text Students_Overview_Add}"
                        Icon="{ui:SymbolIcon Add24}"
                        Command="{Binding ViewModel.AddStudentCommand}" />
             <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                       Content="Edit student"
+                       Content="{loc:Text Students_Overview_Edit}"
                        Icon="{ui:SymbolIcon Edit24}"
                        Command="{Binding ViewModel.EditStudentCommand}" />
         </WrapPanel>
 
         <ContentControl Grid.Row="2"
-                        Content="No students yet. Use Add student to create one."
+                        Content="{loc:Text Students_Overview_Empty}"
                         Tag="{Binding ViewModel.Students}"
                         Style="{StaticResource Ng.EmptyState.WhenNoItems}" />
 
@@ -62,11 +63,11 @@
                 <KeyBinding Key="Enter" Command="{Binding ViewModel.EditStudentCommand}" />
             </ui:DataGrid.InputBindings>
             <ui:DataGrid.Columns>
-                <DataGridTextColumn Header="Id" Binding="{Binding Id}"
+                <DataGridTextColumn Header="{loc:Text Students_Overview_Id_Header}" Binding="{Binding Id}"
                                     ElementStyle="{StaticResource Ng.DataGridText.Numeric}" />
-                <DataGridTextColumn Header="Last name" Binding="{Binding LastName}" ElementStyle="{StaticResource Ng.DataGridText}" />
-                <DataGridTextColumn Header="First name" Binding="{Binding FirstName}" ElementStyle="{StaticResource Ng.DataGridText}" />
-                <DataGridTextColumn Header="Class" Binding="{Binding ClassName}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="{loc:Text Students_Overview_LastName_Header}" Binding="{Binding LastName}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="{loc:Text Students_Overview_FirstName_Header}" Binding="{Binding FirstName}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="{loc:Text Students_Overview_Class_Header}" Binding="{Binding ClassName}" ElementStyle="{StaticResource Ng.DataGridText}" />
             </ui:DataGrid.Columns>
         </ui:DataGrid>
     </Grid>

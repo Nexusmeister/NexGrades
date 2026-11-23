@@ -5,11 +5,12 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:interactivity="http://schemas.microsoft.com/xaml/behaviors"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:loc="clr-namespace:NexGrades.App.Localization"
       xmlns:classes="clr-namespace:NexGrades.App.Features.Classes"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance classes:ClassesOverviewPage, IsDesignTimeCreatable=False}"
-      Title="Classes">
+      Title="{loc:Text Classes_Overview_Title}">
 
     <interactivity:Interaction.Triggers>
         <interactivity:EventTrigger EventName="Loaded">
@@ -34,22 +35,22 @@
         </Grid.RowDefinitions>
 
         <HeaderedContentControl Grid.Row="0"
-                                Header="Classes"
+                                Header="{loc:Text Classes_Overview_Title}"
                                 Style="{StaticResource Ng.PageHeader}" />
 
         <WrapPanel Grid.Row="1" Style="{StaticResource Ng.ActionBar}">
             <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}" Appearance="Primary"
-                       Content="Add class"
+                       Content="{loc:Text Classes_Overview_Add}"
                        Icon="{ui:SymbolIcon Add24}"
                        Command="{Binding ViewModel.AddClassCommand}" />
             <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                       Content="Edit class"
+                       Content="{loc:Text Classes_Overview_Edit}"
                        Icon="{ui:SymbolIcon Edit24}"
                        Command="{Binding ViewModel.EditClassCommand}" />
         </WrapPanel>
 
         <ContentControl Grid.Row="2"
-                        Content="No classes yet. Use Add class to create one."
+                        Content="{loc:Text Classes_Overview_Empty}"
                         Tag="{Binding ViewModel.Classes}"
                         Style="{StaticResource Ng.EmptyState.WhenNoItems}" />
 
@@ -58,9 +59,9 @@
                      ItemsSource="{Binding ViewModel.Classes}"
                      SelectedItem="{Binding ViewModel.SelectedClass}">
             <ui:DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" ElementStyle="{StaticResource Ng.DataGridText}" />
-                <DataGridTextColumn Header="Cohort" Binding="{Binding CohortLabel}" ElementStyle="{StaticResource Ng.DataGridText}" />
-                <DataGridTextColumn Header="Students" Binding="{Binding StudentCount}"
+                <DataGridTextColumn Header="{loc:Text Classes_Grid_Name_Header}" Binding="{Binding Name}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="{loc:Text Classes_Overview_Cohort_Header}" Binding="{Binding CohortLabel}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                <DataGridTextColumn Header="{loc:Text Classes_Overview_Students_Header}" Binding="{Binding StudentCount}"
                                     ElementStyle="{StaticResource Ng.DataGridText.Numeric}" />
             </ui:DataGrid.Columns>
         </ui:DataGrid>

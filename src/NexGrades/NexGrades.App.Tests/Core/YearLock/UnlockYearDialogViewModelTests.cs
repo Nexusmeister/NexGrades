@@ -1,3 +1,4 @@
+using System.Globalization;
 using NexGrades.App.Core.YearLock;
 using NexGrades.App.Tests.TestSupport;
 using NexGrades.Domain.Services;
@@ -10,6 +11,27 @@ public class UnlockYearDialogViewModelTests
 
     private static UnlockYearDialogViewModel Create(string reason = "correction", TestClock? clock = null) =>
         new("2025/26", clock ?? new TestClock(Now)) { Reason = reason };
+
+    [Fact]
+    public void TitleLabelsAndValidationMessage_AreGerman_ForGermanUiCulture()
+    {
+        var previous = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("de-DE");
+        try
+        {
+            var viewModel = Create(reason: string.Empty);
+
+            Assert.Equal("Schuljahr 2025/26 entsperren", viewModel.Title);
+            Assert.Equal(
+                ["1 Stunde", "Bis zum Ende des heutigen Tages", "1 Woche", "Bestimmtes Datum"],
+                viewModel.DurationChoices.Select(c => c.Label));
+            Assert.Equal("Geben Sie einen Grund für das Entsperren des Schuljahres ein.", viewModel.ValidationMessage);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = previous;
+        }
+    }
 
     [Fact]
     public void IsValid_IsTrue_ForReasonAndDefaultDuration()

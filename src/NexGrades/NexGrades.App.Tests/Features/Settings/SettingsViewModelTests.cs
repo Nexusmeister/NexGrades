@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using NexGrades.App.Core;
 using NexGrades.App.Features.Settings;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.App.Storage;
 using NexGrades.App.Tests.TestSupport;
 using NexGrades.App.Theming;
@@ -33,12 +34,12 @@ public sealed class SettingsViewModelTests : IDisposable
         }
     }
 
-    private (SettingsViewModel ViewModel, FakeFolderOpener Opener, FakeSnackbar Snackbar, AppDataPaths Paths) Create(Exception? openerFailure = null, UpdateSettingsViewModel? updates = null, AppearanceSettingsViewModel? appearance = null)
+    private (SettingsViewModel ViewModel, FakeFolderOpener Opener, FakeSnackbar Snackbar, AppDataPaths Paths) Create(Exception? openerFailure = null, UpdateSettingsViewModel? updates = null, AppearanceSettingsViewModel? appearance = null, LanguageSettingsViewModel? language = null)
     {
         var paths = new AppDataPaths(_folder.Path);
         var opener = new FakeFolderOpener(openerFailure);
         var (snackbar, fake) = FakeSnackbar.Create();
-        var viewModel = new SettingsViewModel(null!, snackbar, paths, opener, NullLogger<SettingsViewModel>.Instance, updates!, appearance!);
+        var viewModel = new SettingsViewModel(null!, snackbar, paths, opener, NullLogger<SettingsViewModel>.Instance, updates!, appearance!, language!);
         return (viewModel, opener, fake, paths);
     }
 
@@ -106,7 +107,8 @@ public sealed class SettingsViewModelTests : IDisposable
         var (snackbar, _) = FakeSnackbar.Create();
         var updates = new UpdateSettingsViewModel(coordinator, store, notice, snackbar, NullLogger<UpdateSettingsViewModel>.Instance, action => action());
         var appearance = new AppearanceSettingsViewModel(new AppThemeService(store, new WpfThemeApplier(), NullLogger<AppThemeService>.Instance), snackbar);
-        var (viewModel, _, _, _) = Create(updates: updates, appearance: appearance);
+        var language = new LanguageSettingsViewModel(new AppLanguageService(store, NullLogger<AppLanguageService>.Instance), snackbar);
+        var (viewModel, _, _, _) = Create(updates: updates, appearance: appearance, language: language);
 
         await viewModel.OnNavigatedToAsync();
 

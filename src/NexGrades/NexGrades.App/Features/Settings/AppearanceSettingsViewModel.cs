@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
+using NexGrades.App.Localization;
 using NexGrades.App.Theming;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
@@ -23,9 +24,9 @@ public sealed partial class AppearanceSettingsViewModel(AppThemeService themeSer
     /// <summary>The theme choices, in display order.</summary>
     public IReadOnlyList<ThemeOption> Options { get; } =
     [
-        new(ThemePreference.System, "System"),
-        new(ThemePreference.Light, "Light"),
-        new(ThemePreference.Dark, "Dark"),
+        new(ThemePreference.System, TextResources.Text("Settings_Theme_System")),
+        new(ThemePreference.Light, TextResources.Text("Settings_Theme_Light")),
+        new(ThemePreference.Dark, TextResources.Text("Settings_Theme_Dark")),
     ];
 
     /// <summary>The chosen theme. Changing it applies and saves it.</summary>
@@ -85,8 +86,8 @@ public sealed partial class AppearanceSettingsViewModel(AppThemeService themeSer
         try
         {
             snackbar.Show(
-                "Error",
-                "The theme could not be saved. It applies until you close NexGrades.",
+                TextResources.Text("Common_Error"),
+                TextResources.Text("Settings_Theme_SaveFailed"),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.ErrorCircle24),
                 TimeSpan.FromSeconds(5));

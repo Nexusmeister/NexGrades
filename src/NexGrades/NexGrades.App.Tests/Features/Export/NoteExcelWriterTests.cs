@@ -17,12 +17,31 @@ public class NoteExcelWriterTests
     private static NoteExportTable TableOf(bool includeArchived, params NoteExportRow[] rows) =>
         new("Test", "Alpha", new DateOnly(2025, 8, 1), new DateOnly(2026, 7, 31), includeArchived, new DateTime(2026, 3, 1, 10, 30, 0), rows);
 
-    private static XLWorkbook Write(NoteExportTable table)
+    private static XLWorkbook Write(NoteExportTable table, CultureInfo? culture = null)
     {
         using var stream = new MemoryStream();
-        new NoteExcelWriter().Write(table, stream, EnUs);
+        new NoteExcelWriter().Write(table, stream, culture ?? EnUs);
         stream.Position = 0;
         return new XLWorkbook(stream);
+    }
+
+    [Fact]
+    public void Write_WritesGermanSheetNameLabelsAndHeaders_ForGermanUiCulture()
+    {
+        var archivedOn = new DateTime(2026, 1, 5, 8, 0, 0);
+        using var workbook = Write(TableOf(true, RowOf("note", new DateTime(2025, 10, 1), archived: archivedOn)), CultureInfo.GetCultureInfo("de-DE"));
+
+        var sheet = Assert.Single(workbook.Worksheets);
+        Assert.Equal("Notizen", sheet.Name);
+        Assert.Equal("Schülerin / Schüler", sheet.Cell(1, 1).GetString());
+        Assert.Equal("Alpha, Test", sheet.Cell(1, 2).GetString());
+        Assert.Equal("Zeitraum", sheet.Cell(2, 1).GetString());
+        Assert.Equal(new DateTime(2025, 8, 1), sheet.Cell(2, 2).GetDateTime());
+        Assert.Equal("Exportiert am", sheet.Cell(3, 1).GetString());
+        Assert.Equal(
+            ["Datum", "Schuljahr", "Klasse", "Kategorie", "Notiz", "Zuletzt bearbeitet", "Archiviert am"],
+            Enumerable.Range(1, 7).Select(c => sheet.Cell(5, c).GetString()));
+        Assert.Equal(archivedOn, sheet.Cell(6, 7).GetDateTime());
     }
 
     [Fact]

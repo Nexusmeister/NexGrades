@@ -5,13 +5,14 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:loc="clr-namespace:NexGrades.App.Localization"
       xmlns:students="clr-namespace:NexGrades.App.Features.Students"
       xmlns:yearLock="clr-namespace:NexGrades.App.Core.YearLock"
       xmlns:services="clr-namespace:NexGrades.Domain.Services;assembly=NexGrades.Domain"
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="900"
       d:DataContext="{d:DesignInstance students:StudentPage, IsDesignTimeCreatable=False}"
-      Title="Student">
+      Title="{loc:Text Students_StudentPage_Title}">
 
     <!-- Merged here, like ClassPage: the page must build without App.xaml's resources (see NexGrades.App.Tests). -->
     <Page.Resources>
@@ -71,13 +72,13 @@
 
         <WrapPanel Grid.Row="1" Style="{StaticResource Ng.ActionBar}">
             <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                       Content="Save"
+                       Content="{loc:Text Common_Save}"
                        Appearance="Primary"
                        IsDefault="True"
                        Icon="{ui:SymbolIcon Save24}"
                        Command="{Binding ViewModel.SaveStudentCommand}"/>
             <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                       Content="Cancel"
+                       Content="{loc:Text Common_Cancel}"
                        IsCancel="True"
                        Icon="{ui:SymbolIcon Dismiss24}"
                        Command="{Binding ViewModel.CancelCommand}"/>
@@ -95,27 +96,27 @@
                      VerticalAlignment="Top"
                      Style="{StaticResource Ng.Card}">
                 <StackPanel>
-                    <HeaderedContentControl Header="First name"
+                    <HeaderedContentControl Header="{loc:Text Students_StudentPage_FirstName_Header}"
                                             Style="{StaticResource Ng.FormField}">
                         <ui:TextBox ClearButtonEnabled="True"
                                     MaxLength="{Binding ViewModel.MaxNameLength, Mode=OneTime}"
-                                    AutomationProperties.Name="First name"
+                                    AutomationProperties.Name="{loc:Text Students_StudentPage_FirstName_Header}"
                                     Text="{Binding ViewModel.FirstName, UpdateSourceTrigger=PropertyChanged}"/>
                     </HeaderedContentControl>
 
-                    <HeaderedContentControl Header="Last name"
+                    <HeaderedContentControl Header="{loc:Text Students_StudentPage_LastName_Header}"
                                             Style="{StaticResource Ng.FormField}">
                         <ui:TextBox ClearButtonEnabled="True"
                                     MaxLength="{Binding ViewModel.MaxNameLength, Mode=OneTime}"
-                                    AutomationProperties.Name="Last name"
+                                    AutomationProperties.Name="{loc:Text Students_StudentPage_LastName_Header}"
                                     Text="{Binding ViewModel.LastName, UpdateSourceTrigger=PropertyChanged}"/>
                     </HeaderedContentControl>
 
-                    <HeaderedContentControl Header="Class"
+                    <HeaderedContentControl Header="{loc:Text Students_StudentPage_Class_Header}"
                                             Style="{StaticResource Ng.FormField}"
                                             Visibility="{Binding ViewModel.IsExistingStudent, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                         <ComboBox HorizontalAlignment="Stretch"
-                                  AutomationProperties.Name="Class"
+                                  AutomationProperties.Name="{loc:Text Students_StudentPage_Class_Header}"
                                   ItemsSource="{Binding ViewModel.Classes}"
                                   DisplayMemberPath="Name"
                                   SelectedItem="{Binding ViewModel.SelectedClass}"/>
@@ -148,23 +149,23 @@
                     <!-- Shared header: school year, plus the filter that belongs to the selected tab -->
                     <WrapPanel Grid.Row="0">
                         <!-- Locked while an editor holds unsaved input, because switching resets it. -->
-                        <HeaderedContentControl Header="School year"
+                        <HeaderedContentControl Header="{loc:Text Students_StudentPage_SchoolYear_Header}"
                                                 Margin="0,0,16,8"
                                                 Style="{StaticResource Ng.FormField}">
                             <ComboBox MinWidth="160"
-                                      AutomationProperties.Name="School year"
+                                      AutomationProperties.Name="{loc:Text Students_StudentPage_SchoolYear_Header}"
                                       IsEnabled="{Binding ViewModel.CanChangeNoteYear}"
                                       ItemsSource="{Binding ViewModel.NoteYears}"
                                       SelectedItem="{Binding ViewModel.SelectedNoteYear}"
                                       DisplayMemberPath="Label"/>
                         </HeaderedContentControl>
                         <Grid Margin="{StaticResource Ng.Margin.Related}" VerticalAlignment="Bottom" Style="{StaticResource GradesTabOnly}">
-                            <ui:ToggleSwitch Content="Show voided grades"
-                                             ToolTip="Also list voided grades so they can be restored"
+                            <ui:ToggleSwitch Content="{loc:Text Students_StudentPage_ShowVoided}"
+                                             ToolTip="{loc:Text Students_StudentPage_ShowVoided_Tooltip}"
                                              IsChecked="{Binding ViewModel.Grades.ShowVoidedGrades}"/>
                         </Grid>
                         <Grid Margin="{StaticResource Ng.Margin.Related}" VerticalAlignment="Bottom" Style="{StaticResource NotesTabOnly}">
-                            <ui:ToggleSwitch Content="Show archived notes"
+                            <ui:ToggleSwitch Content="{loc:Text Students_StudentPage_ShowArchived}"
                                              IsChecked="{Binding ViewModel.ShowArchivedNotes}"/>
                         </Grid>
                     </WrapPanel>
@@ -176,7 +177,7 @@
 
                     <TabControl x:Name="DetailTabs" Grid.Row="2" Margin="0,16,0,0">
                         <!-- Grades tab -->
-                        <TabItem Header="Grades" AutomationProperties.Name="Grades">
+                        <TabItem Header="{loc:Text Students_StudentPage_Grades_Tab}" AutomationProperties.Name="{loc:Text Students_StudentPage_Grades_Tab}">
                             <ScrollViewer x:Name="GradesScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                 <StackPanel Margin="0,16,8,0">
                                     <!-- Editor: one inline panel for add and edit -->
@@ -192,54 +193,54 @@
                                                           Appearance="Secondary"
                                                           Text="{Binding ViewModel.Grades.EditorBucketName}"/>
 
-                                            <HeaderedContentControl Header="Assessment"
+                                            <HeaderedContentControl Header="{loc:Text Students_StudentPage_Assessment_Header}"
                                                                     Style="{StaticResource Ng.FormField}"
                                                                     Visibility="{Binding ViewModel.Grades.ShowAssessmentPicker, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                 <ComboBox HorizontalAlignment="Stretch"
-                                                          AutomationProperties.Name="Assessment"
+                                                          AutomationProperties.Name="{loc:Text Students_StudentPage_Assessment_Header}"
                                                           ItemsSource="{Binding ViewModel.Grades.AssessmentChoices}"
                                                           SelectedItem="{Binding ViewModel.Grades.SelectedAssessment}"
                                                           DisplayMemberPath="DisplayText"/>
                                             </HeaderedContentControl>
-                                            <HeaderedContentControl Header="Assessment"
+                                            <HeaderedContentControl Header="{loc:Text Students_StudentPage_Assessment_Header}"
                                                                     Style="{StaticResource Ng.FormField}"
                                                                     Visibility="{Binding ViewModel.Grades.ShowEditingAssessment, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                 <ui:TextBlock TextWrapping="Wrap"
-                                                              AutomationProperties.Name="Assessment"
+                                                              AutomationProperties.Name="{loc:Text Students_StudentPage_Assessment_Header}"
                                                               Text="{Binding ViewModel.Grades.EditingAssessmentTitle}"/>
                                             </HeaderedContentControl>
 
-                                            <HeaderedContentControl Header="Grade"
+                                            <HeaderedContentControl Header="{loc:Text Students_StudentPage_Grade_Header}"
                                                                     Style="{StaticResource Ng.FormField}">
-                                                <ui:TextBox AutomationProperties.Name="Grade"
-                                                            PlaceholderText="For example 2-"
+                                                <ui:TextBox AutomationProperties.Name="{loc:Text Students_StudentPage_Grade_Header}"
+                                                            PlaceholderText="{loc:Text Students_StudentPage_Grade_Placeholder}"
                                                             Text="{Binding ViewModel.Grades.GradeText, UpdateSourceTrigger=PropertyChanged}"/>
                                             </HeaderedContentControl>
 
-                                            <HeaderedContentControl Header="Date"
+                                            <HeaderedContentControl Header="{loc:Text Students_StudentPage_Date_Header}"
                                                                     Style="{StaticResource Ng.FormField}">
                                                 <!-- Fixed to the date of the chosen assessment. -->
                                                 <Grid HorizontalAlignment="Left" Style="{StaticResource DateLockedWhenReadOnly}">
                                                     <DatePicker MinWidth="160"
-                                                                AutomationProperties.Name="Date"
+                                                                AutomationProperties.Name="{loc:Text Students_StudentPage_Date_Header}"
                                                                 SelectedDate="{Binding ViewModel.Grades.GradeDate}"/>
                                                 </Grid>
                                             </HeaderedContentControl>
 
-                                            <HeaderedContentControl Header="Label"
+                                            <HeaderedContentControl Header="{loc:Text Students_StudentPage_Label_Header}"
                                                                     Style="{StaticResource Ng.FormField}"
                                                                     Visibility="{Binding ViewModel.Grades.ShowLabelField, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                <ui:TextBox AutomationProperties.Name="Label"
-                                                            PlaceholderText="Optional, for example Oral quiz"
+                                                <ui:TextBox AutomationProperties.Name="{loc:Text Students_StudentPage_Label_Header}"
+                                                            PlaceholderText="{loc:Text Students_StudentPage_Label_Placeholder}"
                                                             Text="{Binding ViewModel.Grades.GradeLabel, UpdateSourceTrigger=PropertyChanged}"/>
                                             </HeaderedContentControl>
 
-                                            <HeaderedContentControl Header="Comment"
+                                            <HeaderedContentControl Header="{loc:Text Students_StudentPage_Comment_Header}"
                                                                     Margin="{StaticResource Ng.Margin.Related}"
                                                                     Style="{StaticResource Ng.FormField}">
                                                 <ui:TextBox Style="{StaticResource Ng.TextBox.Multiline}"
-                                                            AutomationProperties.Name="Comment"
-                                                            PlaceholderText="Optional"
+                                                            AutomationProperties.Name="{loc:Text Students_StudentPage_Comment_Header}"
+                                                            PlaceholderText="{loc:Text Students_StudentPage_Comment_Placeholder}"
                                                             Text="{Binding ViewModel.Grades.GradeComment, UpdateSourceTrigger=PropertyChanged}"/>
                                             </HeaderedContentControl>
 
@@ -252,14 +253,14 @@
 
                                             <WrapPanel Style="{StaticResource Ng.ActionBar}">
                                                 <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                                           Content="Save grade"
+                                                           Content="{loc:Text Students_StudentPage_SaveGrade}"
                                                            Appearance="Primary"
                                                            Icon="{ui:SymbolIcon Save24}"
                                                            Command="{Binding ViewModel.Grades.SaveGradeCommand}"/>
                                                 <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                                           Content="Cancel"
+                                                           Content="{loc:Text Common_Cancel}"
                                                            Icon="{ui:SymbolIcon Dismiss24}"
-                                                           ToolTip="Discard the input and close the editor"
+                                                           ToolTip="{loc:Text Students_StudentPage_CancelGrade_Tooltip}"
                                                            Command="{Binding ViewModel.Grades.CancelGradeCommand}"/>
                                             </WrapPanel>
                                         </ds:FormPanel>
@@ -269,7 +270,7 @@
                                     <ui:ProgressRing Margin="0,8"
                                                      HorizontalAlignment="Left"
                                                      IsIndeterminate="True"
-                                                     AutomationProperties.Name="Loading grades"
+                                                     AutomationProperties.Name="{loc:Text Students_StudentPage_Grades_Loading_A11y}"
                                                      Visibility="{Binding ViewModel.Grades.IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                     <!-- Empty state -->
@@ -278,7 +279,7 @@
                                                     Visibility="{Binding ViewModel.Grades.HasNoSubjects, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                     <!-- Subjects. Grades and averages use tabular figures so the digits line up. -->
-                                    <ItemsControl AutomationProperties.Name="Grades by subject"
+                                    <ItemsControl AutomationProperties.Name="{loc:Text Students_StudentPage_Grades_List_A11y}"
                                                   IsTabStop="False"
                                                   Typography.NumeralAlignment="Tabular"
                                                   ItemsSource="{Binding ViewModel.Grades.Subjects}">
@@ -299,7 +300,7 @@
                                                                   Margin="8,0,0,0"
                                                                   VerticalAlignment="Center"
                                                                   Appearance="Caution"
-                                                                  Content="Exempt"
+                                                                  Content="{loc:Text Students_StudentPage_Exempt}"
                                                                   Visibility="{Binding IsExempt, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                                         <StackPanel Grid.Column="2"
                                                                     Margin="{StaticResource Ng.Margin.ColumnStart}"
@@ -328,11 +329,11 @@
                                                                               FontTypography="BodyStrong"
                                                                               ToolTip="{Binding FinalGradeDescription}"
                                                                               AutomationProperties.Name="{Binding FinalGradeDescription}"
-                                                                              Text="{Binding FinalGradeText, StringFormat='Final grade: {0}'}"/>
+                                                                              Text="{Binding FinalGradeText, StringFormat={loc:Text Students_StudentPage_FinalGrade_Format}}"/>
                                                             </StackPanel>
                                                             <ui:TextBlock VerticalAlignment="Center"
                                                                           FontTypography="BodyStrong"
-                                                                          Text="{Binding SubjectAverageText, StringFormat='Average: {0}'}"/>
+                                                                          Text="{Binding SubjectAverageText, StringFormat={loc:Text Students_StudentPage_Average_Format}}"/>
                                                         </StackPanel>
                                                     </Grid>
 
@@ -357,19 +358,19 @@
                                                                                           Text="{Binding WeightText}"/>
                                                                             <ui:TextBlock FontTypography="Caption"
                                                                                           Appearance="Secondary"
-                                                                                          Text="{Binding AverageText, StringFormat='Average: {0}'}"/>
+                                                                                          Text="{Binding AverageText, StringFormat={loc:Text Students_StudentPage_Average_Format}}"/>
                                                                         </WrapPanel>
                                                                         <ui:Button Grid.Column="1"
                                                                                    Margin="8,0,0,0"
-                                                                                   Content="Add grade"
+                                                                                   Content="{loc:Text Students_StudentPage_AddGrade}"
                                                                                    Icon="{ui:SymbolIcon Add24}"
-                                                                                   ToolTip="Add a grade to this bucket"
+                                                                                   ToolTip="{loc:Text Students_StudentPage_AddGrade_Tooltip}"
                                                                                    Command="{Binding DataContext.ViewModel.Grades.BeginAddGradeCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                                                    CommandParameter="{Binding}"/>
                                                                     </Grid>
 
                                                                     <ContentControl Margin="0,4,0,0"
-                                                                                    Content="No grades"
+                                                                                    Content="{loc:Text Students_StudentPage_NoGrades}"
                                                                                     Style="{StaticResource Ng.EmptyState}"
                                                                                     Visibility="{Binding HasNoGrades, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
@@ -416,21 +417,21 @@
                                                                                                 VerticalAlignment="Top">
                                                                                         <ui:Button Margin="0,0,4,0"
                                                                                                    Icon="{ui:SymbolIcon Edit24}"
-                                                                                                   ToolTip="Edit grade"
-                                                                                                   AutomationProperties.Name="Edit grade"
+                                                                                                   ToolTip="{loc:Text Students_StudentPage_EditGrade_Tooltip}"
+                                                                                                   AutomationProperties.Name="{loc:Text Students_StudentPage_EditGrade_Tooltip}"
                                                                                                    Command="{Binding DataContext.ViewModel.Grades.BeginEditGradeCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                                                                    CommandParameter="{Binding}"
                                                                                                    Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                                                                         <ui:Button Margin="0,0,4,0"
                                                                                                    Icon="{ui:SymbolIcon DismissCircle24}"
-                                                                                                   ToolTip="Void grade"
-                                                                                                   AutomationProperties.Name="Void grade"
+                                                                                                   ToolTip="{loc:Text Students_StudentPage_VoidGrade_Tooltip}"
+                                                                                                   AutomationProperties.Name="{loc:Text Students_StudentPage_VoidGrade_Tooltip}"
                                                                                                    Command="{Binding DataContext.ViewModel.Grades.VoidGradeCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                                                                    CommandParameter="{Binding}"
                                                                                                    Visibility="{Binding CanVoid, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                                                                         <ui:Button Icon="{ui:SymbolIcon ArrowUndo24}"
-                                                                                                   ToolTip="Restore grade"
-                                                                                                   AutomationProperties.Name="Restore grade"
+                                                                                                   ToolTip="{loc:Text Students_StudentPage_RestoreGrade_Tooltip}"
+                                                                                                   AutomationProperties.Name="{loc:Text Students_StudentPage_RestoreGrade_Tooltip}"
                                                                                                    Command="{Binding DataContext.ViewModel.Grades.RestoreGradeCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                                                                    CommandParameter="{Binding}"
                                                                                                    Visibility="{Binding CanRestore, Converter={StaticResource BooleanToVisibilityConverter}}"/>
@@ -452,7 +453,7 @@
                         </TabItem>
 
                         <!-- Notes tab -->
-                        <TabItem Header="Notes" AutomationProperties.Name="Notes">
+                        <TabItem Header="{loc:Text Students_StudentPage_Notes_Tab}" AutomationProperties.Name="{loc:Text Students_StudentPage_Notes_Tab}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -464,10 +465,10 @@
                                 <!-- Notes actions -->
                                 <WrapPanel Grid.Row="0" Style="{StaticResource Ng.ActionBar}">
                                     <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                               Content="Export notes…"
+                                               Content="{loc:Text Students_StudentPage_ExportNotes}"
                                                Icon="{ui:SymbolIcon ArrowDownload24}"
-                                               ToolTip="Export this student's notes to an Excel file"
-                                               AutomationProperties.Name="Export notes"
+                                               ToolTip="{loc:Text Students_StudentPage_ExportNotes_Tooltip}"
+                                               AutomationProperties.Name="{loc:Text Students_StudentPage_ExportNotes_A11y}"
                                                Command="{Binding ViewModel.ExportNotesCommand}"/>
                                 </WrapPanel>
 
@@ -480,26 +481,26 @@
                                         <ui:TextBox Style="{StaticResource Ng.TextBox.Multiline}"
                                                     MaxLength="{x:Static services:NoteService.MaxTextLength}"
                                                     AutomationProperties.Name="{Binding ViewModel.NoteEditorLabel}"
-                                                    PlaceholderText="Write a note about this student"
+                                                    PlaceholderText="{loc:Text Students_StudentPage_Note_Placeholder}"
                                                     Text="{Binding ViewModel.NoteText, UpdateSourceTrigger=PropertyChanged}"/>
                                     </HeaderedContentControl>
                                     <WrapPanel Margin="{StaticResource Ng.Margin.Related}">
                                         <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                                   Content="Add note"
+                                                   Content="{loc:Text Students_StudentPage_AddNote}"
                                                    Appearance="Primary"
                                                    Icon="{ui:SymbolIcon Add24}"
                                                    Command="{Binding ViewModel.AddNoteCommand}"
                                                    Visibility="{Binding ViewModel.IsEditingNote, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                         <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                                   Content="Save note"
+                                                   Content="{loc:Text Students_StudentPage_SaveNote}"
                                                    Appearance="Primary"
                                                    Icon="{ui:SymbolIcon Save24}"
                                                    Command="{Binding ViewModel.SaveNoteCommand}"
                                                    Visibility="{Binding ViewModel.IsEditingNote, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                         <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
-                                                   Content="Cancel"
+                                                   Content="{loc:Text Common_Cancel}"
                                                    Icon="{ui:SymbolIcon Dismiss24}"
-                                                   ToolTip="Discard the text and stop editing"
+                                                   ToolTip="{loc:Text Students_StudentPage_CancelNote_Tooltip}"
                                                    Command="{Binding ViewModel.CancelEditNoteCommand}"
                                                    Visibility="{Binding ViewModel.CanDiscardNoteInput, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     </WrapPanel>
@@ -513,7 +514,7 @@
 
                                 <!-- Notes list -->
                                 <ListView Grid.Row="3"
-                                          AutomationProperties.Name="Notes"
+                                          AutomationProperties.Name="{loc:Text Students_StudentPage_Notes_Tab}"
                                           ItemsSource="{Binding ViewModel.Notes}"
                                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                           VirtualizingPanel.IsVirtualizing="True"
@@ -550,20 +551,20 @@
                                                             Visibility="{Binding DataContext.ViewModel.IsSelectedYearWritable, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                     <ui:Button Margin="0,0,4,0"
                                                                Icon="{ui:SymbolIcon Edit24}"
-                                                               ToolTip="Edit note"
-                                                               AutomationProperties.Name="Edit note"
+                                                               ToolTip="{loc:Text Students_StudentPage_EditNote_Tooltip}"
+                                                               AutomationProperties.Name="{loc:Text Students_StudentPage_EditNote_Tooltip}"
                                                                Command="{Binding DataContext.ViewModel.StartEditNoteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                                CommandParameter="{Binding}"
                                                                Visibility="{Binding IsArchived, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                                     <ui:Button Icon="{ui:SymbolIcon Archive24}"
-                                                               ToolTip="Archive note"
-                                                               AutomationProperties.Name="Archive note"
+                                                               ToolTip="{loc:Text Students_StudentPage_ArchiveNote_Tooltip}"
+                                                               AutomationProperties.Name="{loc:Text Students_StudentPage_ArchiveNote_Tooltip}"
                                                                Command="{Binding DataContext.ViewModel.ArchiveNoteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                                CommandParameter="{Binding}"
                                                                Visibility="{Binding IsArchived, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                                     <ui:Button Icon="{ui:SymbolIcon ArrowUndo24}"
-                                                               ToolTip="Restore note"
-                                                               AutomationProperties.Name="Restore note"
+                                                               ToolTip="{loc:Text Students_StudentPage_RestoreNote_Tooltip}"
+                                                               AutomationProperties.Name="{loc:Text Students_StudentPage_RestoreNote_Tooltip}"
                                                                Command="{Binding DataContext.ViewModel.RestoreNoteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                                CommandParameter="{Binding}"
                                                                Visibility="{Binding IsArchived, Converter={StaticResource BooleanToVisibilityConverter}}"/>

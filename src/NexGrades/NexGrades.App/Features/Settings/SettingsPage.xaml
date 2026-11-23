@@ -5,12 +5,13 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:settings="clr-namespace:NexGrades.App.Features.Settings"
+      xmlns:loc="clr-namespace:NexGrades.App.Localization"
       d:DataContext="{d:DesignInstance settings:SettingsPage, IsDesignTimeCreatable=False}"
       mc:Ignorable="d" 
       d:DesignHeight="450" 
       d:DesignWidth="800"
       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-      Title="Settings">
+      Title="{loc:Text Settings_Page_Title}">
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -26,7 +27,7 @@
         </Grid.RowDefinitions>
 
         <HeaderedContentControl Grid.Row="0"
-                                Header="Settings"
+                                Header="{loc:Text Settings_Page_Title}"
                                 Margin="{StaticResource Ng.Margin.Block}"
                                 Style="{StaticResource Ng.PageHeader}" />
 
@@ -35,14 +36,14 @@
                 <ui:CardControl Icon="{ui:SymbolIcon Folder24}"
                                 Style="{StaticResource Ng.SettingsCard}">
                     <ui:CardControl.Header>
-                        <HeaderedContentControl Header="Save location"
-                                                Content="Select folder to save app data"
+                        <HeaderedContentControl Header="{loc:Text Settings_SaveLocation_Header}"
+                                                Content="{loc:Text Settings_SaveLocation_Description}"
                                                 Style="{StaticResource Ng.SettingHeader}" />
                     </ui:CardControl.Header>
                     <StackPanel Orientation="Vertical">
                         <ui:Button HorizontalAlignment="Right"
                                    Command="{Binding ViewModel.OpenFolderCommand}"
-                                   Content="Select Folder" />
+                                   Content="{loc:Text Settings_SaveLocation_Select}" />
                         <StackPanel Margin="0,8,0,0"
                                     VerticalAlignment="Center"
                                     Orientation="Horizontal"
@@ -55,66 +56,91 @@
                 <ui:CardControl Icon="{ui:SymbolIcon DocumentText24}"
                                 Style="{StaticResource Ng.SettingsCard}">
                     <ui:CardControl.Header>
-                        <HeaderedContentControl Header="Log files"
-                                                Content="Opens the folder with the application's log files, for support."
+                        <HeaderedContentControl Header="{loc:Text Settings_Logs_Header}"
+                                                Content="{loc:Text Settings_Logs_Description}"
                                                 Style="{StaticResource Ng.SettingHeader}" />
                     </ui:CardControl.Header>
-                    <ui:Button Content="Open log folder"
+                    <ui:Button Content="{loc:Text Settings_Logs_Open}"
                                Icon="{ui:SymbolIcon FolderOpen24}"
-                               AutomationProperties.Name="Open log folder"
-                               ToolTip="Open the folder with the application's log files"
+                               AutomationProperties.Name="{loc:Text Settings_Logs_Open}"
+                               ToolTip="{loc:Text Settings_Logs_Open_Tooltip}"
                                Command="{Binding ViewModel.OpenLogFolderCommand}" />
                 </ui:CardControl>
 
                 <ui:CardControl Icon="{ui:SymbolIcon PaintBrush24}"
                                 Style="{StaticResource Ng.SettingsCard}">
                     <ui:CardControl.Header>
-                        <HeaderedContentControl Header="Theme"
-                                                Content="Choose System to follow the Windows setting."
+                        <HeaderedContentControl Header="{loc:Text Settings_Theme_Header}"
+                                                Content="{loc:Text Settings_Theme_Description}"
                                                 Style="{StaticResource Ng.SettingHeader}" />
                     </ui:CardControl.Header>
                     <ComboBox MinWidth="160"
-                              AutomationProperties.Name="Theme"
+                              AutomationProperties.Name="{loc:Text Settings_Theme_Header}"
                               ItemsSource="{Binding ViewModel.Appearance.Options}"
                               DisplayMemberPath="Label"
                               SelectedValuePath="Value"
                               SelectedValue="{Binding ViewModel.Appearance.SelectedTheme, Mode=TwoWay}" />
                 </ui:CardControl>
 
+                <ui:CardControl Icon="{ui:SymbolIcon LocalLanguage24}"
+                                Style="{StaticResource Ng.SettingsCard}">
+                    <ui:CardControl.Header>
+                        <HeaderedContentControl Header="{loc:Text Settings_Language_Header}"
+                                                Content="{loc:Text Settings_Language_Description}"
+                                                Style="{StaticResource Ng.SettingHeader}" />
+                    </ui:CardControl.Header>
+                    <StackPanel>
+                        <ComboBox MinWidth="160"
+                                  HorizontalAlignment="Right"
+                                  AutomationProperties.Name="{loc:Text Settings_Language_Header}"
+                                  ItemsSource="{Binding ViewModel.Language.Options}"
+                                  DisplayMemberPath="Label"
+                                  SelectedValuePath="Value"
+                                  SelectedValue="{Binding ViewModel.Language.SelectedLanguage, Mode=TwoWay}" />
+                        <ui:TextBlock Margin="0,8,0,0"
+                                      MaxWidth="320"
+                                      HorizontalAlignment="Right"
+                                      FontTypography="Caption"
+                                      TextWrapping="Wrap"
+                                      Text="{loc:Text Settings_Language_RestartNotice}"
+                                      Visibility="{Binding ViewModel.Language.IsRestartPending, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+                </ui:CardControl>
+
                 <ui:CardControl Icon="{ui:SymbolIcon ArrowSync24}"
                                 Style="{StaticResource Ng.SettingsCard}">
                     <ui:CardControl.Header>
-                        <HeaderedContentControl Header="Updates"
+                        <HeaderedContentControl Header="{loc:Text Settings_Updates_Header}"
                                                 Content="{Binding ViewModel.Updates.VersionText}"
                                                 Style="{StaticResource Ng.SettingHeader}" />
                     </ui:CardControl.Header>
                     <StackPanel MinWidth="280"
                                 IsEnabled="{Binding ViewModel.Updates.IsUpdaterAvailable}">
-                        <ui:ToggleSwitch Content="Automatically check for updates"
-                                         AutomationProperties.Name="Automatically check for updates"
+                        <ui:ToggleSwitch Content="{loc:Text Settings_Updates_AutoCheck}"
+                                         AutomationProperties.Name="{loc:Text Settings_Updates_AutoCheck}"
                                          IsChecked="{Binding ViewModel.Updates.AutoCheckForUpdates, Mode=TwoWay}" />
-                        <ui:ToggleSwitch Content="Receive beta updates"
+                        <ui:ToggleSwitch Content="{loc:Text Settings_Updates_Beta}"
                                          Margin="0,8,0,0"
-                                         AutomationProperties.Name="Receive beta updates"
+                                         AutomationProperties.Name="{loc:Text Settings_Updates_Beta}"
                                          IsChecked="{Binding ViewModel.Updates.ReceiveBetaUpdates, Mode=TwoWay}" />
                         <ui:TextBlock FontTypography="Caption"
                                       Appearance="Secondary"
                                       TextWrapping="Wrap"
                                       MaxWidth="320"
                                       HorizontalAlignment="Left"
-                                      Text="Beta versions may contain unfinished features. Turning this off never reverts to an older version." />
+                                      Text="{loc:Text Settings_Updates_BetaNote}" />
                         <StackPanel Orientation="Horizontal"
                                     Margin="0,16,0,0">
-                            <ui:Button Content="Check for updates now"
+                            <ui:Button Content="{loc:Text Settings_Updates_CheckNow}"
                                        Icon="{ui:SymbolIcon ArrowSync24}"
-                                       AutomationProperties.Name="Check for updates now"
-                                       ToolTip="Look for a newer version of NexGrades"
+                                       AutomationProperties.Name="{loc:Text Settings_Updates_CheckNow}"
+                                       ToolTip="{loc:Text Settings_Updates_CheckNow_Tooltip}"
                                        Command="{Binding ViewModel.Updates.CheckNowCommand}" />
                             <ui:ProgressRing IsIndeterminate="True"
                                              Width="20"
                                              Height="20"
                                              Margin="8,0,0,0"
-                                             AutomationProperties.Name="Checking for updates"
+                                             AutomationProperties.Name="{loc:Text Settings_Updates_Checking_A11y}"
                                              Visibility="{Binding ViewModel.Updates.IsChecking, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </StackPanel>
                         <ui:TextBlock Margin="0,8,0,0"
@@ -123,11 +149,11 @@
                                       HorizontalAlignment="Left"
                                       Text="{Binding ViewModel.Updates.StatusText}"
                                       Visibility="{Binding ViewModel.Updates.StatusText, Converter={StaticResource NonEmptyStringToVisibilityConverter}}" />
-                        <ui:Button Content="Restart now"
+                        <ui:Button Content="{loc:Text Settings_Updates_RestartNow}"
                                    Margin="0,8,0,0"
                                    Appearance="Primary"
-                                   AutomationProperties.Name="Restart now"
-                                   ToolTip="Close NexGrades, install the update and start it again"
+                                   AutomationProperties.Name="{loc:Text Settings_Updates_RestartNow}"
+                                   ToolTip="{loc:Text Settings_Updates_RestartNow_Tooltip}"
                                    Command="{Binding ViewModel.Updates.RestartNowCommand}"
                                    Visibility="{Binding ViewModel.Updates.IsReadyToInstall, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </StackPanel>

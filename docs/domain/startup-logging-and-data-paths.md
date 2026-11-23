@@ -26,12 +26,15 @@ startup fails, and how telemetry and privacy fit in.
    registration (`AddDatabase`).
 2. Write the startup lines to the log, then create the telemetry listeners. A failure to set telemetry up is
    logged and the App runs without it; it is not a startup failure.
-3. Relocate a legacy database, when there is no database override.
-4. Apply pending migrations. `StartupDatabaseMigrator` calls `DatabaseMigrationService`, and takes the backup
+3. Set the language. `AppLanguageService.InitializeAsync` reads the saved language and `UiCultureApplier.Apply` makes
+   its cultures the process cultures. Neither throws, and both run before anything formats a date or reads a text.
+   See [UI text and localization](ui-text-and-localization.md#startup-order).
+4. Relocate a legacy database, when there is no database override.
+5. Apply pending migrations. `StartupDatabaseMigrator` calls `DatabaseMigrationService`, and takes the backup
    first when one is needed (see [Updates, backups and settings](updates-backups-and-settings.md)).
-5. Call `SchoolYearService.EnsureActiveYearAsync`, which bootstraps an `Active` school year if none exists.
+6. Call `SchoolYearService.EnsureActiveYearAsync`, which bootstraps an `Active` school year if none exists.
    See [School year lifecycle](school-year-lifecycle.md).
-6. Start the host, which shows the window.
+7. Apply the saved theme, then start the host, which shows the window.
 
 Migrations run before the bootstrap, so the year is created in a migrated database. Before `App` is created,
 `Program.Main` runs `VelopackApp.Build().Run()`; it handles the installer's hook arguments and returns on a
@@ -44,6 +47,10 @@ start) is logged at Critical, shown once in a message box, and ends the process 
 calls `App.ReportStartupFailure`, which hands the exception to `StartupFailureHandler`. The box never shows
 the exception text. It names the log folder only when the file logger was created. The handler guards
 everything that can throw, so the box and the exit always happen.
+
+The box text comes from the resources, so it is in the language of the app: the language set in step 3 of the
+startup sequence, or the Windows language for a failure that comes before it. The log entry stays in English. See
+[UI text and localization](ui-text-and-localization.md).
 
 ## Log files
 
@@ -92,6 +99,8 @@ See [Rules by area](../../AGENTS.md#rules-by-area) in `AGENTS.md`.
 - `NexGrades.App/App.xaml.cs`
 - `NexGrades.App/Extensions/HostBuilderExtensions.cs`
 - `NexGrades.App/Infrastructure/StartupFailureHandler.cs`
+- `NexGrades.App/Localization/AppLanguageService.cs`
+- `NexGrades.App/Localization/UiCultureApplier.cs`
 - `NexGrades.App/Logging/FileLogging.cs`
 - `NexGrades.App/Logging/FileLoggingOptions.cs`
 - `NexGrades.App/Shell/ApplicationHostService.cs`

@@ -299,20 +299,8 @@ particular:
 
 ## UI text and localization
 
-The UI is English first; multi-language support (German first) is planned. Write new UI code so it can be
-localized later without a rewrite:
-
-- All user-facing text is English.
-- Never build a sentence by concatenating fragments; use a single format string with placeholders, since
-  word order differs between languages.
-- Format numbers, grade averages and dates for display with the current UI culture (German uses `2,3`,
-  not `2.3`). Persisted and audit values use `CultureInfo.InvariantCulture`, as
-  `ClosedYearAuditInterceptor` does.
-- Grade tokens ("1+", "2-") are culture-neutral.
-- Exception messages are diagnostic text and will not be translated; don't design UI that depends on
-  showing them verbatim.
-- Some existing pages show identifiers such as `AddClass` or `ClassName` instead of real text. Don't copy
-  that pattern for new UI.
+The UI is localized in English and German. Every rule for user-facing text (resource files and keys, the culture
+rules, what stays English, and the tests) is in [UI text and localization](docs/domain/ui-text-and-localization.md), which you must read before adding or changing UI text.
 
 ## Testing
 

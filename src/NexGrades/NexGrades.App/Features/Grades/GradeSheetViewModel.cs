@@ -1,11 +1,11 @@
 using System.Collections.ObjectModel;
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Core;
 using NexGrades.App.Core.YearLock;
+using NexGrades.App.Localization;
 using NexGrades.Data.Entities;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Grading;
@@ -196,7 +196,7 @@ public sealed partial class GradeSheetViewModel(
 
         if (_subjectInstanceId is null)
         {
-            ClearSheet("This grade sheet could not be found.");
+            ClearSheet(TextResources.Text("Grades_GradeSheet_NotFound"));
             return;
         }
 
@@ -212,10 +212,10 @@ public sealed partial class GradeSheetViewModel(
         }
 
         return await ConfirmAsync(
-            "Discard changes",
-            "You have grades or details that are not saved. Leave the page and discard them?",
-            "Discard",
-            "Keep editing",
+            TextResources.Text("Core_DiscardChanges_Title"),
+            TextResources.Text("Grades_GradeSheet_Leave_Message"),
+            TextResources.Text("Common_Discard"),
+            TextResources.Text("Common_KeepEditing"),
             cancellationToken);
     }
 
@@ -251,13 +251,13 @@ public sealed partial class GradeSheetViewModel(
                     grade.Id, grade.Value, DateOnly.FromDateTime(date), DetailLabel, DetailComment, cancellationToken);
                 cell.ApplyGrade(ToSheetGrade(updated));
             },
-            "The grade details could not be saved. Check that the date lies in the school year and that the student was enrolled and not exempt on that date.",
-            "The grade details could not be saved because the school year is closed.");
+            TextResources.Text("Grades_Detail_Save_Failed"),
+            TextResources.Text("Grades_Detail_Save_ClosedYear"));
 
         if (saved)
         {
             RefreshDetail();
-            ShowSuccess("The grade details have been saved.");
+            ShowSuccess(TextResources.Text("Grades_Detail_Save_Success"));
         }
     }
 
@@ -290,13 +290,13 @@ public sealed partial class GradeSheetViewModel(
                     FindRow(cell)?.RecomputeAverages();
                 }
             },
-            "The grade could not be voided.",
-            "The grade could not be voided because the school year is closed.");
+            TextResources.Text("Grades_Grade_Void_Failed"),
+            TextResources.Text("Grades_Grade_Void_ClosedYear"));
 
         if (voided)
         {
             RefreshDetail();
-            ShowSuccess("The grade has been voided.");
+            ShowSuccess(TextResources.Text("Grades_Grade_Void_Success"));
 
             // With "show voided" on, the voided grade stays in its cell, so the sheet reloads to show it.
             if (ShowVoidedGrades)
@@ -327,13 +327,13 @@ public sealed partial class GradeSheetViewModel(
                 cell.ApplyGrade(grade with { VoidedOn = null });
                 FindRow(cell)?.RecomputeAverages();
             },
-            "The grade could not be restored. Check that the student has no other grade for this assessment and was enrolled on its date.",
-            "The grade could not be restored because the school year is closed.");
+            TextResources.Text("Grades_Grade_Restore_Failed"),
+            TextResources.Text("Grades_Grade_Restore_ClosedYear"));
 
         if (restored)
         {
             RefreshDetail();
-            ShowSuccess("The grade has been restored.");
+            ShowSuccess(TextResources.Text("Grades_Grade_Restore_Success"));
         }
     }
 
@@ -353,13 +353,13 @@ public sealed partial class GradeSheetViewModel(
 
         var added = await RunAsync(
             () => assessmentService.CreateAssessmentAsync(bucket.Id, NewAssessmentTitle, DateOnly.FromDateTime(date), cancellationToken),
-            "The assessment could not be added. Enter a title and a date within the school year.",
-            "The assessment could not be added because the school year is closed.");
+            TextResources.Text("Grades_Assessment_Add_Failed"),
+            TextResources.Text("Grades_Assessment_Add_ClosedYear"));
 
         if (added)
         {
             NewAssessmentTitle = string.Empty;
-            ShowSuccess("The assessment has been added.");
+            ShowSuccess(TextResources.Text("Grades_Assessment_Add_Success"));
             await ReloadAfterWriteAsync(cancellationToken);
         }
     }
@@ -399,13 +399,13 @@ public sealed partial class GradeSheetViewModel(
 
         var saved = await RunAsync(
             () => assessmentService.EditAssessmentAsync(id, EditAssessmentTitle, DateOnly.FromDateTime(date), cancellationToken),
-            "The assessment could not be changed. Enter a title and a date within the school year, check that every graded student was enrolled and not exempt on the new date, and that the assessment is not voided.",
-            "The assessment could not be changed because the school year is closed.");
+            TextResources.Text("Grades_Assessment_Change_Failed"),
+            TextResources.Text("Grades_Assessment_Change_ClosedYear"));
 
         if (saved)
         {
             EditingAssessment = null;
-            ShowSuccess("The assessment has been changed.");
+            ShowSuccess(TextResources.Text("Grades_Assessment_Change_Success"));
             await ReloadAfterWriteAsync(cancellationToken);
         }
     }
@@ -423,12 +423,12 @@ public sealed partial class GradeSheetViewModel(
 
         // One dialog: voiding reloads the sheet, so unsaved input is part of the same question instead of a second one.
         var confirmed = await ConfirmAsync(
-            "Void assessment",
+            TextResources.Text("Grades_Assessment_Void"),
             HasUnsavedInput
-                ? "The grades of this assessment no longer count towards any average while it is voided. You can restore it later. Voiding reloads the sheet and discards the grades or details that are not saved. Void the assessment?"
-                : "The grades of this assessment no longer count towards any average while it is voided. You can restore it later. Void the assessment?",
-            "Void",
-            "Cancel",
+                ? TextResources.Text("Grades_Assessment_Void_Confirm_MessageUnsaved")
+                : TextResources.Text("Grades_Assessment_Void_Confirm_Message"),
+            TextResources.Text("Grades_Assessment_Void_Confirm_Primary"),
+            TextResources.Text("Common_Cancel"),
             cancellationToken);
         if (!confirmed)
         {
@@ -437,12 +437,12 @@ public sealed partial class GradeSheetViewModel(
 
         var voided = await RunAsync(
             () => assessmentService.VoidAssessmentAsync(id, cancellationToken),
-            "The assessment could not be voided.",
-            "The assessment could not be voided because the school year is closed.");
+            TextResources.Text("Grades_Assessment_Void_Failed"),
+            TextResources.Text("Grades_Assessment_Void_ClosedYear"));
 
         if (voided)
         {
-            ShowSuccess("The assessment has been voided.");
+            ShowSuccess(TextResources.Text("Grades_Assessment_Void_Success"));
 
             // The void dialog already warned about unsaved input, so reload without asking a second time.
             await LoadAsync();
@@ -467,12 +467,12 @@ public sealed partial class GradeSheetViewModel(
 
         var restored = await RunAsync(
             () => assessmentService.RestoreAssessmentAsync(id, cancellationToken),
-            "The assessment could not be restored.",
-            "The assessment could not be restored because the school year is closed.");
+            TextResources.Text("Grades_Assessment_Restore_Failed"),
+            TextResources.Text("Grades_Assessment_Restore_ClosedYear"));
 
         if (restored)
         {
-            ShowSuccess("The assessment has been restored.");
+            ShowSuccess(TextResources.Text("Grades_Assessment_Restore_Success"));
             await ReloadAfterWriteAsync(cancellationToken);
         }
     }
@@ -546,7 +546,7 @@ public sealed partial class GradeSheetViewModel(
         {
             // Fire-and-forget caller: nothing above can observe this, so report it here.
             LogVoidedToggleReloadFailed(ex);
-            ShowError("The grade sheet could not be reloaded. It may be out of date until you reload it.");
+            ShowError(TextResources.Text("Grades_GradeSheet_ReloadFailed"));
         }
     }
 
@@ -559,10 +559,10 @@ public sealed partial class GradeSheetViewModel(
         }
 
         return await ConfirmAsync(
-            "Discard changes",
-            "You have grades or details that are not saved. Reloading the sheet discards them. Continue?",
-            "Discard",
-            "Keep editing",
+            TextResources.Text("Core_DiscardChanges_Title"),
+            TextResources.Text("Grades_GradeSheet_Reload_Message"),
+            TextResources.Text("Common_Discard"),
+            TextResources.Text("Common_KeepEditing"),
             cancellationToken);
     }
 
@@ -578,7 +578,7 @@ public sealed partial class GradeSheetViewModel(
             return;
         }
 
-        ShowError("The sheet may be out of date until you reload it.");
+        ShowError(TextResources.Text("Grades_GradeSheet_MaybeOutdated"));
     }
 
     partial void OnSelectedCellChanged(GradeCellViewModel? value) => RefreshDetail();
@@ -702,7 +702,7 @@ public sealed partial class GradeSheetViewModel(
             {
                 if (version == _loadVersion)
                 {
-                    ClearSheet("This grade sheet could not be found.");
+                    ClearSheet(TextResources.Text("Grades_GradeSheet_NotFound"));
                 }
 
                 return;
@@ -712,8 +712,8 @@ public sealed partial class GradeSheetViewModel(
                 LogLoadFailed(ex);
                 if (version == _loadVersion)
                 {
-                    ClearSheet("The grade sheet could not be loaded.");
-                    ShowError("The grade sheet could not be loaded.");
+                    ClearSheet(TextResources.Text("Grades_GradeSheet_LoadFailed"));
+                    ShowError(TextResources.Text("Grades_GradeSheet_LoadFailed"));
                 }
 
                 return;
@@ -746,7 +746,7 @@ public sealed partial class GradeSheetViewModel(
         SubjectName = sheet.SubjectName;
         ClassName = sheet.ClassName;
         SchoolYearLabel = sheet.SchoolYearLabel;
-        Title = string.Format(CultureInfo.CurrentCulture, "{0}, {1}", sheet.SubjectName, sheet.ClassName);
+        Title = TextResources.Format("Grades_GradeSheet_PageTitle_Format", sheet.SubjectName, sheet.ClassName);
         EmptyStateMessage = string.Empty;
 
         // Rows first, so no column ever points at cells that are gone.
@@ -760,10 +760,10 @@ public sealed partial class GradeSheetViewModel(
     }
 
     private void OnCellTextCommitted(GradeCellViewModel cell) => _ = SaveSerializedAsync(
-        cell, () => SaveCellAsync(cell), "The grade could not be saved because of an unexpected problem.");
+        cell, () => SaveCellAsync(cell), TextResources.Text("Grades_Cell_Save_Unexpected"));
 
     private void OnFinalCellTextCommitted(FinalGradeCellViewModel cell) => _ = SaveSerializedAsync(
-        cell, () => SaveFinalCellAsync(cell), "The final grade could not be saved because of an unexpected problem.");
+        cell, () => SaveFinalCellAsync(cell), TextResources.Text("Grades_FinalGrade_Save_Unexpected"));
 
     /// <summary>
     /// Saves one cell (assessment or final grade) at a time. A commit that arrives while a save of the same cell runs is queued, and the
@@ -853,8 +853,8 @@ public sealed partial class GradeSheetViewModel(
                     : await gradeService.RecordAssessmentGradeAsync(cell.AssessmentId, cell.StudentId, value);
                 cell.ApplyGrade(ToSheetGrade(saved), text);
             },
-            "The grade could not be saved. Check that the student was enrolled on the assessment's date and is not exempt.",
-            "The grade could not be saved because its school year is closed.",
+            TextResources.Text("Grades_Cell_Save_Failed"),
+            TextResources.Text("Grades_Cell_Save_ClosedYear"),
             successMessage: null,
             reloadAfter: () => false);
     }
@@ -925,7 +925,7 @@ public sealed partial class GradeSheetViewModel(
             FinalGradeClosedYearMessage);
         if (cleared)
         {
-            ShowSuccess("The override has been removed. The proposal is used again.");
+            ShowSuccess(TextResources.Text("Grades_FinalGrade_Override_Removed"));
         }
         else
         {
@@ -933,10 +933,9 @@ public sealed partial class GradeSheetViewModel(
         }
     }
 
-    private const string FinalGradeFailureMessage =
-        "The final grade could not be saved. Enter a whole grade from 1 to 6 for a student who is enrolled and not exempt.";
+    private static string FinalGradeFailureMessage => TextResources.Text("Grades_FinalGrade_Save_Failed");
 
-    private const string FinalGradeClosedYearMessage = "The final grade could not be saved because the school year is closed.";
+    private static string FinalGradeClosedYearMessage => TextResources.Text("Grades_FinalGrade_Save_ClosedYear");
 
     /// <summary>
     /// Voids the grade of a cell the user emptied. With "show voided" on, the sheet reloads so the voided grade
@@ -963,9 +962,9 @@ public sealed partial class GradeSheetViewModel(
                     cell.ApplyGrade(null, text);
                 }
             },
-            "The grade could not be voided.",
-            "The grade could not be voided because the school year is closed.",
-            "The grade has been voided.",
+            TextResources.Text("Grades_Grade_Void_Failed"),
+            TextResources.Text("Grades_Grade_Void_ClosedYear"),
+            TextResources.Text("Grades_Grade_Void_Success"),
             reloadAfter: () => ShowVoidedGrades && !keepSheet && !HasUnsavedInputExcept(cell));
     }
 
@@ -1068,10 +1067,10 @@ public sealed partial class GradeSheetViewModel(
     }
 
     private void ShowSuccess(string message) =>
-        snackbar.Show("Success", message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Success"), message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
 
     private void ShowError(string message) =>
-        snackbar.Show("Error", message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Error"), message, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Loading the grade sheet failed.")]
     private partial void LogLoadFailed(Exception exception);

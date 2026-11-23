@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Classes_Overview_Title" xml:space="preserve"><value>Classes</value></data>
+  <data name="Classes_Overview_Add" xml:space="preserve"><value>Add class</value></data>
+  <data name="Classes_Overview_Edit" xml:space="preserve"><value>Edit class</value></data>
+  <data name="Classes_Overview_Empty" xml:space="preserve"><value>No classes yet. Use Add class to create one.</value></data>
+  <data name="Classes_Grid_Name_Header" xml:space="preserve"><value>Name</value></data>
+  <data name="Classes_Overview_Cohort_Header" xml:space="preserve"><value>Cohort</value></data>
+  <data name="Classes_Overview_Students_Header" xml:space="preserve"><value>Students</value></data>
+  <data name="Classes_ClassPage_Title" xml:space="preserve"><value>Class</value></data>
+  <data name="Classes_ClassPage_Name_Header" xml:space="preserve"><value>Class name</value></data>
+  <data name="Classes_ClassPage_Name_Placeholder" xml:space="preserve"><value>Class name</value></data>
+  <data name="Classes_ClassPage_Students_Header" xml:space="preserve"><value>Students</value></data>
+  <data name="Classes_ClassPage_Students_Empty" xml:space="preserve"><value>No students are enrolled in this class.</value></data>
+  <data name="Classes_ClassPage_Students_A11y" xml:space="preserve"><value>Students in this class</value></data>
+  <data name="Classes_ClassPage_Joined_Header" xml:space="preserve"><value>Joined</value></data>
+  <data name="Classes_ClassPage_Left_Header" xml:space="preserve"><value>Left the class</value></data>
+  <data name="Classes_ClassPage_Left_A11y" xml:space="preserve"><value>Students who left the class</value></data>
+  <data name="Classes_ClassPage_Enrolled_Header" xml:space="preserve"><value>Enrolled</value></data>
+  <data name="Classes_ClassPage_Subjects_Header" xml:space="preserve"><value>Subjects</value></data>
+  <data name="Classes_ClassPage_Subjects_Empty" xml:space="preserve"><value>No subjects are taught in this class.</value></data>
+  <data name="Classes_ClassPage_Grades" xml:space="preserve"><value>Grades</value></data>
+  <data name="Classes_ClassPage_Grades_Tooltip" xml:space="preserve"><value>Open the grade sheet of this subject</value></data>
+  <data name="Classes_ClassPage_Export" xml:space="preserve"><value>Export to Excel</value></data>
+  <data name="Classes_ClassPage_Export_Tooltip" xml:space="preserve"><value>Export the overview of this subject to an Excel file</value></data>
+  <data name="Classes_ClassPage_Add_Title" xml:space="preserve"><value>Add class</value></data>
+  <data name="Classes_ClassPage_Edit_Title" xml:space="preserve"><value>Edit class</value></data>
+  <data name="Classes_ClassPage_Name_Required" xml:space="preserve"><value>Enter a class name.</value></data>
+  <data name="Classes_ClassPage_Name_TooLong_Format" xml:space="preserve"><value>The class name can be at most {0} characters.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Classes_ClassPage_Export_Success_Format" xml:space="preserve"><value>Exported {0}.</value><comment>{0} is the name of the saved file.</comment></data>
+  <data name="Classes_ClassPage_Export_SaveFailed" xml:space="preserve"><value>The export could not be saved. Check that the file is not open and that you may write to the folder.</value></data>
+  <data name="Classes_ClassPage_Export_CreateFailed" xml:space="preserve"><value>The export could not be created. Check that the subject still exists and try again.</value></data>
+  <data name="Classes_ClassPage_Create_ClosedYear" xml:space="preserve"><value>The class could not be created because the school year is closed.</value></data>
+  <data name="Classes_ClassPage_Rename_ClosedYear" xml:space="preserve"><value>The class could not be renamed because its school year is closed.</value></data>
+  <data name="Classes_ClassPage_Create_Failed_Format" xml:space="preserve"><value>The class could not be created. Enter a name of at most {0} characters and make sure there is an active school year.</value><comment>{0} is the maximum number of characters of a class name.</comment></data>
+  <data name="Classes_ClassPage_Rename_Failed_Format" xml:space="preserve"><value>The class could not be renamed. Enter a name of at most {0} characters, and check that the class has not been rolled forward or archived.</value><comment>{0} is the maximum number of characters of a class name.</comment></data>
+  <data name="Classes_ClassPage_Saved" xml:space="preserve"><value>Class has been saved.</value></data>
+  <data name="Classes_Overview_SelectToEdit" xml:space="preserve"><value>Please select a class to edit.</value></data>
+</root>

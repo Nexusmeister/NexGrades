@@ -5,11 +5,12 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:loc="clr-namespace:NexGrades.App.Localization"
       xmlns:classes="clr-namespace:NexGrades.App.Features.Classes"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance classes:ClassPage, IsDesignTimeCreatable=False}"
-      Title="Class">
+      Title="{loc:Text Classes_ClassPage_Title}">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -34,12 +35,12 @@
             <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                        Appearance="Primary"
                        IsDefault="True"
-                       Content="Save"
+                       Content="{loc:Text Common_Save}"
                        Icon="{ui:SymbolIcon Save24}"
                        Command="{Binding ViewModel.SaveClassCommand}" />
             <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                        IsCancel="True"
-                       Content="Cancel"
+                       Content="{loc:Text Common_Cancel}"
                        Icon="{ui:SymbolIcon Dismiss24}"
                        Command="{Binding ViewModel.CancelCommand}" />
         </WrapPanel>
@@ -47,13 +48,13 @@
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <ds:FormPanel Style="{StaticResource Ng.FormPanel}">
-                    <HeaderedContentControl Header="Class name"
+                    <HeaderedContentControl Header="{loc:Text Classes_ClassPage_Name_Header}"
                                             Margin="{StaticResource Ng.Margin.Related}"
                                             Style="{StaticResource Ng.FormField}">
                         <ui:TextBox ClearButtonEnabled="True"
-                                    PlaceholderText="Class name"
+                                    PlaceholderText="{loc:Text Classes_ClassPage_Name_Placeholder}"
                                     PlaceholderEnabled="True"
-                                    AutomationProperties.Name="Class name"
+                                    AutomationProperties.Name="{loc:Text Classes_ClassPage_Name_Header}"
                                     MaxLength="{Binding ViewModel.MaxNameLength, Mode=OneTime}"
                                     Text="{Binding ViewModel.Name, UpdateSourceTrigger=PropertyChanged}" />
                     </HeaderedContentControl>
@@ -67,35 +68,35 @@
                                   Visibility="{Binding ViewModel.HasClassValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}" />
                 </ds:FormPanel>
 
-                <HeaderedContentControl Header="Students"
+                <HeaderedContentControl Header="{loc:Text Classes_ClassPage_Students_Header}"
                                         Style="{StaticResource Ng.Section}"
                                         Visibility="{Binding ViewModel.IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
-                        <ContentControl Content="No students are enrolled in this class."
+                        <ContentControl Content="{loc:Text Classes_ClassPage_Students_Empty}"
                                         Style="{StaticResource Ng.EmptyState}"
                                         Visibility="{Binding ViewModel.HasNoStudents, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <ui:DataGrid ItemsSource="{Binding ViewModel.ActiveStudents}"
                                      Style="{StaticResource Ng.DataGrid}"
                                      HorizontalAlignment="Left"
                                      MaxHeight="360"
-                                     AutomationProperties.Name="Students in this class">
+                                     AutomationProperties.Name="{loc:Text Classes_ClassPage_Students_A11y}">
                             <ui:DataGrid.Columns>
-                                <DataGridTextColumn Header="Name" Width="260" Binding="{Binding FullName}" ElementStyle="{StaticResource Ng.DataGridText}" />
-                                <DataGridTextColumn Header="Joined" Width="160" Binding="{Binding Period}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                                <DataGridTextColumn Header="{loc:Text Classes_Grid_Name_Header}" Width="260" Binding="{Binding FullName}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                                <DataGridTextColumn Header="{loc:Text Classes_ClassPage_Joined_Header}" Width="160" Binding="{Binding Period}" ElementStyle="{StaticResource Ng.DataGridText}" />
                             </ui:DataGrid.Columns>
                         </ui:DataGrid>
                         <StackPanel Visibility="{Binding ViewModel.HasLeftStudents, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <ui:TextBlock FontTypography="BodyStrong"
-                                          Text="Left the class"
+                                          Text="{loc:Text Classes_ClassPage_Left_Header}"
                                           Margin="0,16,0,8" />
                             <ui:DataGrid ItemsSource="{Binding ViewModel.LeftStudents}"
                                          Style="{StaticResource Ng.DataGrid}"
                                          HorizontalAlignment="Left"
                                          MaxHeight="240"
-                                         AutomationProperties.Name="Students who left the class">
+                                         AutomationProperties.Name="{loc:Text Classes_ClassPage_Left_A11y}">
                                 <ui:DataGrid.Columns>
-                                    <DataGridTextColumn Header="Name" Width="260" Binding="{Binding FullName}" ElementStyle="{StaticResource Ng.DataGridText}" />
-                                    <DataGridTextColumn Header="Enrolled" Width="220" Binding="{Binding Period}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                                    <DataGridTextColumn Header="{loc:Text Classes_Grid_Name_Header}" Width="260" Binding="{Binding FullName}" ElementStyle="{StaticResource Ng.DataGridText}" />
+                                    <DataGridTextColumn Header="{loc:Text Classes_ClassPage_Enrolled_Header}" Width="220" Binding="{Binding Period}" ElementStyle="{StaticResource Ng.DataGridText}" />
                                 </ui:DataGrid.Columns>
                             </ui:DataGrid>
                         </StackPanel>
@@ -103,11 +104,11 @@
                 </HeaderedContentControl>
 
                 <HeaderedContentControl x:Name="SubjectsSection"
-                                        Header="Subjects"
+                                        Header="{loc:Text Classes_ClassPage_Subjects_Header}"
                                         Style="{StaticResource Ng.Section}"
                                         Visibility="{Binding ViewModel.IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
-                        <ContentControl Content="No subjects are taught in this class."
+                        <ContentControl Content="{loc:Text Classes_ClassPage_Subjects_Empty}"
                                         Style="{StaticResource Ng.EmptyState}"
                                         Visibility="{Binding ViewModel.HasNoSubjects, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <ItemsControl ItemsSource="{Binding ViewModel.Subjects}">
@@ -125,15 +126,15 @@
                                                       Text="{Binding SubjectName}" />
                                         <ui:Button Grid.Column="1"
                                                    Margin="{StaticResource Ng.Margin.InlineGap}"
-                                                   Content="Grades"
+                                                   Content="{loc:Text Classes_ClassPage_Grades}"
                                                    Icon="{ui:SymbolIcon Table24}"
-                                                   ToolTip="Open the grade sheet of this subject"
+                                                   ToolTip="{loc:Text Classes_ClassPage_Grades_Tooltip}"
                                                    Command="{Binding DataContext.ViewModel.OpenGradesCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                    CommandParameter="{Binding}" />
                                         <ui:Button Grid.Column="2"
-                                                   Content="Export to Excel"
+                                                   Content="{loc:Text Classes_ClassPage_Export}"
                                                    Icon="{ui:SymbolIcon ArrowExportUp24}"
-                                                   ToolTip="Export the overview of this subject to an Excel file"
+                                                   ToolTip="{loc:Text Classes_ClassPage_Export_Tooltip}"
                                                    Command="{Binding DataContext.ViewModel.ExportSubjectOverviewCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                    CommandParameter="{Binding}" />
                                     </Grid>

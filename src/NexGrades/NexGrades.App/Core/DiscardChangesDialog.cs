@@ -1,3 +1,4 @@
+using NexGrades.App.Localization;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 using Wpf.Ui.Extensions;
@@ -10,8 +11,8 @@ namespace NexGrades.App.Core;
 /// </summary>
 public static class DiscardChangesDialog
 {
-    /// <summary>The text for a page whose form holds unsaved input.</summary>
-    public const string UnsavedChangesMessage = "You have unsaved changes on this page. Leave the page and discard them?";
+    /// <summary>The text for a page whose form holds unsaved input, in the current UI language.</summary>
+    public static string UnsavedChangesMessage => TextResources.Text("Core_DiscardChanges_Message");
 
     /// <summary>Asks whether unsaved input may be discarded.</summary>
     /// <param name="dialogService">Shows the dialog in the main window.</param>
@@ -25,10 +26,10 @@ public static class DiscardChangesDialog
         var confirmation = await dialogService.ShowSimpleDialogAsync(
             new SimpleContentDialogCreateOptions
             {
-                Title = "Discard changes",
+                Title = TextResources.Text("Core_DiscardChanges_Title"),
                 Content = content,
-                PrimaryButtonText = "Discard",
-                CloseButtonText = "Keep editing",
+                PrimaryButtonText = TextResources.Text("Common_Discard"),
+                CloseButtonText = TextResources.Text("Common_KeepEditing"),
             },
             cancellationToken);
 

@@ -2,9 +2,10 @@
                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                   xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                  Title="Export notes"
-                  PrimaryButtonText="Export"
-                  CloseButtonText="Cancel"
+                  xmlns:loc="clr-namespace:NexGrades.App.Localization"
+                  Title="{loc:Text Students_ExportDialog_Title}"
+                  PrimaryButtonText="{loc:Text Students_ExportDialog_Export}"
+                  CloseButtonText="{loc:Text Common_Cancel}"
                   DefaultButton="Primary"
                   IsPrimaryButtonEnabled="{Binding IsValid}">
 
@@ -20,28 +21,28 @@
     <StackPanel MinWidth="360"
                 MaxWidth="480"
                 FocusManager.FocusedElement="{Binding ElementName=FromPicker}">
-        <HeaderedContentControl Header="From"
+        <HeaderedContentControl Header="{loc:Text Students_ExportDialog_From_Header}"
                                 Style="{StaticResource Ng.FormField}">
             <DatePicker x:Name="FromPicker"
                         HorizontalAlignment="Stretch"
                         TabIndex="0"
                         DisplayDateEnd="{Binding DisplayDateEnd, Mode=OneWay}"
-                        AutomationProperties.Name="From: first day of the exported notes"
+                        AutomationProperties.Name="{loc:Text Students_ExportDialog_From_A11y}"
                         SelectedDate="{Binding From}" />
         </HeaderedContentControl>
 
-        <HeaderedContentControl Header="To"
+        <HeaderedContentControl Header="{loc:Text Students_ExportDialog_To_Header}"
                                 Style="{StaticResource Ng.FormField}">
             <DatePicker HorizontalAlignment="Stretch"
                         TabIndex="1"
                         DisplayDateEnd="{Binding DisplayDateEnd, Mode=OneWay}"
-                        AutomationProperties.Name="To: last day of the exported notes"
+                        AutomationProperties.Name="{loc:Text Students_ExportDialog_To_A11y}"
                         SelectedDate="{Binding To}" />
         </HeaderedContentControl>
 
         <CheckBox Margin="{StaticResource Ng.Margin.Block}"
                   TabIndex="2"
-                  Content="Include archived notes"
+                  Content="{loc:Text Students_ExportDialog_IncludeArchived}"
                   IsChecked="{Binding IncludeArchived}" />
 
         <ui:TextBlock FontTypography="Caption"

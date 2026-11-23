@@ -1,11 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Text;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.App.Updates;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
@@ -20,28 +19,6 @@ namespace NexGrades.App.Features.Settings;
 /// </summary>
 public sealed partial class UpdateSettingsViewModel : ObservableObject
 {
-    /// <summary>The version line; <c>{0}</c> is the running version.</summary>
-    public const string VersionFormat = "Version {0}";
-
-    /// <summary>Status after a check that found nothing newer.</summary>
-    public const string UpToDateText = "NexGrades is up to date.";
-
-    /// <summary>Status while an update downloads; <c>{0}</c> is its version.</summary>
-    public const string DownloadingFormat = "Version {0} is being downloaded.";
-
-    /// <summary>Status when an update is downloaded; <c>{0}</c> is its version.</summary>
-    public const string ReadyFormat = "Version {0} will be installed when you close NexGrades.";
-
-    /// <summary>Status when no channel could be checked.</summary>
-    public const string OfflineText = "NexGrades could not check for updates. Check your internet connection.";
-
-    /// <summary>Status in an app that cannot update itself.</summary>
-    public const string NotInstalledText = "Updates are only available in the installed app.";
-
-    private static readonly CompositeFormat _version = CompositeFormat.Parse(VersionFormat);
-    private static readonly CompositeFormat _downloading = CompositeFormat.Parse(DownloadingFormat);
-    private static readonly CompositeFormat _ready = CompositeFormat.Parse(ReadyFormat);
-
     private readonly UpdateCoordinator _coordinator;
     private readonly IUserSettingsStore _settingsStore;
     private readonly UpdateNoticeViewModel _notice;
@@ -121,7 +98,7 @@ public sealed partial class UpdateSettingsViewModel : ObservableObject
     }
 
     /// <summary>"Version {0}" with the running version.</summary>
-    public string VersionText => string.Format(CultureInfo.CurrentCulture, _version, _coordinator.CurrentVersionText);
+    public string VersionText => TextResources.Format("Settings_Updates_Version_Format", _coordinator.CurrentVersionText);
 
     /// <summary>Whether this app can update itself; the check and the preferences only matter when it can.</summary>
     public bool IsUpdaterAvailable => _coordinator.IsAvailable;
@@ -164,7 +141,7 @@ public sealed partial class UpdateSettingsViewModel : ObservableObject
     {
         if (!_coordinator.IsAvailable)
         {
-            ShowResult(NotInstalledText);
+            ShowResult(TextResources.Text("Settings_Updates_NotInstalled"));
             return;
         }
 
@@ -175,13 +152,13 @@ public sealed partial class UpdateSettingsViewModel : ObservableObject
             switch (outcome)
             {
                 case UpdateCheckOutcome.NotInstalled:
-                    ShowResult(NotInstalledText);
+                    ShowResult(TextResources.Text("Settings_Updates_NotInstalled"));
                     break;
                 case UpdateCheckOutcome.UpToDate:
-                    ShowResult(UpToDateText);
+                    ShowResult(TextResources.Text("Settings_Updates_UpToDate"));
                     break;
                 case UpdateCheckOutcome.Offline:
-                    ShowResult(OfflineText);
+                    ShowResult(TextResources.Text("Settings_Updates_Offline"));
                     break;
                 default:
                     ApplyState();
@@ -190,7 +167,7 @@ public sealed partial class UpdateSettingsViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            ShowResult(OfflineText);
+            ShowResult(TextResources.Text("Settings_Updates_Offline"));
         }
         finally
         {
@@ -225,8 +202,8 @@ public sealed partial class UpdateSettingsViewModel : ObservableObject
         {
             LogSaveFailed(ex.GetType().Name);
             _snackbar.Show(
-                "Error",
-                "The update setting could not be saved.",
+                TextResources.Text("Common_Error"),
+                TextResources.Text("Settings_Updates_SaveFailed"),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.ErrorCircle24),
                 TimeSpan.FromSeconds(5));
@@ -239,7 +216,7 @@ public sealed partial class UpdateSettingsViewModel : ObservableObject
         IsReadyToInstall = _coordinator.State == UpdateState.ReadyToInstall;
         if (!_coordinator.IsAvailable)
         {
-            ShowResult(NotInstalledText);
+            ShowResult(TextResources.Text("Settings_Updates_NotInstalled"));
         }
         else if (StateText() is { } text)
         {
@@ -271,8 +248,8 @@ public sealed partial class UpdateSettingsViewModel : ObservableObject
 
         return _coordinator.State switch
         {
-            UpdateState.Downloading => string.Format(CultureInfo.CurrentCulture, _downloading, version),
-            UpdateState.ReadyToInstall => string.Format(CultureInfo.CurrentCulture, _ready, version),
+            UpdateState.Downloading => TextResources.Format("Settings_Updates_Downloading_Format", version),
+            UpdateState.ReadyToInstall => TextResources.Format("Shell_UpdateNotice_Ready_Format", version),
             _ => null,
         };
     }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using NexGrades.App.Features.Export;
 using NexGrades.Domain.Export;
@@ -14,7 +15,15 @@ public class NoteExporterTests
     {
         var table = TableOf("Test", "Alpha", new DateOnly(2025, 8, 1), new DateOnly(2026, 7, 31));
 
-        Assert.Equal("Notes Alpha Test 2025-08-01–2026-07-31.xlsx", NoteExporter.SuggestFileName(table));
+        Assert.Equal("Notes Alpha Test 2025-08-01–2026-07-31.xlsx", NoteExporter.SuggestFileName(table, CultureInfo.GetCultureInfo("en-US")));
+    }
+
+    [Fact]
+    public void SuggestFileName_UsesGermanPrefixAndInvariantDates_ForGermanUiCulture()
+    {
+        var table = TableOf("Test", "Alpha", new DateOnly(2025, 8, 1), new DateOnly(2026, 7, 31));
+
+        Assert.Equal("Notizen Alpha Test 2025-08-01–2026-07-31.xlsx", NoteExporter.SuggestFileName(table, CultureInfo.GetCultureInfo("de-DE")));
     }
 
     [Fact]
@@ -22,7 +31,7 @@ public class NoteExporterTests
     {
         var table = TableOf("Te/st", "Al:pha?", new DateOnly(2025, 8, 1), new DateOnly(2026, 7, 31));
 
-        var name = NoteExporter.SuggestFileName(table);
+        var name = NoteExporter.SuggestFileName(table, CultureInfo.GetCultureInfo("en-US"));
 
         Assert.Equal("Notes Al-pha- Te-st 2025-08-01–2026-07-31.xlsx", name);
         Assert.DoesNotContain(name, c => Array.IndexOf(Path.GetInvalidFileNameChars(), c) >= 0);
@@ -30,5 +39,5 @@ public class NoteExporterTests
 
     [Fact]
     public void SuggestFileName_ThrowsArgumentNull_ForNullTable() =>
-        Assert.Throws<ArgumentNullException>(() => NoteExporter.SuggestFileName(null!));
+        Assert.Throws<ArgumentNullException>(() => NoteExporter.SuggestFileName(null!, CultureInfo.InvariantCulture));
 }

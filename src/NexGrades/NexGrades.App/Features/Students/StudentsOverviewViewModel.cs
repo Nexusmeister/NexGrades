@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
+using NexGrades.App.Localization;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
 using Wpf.Ui;
@@ -32,7 +33,7 @@ public partial class StudentsOverviewViewModel(
     {
         if (SelectedStudent is null)
         {
-            snackbarService.Show("No student selected", "Select a student to edit.", ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(5));
+            snackbarService.Show(TextResources.Text("Students_Overview_NoSelection_Title"), TextResources.Text("Students_Overview_NoSelection_Message"), ControlAppearance.Info, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(5));
             return;
         }
 

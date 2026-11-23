@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Subjects_Overview_Title" xml:space="preserve"><value>Subjects</value></data>
+  <data name="Subjects_Overview_Add" xml:space="preserve"><value>Add subject</value></data>
+  <data name="Subjects_Overview_Empty" xml:space="preserve"><value>No subjects yet. Use Add subject to create one.</value></data>
+  <data name="Subjects_Overview_Id_Header" xml:space="preserve"><value>Id</value></data>
+  <data name="Subjects_Overview_Name_Header" xml:space="preserve"><value>Name</value></data>
+  <data name="Subjects_Overview_Code_Header" xml:space="preserve"><value>Code</value></data>
+  <data name="Subjects_Overview_Actions_Header" xml:space="preserve"><value>Actions</value></data>
+  <data name="Subjects_Overview_Edit_Tooltip" xml:space="preserve"><value>Edit subject</value></data>
+  <data name="Subjects_DetailPage_Title" xml:space="preserve"><value>Subject</value></data>
+  <data name="Subjects_DetailPage_Name_Header" xml:space="preserve"><value>Subject name</value></data>
+  <data name="Subjects_DetailPage_ShortCode_Header" xml:space="preserve"><value>Short code</value></data>
+  <data name="Subjects_DetailPage_ShortCode_Placeholder" xml:space="preserve"><value>Short code (e.g. MA)</value></data>
+  <data name="Subjects_DetailPage_Add_Title" xml:space="preserve"><value>Add subject</value></data>
+  <data name="Subjects_DetailPage_Edit_Title" xml:space="preserve"><value>Edit subject</value></data>
+  <data name="Subjects_DetailPage_NotFound" xml:space="preserve"><value>The subject could not be found. It may have been removed.</value></data>
+  <data name="Subjects_DetailPage_Name_TooLong_Format" xml:space="preserve"><value>The subject name can be at most {0} characters.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Subjects_DetailPage_ShortCode_TooLong_Format" xml:space="preserve"><value>The short code can be at most {0} characters.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Subjects_DetailPage_Save_Failed_Format" xml:space="preserve"><value>The subject could not be saved. Enter a name of up to {0} characters and a short code of up to {1} characters.</value><comment>{0} is the maximum length of the subject name; {1} is the maximum length of the short code.</comment></data>
+  <data name="Subjects_DetailPage_Saved" xml:space="preserve"><value>Subject has been saved.</value></data>
+</root>

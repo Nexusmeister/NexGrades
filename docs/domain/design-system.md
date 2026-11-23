@@ -69,6 +69,25 @@ it does not merge.
   fails when the view loads. The shared styles that extend a WPF-UI style use
   `BasedOn="{StaticResource {x:Type ui:Card}}"` and the like.
 
+## Text and localization
+
+Every piece of visible text comes from a resource file, through `{loc:Text <Key>}` in XAML. A view does not set a
+literal `Text`, `Content`, `Header`, `ToolTip`, `Placeholder` or `AutomationProperties.Name`; the product name
+`NexGrades` is the one exception. The `loc` namespace is
+`xmlns:loc="clr-namespace:NexGrades.App.Localization"`. The keys, the files and the rules for adding text are in
+[UI text and localization](ui-text-and-localization.md). `XamlSourceRulesTests` fails for a literal text attribute,
+and `ResourceKeyUsageTests` fails for a `{loc:Text}` key that does not exist or is not used.
+
+A design must hold in German. German text is about 30% longer than English, so check every new layout with the German
+text as well as the English:
+
+- No fixed width on a button, a column or a label that only fits the English text. Use `MinWidth` or let the control
+  size to its content.
+- Wrap a long label or a caption (`TextWrapping="Wrap"`) rather than clip it. A `ui:Button` or a column header can
+  grow.
+- Check the window at about 900 × 600 with the German text, as well as the English text, under
+  [Tests and checks](#tests-and-checks).
+
 ## Tokens
 
 | Key | Value | Used for |
@@ -191,12 +210,12 @@ rows, and the content always sits in the `*` row. See [Known gaps](#known-gaps).
         <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                    Appearance="Primary"
                    IsDefault="True"
-                   Content="Save"
+                   Content="{loc:Text Common_Save}"
                    Icon="{ui:SymbolIcon Save24}"
                    Command="{Binding ViewModel.SaveCommand}" />
         <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                    IsCancel="True"
-                   Content="Cancel"
+                   Content="{loc:Text Common_Cancel}"
                    Icon="{ui:SymbolIcon Dismiss24}"
                    Command="{Binding ViewModel.CancelCommand}" />
     </WrapPanel>
@@ -239,16 +258,16 @@ All keys are defined in `Styles.xaml`.
 Short usage examples:
 
 ```xml
-<HeaderedContentControl Header="First name"
+<HeaderedContentControl Header="{loc:Text Students_Overview_FirstName_Header}"
                         Style="{StaticResource Ng.FormField}">
-    <ui:TextBox AutomationProperties.Name="First name"
+    <ui:TextBox AutomationProperties.Name="{loc:Text Students_Overview_FirstName_Header}"
                 Text="{Binding ViewModel.FirstName, UpdateSourceTrigger=PropertyChanged}" />
 </HeaderedContentControl>
 ```
 
 ```xml
 <ContentControl Tag="{Binding ViewModel.Classes}"
-                Content="No classes yet. Use Add class to create one."
+                Content="{loc:Text Classes_Overview_Empty}"
                 Style="{StaticResource Ng.EmptyState.WhenNoItems}" />
 ```
 
@@ -273,8 +292,9 @@ message appears when the collection has no items.
              ItemsSource="{Binding ViewModel.Classes}"
              SelectedItem="{Binding ViewModel.SelectedClass}">
     <ui:DataGrid.Columns>
-        <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
-        <DataGridTextColumn Header="Students" Binding="{Binding StudentCount}"
+        <!-- Every header is a {loc:Text} key from the area's resource file. Replace <Area> and <Column> with real names. -->
+        <DataGridTextColumn Header="{loc:Text Classes_Grid_Name_Header}" Binding="{Binding Name}" />
+        <DataGridTextColumn Header="{loc:Text <Area>_Grid_<Column>_Header}" Binding="{Binding StudentCount}"
                             ElementStyle="{StaticResource Ng.DataGridText.Numeric}" />
     </ui:DataGrid.Columns>
 </ui:DataGrid>
@@ -330,8 +350,9 @@ the student page have.
 
 | Check | What it enforces |
 |---|---|
-| `XamlLoadTests` (`NexGrades.App.Tests/Composition`) | Creates every page and the shared views on an STA thread, with every resource read. A view that uses an unmerged key, or a `DynamicResource` in `BasedOn`, fails. Keys used only inside item, data or cell templates are not instantiated by the test, so they are not checked. |
-| `XamlSourceRulesTests` (`NexGrades.App.Tests/Composition`) | Scans every App XAML file. It fails for a style that sets `Visibility` on a `ui:TextBlock`, and for a page title that equals its class name. It fails if no `ui:TextBlock` is found, so the rule cannot pass without checking anything. It also fails for a file with an `IsDefault` or `IsCancel` button that has a `TextBox` whose `Text` binding lacks `UpdateSourceTrigger=PropertyChanged` (Enter and Escape would act on a stale value). |
+| `XamlLoadTests` (`NexGrades.App.Tests/Composition`) | Creates every page and the shared views on an STA thread, under en-US and de-DE, with every resource read. A view that uses an unmerged key, a missing `{loc:Text}` key, or a `DynamicResource` in `BasedOn`, fails. Keys used only inside item, data or cell templates are not instantiated by the test, so it does not load them; `ResourceKeyUsageTests` still checks that they exist. |
+| `XamlSourceRulesTests` (`NexGrades.App.Tests/Composition`) | Scans every App XAML file. It fails for a style that sets `Visibility` on a `ui:TextBlock`, for a literal text attribute (`Content`, `Text`, `ToolTip` and the like) or a `StringFormat` with literal text, and for a page title that equals its class name or looks like an identifier. It fails if no `ui:TextBlock` or no `{loc:Text}` is found, so the rule cannot pass without checking anything. It also fails for a file with an `IsDefault` or `IsCancel` button that has a `TextBox` whose `Text` binding lacks `UpdateSourceTrigger=PropertyChanged` (Enter and Escape would act on a stale value). |
+| `ResourceKeyUsageTests` (`NexGrades.App.Tests/Localization`) | Scans the App's XAML and C# sources. It fails for a key that a source refers to but the neutral resx of its area does not have (a typo), for a key in a neutral resx that no source uses, and for literal UI text in the C# properties and `Show` arguments it lists. See [UI text and localization](ui-text-and-localization.md#tests). |
 | `DesignSystemRulesTests` (`NexGrades.App.Tests/Composition`) | Scans every App XAML file outside `obj` and `bin`. It fails for three rules: a view (`Page`, `UserControl`, `ContentDialog` or `FluentWindow` root) that does not merge `DesignSystem.xaml` in its resources; a `Margin` or `Padding`, as an attribute, a setter or a `Thickness` resource, whose value is not a multiple of 4; and a hex colour in any attribute value or text. A markup extension such as `{StaticResource ...}` is not checked for spacing. |
 | `GradeSheetColumnHeaderTemplateTests` | The "Type 1–6 to override" hint shows only on the final grade column. |
 
@@ -373,7 +394,8 @@ Whatever you add:
 - Do not use `DynamicResource` in `BasedOn`.
 - Do not write a hex colour or a `FontSize`. Use a theme brush and a `FontTypography` step. A hex colour fails
   `DesignSystemRulesTests`.
-- Do not rename a shared key without changing every view that uses it. A missing key fails when the view loads.
+- Do not rename a shared key without changing every view that uses it. A missing key fails `ResourceKeyUsageTests`,
+  and it fails `XamlLoadTests` when the view loads.
 - After you add a token or a style, run `dotnet test` and check the page in Light and Dark.
 
 ## Known gaps

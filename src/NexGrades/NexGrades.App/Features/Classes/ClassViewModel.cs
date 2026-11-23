@@ -9,6 +9,7 @@ using NexGrades.App.Core;
 using NexGrades.App.Features.Export;
 using NexGrades.App.Features.Grades;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.Data;
 using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Services;
@@ -48,7 +49,7 @@ public partial class ClassViewModel(
     [NotifyCanExecuteChangedFor(nameof(SaveClassCommand))]
     private string _name = string.Empty;
 
-    [ObservableProperty] private string _title = "AddClass";
+    [ObservableProperty] private string _title = TextResources.Text("Classes_ClassPage_Add_Title");
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ClassValidationMessage), nameof(HasClassValidationMessage))]
@@ -78,12 +79,12 @@ public partial class ClassViewModel(
             var trimmed = Name.Trim();
             if (trimmed.Length == 0)
             {
-                return "Enter a class name.";
+                return TextResources.Text("Classes_ClassPage_Name_Required");
             }
 
             var unchanged = IsEditing && string.Equals(trimmed, _loadedName, StringComparison.Ordinal);
             return !unchanged && trimmed.Length > MaxNameLength
-                ? string.Format(CultureInfo.CurrentCulture, "The class name can be at most {0} characters.", MaxNameLength)
+                ? TextResources.Format("Classes_ClassPage_Name_TooLong_Format", MaxNameLength)
                 : null;
         }
     }
@@ -130,7 +131,7 @@ public partial class ClassViewModel(
         IsEditing = false;
         _loadedName = string.Empty;
         Name = string.Empty;
-        Title = "Add class";
+        Title = TextResources.Text("Classes_ClassPage_Add_Title");
 
         if (_editingClassInstanceId is not { } id)
         {
@@ -147,7 +148,7 @@ public partial class ClassViewModel(
 
         _loadedName = existing.Name;
         Name = existing.Name;
-        Title = "Edit class";
+        Title = TextResources.Text("Classes_ClassPage_Edit_Title");
         IsEditing = true;
 
         var enrollments = await db.Enrollments.AsNoTracking()
@@ -204,15 +205,15 @@ public partial class ClassViewModel(
             }
 
             await exporter.ExportAsync(table, path, cancellationToken);
-            snackbar.Show("Success", string.Format(CultureInfo.CurrentCulture, "Exported {0}.", Path.GetFileName(path)), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Success"), TextResources.Format("Classes_ClassPage_Export_Success_Format", Path.GetFileName(path)), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            snackbar.Show("Error", "The export could not be saved. Check that the file is not open and that you may write to the folder.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Error"), TextResources.Text("Classes_ClassPage_Export_SaveFailed"), ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbException)
         {
-            snackbar.Show("Error", "The export could not be created. Check that the subject still exists and try again.", ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
+            snackbar.Show(TextResources.Text("Common_Error"), TextResources.Text("Classes_ClassPage_Export_CreateFailed"), ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
         }
         finally
         {
@@ -240,27 +241,23 @@ public partial class ClassViewModel(
         catch (ClosedYearException)
         {
             snackbar.Show(
-                "Error",
-                editId is null
-                ? "The class could not be created because the school year is closed."
-                : "The class could not be renamed because its school year is closed.",
+                TextResources.Text("Common_Error"),
+                TextResources.Text(editId is null ? "Classes_ClassPage_Create_ClosedYear" : "Classes_ClassPage_Rename_ClosedYear"),
                 ControlAppearance.Caution, new SymbolIcon(SymbolRegular.ErrorCircle24), TimeSpan.FromSeconds(5));
             return;
         }
         catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
         {
             snackbar.Show(
-                "Error",
-                editId is null
-                ? string.Format(CultureInfo.CurrentCulture, "The class could not be created. Enter a name of at most {0} characters and make sure there is an active school year.", MaxNameLength)
-                : string.Format(CultureInfo.CurrentCulture, "The class could not be renamed. Enter a name of at most {0} characters, and check that the class has not been rolled forward or archived.", MaxNameLength),
+                TextResources.Text("Common_Error"),
+                TextResources.Format(editId is null ? "Classes_ClassPage_Create_Failed_Format" : "Classes_ClassPage_Rename_Failed_Format", MaxNameLength),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.ErrorCircle24),
                 TimeSpan.FromSeconds(5));
             return;
         }
 
-        snackbar.Show("Success", "Class has been saved.", ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
+        snackbar.Show(TextResources.Text("Common_Success"), TextResources.Text("Classes_ClassPage_Saved"), ControlAppearance.Success, new SymbolIcon(SymbolRegular.CheckmarkCircle32), TimeSpan.FromSeconds(5));
         _leaveGuard.LeaveWithoutPrompt(navigation.GoBack);
     }
 

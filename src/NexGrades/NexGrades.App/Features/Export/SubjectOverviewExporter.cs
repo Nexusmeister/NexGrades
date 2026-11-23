@@ -29,7 +29,7 @@ public sealed class SubjectOverviewExporter(SubjectOverviewExportService exportS
     public async Task ExportAsync(SubjectOverviewTable table, string path, CancellationToken cancellationToken = default)
     {
         using var stream = new MemoryStream();
-        writer.Write(table, stream, CultureInfo.CurrentUICulture);
+        writer.Write(table, stream, CultureInfo.CurrentUICulture, CultureInfo.CurrentCulture);
 
         await File.WriteAllBytesAsync(path, stream.ToArray(), cancellationToken);
     }

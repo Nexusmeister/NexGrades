@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="SchoolYears_Page_Title" xml:space="preserve"><value>School year</value></data>
+  <data name="SchoolYears_Readiness_Open" xml:space="preserve"><value>Open</value></data>
+  <data name="SchoolYears_Readiness_Open_Tooltip" xml:space="preserve"><value>Open the page where this can be fixed</value></data>
+  <data name="SchoolYears_Class_RollForward" xml:space="preserve"><value>Roll forward</value></data>
+  <data name="SchoolYears_Class_RollForward_A11y" xml:space="preserve"><value>Roll this class forward</value></data>
+  <data name="SchoolYears_Class_Archive" xml:space="preserve"><value>Archive</value></data>
+  <data name="SchoolYears_Class_Archive_A11y" xml:space="preserve"><value>Archive this class</value></data>
+  <data name="SchoolYears_Class_NewName_Header" xml:space="preserve"><value>Name in the next school year</value></data>
+  <data name="SchoolYears_Class_NewName_A11y" xml:space="preserve"><value>Name of the class in the next school year</value></data>
+  <data name="SchoolYears_Class_End" xml:space="preserve"><value>End this class</value></data>
+  <data name="SchoolYears_Class_End_Tooltip" xml:space="preserve"><value>Also ends the class itself, so it does not continue in later school years</value></data>
+  <data name="SchoolYears_Closed_Locked" xml:space="preserve"><value>Locked</value></data>
+  <data name="SchoolYears_Closed_Unlock" xml:space="preserve"><value>Unlock year…</value></data>
+  <data name="SchoolYears_Closed_Unlock_Tooltip" xml:space="preserve"><value>Unlock this school year temporarily to make corrections</value></data>
+  <data name="SchoolYears_Closed_Unlock_A11y" xml:space="preserve"><value>Unlock this school year</value></data>
+  <data name="SchoolYears_Closed_Relock" xml:space="preserve"><value>Lock again</value></data>
+  <data name="SchoolYears_Closed_Relock_Tooltip" xml:space="preserve"><value>Make this school year read-only again now</value></data>
+  <data name="SchoolYears_Closed_Relock_A11y" xml:space="preserve"><value>Lock this school year again</value></data>
+  <data name="SchoolYears_NoActiveYear_Title" xml:space="preserve"><value>No active school year</value></data>
+  <data name="SchoolYears_NoActiveYear_Message" xml:space="preserve"><value>There is no active school year.</value></data>
+  <data name="SchoolYears_Step_Overview" xml:space="preserve"><value>Step 1 of 6: Overview</value></data>
+  <data name="SchoolYears_Step_NextYear" xml:space="preserve"><value>Step 2 of 6: Next school year</value></data>
+  <data name="SchoolYears_Step_Classes" xml:space="preserve"><value>Step 3 of 6: Classes</value></data>
+  <data name="SchoolYears_Step_Readiness" xml:space="preserve"><value>Step 4 of 6: Readiness check</value></data>
+  <data name="SchoolYears_Step_Confirm" xml:space="preserve"><value>Step 5 of 6: Confirm</value></data>
+  <data name="SchoolYears_Step_Done" xml:space="preserve"><value>Step 6 of 6: Done</value></data>
+  <data name="SchoolYears_Loading_A11y" xml:space="preserve"><value>Loading</value></data>
+  <data name="SchoolYears_Overview_Active_Header" xml:space="preserve"><value>Active school year</value></data>
+  <data name="SchoolYears_Overview_Starts_Format" xml:space="preserve"><value>Starts on {0:d}</value><comment>{0} is the first day of the school year, a date shown in the short format of the current culture.</comment></data>
+  <data name="SchoolYears_Overview_Ends_Format" xml:space="preserve"><value>Ends on {0:d}</value><comment>{0} is the last day of the school year, a date shown in the short format of the current culture.</comment></data>
+  <data name="SchoolYears_Overview_NotOver_Title" xml:space="preserve"><value>Not over yet</value></data>
+  <data name="SchoolYears_Overview_NotOver_Message" xml:space="preserve"><value>The school year has not ended yet. You can still end it now.</value></data>
+  <data name="SchoolYears_Closed_Header" xml:space="preserve"><value>Closed school years</value></data>
+  <data name="SchoolYears_Closed_Empty" xml:space="preserve"><value>No school year has been closed yet.</value></data>
+  <data name="SchoolYears_Closed_LoadFailed" xml:space="preserve"><value>The closed school years could not be loaded.</value></data>
+  <data name="SchoolYears_NextYear_Header" xml:space="preserve"><value>Next school year</value></data>
+  <data name="SchoolYears_NextYear_Label_Header" xml:space="preserve"><value>Label</value></data>
+  <data name="SchoolYears_NextYear_Label_A11y" xml:space="preserve"><value>Label of the next school year</value></data>
+  <data name="SchoolYears_NextYear_First_Header" xml:space="preserve"><value>First day</value></data>
+  <data name="SchoolYears_NextYear_First_A11y" xml:space="preserve"><value>First day of the next school year</value></data>
+  <data name="SchoolYears_NextYear_Last_Header" xml:space="preserve"><value>Last day</value></data>
+  <data name="SchoolYears_NextYear_Last_A11y" xml:space="preserve"><value>Last day of the next school year</value></data>
+  <data name="SchoolYears_Classes_Header" xml:space="preserve"><value>Decide what happens to each class</value></data>
+  <data name="SchoolYears_Readiness_Blocking_Title" xml:space="preserve"><value>These must be fixed first</value></data>
+  <data name="SchoolYears_Readiness_Blocking_Message" xml:space="preserve"><value>The school year cannot be closed until the items below are fixed.</value></data>
+  <data name="SchoolYears_Readiness_Warning_Title" xml:space="preserve"><value>Please review</value></data>
+  <data name="SchoolYears_Readiness_Warning_Message" xml:space="preserve"><value>The items below do not stop you from closing the school year.</value></data>
+  <data name="SchoolYears_Readiness_Acknowledge" xml:space="preserve"><value>I have reviewed these warnings.</value></data>
+  <data name="SchoolYears_Readiness_AllClear" xml:space="preserve"><value>Nothing is blocking the close and there are no warnings.</value></data>
+  <data name="SchoolYears_Confirm_Title" xml:space="preserve"><value>This cannot be undone</value></data>
+  <data name="SchoolYears_Confirm_Message" xml:space="preserve"><value>Closing the school year cannot be undone. The old school year becomes read-only and can only be changed later by unlocking it temporarily.</value></data>
+  <data name="SchoolYears_Action_EndYear" xml:space="preserve"><value>End school year</value></data>
+  <data name="SchoolYears_Action_CreateNextYear" xml:space="preserve"><value>Create next year</value></data>
+  <data name="SchoolYears_Action_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="SchoolYears_Action_Apply_Tooltip" xml:space="preserve"><value>Apply the choices for all classes that are still waiting</value></data>
+  <data name="SchoolYears_Action_Continue" xml:space="preserve"><value>Continue</value></data>
+  <data name="SchoolYears_Action_Close" xml:space="preserve"><value>Close school year and activate next</value></data>
+  <data name="SchoolYears_Action_GoToClasses" xml:space="preserve"><value>Go to classes</value></data>
+  <data name="SchoolYears_Class_CarryOver_One_Format" xml:space="preserve"><value>{0} student carries over.</value><comment>{0} is the number of students that carry over, here exactly one.</comment></data>
+  <data name="SchoolYears_Class_CarryOver_Many_Format" xml:space="preserve"><value>{0} students carry over.</value><comment>{0} is the number of students that carry over, none or more than one.</comment></data>
+  <data name="SchoolYears_Class_RolledForward_Format" xml:space="preserve"><value>Rolled forward as {0}.</value><comment>{0} is the name of the class in the next school year.</comment></data>
+  <data name="SchoolYears_Class_Archived" xml:space="preserve"><value>Archived.</value></data>
+  <data name="SchoolYears_Class_Failed" xml:space="preserve"><value>This class could not be rolled forward or archived. Check the new name, and that none of its students is already in a class of the next year.</value></data>
+  <data name="SchoolYears_Readiness_ClassStillActive_Format" xml:space="preserve"><value>Class {0} has not been rolled forward or archived yet.</value><comment>{0} is the class name.</comment></data>
+  <data name="SchoolYears_Readiness_SubjectWithoutGrades_Format" xml:space="preserve"><value>{1} in class {0} has no grades yet.</value><comment>{0} is the class name, {1} is the subject name.</comment></data>
+  <data name="SchoolYears_Readiness_WeightsNotHundred_Format" xml:space="preserve"><value>The grade category weights of {1} in class {0} add up to {2:0.##} instead of 100.</value><comment>{0} is the class name, {1} is the subject name, {2} is the sum of the weights, a number shown with the decimal separator of the current culture.</comment></data>
+  <data name="SchoolYears_Readiness_StudentWithoutGrade_Format" xml:space="preserve"><value>{2}, {3} has no grade in {1} in class {0}.</value><comment>{0} is the class name, {1} is the subject name, {2} is the student's last name, {3} is the student's first name.</comment></data>
+  <data name="SchoolYears_LoadFailed" xml:space="preserve"><value>The school year could not be loaded. Close this page and open it again.</value></data>
+  <data name="SchoolYears_NextYear_CreateFailed" xml:space="preserve"><value>The next school year could not be created. Check the label and the dates, and that they do not overlap another school year.</value></data>
+  <data name="SchoolYears_Classes_Apply_Title" xml:space="preserve"><value>Apply class choices</value></data>
+  <data name="SchoolYears_Classes_Apply_Message" xml:space="preserve"><value>Rolling forward and archiving cannot be undone. Apply the choices for all classes now?</value></data>
+  <data name="SchoolYears_Classes_LoadFailed" xml:space="preserve"><value>The classes could not be loaded. Close this page and open it again.</value></data>
+  <data name="SchoolYears_Classes_SomeFailed" xml:space="preserve"><value>Some classes could not be processed. They are marked in the list.</value></data>
+  <data name="SchoolYears_Classes_Processed" xml:space="preserve"><value>The classes have been processed.</value></data>
+  <data name="SchoolYears_Confirm_Summary_Format" xml:space="preserve"><value>{0} will be closed and {1} will become the active school year. Classes rolled forward: {2}. Classes archived: {3}.</value><comment>{0} is the label of the closing school year, {1} is the label of the next school year, {2} is the number of classes rolled forward, {3} is the number of classes archived.</comment></data>
+  <data name="SchoolYears_Close_Confirm_Message" xml:space="preserve"><value>This cannot be undone. The school year will be closed and the next one becomes active.</value></data>
+  <data name="SchoolYears_Close_Result_Format" xml:space="preserve"><value>{0} is closed. {1} is now the active school year.</value><comment>{0} is the label of the closed school year, {1} is the label of the new active school year.</comment></data>
+  <data name="SchoolYears_Close_Success" xml:space="preserve"><value>The school year has been closed.</value></data>
+  <data name="SchoolYears_Close_Failed" xml:space="preserve"><value>The school year could not be ended. Review the steps and try again.</value></data>
+</root>

@@ -1,5 +1,6 @@
 using NexGrades.App.Core;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 
 namespace NexGrades.App.Features.Home;
 
@@ -9,7 +10,7 @@ namespace NexGrades.App.Features.Home;
 public class HomeViewModel : ViewModel
 {
     /// <summary>The greeting shown on the home page: "Good Morning" before noon, "Hello" from noon on.</summary>
-    public string WelcomeMessage { get; set; } = "Welcome to NexGradeMaker!";
+    public string WelcomeMessage { get; set; } = TextResources.Text("Home_Welcome_Default");
 
     /// <summary>Creates the view model and sets the greeting for the current user.</summary>
     /// <param name="userService">Provides the user name for the greeting.</param>
@@ -17,6 +18,6 @@ public class HomeViewModel : ViewModel
     {
         var now = DateTime.Now;
         var username = userService.GetUserName();
-        WelcomeMessage = now.Hour < 12 ? $"Good Morning {username}!" : $"Hello {username}!";
+        WelcomeMessage = TextResources.Format(now.Hour < 12 ? "Home_Welcome_Morning_Format" : "Home_Welcome_Day_Format", username);
     }
 }

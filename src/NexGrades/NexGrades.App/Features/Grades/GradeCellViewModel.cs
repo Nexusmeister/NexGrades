@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Grading;
 
 namespace NexGrades.App.Features.Grades;
@@ -95,11 +96,11 @@ public sealed partial class GradeCellViewModel : ObservableObject, IGradeSheetEd
     /// </summary>
     public string Description => VisualState switch
     {
-        GradeCellVisualState.Error => "This grade is not saved. Enter a grade from 1+ to 6, or clear the cell.",
-        GradeCellVisualState.Exempt => "The student is exempt from this subject.",
-        GradeCellVisualState.NotEnrolled => "The student was not enrolled in the class on this date.",
-        GradeCellVisualState.AssessmentVoided => "This assessment is voided.",
-        GradeCellVisualState.Voided => "This grade is voided.",
+        GradeCellVisualState.Error => TextResources.Text("Grades_Cell_Error_Description"),
+        GradeCellVisualState.Exempt => TextResources.Text("Grades_Cell_Exempt_Description"),
+        GradeCellVisualState.NotEnrolled => TextResources.Text("Grades_Cell_NotEnrolled_Description"),
+        GradeCellVisualState.AssessmentVoided => TextResources.Text("Grades_Cell_AssessmentVoided_Description"),
+        GradeCellVisualState.Voided => TextResources.Text("Grades_Cell_Voided_Description"),
         _ => string.Empty,
     };
 

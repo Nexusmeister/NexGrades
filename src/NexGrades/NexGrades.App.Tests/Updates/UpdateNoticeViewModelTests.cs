@@ -13,7 +13,6 @@ namespace NexGrades.App.Tests.Updates;
 public class UpdateNoticeViewModelTests
 {
 
-    private static string Fmt(string format, string value) => format.Replace("{0}", value, StringComparison.Ordinal);
     private readonly FakeUpdateClient _client = new();
     private readonly FakeUserSettingsStore _store = new() { Current = new UserSettings { AutoCheckForUpdates = false } };
     private readonly FakeAppShutdown _shutdown = new();
@@ -50,7 +49,7 @@ public class UpdateNoticeViewModelTests
         await MakeReadyAsync();
 
         Assert.True(notice.IsOpen);
-        Assert.Equal(Fmt(UpdateNoticeViewModel.ReadyMessageFormat, "0.2.0"), notice.Message);
+        Assert.Equal("Version 0.2.0 will be installed when you close NexGrades.", notice.Message);
     }
 
     [Fact]

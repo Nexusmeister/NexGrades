@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Core_YearLock_Closed_Title" xml:space="preserve"><value>Abgeschlossenes Schuljahr</value></data>
+  <data name="Core_YearLock_Unlock" xml:space="preserve"><value>Schuljahr entsperren ...</value></data>
+  <data name="Core_YearLock_Unlock_Tooltip" xml:space="preserve"><value>Dieses Schuljahr vorübergehend entsperren, um Korrekturen vorzunehmen</value></data>
+  <data name="Core_YearLock_Unlock_A11y" xml:space="preserve"><value>Dieses Schuljahr entsperren</value></data>
+  <data name="Core_YearLock_Unlocked_Title" xml:space="preserve"><value>Abgeschlossenes Schuljahr, entsperrt</value></data>
+  <data name="Core_YearLock_Relock" xml:space="preserve"><value>Wieder sperren</value></data>
+  <data name="Core_YearLock_Relock_Tooltip" xml:space="preserve"><value>Dieses Schuljahr jetzt wieder sperren, sodass es nur lesbar ist</value></data>
+  <data name="Core_YearLock_Relock_A11y" xml:space="preserve"><value>Dieses Schuljahr wieder sperren</value></data>
+  <data name="Core_UnlockDialog_Unlock" xml:space="preserve"><value>Entsperren</value></data>
+  <data name="Core_UnlockDialog_Reason_Header" xml:space="preserve"><value>Grund</value></data>
+  <data name="Core_UnlockDialog_Reason_A11y" xml:space="preserve"><value>Grund für das Entsperren des Schuljahres</value></data>
+  <data name="Core_UnlockDialog_Reason_Placeholder" xml:space="preserve"><value>Warum muss dieses Schuljahr geändert werden?</value></data>
+  <data name="Core_UnlockDialog_Duration_Header" xml:space="preserve"><value>Entsperren für</value></data>
+  <data name="Core_UnlockDialog_Duration_A11y" xml:space="preserve"><value>Wie lange das Schuljahr entsperrt bleibt</value></data>
+  <data name="Core_UnlockDialog_EndDate_Header" xml:space="preserve"><value>Enddatum</value></data>
+  <data name="Core_UnlockDialog_EndDate_A11y" xml:space="preserve"><value>Datum, an dem die Entsperrung endet</value></data>
+  <data name="Core_DiscardChanges_Title" xml:space="preserve"><value>Änderungen verwerfen</value></data>
+  <data name="Core_DiscardChanges_Message" xml:space="preserve"><value>Sie haben nicht gespeicherte Änderungen auf dieser Seite. Möchten Sie die Seite verlassen und die Änderungen verwerfen?</value></data>
+  <data name="Core_YearLock_Locked_Message" xml:space="preserve"><value>Dieses Schuljahr ist abgeschlossen und nur lesbar. Entsperren Sie es, um Korrekturen vorzunehmen; jede Änderung wird im Änderungsprotokoll festgehalten.</value></data>
+  <data name="Core_YearLock_Unlocked_Message_Format" xml:space="preserve"><value>Dieses Schuljahr ist abgeschlossen, aber bis {0} entsperrt. Jede Änderung wird im Änderungsprotokoll festgehalten.</value><comment>{0} is the date and time the unlock ends.</comment></data>
+  <data name="Core_YearLock_ClosedOn_Format" xml:space="preserve"><value>Abgeschlossen am {0}</value><comment>{0} is the date the school year was closed.</comment></data>
+  <data name="Core_YearLock_Refresh_Failed" xml:space="preserve"><value>Der Status des Schuljahres konnte nicht aktualisiert werden.</value></data>
+  <data name="Core_YearLock_Unlock_Failed" xml:space="preserve"><value>Das Schuljahr konnte nicht entsperrt werden. Versuchen Sie es erneut.</value></data>
+  <data name="Core_YearLock_Unlock_StateFailed" xml:space="preserve"><value>Das Schuljahr konnte nicht entsperrt werden, oder sein Status konnte danach nicht gelesen werden. Kontrollieren Sie das Schuljahr und versuchen Sie es erneut.</value></data>
+  <data name="Core_YearLock_Unlock_Success_Format" xml:space="preserve"><value>{0} ist bis {1} entsperrt.</value><comment>{0} is the school year label; {1} is the date and time the unlock ends.</comment></data>
+  <data name="Core_YearLock_Relock_Failed" xml:space="preserve"><value>Das Schuljahr konnte nicht wieder gesperrt werden. Versuchen Sie es erneut.</value></data>
+  <data name="Core_YearLock_Relock_StateFailed" xml:space="preserve"><value>Das Schuljahr konnte nicht wieder gesperrt werden, oder sein Status konnte danach nicht gelesen werden. Kontrollieren Sie das Schuljahr und versuchen Sie es erneut.</value></data>
+  <data name="Core_YearLock_Relock_Success_Format" xml:space="preserve"><value>{0} ist wieder gesperrt.</value><comment>{0} is the school year label.</comment></data>
+  <data name="Core_YearLock_UnlockEnded_Title" xml:space="preserve"><value>Entsperrung beendet</value></data>
+  <data name="Core_YearLock_UnlockEnded_Message" xml:space="preserve"><value>Die Entsperrung eines abgeschlossenen Schuljahres ist beendet. Es ist wieder nur lesbar.</value></data>
+  <data name="Core_UnlockDialog_Title_Format" xml:space="preserve"><value>Schuljahr {0} entsperren</value><comment>{0} is the school year label.</comment></data>
+  <data name="Core_UnlockDialog_Duration_OneHour" xml:space="preserve"><value>1 Stunde</value></data>
+  <data name="Core_UnlockDialog_Duration_EndOfToday" xml:space="preserve"><value>Bis zum Ende des heutigen Tages</value></data>
+  <data name="Core_UnlockDialog_Duration_OneWeek" xml:space="preserve"><value>1 Woche</value></data>
+  <data name="Core_UnlockDialog_Duration_CustomDate" xml:space="preserve"><value>Bestimmtes Datum</value></data>
+  <data name="Core_UnlockDialog_Reason_Required" xml:space="preserve"><value>Geben Sie einen Grund für das Entsperren des Schuljahres ein.</value></data>
+  <data name="Core_UnlockDialog_Reason_TooLong_Format" xml:space="preserve"><value>Der Grund darf höchstens {0} Zeichen lang sein.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Core_UnlockDialog_EndDate_NotFuture" xml:space="preserve"><value>Wählen Sie ein Enddatum in der Zukunft.</value></data>
+  <data name="Core_UnlockDialog_EndDate_TooFar_Format" xml:space="preserve"><value>Wählen Sie ein Enddatum innerhalb der nächsten {0} Tage.</value><comment>{0} is the maximum number of days ahead.</comment></data>
+</root>

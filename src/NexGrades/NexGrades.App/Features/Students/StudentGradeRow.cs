@@ -1,5 +1,6 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Grading;
 
 namespace NexGrades.App.Features.Students;
@@ -73,7 +74,7 @@ public sealed class StudentGradeRow : ObservableObject
     public bool IsVoided => _isOwnVoided || IsAssessmentVoided;
 
     /// <summary>Tells when the grade was voided, or that its assessment is; <see langword="null"/> while it counts.</summary>
-    public string? VoidedText => _isOwnVoided ? _voidedText : IsAssessmentVoided ? "The assessment is voided." : null;
+    public string? VoidedText => _isOwnVoided ? _voidedText : IsAssessmentVoided ? TextResources.Text("Students_Grades_AssessmentVoided") : null;
 
     /// <summary>True when the grade can be edited: it is not voided and the student is not exempt.</summary>
     public bool CanEdit => !IsVoided && !IsExempt;
@@ -102,7 +103,7 @@ public sealed class StudentGradeRow : ObservableObject
     }
 
     private static string FormatVoided(DateTime voidedOn) =>
-        string.Format(CultureInfo.CurrentCulture, "Voided {0:g}", voidedOn);
+        TextResources.Format("Students_Grades_Voided_Format", voidedOn);
 
     private void RaiseStateChanged()
     {

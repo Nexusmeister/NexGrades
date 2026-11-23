@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Core;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.App.Storage;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
@@ -21,6 +22,7 @@ namespace NexGrades.App.Features.Settings;
 /// <param name="logger">Records a failure to open the log folder.</param>
 /// <param name="updates">The update section of the page.</param>
 /// <param name="appearance">The appearance section of the page.</param>
+/// <param name="language">The language section of the page.</param>
 public partial class SettingsViewModel(
     IFileSystemDialogService dialogService,
     ISnackbarService snackbarService,
@@ -28,13 +30,17 @@ public partial class SettingsViewModel(
     IFolderOpener folderOpener,
     ILogger<SettingsViewModel> logger,
     UpdateSettingsViewModel updates,
-    AppearanceSettingsViewModel appearance) : ViewModel
+    AppearanceSettingsViewModel appearance,
+    LanguageSettingsViewModel language) : ViewModel
 {
     /// <summary>The update section: version, update preferences, "Check for updates now" and "Restart now".</summary>
     public UpdateSettingsViewModel Updates { get; } = updates;
 
     /// <summary>The appearance section: the colour theme.</summary>
     public AppearanceSettingsViewModel Appearance { get; } = appearance;
+
+    /// <summary>The language section: the app language, which applies after a restart.</summary>
+    public LanguageSettingsViewModel Language { get; } = language;
 
     [ObservableProperty]
     private bool _openedFolderPathVisibility;
@@ -49,6 +55,7 @@ public partial class SettingsViewModel(
         await base.OnNavigatedToAsync(parameter);
         await Updates.LoadAsync();
         await Appearance.LoadAsync();
+        await Language.LoadAsync();
     }
 
     /// <summary>
@@ -66,8 +73,8 @@ public partial class SettingsViewModel(
         if (foldersSelected.Count > 1)
         {
             snackbarService.Show(
-                "Too many folders",
-                "Select a single folder.",
+                TextResources.Text("Settings_SaveLocation_TooMany_Title"),
+                TextResources.Text("Settings_SaveLocation_TooMany_Message"),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.FolderLightning20),
                 TimeSpan.FromSeconds(5));
@@ -77,8 +84,8 @@ public partial class SettingsViewModel(
         if (foldersSelected.Count == 0)
         {
             snackbarService.Show(
-                "Missing setting",
-                "Save location has to be selected. Rolling back to default save location in My Documents.",
+                TextResources.Text("Settings_SaveLocation_Missing_Title"),
+                TextResources.Text("Settings_SaveLocation_Missing_Message"),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.FolderLightning20),
                 TimeSpan.FromSeconds(15));
@@ -107,8 +114,8 @@ public partial class SettingsViewModel(
         {
             LogOpenLogFolderFailed();
             snackbarService.Show(
-                "Error",
-                "The log folder could not be opened.",
+                TextResources.Text("Common_Error"),
+                TextResources.Text("Settings_Logs_OpenFailed"),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.ErrorCircle24),
                 TimeSpan.FromSeconds(5));

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Students_Overview_Title" xml:space="preserve"><value>Schülerinnen und Schüler</value></data>
+  <data name="Students_Overview_Add" xml:space="preserve"><value>Schülerin / Schüler hinzufügen</value></data>
+  <data name="Students_Overview_Edit" xml:space="preserve"><value>Schülerin / Schüler bearbeiten</value></data>
+  <data name="Students_Overview_Empty" xml:space="preserve"><value>Noch keine Schülerinnen und Schüler vorhanden. Verwenden Sie „Schülerin / Schüler hinzufügen“, um einen Eintrag anzulegen.</value></data>
+  <data name="Students_Overview_Id_Header" xml:space="preserve"><value>Id</value></data>
+  <data name="Students_Overview_LastName_Header" xml:space="preserve"><value>Nachname</value></data>
+  <data name="Students_Overview_FirstName_Header" xml:space="preserve"><value>Vorname</value></data>
+  <data name="Students_Overview_Class_Header" xml:space="preserve"><value>Klasse</value></data>
+  <data name="Students_ExportDialog_Title" xml:space="preserve"><value>Notizen exportieren</value></data>
+  <data name="Students_ExportDialog_Export" xml:space="preserve"><value>Exportieren</value></data>
+  <data name="Students_ExportDialog_From_Header" xml:space="preserve"><value>Von</value></data>
+  <data name="Students_ExportDialog_From_A11y" xml:space="preserve"><value>Von: erster Tag der exportierten Notizen</value></data>
+  <data name="Students_ExportDialog_To_Header" xml:space="preserve"><value>Bis</value></data>
+  <data name="Students_ExportDialog_To_A11y" xml:space="preserve"><value>Bis: letzter Tag der exportierten Notizen</value></data>
+  <data name="Students_ExportDialog_IncludeArchived" xml:space="preserve"><value>Archivierte Notizen einbeziehen</value></data>
+  <data name="Students_StudentPage_Title" xml:space="preserve"><value>Schülerin / Schüler</value></data>
+  <data name="Students_StudentPage_FirstName_Header" xml:space="preserve"><value>Vorname</value></data>
+  <data name="Students_StudentPage_LastName_Header" xml:space="preserve"><value>Nachname</value></data>
+  <data name="Students_StudentPage_Class_Header" xml:space="preserve"><value>Klasse</value></data>
+  <data name="Students_StudentPage_SchoolYear_Header" xml:space="preserve"><value>Schuljahr</value></data>
+  <data name="Students_StudentPage_ShowVoided" xml:space="preserve"><value>Gestrichene Noten anzeigen</value></data>
+  <data name="Students_StudentPage_ShowVoided_Tooltip" xml:space="preserve"><value>Gestrichene Noten ebenfalls anzeigen, damit sie wiederhergestellt werden können</value></data>
+  <data name="Students_StudentPage_ShowArchived" xml:space="preserve"><value>Archivierte Notizen anzeigen</value></data>
+  <data name="Students_StudentPage_Grades_Tab" xml:space="preserve"><value>Noten</value></data>
+  <data name="Students_StudentPage_Notes_Tab" xml:space="preserve"><value>Notizen</value></data>
+  <data name="Students_StudentPage_Assessment_Header" xml:space="preserve"><value>Leistungsnachweis</value></data>
+  <data name="Students_StudentPage_Grade_Header" xml:space="preserve"><value>Note</value></data>
+  <data name="Students_StudentPage_Grade_Placeholder" xml:space="preserve"><value>Zum Beispiel 2-</value></data>
+  <data name="Students_StudentPage_Date_Header" xml:space="preserve"><value>Datum</value></data>
+  <data name="Students_StudentPage_Label_Header" xml:space="preserve"><value>Bezeichnung</value></data>
+  <data name="Students_StudentPage_Label_Placeholder" xml:space="preserve"><value>Optional, zum Beispiel Mündliche Mitarbeit</value></data>
+  <data name="Students_StudentPage_Comment_Header" xml:space="preserve"><value>Kommentar</value></data>
+  <data name="Students_StudentPage_Comment_Placeholder" xml:space="preserve"><value>Optional</value></data>
+  <data name="Students_StudentPage_SaveGrade" xml:space="preserve"><value>Note speichern</value></data>
+  <data name="Students_StudentPage_CancelGrade_Tooltip" xml:space="preserve"><value>Eingabe verwerfen und Editor schließen</value></data>
+  <data name="Students_StudentPage_Grades_Loading_A11y" xml:space="preserve"><value>Noten werden geladen</value></data>
+  <data name="Students_StudentPage_Grades_List_A11y" xml:space="preserve"><value>Noten nach Fach</value></data>
+  <data name="Students_StudentPage_Exempt" xml:space="preserve"><value>Befreit</value></data>
+  <data name="Students_StudentPage_FinalGrade_Format" xml:space="preserve"><value>Zeugnisnote: {0}</value><comment>{0} is the final grade token or value.</comment></data>
+  <data name="Students_StudentPage_Average_Format" xml:space="preserve"><value>Durchschnitt: {0}</value><comment>{0} is the average, already formatted for the current culture.</comment></data>
+  <data name="Students_StudentPage_AddGrade" xml:space="preserve"><value>Note hinzufügen</value></data>
+  <data name="Students_StudentPage_AddGrade_Tooltip" xml:space="preserve"><value>Note zu diesem Bewertungsbereich hinzufügen</value></data>
+  <data name="Students_StudentPage_NoGrades" xml:space="preserve"><value>Keine Noten</value></data>
+  <data name="Students_StudentPage_EditGrade_Tooltip" xml:space="preserve"><value>Note bearbeiten</value></data>
+  <data name="Students_StudentPage_VoidGrade_Tooltip" xml:space="preserve"><value>Note streichen</value></data>
+  <data name="Students_StudentPage_RestoreGrade_Tooltip" xml:space="preserve"><value>Note wiederherstellen</value></data>
+  <data name="Students_StudentPage_ExportNotes" xml:space="preserve"><value>Notizen exportieren ...</value></data>
+  <data name="Students_StudentPage_ExportNotes_Tooltip" xml:space="preserve"><value>Notizen dieser Schülerin / dieses Schülers in eine Excel-Datei exportieren</value></data>
+  <data name="Students_StudentPage_ExportNotes_A11y" xml:space="preserve"><value>Notizen exportieren</value></data>
+  <data name="Students_StudentPage_Note_Placeholder" xml:space="preserve"><value>Notiz zu dieser Schülerin / diesem Schüler schreiben</value></data>
+  <data name="Students_StudentPage_AddNote" xml:space="preserve"><value>Notiz hinzufügen</value></data>
+  <data name="Students_StudentPage_SaveNote" xml:space="preserve"><value>Notiz speichern</value></data>
+  <data name="Students_StudentPage_CancelNote_Tooltip" xml:space="preserve"><value>Text verwerfen und Bearbeitung beenden</value></data>
+  <data name="Students_StudentPage_EditNote_Tooltip" xml:space="preserve"><value>Notiz bearbeiten</value></data>
+  <data name="Students_StudentPage_ArchiveNote_Tooltip" xml:space="preserve"><value>Notiz archivieren</value></data>
+  <data name="Students_StudentPage_RestoreNote_Tooltip" xml:space="preserve"><value>Notiz wiederherstellen</value></data>
+  <data name="Students_Overview_NoSelection_Title" xml:space="preserve"><value>Keine Schülerin / kein Schüler ausgewählt</value></data>
+  <data name="Students_Overview_NoSelection_Message" xml:space="preserve"><value>Wählen Sie eine Schülerin / einen Schüler zum Bearbeiten aus.</value></data>
+  <data name="Students_ExportDialog_Dates_Required" xml:space="preserve"><value>Geben Sie ein Startdatum und ein Enddatum ein.</value></data>
+  <data name="Students_ExportDialog_End_TooFar" xml:space="preserve"><value>Das Enddatum liegt zu weit in der Zukunft.</value></data>
+  <data name="Students_ExportDialog_Range_Reversed" xml:space="preserve"><value>Das Startdatum darf nicht nach dem Enddatum liegen.</value></data>
+  <data name="Students_StudentPage_Add_Title" xml:space="preserve"><value>Schülerin / Schüler hinzufügen</value></data>
+  <data name="Students_StudentPage_Edit_Title" xml:space="preserve"><value>Schülerin / Schüler bearbeiten</value></data>
+  <data name="Students_StudentPage_Name_Required" xml:space="preserve"><value>Geben Sie einen Vornamen und einen Nachnamen ein.</value></data>
+  <data name="Students_StudentPage_FirstName_TooLong_Format" xml:space="preserve"><value>Der Vorname darf höchstens {0} Zeichen lang sein.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Students_StudentPage_LastName_TooLong_Format" xml:space="preserve"><value>Der Nachname darf höchstens {0} Zeichen lang sein.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Students_StudentPage_NoClass_Available" xml:space="preserve"><value>Im aktiven Schuljahr gibt es keine Klasse, der die Schülerin / der Schüler zugeordnet werden kann.</value></data>
+  <data name="Students_StudentPage_Class_Required" xml:space="preserve"><value>Wählen Sie eine Klasse für die Schülerin / den Schüler aus.</value></data>
+  <data name="Students_StudentPage_Notes_Empty_NotEnrolled" xml:space="preserve"><value>Diese Schülerin / dieser Schüler ist noch keinem Schuljahr zugeordnet, daher gibt es keine Notizen. Notizen lassen sich hinzufügen, sobald die Zuordnung zu einer Klasse besteht.</value></data>
+  <data name="Students_StudentPage_Notes_Empty_Writable" xml:space="preserve"><value>Für dieses Schuljahr gibt es noch keine Notizen. Schreiben Sie oben eine Notiz, um eine hinzuzufügen.</value></data>
+  <data name="Students_StudentPage_Notes_Empty_ReadOnly" xml:space="preserve"><value>Für dieses Schuljahr gibt es keine Notizen.</value></data>
+  <data name="Students_StudentPage_NoteEditor_New" xml:space="preserve"><value>Neue Notiz</value></data>
+  <data name="Students_StudentPage_NoteEditor_Edit" xml:space="preserve"><value>Notiz bearbeiten</value></data>
+  <data name="Students_StudentPage_Save_MissingClass_Title" xml:space="preserve"><value>Klasse fehlt</value></data>
+  <data name="Students_StudentPage_Save_MissingClass_Message" xml:space="preserve"><value>Wählen Sie vor dem Speichern eine Klasse für die Schülerin / den Schüler aus.</value></data>
+  <data name="Students_StudentPage_Create_Failed" xml:space="preserve"><value>Die Schülerin / der Schüler konnte nicht gespeichert werden. Prüfen Sie die ausgewählte Klasse, und versuchen Sie es erneut.</value></data>
+  <data name="Students_StudentPage_Save_Failed" xml:space="preserve"><value>Die Schülerin / der Schüler konnte nicht gespeichert werden.</value></data>
+  <data name="Students_StudentPage_Save_Success" xml:space="preserve"><value>Die Schülerin / der Schüler wurde gespeichert.</value></data>
+  <data name="Students_StudentPage_Leave_Both" xml:space="preserve"><value>Die Notiz und die Note, die Sie gerade eingeben, wurden nicht gespeichert. Möchten Sie die Schülerin / den Schüler speichern und beide verwerfen?</value></data>
+  <data name="Students_StudentPage_Leave_NoteOnly" xml:space="preserve"><value>Die Notiz, die Sie gerade schreiben, wurde nicht gespeichert. Möchten Sie die Schülerin / den Schüler speichern und die Notiz verwerfen?</value></data>
+  <data name="Students_StudentPage_Leave_GradeOnly" xml:space="preserve"><value>Die Note, die Sie gerade eingeben, wurde nicht gespeichert. Möchten Sie die Schülerin / den Schüler speichern und die Note verwerfen?</value></data>
+  <data name="Students_StudentPage_Export_Failed" xml:space="preserve"><value>Die Notizen konnten nicht exportiert werden. Prüfen Sie, ob die Schülerin / der Schüler noch vorhanden ist, und versuchen Sie es erneut.</value></data>
+  <data name="Students_StudentPage_Export_SaveFailed" xml:space="preserve"><value>Der Export konnte nicht gespeichert werden. Prüfen Sie, ob die Datei geöffnet ist und ob Sie in den Ordner schreiben dürfen.</value></data>
+  <data name="Students_StudentPage_Export_NoNotes_Title" xml:space="preserve"><value>Keine Notizen</value></data>
+  <data name="Students_StudentPage_Export_NoNotes_Message" xml:space="preserve"><value>Keine Notizen in diesem Zeitraum</value></data>
+  <data name="Students_StudentPage_Export_Success_Format" xml:space="preserve"><value>{0} wurde exportiert.</value><comment>{0} is the file name of the exported workbook.</comment></data>
+  <data name="Students_StudentPage_Note_Add_Success" xml:space="preserve"><value>Die Notiz wurde hinzugefügt.</value></data>
+  <data name="Students_StudentPage_Note_Save_Success" xml:space="preserve"><value>Die Notiz wurde gespeichert.</value></data>
+  <data name="Students_StudentPage_Note_Save_Failed" xml:space="preserve"><value>Die Notiz konnte nicht gespeichert werden.</value></data>
+  <data name="Students_StudentPage_Note_Save_ClosedYear" xml:space="preserve"><value>Die Notiz konnte nicht gespeichert werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Students_StudentPage_Note_Archive_Title" xml:space="preserve"><value>Notiz archivieren</value></data>
+  <data name="Students_StudentPage_Note_Archive_Message" xml:space="preserve"><value>Möchten Sie diese Notiz archivieren? Archivierte Notizen werden in der Liste ausgeblendet. Sie können sie jederzeit anzeigen und wiederherstellen.</value></data>
+  <data name="Students_StudentPage_Note_Archive_Confirm" xml:space="preserve"><value>Archivieren</value></data>
+  <data name="Students_StudentPage_Note_Archive_Success" xml:space="preserve"><value>Die Notiz wurde archiviert.</value></data>
+  <data name="Students_StudentPage_Note_Archive_Failed" xml:space="preserve"><value>Die Notiz konnte nicht archiviert werden.</value></data>
+  <data name="Students_StudentPage_Note_Archive_ClosedYear" xml:space="preserve"><value>Die Notiz konnte nicht archiviert werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Students_StudentPage_Note_Restore_Success" xml:space="preserve"><value>Die Notiz wurde wiederhergestellt.</value></data>
+  <data name="Students_StudentPage_Note_Restore_Failed" xml:space="preserve"><value>Die Notiz konnte nicht wiederhergestellt werden.</value></data>
+  <data name="Students_StudentPage_Note_Restore_ClosedYear" xml:space="preserve"><value>Die Notiz konnte nicht wiederhergestellt werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Students_StudentPage_Notes_LoadFailed" xml:space="preserve"><value>Die Notizen konnten nicht geladen werden.</value></data>
+  <data name="Students_StudentPage_Note_Edited_Format" xml:space="preserve"><value>Zuletzt bearbeitet: {0}</value><comment>{0} is the date and time of the last edit, already formatted for the current culture.</comment></data>
+  <data name="Students_StudentPage_Note_Archived_Format" xml:space="preserve"><value>Archiviert: {0}</value><comment>{0} is the date and time the note was archived, already formatted for the current culture.</comment></data>
+  <data name="Students_Grades_LoadFailed" xml:space="preserve"><value>Die Noten konnten nicht geladen werden.</value></data>
+  <data name="Students_Grades_Empty_NotEnrolled" xml:space="preserve"><value>Diese Schülerin / dieser Schüler ist noch keinem Schuljahr zugeordnet, daher gibt es keine Noten.</value></data>
+  <data name="Students_Grades_Empty_NoSubjects" xml:space="preserve"><value>Diese Schülerin / dieser Schüler hat in diesem Schuljahr keine Fächer.</value></data>
+  <data name="Students_Grades_NoAssessment" xml:space="preserve"><value>Kein Leistungsnachweis (einzelne Note)</value></data>
+  <data name="Students_Grades_Grade_Invalid" xml:space="preserve"><value>Geben Sie eine Note von 1+ bis 6 ein, zum Beispiel 2-.</value></data>
+  <data name="Students_Grades_Date_Required" xml:space="preserve"><value>Wählen Sie ein Datum für die Note aus.</value></data>
+  <data name="Students_Grades_Label_TooLong_Format" xml:space="preserve"><value>Die Bezeichnung darf höchstens {0} Zeichen lang sein.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Students_Grades_Comment_TooLong_Format" xml:space="preserve"><value>Der Kommentar darf höchstens {0} Zeichen lang sein.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Students_Grades_Editor_New_Title" xml:space="preserve"><value>Neue Note</value></data>
+  <data name="Students_Grades_Editor_Edit_Title" xml:space="preserve"><value>Note bearbeiten</value></data>
+  <data name="Students_Grades_Save_Success" xml:space="preserve"><value>Die Note wurde gespeichert.</value></data>
+  <data name="Students_Grades_Save_Failed" xml:space="preserve"><value>Die Note konnte nicht gespeichert werden. Prüfen Sie die Note und das Datum, und versuchen Sie es erneut.</value></data>
+  <data name="Students_Grades_Save_ClosedYear" xml:space="preserve"><value>Die Note konnte nicht gespeichert werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Students_Grades_Void_Success" xml:space="preserve"><value>Die Note wurde gestrichen.</value></data>
+  <data name="Students_Grades_Void_Failed" xml:space="preserve"><value>Die Note konnte nicht gestrichen werden.</value></data>
+  <data name="Students_Grades_Void_ClosedYear" xml:space="preserve"><value>Die Note konnte nicht gestrichen werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Students_Grades_Restore_Success" xml:space="preserve"><value>Die Note wurde wiederhergestellt.</value></data>
+  <data name="Students_Grades_Restore_Failed" xml:space="preserve"><value>Die Note konnte nicht wiederhergestellt werden. Der zugehörige Leistungsnachweis wurde möglicherweise gestrichen oder erneut benotet.</value></data>
+  <data name="Students_Grades_Restore_ClosedYear" xml:space="preserve"><value>Die Note konnte nicht wiederhergestellt werden, weil das Schuljahr abgeschlossen ist.</value></data>
+  <data name="Students_Grades_Stale" xml:space="preserve"><value>Diese Note hat sich zwischenzeitlich geändert, die Liste wurde aktualisiert.</value></data>
+  <data name="Students_Grades_Weight_Format" xml:space="preserve"><value>Gewichtung {0:0.##} %</value><comment>{0} is the grade category's weight in percent, formatted for the current culture.</comment></data>
+  <data name="Students_Grades_FinalGrade_Override_Format" xml:space="preserve"><value>Zeugnisnote: {0} (von der Lehrkraft festgelegt, Vorschlag {1})</value><comment>{0} is the final grade, {1} is the proposed final grade.</comment></data>
+  <data name="Students_Grades_FinalGrade_OverrideNoProposal_Format" xml:space="preserve"><value>Zeugnisnote: {0} (von der Lehrkraft festgelegt, kein Vorschlag)</value><comment>{0} is the final grade.</comment></data>
+  <data name="Students_Grades_Voided_Format" xml:space="preserve"><value>Gestrichen am {0:g}</value><comment>{0} is the date and time the grade was voided.</comment></data>
+  <data name="Students_Grades_AssessmentVoided" xml:space="preserve"><value>Der Leistungsnachweis ist gestrichen.</value></data>
+</root>

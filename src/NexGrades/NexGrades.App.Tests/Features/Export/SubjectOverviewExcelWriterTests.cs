@@ -32,10 +32,10 @@ public class SubjectOverviewExcelWriterTests
             ],
             leftOn);
 
-    private static XLWorkbook Write(SubjectOverviewTable table, CultureInfo? culture = null)
+    private static XLWorkbook Write(SubjectOverviewTable table, CultureInfo? culture = null, CultureInfo? formatCulture = null)
     {
         using var stream = new MemoryStream();
-        new SubjectOverviewExcelWriter().Write(table, stream, culture ?? EnUs);
+        new SubjectOverviewExcelWriter().Write(table, stream, culture ?? EnUs, formatCulture ?? culture ?? EnUs);
         stream.Position = 0;
         return new XLWorkbook(stream);
     }
@@ -139,7 +139,19 @@ public class SubjectOverviewExcelWriterTests
         var enText = en.Worksheet(1).Cell(2, 1).GetString();
         var deText = de.Worksheet(1).Cell(2, 1).GetString();
         Assert.NotEqual(enText, deText);
-        Assert.Equal("Alpha, Test (left on 01.12.2025)", deText);
+        Assert.Equal("Alpha, Test (ausgetreten am 01.12.2025)", deText);
+    }
+
+    [Fact]
+    public void Write_FormatsLeftMarkerDate_ByFormatCulture_NotByUiCulture()
+    {
+        var table = TableOf(RowOf("Alpha, Test", "2", 2.0m, new DateOnly(2025, 12, 1)));
+
+        using var enGb = Write(table, EnUs, CultureInfo.GetCultureInfo("en-GB"));
+        using var deCh = Write(table, DeDe, CultureInfo.GetCultureInfo("de-CH"));
+
+        Assert.Equal("Alpha, Test (left on 01/12/2025)", enGb.Worksheet(1).Cell(2, 1).GetString());
+        Assert.Equal("Alpha, Test (ausgetreten am 01.12.2025)", deCh.Worksheet(1).Cell(2, 1).GetString());
     }
 
     [Fact]
@@ -148,6 +160,29 @@ public class SubjectOverviewExcelWriterTests
         using var workbook = Write(TableOf(RowOf("Alpha, Test", "2", 2.0m)));
 
         Assert.Equal("Alpha, Test", workbook.Worksheet(1).Cell(2, 1).GetString());
+    }
+
+    [Fact]
+    public void Write_WritesGermanHeadersAndMarker_ForGermanUiCulture()
+    {
+        using var workbook = Write(FinalGradeTable(2.5m, 3m, true), DeDe);
+
+        var sheet = workbook.Worksheet(1);
+        Assert.Equal("Schülerin / Schüler", sheet.Cell(1, 1).GetString());
+        Assert.Equal("Fachdurchschnitt", sheet.Cell(1, 2).GetString());
+        Assert.Equal("Zeugnisnote", sheet.Cell(1, 3).GetString());
+        Assert.Equal("Zeugnisnote von der Lehrkraft festgelegt", sheet.Cell(1, 4).GetString());
+        Assert.Equal("Ja", sheet.Cell(2, 4).GetString());
+    }
+
+    [Fact]
+    public void Write_WritesGermanBucketAverageHeader_ForGermanUiCulture()
+    {
+        using var workbook = Write(TableOf(RowOf("Alpha, Test", "2", 2.0m)), DeDe);
+
+        var sheet = workbook.Worksheet(1);
+        Assert.Equal("Written", sheet.Cell(1, 2).GetString());
+        Assert.Equal("Durchschnitt Written", sheet.Cell(1, 3).GetString());
     }
 
     // ---------- Final grade ----------

@@ -189,6 +189,29 @@ public class GradeSheetColumnBuilderTests
     }
 
     [Fact]
+    public void Build_WritesGermanHeaders_ForGermanUiCulture()
+    {
+        var previous = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("de-DE");
+        try
+        {
+            var sheet = CreateSheet([CreateBucket(10, "Tests", 0, CreateAssessment(1, "Test 1"))], CreateStudent(1));
+
+            var columns = BuildIn("de-DE", sheet);
+
+            Assert.Equal("Schülerin / Schüler", columns[0].Header);
+            Assert.Equal("Tests: Durchschnitt", columns.Single(c => c.Kind == GradeSheetColumnKind.BucketAverage).Header);
+            Assert.Equal("Durchschnitt", columns.Single(c => c.Kind == GradeSheetColumnKind.SubjectAverage).Header);
+            Assert.Equal("Vorschlag", columns.Single(c => c.Kind == GradeSheetColumnKind.ProposedFinalGrade).Header);
+            Assert.Equal("Zeugnisnote", columns[^1].Header);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = previous;
+        }
+    }
+
+    [Fact]
     public void Build_MakesFinalGradeColumnEditable_AndProposalColumnReadOnly()
     {
         var columns = BuildIn("en-US", CreateSheet([], CreateStudent(1)));

@@ -1,7 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Text;
 using ClosedXML.Excel;
+using NexGrades.App.Localization;
 using NexGrades.Domain.Export;
 
 namespace NexGrades.App.Features.Export;
@@ -13,17 +14,6 @@ namespace NexGrades.App.Features.Export;
 /// </summary>
 public sealed class NoteExcelWriter
 {
-    private const string SheetName = "Notes";
-    private const string StudentLabel = "Student";
-    private const string RangeLabel = "Date range";
-    private const string ExportedLabel = "Exported on";
-    private const string DateHeader = "Date";
-    private const string SchoolYearHeader = "School year";
-    private const string ClassHeader = "Class";
-    private const string CategoryHeader = "Category";
-    private const string NoteHeader = "Note";
-    private const string LastEditedHeader = "Last edited";
-    private const string ArchivedHeader = "Archived on";
     private const string TextNumberFormat = "@";
 
     // Excel's built-in, locale-aware formats: 14 is the short date, 22 the short date with time.
@@ -33,26 +23,21 @@ public sealed class NoteExcelWriter
     private const int HeaderRow = 5;
     private const int NoteColumn = 5;
 
-    private readonly CompositeFormat _studentFormat = CompositeFormat.Parse("{0}, {1}");
-
     /// <summary>Writes the workbook for <paramref name="table"/> to <paramref name="output"/>.</summary>
     /// <param name="table">The table to write.</param>
     /// <param name="output">The stream that receives the .xlsx content.</param>
-    /// <param name="uiCulture">The culture for the student name format.</param>
+    /// <param name="uiCulture">The culture for the language of sheet name, labels and headers.</param>
+    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Resolved from DI as an instance, like the other exporters' collaborators.")]
     public void Write(NoteExportTable table, Stream output, CultureInfo uiCulture)
     {
         ArgumentNullException.ThrowIfNull(table);
 
         using var workbook = new XLWorkbook();
-        var sheet = workbook.Worksheets.Add(SheetName);
+        var sheet = workbook.Worksheets.Add(TextResources.Get("Export_Notes_SheetName", uiCulture));
 
         WriteHeaderBlock(sheet, table, uiCulture);
 
-        var headers = new List<string> { DateHeader, SchoolYearHeader, ClassHeader, CategoryHeader, NoteHeader, LastEditedHeader };
-        if (table.IncludeArchived)
-        {
-            headers.Add(ArchivedHeader);
-        }
+        var headers = HeadersFor(table, uiCulture);
 
         for (var c = 0; c < headers.Count; c++)
         {
@@ -99,16 +84,35 @@ public sealed class NoteExcelWriter
         workbook.SaveAs(output);
     }
 
-    private void WriteHeaderBlock(IXLWorksheet sheet, NoteExportTable table, CultureInfo uiCulture)
+    private static List<string> HeadersFor(NoteExportTable table, CultureInfo uiCulture)
     {
-        SetLabel(sheet.Cell(1, 1), StudentLabel);
-        SetText(sheet.Cell(1, 2), string.Format(uiCulture, _studentFormat, table.LastName, table.FirstName));
+        var headers = new List<string>
+        {
+            TextResources.Get("Export_Notes_Date_Header", uiCulture),
+            TextResources.Get("Export_Notes_SchoolYear_Header", uiCulture),
+            TextResources.Get("Export_Notes_Class_Header", uiCulture),
+            TextResources.Get("Export_Notes_Category_Header", uiCulture),
+            TextResources.Get("Export_Notes_Note_Header", uiCulture),
+            TextResources.Get("Export_Notes_LastEdited_Header", uiCulture),
+        };
+        if (table.IncludeArchived)
+        {
+            headers.Add(TextResources.Get("Export_Notes_Archived_Header", uiCulture));
+        }
 
-        SetLabel(sheet.Cell(2, 1), RangeLabel);
+        return headers;
+    }
+
+    private static void WriteHeaderBlock(IXLWorksheet sheet, NoteExportTable table, CultureInfo uiCulture)
+    {
+        SetLabel(sheet.Cell(1, 1), TextResources.Get("Export_Notes_Student_Label", uiCulture));
+        SetText(sheet.Cell(1, 2), string.Format(CultureInfo.InvariantCulture, "{0}, {1}", table.LastName, table.FirstName));
+
+        SetLabel(sheet.Cell(2, 1), TextResources.Get("Export_Notes_Range_Label", uiCulture));
         SetDate(sheet.Cell(2, 2), table.From.ToDateTime(TimeOnly.MinValue));
         SetDate(sheet.Cell(2, 3), table.To.ToDateTime(TimeOnly.MinValue));
 
-        SetLabel(sheet.Cell(3, 1), ExportedLabel);
+        SetLabel(sheet.Cell(3, 1), TextResources.Get("Export_Notes_Exported_Label", uiCulture));
         SetDate(sheet.Cell(3, 2), table.ExportedOn.Date);
     }
 

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Core_YearLock_Closed_Title" xml:space="preserve"><value>Closed school year</value></data>
+  <data name="Core_YearLock_Unlock" xml:space="preserve"><value>Unlock year…</value></data>
+  <data name="Core_YearLock_Unlock_Tooltip" xml:space="preserve"><value>Unlock this school year temporarily to make corrections</value></data>
+  <data name="Core_YearLock_Unlock_A11y" xml:space="preserve"><value>Unlock this school year</value></data>
+  <data name="Core_YearLock_Unlocked_Title" xml:space="preserve"><value>Closed school year, unlocked</value></data>
+  <data name="Core_YearLock_Relock" xml:space="preserve"><value>Lock again</value></data>
+  <data name="Core_YearLock_Relock_Tooltip" xml:space="preserve"><value>Make this school year read-only again now</value></data>
+  <data name="Core_YearLock_Relock_A11y" xml:space="preserve"><value>Lock this school year again</value></data>
+  <data name="Core_UnlockDialog_Unlock" xml:space="preserve"><value>Unlock</value></data>
+  <data name="Core_UnlockDialog_Reason_Header" xml:space="preserve"><value>Reason</value></data>
+  <data name="Core_UnlockDialog_Reason_A11y" xml:space="preserve"><value>Reason for unlocking the school year</value></data>
+  <data name="Core_UnlockDialog_Reason_Placeholder" xml:space="preserve"><value>Why does this school year need to be changed?</value></data>
+  <data name="Core_UnlockDialog_Duration_Header" xml:space="preserve"><value>Unlock for</value></data>
+  <data name="Core_UnlockDialog_Duration_A11y" xml:space="preserve"><value>How long to unlock the school year</value></data>
+  <data name="Core_UnlockDialog_EndDate_Header" xml:space="preserve"><value>End date</value></data>
+  <data name="Core_UnlockDialog_EndDate_A11y" xml:space="preserve"><value>Date the unlock ends</value></data>
+  <data name="Core_DiscardChanges_Title" xml:space="preserve"><value>Discard changes</value></data>
+  <data name="Core_DiscardChanges_Message" xml:space="preserve"><value>You have unsaved changes on this page. Leave the page and discard them?</value></data>
+  <data name="Core_YearLock_Locked_Message" xml:space="preserve"><value>This school year is closed and read-only. Unlock it to make corrections; every change is recorded in the audit log.</value></data>
+  <data name="Core_YearLock_Unlocked_Message_Format" xml:space="preserve"><value>This school year is closed but unlocked until {0}. Every change is recorded in the audit log.</value><comment>{0} is the date and time the unlock ends.</comment></data>
+  <data name="Core_YearLock_ClosedOn_Format" xml:space="preserve"><value>Closed on {0}</value><comment>{0} is the date the school year was closed.</comment></data>
+  <data name="Core_YearLock_Refresh_Failed" xml:space="preserve"><value>The school year state could not be refreshed.</value></data>
+  <data name="Core_YearLock_Unlock_Failed" xml:space="preserve"><value>The school year could not be unlocked. Try again.</value></data>
+  <data name="Core_YearLock_Unlock_StateFailed" xml:space="preserve"><value>The school year could not be unlocked, or its state could not be read afterwards. Check the school year and try again.</value></data>
+  <data name="Core_YearLock_Unlock_Success_Format" xml:space="preserve"><value>{0} is unlocked until {1}.</value><comment>{0} is the school year label; {1} is the date and time the unlock ends.</comment></data>
+  <data name="Core_YearLock_Relock_Failed" xml:space="preserve"><value>The school year could not be locked again. Try again.</value></data>
+  <data name="Core_YearLock_Relock_StateFailed" xml:space="preserve"><value>The school year could not be locked again, or its state could not be read afterwards. Check the school year and try again.</value></data>
+  <data name="Core_YearLock_Relock_Success_Format" xml:space="preserve"><value>{0} is locked again.</value><comment>{0} is the school year label.</comment></data>
+  <data name="Core_YearLock_UnlockEnded_Title" xml:space="preserve"><value>Unlock ended</value></data>
+  <data name="Core_YearLock_UnlockEnded_Message" xml:space="preserve"><value>The unlock of a closed school year has ended. It is read-only again.</value></data>
+  <data name="Core_UnlockDialog_Title_Format" xml:space="preserve"><value>Unlock school year {0}</value><comment>{0} is the school year label.</comment></data>
+  <data name="Core_UnlockDialog_Duration_OneHour" xml:space="preserve"><value>1 hour</value></data>
+  <data name="Core_UnlockDialog_Duration_EndOfToday" xml:space="preserve"><value>Until the end of today</value></data>
+  <data name="Core_UnlockDialog_Duration_OneWeek" xml:space="preserve"><value>1 week</value></data>
+  <data name="Core_UnlockDialog_Duration_CustomDate" xml:space="preserve"><value>Custom date</value></data>
+  <data name="Core_UnlockDialog_Reason_Required" xml:space="preserve"><value>Enter a reason for unlocking the year.</value></data>
+  <data name="Core_UnlockDialog_Reason_TooLong_Format" xml:space="preserve"><value>The reason can be at most {0} characters.</value><comment>{0} is the maximum number of characters.</comment></data>
+  <data name="Core_UnlockDialog_EndDate_NotFuture" xml:space="preserve"><value>Choose an end date that is in the future.</value></data>
+  <data name="Core_UnlockDialog_EndDate_TooFar_Format" xml:space="preserve"><value>Choose an end date within the next {0} days.</value><comment>{0} is the maximum number of days ahead.</comment></data>
+</root>

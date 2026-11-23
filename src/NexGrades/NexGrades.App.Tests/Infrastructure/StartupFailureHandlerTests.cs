@@ -1,5 +1,7 @@
+using System.Resources;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Infrastructure;
+using NexGrades.App.Localization;
 using NexGrades.App.Tests.TestSupport;
 
 namespace NexGrades.App.Tests.Infrastructure;
@@ -128,7 +130,7 @@ public sealed class StartupFailureHandlerTests
         harness.Handler.Handle(_failure, () => null, () => null, () => logDirectory);
 
         var message = Assert.Single(harness.Dialog.Messages);
-        Assert.Equal(StartupFailureHandler.MessageWithoutLogFolder, message);
+        Assert.Equal(TextResources.Text("Infrastructure_Startup_Failed"), message);
         Assert.DoesNotContain(SecretText, message, StringComparison.Ordinal);
     }
 
@@ -144,7 +146,7 @@ public sealed class StartupFailureHandlerTests
             () => throw new InvalidOperationException("no paths")));
 
         Assert.Null(ex);
-        Assert.Equal([StartupFailureHandler.MessageWithoutLogFolder], harness.Dialog.Messages);
+        Assert.Equal([TextResources.Text("Infrastructure_Startup_Failed")], harness.Dialog.Messages);
         Assert.Equal([1], harness.ExitCodes);
     }
 
@@ -179,6 +181,50 @@ public sealed class StartupFailureHandlerTests
         Assert.Null(ex);
         Assert.Single(harness.Dialog.Messages);
         Assert.Equal([1], harness.ExitCodes);
+    }
+
+    public static TheoryData<Exception> LookupFailures =>
+    [
+        new InvalidOperationException("x"),
+        new MissingManifestResourceException("x"),
+        new MissingSatelliteAssemblyException("x"),
+        new FormatException("x"),
+    ];
+
+    [Theory]
+    [MemberData(nameof(LookupFailures))]
+    public void BuildMessageOrFallback_ReturnsFallback_WhenBuildThrowsLookupFailure(Exception failure)
+    {
+        var message = StartupFailureHandler.BuildMessageOrFallback(_failure, "logs", (_, _) => throw failure);
+
+        Assert.Equal(StartupFailureHandler.FallbackMessage, message);
+    }
+
+    [Fact]
+    public void BuildMessageOrFallback_ReturnsBuiltText_WhenBuildSucceeds()
+    {
+        var message = StartupFailureHandler.BuildMessageOrFallback(_failure, "logs", (_, dir) => "built " + dir);
+
+        Assert.Equal("built logs", message);
+    }
+
+    [Fact]
+    public void BuildMessageOrFallback_Propagates_WhenBuildThrowsOtherException()
+    {
+        Assert.Throws<NotSupportedException>(() =>
+            StartupFailureHandler.BuildMessageOrFallback(_failure, "logs", (_, _) => throw new NotSupportedException()));
+    }
+
+    [Fact]
+    public void FallbackMessage_HasNoPlaceholderOrPath()
+    {
+        var text = StartupFailureHandler.FallbackMessage;
+
+        Assert.False(string.IsNullOrWhiteSpace(text));
+        Assert.DoesNotContain("{", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("}", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("\\", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("/", text, StringComparison.Ordinal);
     }
 
     private sealed class Harness

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Settings_Language_Header" xml:space="preserve"><value>Sprache</value></data>
+  <data name="Settings_Language_Description" xml:space="preserve"><value>Die Sprache der App. Eine Änderung gilt nach einem Neustart von NexGrades.</value></data>
+  <data name="Settings_Language_System" xml:space="preserve"><value>System</value></data>
+  <data name="Settings_Language_English" xml:space="preserve"><value>English</value></data>
+  <data name="Settings_Language_German" xml:space="preserve"><value>Deutsch</value></data>
+  <data name="Settings_Language_RestartNotice" xml:space="preserve"><value>Starten Sie NexGrades neu, um die neue Sprache zu verwenden.</value></data>
+  <data name="Settings_Language_SaveFailed_Title" xml:space="preserve"><value>Fehler</value></data>
+  <data name="Settings_Language_SaveFailed_Message" xml:space="preserve"><value>Die Sprache konnte nicht gespeichert werden.</value></data>
+  <data name="Settings_Page_Title" xml:space="preserve"><value>Einstellungen</value></data>
+  <data name="Settings_SaveLocation_Header" xml:space="preserve"><value>Speicherort</value></data>
+  <data name="Settings_SaveLocation_Description" xml:space="preserve"><value>Ordner zum Speichern der App-Daten auswählen</value></data>
+  <data name="Settings_SaveLocation_Select" xml:space="preserve"><value>Ordner auswählen</value></data>
+  <data name="Settings_Logs_Header" xml:space="preserve"><value>Protokolldateien</value></data>
+  <data name="Settings_Logs_Description" xml:space="preserve"><value>Öffnet den Ordner mit den Protokolldateien der Anwendung, für den Support.</value></data>
+  <data name="Settings_Logs_Open" xml:space="preserve"><value>Protokollordner öffnen</value></data>
+  <data name="Settings_Logs_Open_Tooltip" xml:space="preserve"><value>Den Ordner mit den Protokolldateien der Anwendung öffnen</value></data>
+  <data name="Settings_Theme_Header" xml:space="preserve"><value>Design</value></data>
+  <data name="Settings_Theme_Description" xml:space="preserve"><value>Wählen Sie „System“, um der Windows-Einstellung zu folgen.</value></data>
+  <data name="Settings_Updates_Header" xml:space="preserve"><value>Updates</value></data>
+  <data name="Settings_Updates_AutoCheck" xml:space="preserve"><value>Automatisch nach Updates suchen</value></data>
+  <data name="Settings_Updates_Beta" xml:space="preserve"><value>Beta-Versionen erhalten</value></data>
+  <data name="Settings_Updates_BetaNote" xml:space="preserve"><value>Beta-Versionen können unfertige Funktionen enthalten. Wenn Sie diese Option ausschalten, wird nie auf eine ältere Version zurückgewechselt.</value></data>
+  <data name="Settings_Updates_CheckNow" xml:space="preserve"><value>Jetzt nach Updates suchen</value></data>
+  <data name="Settings_Updates_CheckNow_Tooltip" xml:space="preserve"><value>Nach einer neueren Version von NexGrades suchen</value></data>
+  <data name="Settings_Updates_Checking_A11y" xml:space="preserve"><value>Es wird nach Updates gesucht</value></data>
+  <data name="Settings_Updates_RestartNow" xml:space="preserve"><value>Jetzt neu starten</value></data>
+  <data name="Settings_Updates_RestartNow_Tooltip" xml:space="preserve"><value>NexGrades schließen, das Update installieren und NexGrades erneut starten</value></data>
+  <data name="Settings_Theme_System" xml:space="preserve"><value>System</value></data>
+  <data name="Settings_Theme_Light" xml:space="preserve"><value>Hell</value></data>
+  <data name="Settings_Theme_Dark" xml:space="preserve"><value>Dunkel</value></data>
+  <data name="Settings_Theme_SaveFailed" xml:space="preserve"><value>Das Design konnte nicht gespeichert werden. Es gilt, bis Sie NexGrades schließen.</value></data>
+  <data name="Settings_SaveLocation_TooMany_Title" xml:space="preserve"><value>Zu viele Ordner</value></data>
+  <data name="Settings_SaveLocation_TooMany_Message" xml:space="preserve"><value>Wählen Sie einen einzelnen Ordner aus.</value></data>
+  <data name="Settings_SaveLocation_Missing_Title" xml:space="preserve"><value>Fehlende Einstellung</value></data>
+  <data name="Settings_SaveLocation_Missing_Message" xml:space="preserve"><value>Ein Speicherort muss ausgewählt werden. Es wird auf den Standardspeicherort in „Dokumente“ zurückgegriffen.</value></data>
+  <data name="Settings_Logs_OpenFailed" xml:space="preserve"><value>Der Protokollordner konnte nicht geöffnet werden.</value></data>
+  <data name="Settings_Updates_Version_Format" xml:space="preserve"><value>Version {0}</value><comment>{0} is the version number of the running app.</comment></data>
+  <data name="Settings_Updates_UpToDate" xml:space="preserve"><value>NexGrades ist auf dem neuesten Stand.</value></data>
+  <data name="Settings_Updates_Downloading_Format" xml:space="preserve"><value>Version {0} wird heruntergeladen.</value><comment>{0} is the version number of the update that is downloading.</comment></data>
+  <data name="Settings_Updates_Offline" xml:space="preserve"><value>NexGrades konnte nicht nach Updates suchen. Prüfen Sie Ihre Internetverbindung.</value></data>
+  <data name="Settings_Updates_NotInstalled" xml:space="preserve"><value>Updates sind nur in der installierten App verfügbar.</value></data>
+  <data name="Settings_Updates_SaveFailed" xml:space="preserve"><value>Die Update-Einstellung konnte nicht gespeichert werden.</value></data>
+</root>
