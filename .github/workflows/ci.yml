@@ -36,7 +36,7 @@ jobs:
         working-directory: ./src/NexGrades
     steps:
       # Full history: MinVer derives the version from git tags.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Setup .NET
@@ -56,7 +56,7 @@ jobs:
       run:
         working-directory: ./src/NexGrades
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Setup .NET
@@ -101,7 +101,7 @@ jobs:
     steps:
       # Full history and tags: MinVer derives the version from them. The token is not persisted; every step
       # that talks to GitHub gets GH_TOKEN itself, and a git command that must authenticate passes it for that call only.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -226,7 +226,7 @@ jobs:
       RELEASE_SHA: ${{ github.sha }}
     steps:
       # Token not persisted; see the beta job.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
