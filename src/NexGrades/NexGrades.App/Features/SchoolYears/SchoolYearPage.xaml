@@ -275,6 +275,25 @@
                     </StackPanel>
                 </ui:Card>
 
+                <!-- The Planned successor, once it exists. -->
+                <ui:Card Style="{StaticResource Ng.Card}"
+                         Visibility="{Binding ViewModel.IsNextYearCreated, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Caption" Appearance="Secondary" Text="{loc:Text SchoolYears_Overview_Planned_Header}"/>
+                        <ui:TextBlock FontTypography="Subtitle" Margin="0,4,0,0" Text="{Binding ViewModel.NextYearLabel}"/>
+                        <ui:TextBlock FontTypography="Body" Margin="0,8,0,0"
+                                      Text="{Binding ViewModel.NextYearStart, StringFormat={loc:Text SchoolYears_Overview_Starts_Format}}"/>
+                        <ui:TextBlock FontTypography="Body" Margin="0,4,0,0"
+                                      Text="{Binding ViewModel.NextYearEnd, StringFormat={loc:Text SchoolYears_Overview_Ends_Format}}"/>
+                        <ui:Button Margin="0,16,0,0"
+                                   Content="{loc:Text SchoolYears_Overview_EditNextYear}"
+                                   Icon="{ui:SymbolIcon Edit24}"
+                                   ToolTip="{loc:Text SchoolYears_Overview_EditNextYear_Tooltip}"
+                                   AutomationProperties.Name="{loc:Text SchoolYears_Overview_EditNextYear_Tooltip}"
+                                   Command="{Binding ViewModel.EditNextYearCommand}"/>
+                    </StackPanel>
+                </ui:Card>
+
                 <!-- Closed school years: unlock or lock again. -->
                 <HeaderedContentControl Header="{loc:Text SchoolYears_Closed_Header}"
                                         Margin="0"
@@ -302,19 +321,28 @@
                                       Text="{loc:Text SchoolYears_NextYear_Header}"/>
                         <HeaderedContentControl Header="{loc:Text SchoolYears_NextYear_Label_Header}" Style="{StaticResource Ng.FormField}">
                             <ui:TextBox AutomationProperties.Name="{loc:Text SchoolYears_NextYear_Label_A11y}"
-                                        IsReadOnly="{Binding ViewModel.IsNextYearCreated}"
                                         Text="{Binding ViewModel.NextYearLabel, UpdateSourceTrigger=PropertyChanged}"/>
                         </HeaderedContentControl>
                         <HeaderedContentControl Header="{loc:Text SchoolYears_NextYear_First_Header}" Style="{StaticResource Ng.FormField}">
                             <DatePicker AutomationProperties.Name="{loc:Text SchoolYears_NextYear_First_A11y}"
-                                        IsEnabled="{Binding ViewModel.IsNextYearEditable}"
                                         SelectedDate="{Binding ViewModel.NextYearStart}"/>
                         </HeaderedContentControl>
                         <HeaderedContentControl Header="{loc:Text SchoolYears_NextYear_Last_Header}" Margin="0" Style="{StaticResource Ng.FormField}">
                             <DatePicker AutomationProperties.Name="{loc:Text SchoolYears_NextYear_Last_A11y}"
-                                        IsEnabled="{Binding ViewModel.IsNextYearEditable}"
                                         SelectedDate="{Binding ViewModel.NextYearEnd}"/>
                         </HeaderedContentControl>
+                        <ui:TextBlock Margin="{StaticResource Ng.Margin.Block}"
+                                      FontTypography="Caption"
+                                      Appearance="Secondary"
+                                      TextWrapping="Wrap"
+                                      Text="{loc:Text SchoolYears_NextYear_Planned_Hint}"
+                                      Visibility="{Binding ViewModel.IsNextYearCreated, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <ui:TextBlock Margin="{StaticResource Ng.Margin.Block}"
+                                      FontTypography="Caption"
+                                      Appearance="Secondary"
+                                      TextWrapping="Wrap"
+                                      Text="{Binding ViewModel.NextYearValidationMessage}"
+                                      Visibility="{Binding ViewModel.HasNextYearValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </ds:FormPanel>
                 </ui:Card>
 
@@ -436,7 +464,20 @@
                            Appearance="Primary"
                            IsDefault="True"
                            Icon="{ui:SymbolIcon CalendarAdd24}"
-                           Command="{Binding ViewModel.CreateNextYearCommand}"/>
+                           Command="{Binding ViewModel.CreateNextYearCommand}"
+                           Visibility="{Binding ViewModel.IsNextYearCreated, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                           Content="{loc:Text Common_Save}"
+                           Appearance="Primary"
+                           IsDefault="True"
+                           Icon="{ui:SymbolIcon Save24}"
+                           Command="{Binding ViewModel.SaveNextYearCommand}"
+                           Visibility="{Binding ViewModel.IsNextYearCreated, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
+                           Content="{loc:Text SchoolYears_Action_Continue}"
+                           Icon="{ui:SymbolIcon ArrowRight24}"
+                           Command="{Binding ViewModel.ContinueToClassesCommand}"
+                           Visibility="{Binding ViewModel.IsNextYearCreated, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <ui:Button Margin="{StaticResource Ng.Margin.ActionItem}"
                            Content="{loc:Text Common_Back}"
                            Icon="{ui:SymbolIcon ArrowLeft24}"

@@ -73,6 +73,15 @@
   <data name="SchoolYears_Readiness_StudentWithoutGrade_Format" xml:space="preserve"><value>{2}, {3} hat in {1} in Klasse {0} keine Note.</value><comment>{0} is the class name, {1} is the subject name, {2} is the student's last name, {3} is the student's first name.</comment></data>
   <data name="SchoolYears_LoadFailed" xml:space="preserve"><value>Das Schuljahr konnte nicht geladen werden. Schließen Sie diese Seite und öffnen Sie sie erneut.</value></data>
   <data name="SchoolYears_NextYear_CreateFailed" xml:space="preserve"><value>Das nächste Schuljahr konnte nicht angelegt werden. Prüfen Sie die Bezeichnung und die Daten und dass sie sich nicht mit einem anderen Schuljahr überschneiden.</value></data>
+  <data name="SchoolYears_Overview_Planned_Header" xml:space="preserve"><value>Nächstes Schuljahr (geplant)</value></data>
+  <data name="SchoolYears_Overview_EditNextYear" xml:space="preserve"><value>Nächstes Schuljahr bearbeiten</value></data>
+  <data name="SchoolYears_Overview_EditNextYear_Tooltip" xml:space="preserve"><value>Bezeichnung und Daten des geplanten Schuljahres ändern</value></data>
+  <data name="SchoolYears_NextYear_Planned_Hint" xml:space="preserve"><value>Dieses Schuljahr ist geplant. Sie können Bezeichnung und Daten ändern, bis es aktiv wird.</value></data>
+  <data name="SchoolYears_NextYear_Validation_LabelRequired" xml:space="preserve"><value>Geben Sie eine Bezeichnung ein.</value></data>
+  <data name="SchoolYears_NextYear_Validation_DatesRequired" xml:space="preserve"><value>Wählen Sie den ersten und den letzten Schultag.</value></data>
+  <data name="SchoolYears_NextYear_Validation_DateOrder" xml:space="preserve"><value>Der erste Schultag muss vor dem letzten Schultag liegen.</value></data>
+  <data name="SchoolYears_NextYear_Saved" xml:space="preserve"><value>Das nächste Schuljahr wurde gespeichert.</value></data>
+  <data name="SchoolYears_NextYear_SaveFailed" xml:space="preserve"><value>Die Änderungen konnten nicht gespeichert werden. Prüfen Sie, dass kein anderes Schuljahr die Bezeichnung verwendet, dass das Schuljahr nach dem Ende des aktiven Schuljahres beginnt und sich nicht mit einem anderen Schuljahr überschneidet und dass kein Leistungsnachweis und keine Note dieses Schuljahres außerhalb der neuen Daten liegt.</value></data>
   <data name="SchoolYears_Classes_Apply_Title" xml:space="preserve"><value>Klassenauswahl übernehmen</value></data>
   <data name="SchoolYears_Classes_Apply_Message" xml:space="preserve"><value>Das Übernehmen in das nächste Schuljahr und das Archivieren lassen sich nicht rückgängig machen. Möchten Sie die Auswahl jetzt für alle Klassen übernehmen?</value></data>
   <data name="SchoolYears_Classes_LoadFailed" xml:space="preserve"><value>Die Klassen konnten nicht geladen werden. Schließen Sie diese Seite und öffnen Sie sie erneut.</value></data>

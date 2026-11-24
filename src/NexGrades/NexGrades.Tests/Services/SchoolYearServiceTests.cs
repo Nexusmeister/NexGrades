@@ -479,6 +479,355 @@ public class SchoolYearServiceTests
         Assert.Null(await CreateService(db, Aug2025).GetActiveYearAsync());
     }
 
+    private static readonly DateTime Aug2026 = new(2026, 8, 1);
+    private static readonly DateTime Jul2027 = new(2027, 7, 31);
+
+    private sealed record ActiveAndPlanned(int ActiveId, int PlannedId);
+
+    /// <summary>Seeds the Active year 2025/26 and its Planned successor 2026/27.</summary>
+    private static async Task<ActiveAndPlanned> SeedActiveAndPlannedAsync(SqliteTestDatabase db)
+    {
+        var activeId = await SeedActiveYearAsync(db);
+        var plannedId = await SeedYearAsync(db, "2026/27", Aug2026, Jul2027, SchoolYearStatus.Planned);
+        return new ActiveAndPlanned(activeId, plannedId);
+    }
+
+    private static async Task AssertYearAsync(
+        SqliteTestDatabase db, int id, string label, DateTime start, DateTime end, SchoolYearStatus status)
+    {
+        await using var context = db.CreateContext();
+        var year = await context.SchoolYears.AsNoTracking().SingleAsync(sy => sy.Id == id);
+        Assert.Equal(label, year.Label);
+        Assert.Equal(start, year.StartDate);
+        Assert.Equal(end, year.EndDate);
+        Assert.Equal(status, year.Status);
+    }
+
+    private static Task AssertPlannedUnchangedAsync(SqliteTestDatabase db, int plannedId) =>
+        AssertYearAsync(db, plannedId, "2026/27", Aug2026, Jul2027, SchoolYearStatus.Planned);
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_SavesTrimmedLabelAndDates_ForPlannedYear()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        var draft = new SchoolYearDraft("  Year Two  ", new DateTime(2026, 9, 1), new DateTime(2027, 6, 30));
+
+        var updated = await CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, draft);
+
+        Assert.Equal("Year Two", updated.Label);
+        Assert.Equal(new DateTime(2026, 9, 1), updated.StartDate);
+        Assert.Equal(new DateTime(2027, 6, 30), updated.EndDate);
+        await AssertYearAsync(db, years.PlannedId, "Year Two", new DateTime(2026, 9, 1), new DateTime(2027, 6, 30), SchoolYearStatus.Planned);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Succeeds_WhenLabelAndDatesAreUnchanged()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+
+        await CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, new SchoolYearDraft("2026/27", Aug2026, Jul2027));
+
+        await AssertPlannedUnchangedAsync(db, years.PlannedId);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Succeeds_WhenOnlyTheCaseOfItsOwnLabelChanges()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        await using (var context = db.CreateContext())
+        {
+            (await context.SchoolYears.SingleAsync(sy => sy.Id == years.PlannedId)).Label = "Year Two";
+            await context.SaveChangesAsync();
+        }
+
+        await CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, new SchoolYearDraft("YEAR TWO", Aug2026, Jul2027));
+
+        await AssertYearAsync(db, years.PlannedId, "YEAR TWO", Aug2026, Jul2027, SchoolYearStatus.Planned);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Succeeds_WhenNewRangeOverlapsOnlyItsOwnOldRange()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        var draft = new SchoolYearDraft("2026/27", new DateTime(2026, 9, 1), new DateTime(2027, 8, 31));
+
+        await CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, draft);
+
+        await AssertYearAsync(db, years.PlannedId, "2026/27", new DateTime(2026, 9, 1), new DateTime(2027, 8, 31), SchoolYearStatus.Planned);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Succeeds_WhenStartingTheDayAfterTheActiveYearEnds()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        var draft = new SchoolYearDraft("2026/27", Jul2026.AddDays(1), Jul2027);
+
+        await CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, draft);
+
+        await AssertYearAsync(db, years.PlannedId, "2026/27", Jul2026.AddDays(1), Jul2027, SchoolYearStatus.Planned);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_KeepsIdAndPlannedStatus_AndFindPlannedSuccessorStillReturnsIt()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        var service = CreateService(db, Aug2025);
+
+        var updated = await service.UpdatePlannedYearAsync(years.PlannedId, new SchoolYearDraft("Renamed", new DateTime(2026, 9, 1), Jul2027));
+
+        Assert.Equal(years.PlannedId, updated.Id);
+        Assert.Equal(SchoolYearStatus.Planned, updated.Status);
+        var found = await service.FindPlannedSuccessorAsync(years.ActiveId);
+        Assert.NotNull(found);
+        Assert.Equal(years.PlannedId, found.Id);
+        Assert.Equal("Renamed", found.Label);
+        Assert.Equal(new DateTime(2026, 9, 1), found.StartDate);
+        await AssertYearCountAsync(db, 2);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_LeavesOtherYearsUnchanged()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        var closedId = await SeedYearAsync(db, "2024/25", new DateTime(2024, 8, 1), new DateTime(2025, 7, 31), SchoolYearStatus.Closed);
+
+        await CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, new SchoolYearDraft("Renamed", new DateTime(2026, 9, 1), Jul2027));
+
+        await AssertYearAsync(db, years.ActiveId, "2025/26", Aug2025, Jul2026, SchoolYearStatus.Active);
+        await AssertYearAsync(db, closedId, "2024/25", new DateTime(2024, 8, 1), new DateTime(2025, 7, 31), SchoolYearStatus.Closed);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_WritesNoAuditEntry()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+
+        await CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, new SchoolYearDraft("Renamed", new DateTime(2026, 9, 1), Jul2027));
+
+        await using var context = db.CreateContext();
+        Assert.Empty(await context.AuditEntries.AsNoTracking().ToListAsync());
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Succeeds_WhenGradesAndAssessmentsStayInsideNewRange()
+    {
+        using var db = new SqliteTestDatabase();
+        await SeedYearAsync(db, "2024/25", new DateTime(2024, 8, 1), new DateTime(2025, 7, 31), SchoolYearStatus.Active);
+        var seed = await GradeSheetSeed.CreateAsync(db, SchoolYearStatus.Planned);
+        var student = await seed.AddStudentAsync("Pat", "Test");
+        var newStart = new DateTime(2025, 9, 1);
+        var newEnd = new DateTime(2026, 6, 30);
+        var assessmentId = await seed.AddAssessmentAsync("Test A", DateOnly.FromDateTime(newStart));
+        await seed.AddGradeAsync(student, 2m, DateOnly.FromDateTime(newEnd), assessmentId);
+        await seed.AddGradeAsync(student, 3m, new DateOnly(2026, 1, 10), voidedOn: new DateTime(2026, 1, 11));
+
+        await CreateService(db, Aug2025).UpdatePlannedYearAsync(seed.YearId, new SchoolYearDraft("2025/26", newStart, newEnd));
+
+        await AssertYearAsync(db, seed.YearId, "2025/26", newStart, newEnd, SchoolYearStatus.Planned);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Throws_ForMissingYear()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        var draft = new SchoolYearDraft("2027/28", new DateTime(2027, 8, 1), new DateTime(2028, 7, 31));
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db, Aug2025).UpdatePlannedYearAsync(4711, draft));
+
+        await AssertYearCountAsync(db, 2);
+        await AssertPlannedUnchangedAsync(db, years.PlannedId);
+    }
+
+    [Theory]
+    [InlineData(SchoolYearStatus.Active)]
+    [InlineData(SchoolYearStatus.Closed)]
+    public async Task UpdatePlannedYearAsync_Throws_WhenYearIsNotPlanned(SchoolYearStatus status)
+    {
+        using var db = new SqliteTestDatabase();
+        var activeId = await SeedActiveYearAsync(db);
+        var targetId = activeId;
+        var label = "2025/26";
+        var start = Aug2025;
+        var end = Jul2026;
+        if (status == SchoolYearStatus.Closed)
+        {
+            label = "2024/25";
+            start = new DateTime(2024, 8, 1);
+            end = new DateTime(2025, 7, 31);
+            targetId = await SeedYearAsync(db, label, start, end, SchoolYearStatus.Closed);
+        }
+
+        var draft = new SchoolYearDraft("Renamed", Aug2026, Jul2027);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db, Aug2025).UpdatePlannedYearAsync(targetId, draft));
+
+        await AssertYearAsync(db, targetId, label, start, end, status);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Throws_ForClosedYear_EvenWhenUnlocked()
+    {
+        using var db = new SqliteTestDatabase();
+        await SeedActiveYearAsync(db);
+        int closedId;
+        await using (var context = db.CreateContext())
+        {
+            var closed = new SchoolYear
+            {
+                Label = "2024/25",
+                StartDate = new DateTime(2024, 8, 1),
+                EndDate = new DateTime(2025, 7, 31),
+                Status = SchoolYearStatus.Closed,
+                UnlockedUntil = new DateTime(2030, 1, 1),
+                UnlockReason = "Correction",
+            };
+            context.SchoolYears.Add(closed);
+            await context.SaveChangesAsync();
+            closedId = closed.Id;
+        }
+
+        var draft = new SchoolYearDraft("Renamed", Aug2026, Jul2027);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db, Aug2025).UpdatePlannedYearAsync(closedId, draft));
+
+        await AssertYearAsync(db, closedId, "2024/25", new DateTime(2024, 8, 1), new DateTime(2025, 7, 31), SchoolYearStatus.Closed);
+        await using var verify = db.CreateContext();
+        Assert.Empty(await verify.AuditEntries.AsNoTracking().ToListAsync());
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task UpdatePlannedYearAsync_Throws_ForEmptyLabel(string label)
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, new SchoolYearDraft(label, Aug2026, Jul2027)));
+
+        await AssertPlannedUnchangedAsync(db, years.PlannedId);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Throws_WhenLabelIsUsedByAnotherYearIgnoringCase()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        await SeedYearAsync(db, "Year X", new DateTime(2020, 8, 1), new DateTime(2021, 7, 31), SchoolYearStatus.Closed);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, new SchoolYearDraft(" year x ", Aug2026, Jul2027)));
+
+        await AssertPlannedUnchangedAsync(db, years.PlannedId);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Throws_WhenStartIsAfterEnd()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, new SchoolYearDraft("2026/27", Jul2027, Aug2026)));
+
+        await AssertPlannedUnchangedAsync(db, years.PlannedId);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Throws_WhenStartEqualsEnd()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, new SchoolYearDraft("2026/27", Aug2026, Aug2026)));
+
+        await AssertPlannedUnchangedAsync(db, years.PlannedId);
+    }
+
+    [Theory]
+    [InlineData("2026-07-31", "2027-07-31")]
+    [InlineData("2025-08-01", "2026-05-31")]
+    public async Task UpdatePlannedYearAsync_Throws_WhenStartIsNotAfterActiveYearEnd(string start, string end)
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        var draft = new SchoolYearDraft(
+            "2026/27",
+            DateTime.Parse(start, System.Globalization.CultureInfo.InvariantCulture),
+            DateTime.Parse(end, System.Globalization.CultureInfo.InvariantCulture));
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, draft));
+
+        await AssertPlannedUnchangedAsync(db, years.PlannedId);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Throws_WhenDatesOverlapAnotherYear()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedActiveAndPlannedAsync(db);
+        await SeedYearAsync(db, "2028/29", new DateTime(2028, 8, 1), new DateTime(2029, 7, 31), SchoolYearStatus.Closed);
+        var draft = new SchoolYearDraft("2026/27", Aug2026, new DateTime(2028, 8, 1));
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db, Aug2025).UpdatePlannedYearAsync(years.PlannedId, draft));
+
+        await AssertPlannedUnchangedAsync(db, years.PlannedId);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Throws_WhenNoActiveYearExists()
+    {
+        using var db = new SqliteTestDatabase();
+        var plannedId = await SeedYearAsync(db, "2026/27", Aug2026, Jul2027, SchoolYearStatus.Planned);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(
+            () => CreateService(db, Aug2025).UpdatePlannedYearAsync(plannedId, new SchoolYearDraft("Renamed", Aug2026, Jul2027)));
+
+        await AssertPlannedUnchangedAsync(db, plannedId);
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Throws_WhenAnAssessmentWouldFallOutsideTheNewRange()
+    {
+        using var db = new SqliteTestDatabase();
+        await SeedYearAsync(db, "2024/25", new DateTime(2024, 8, 1), new DateTime(2025, 7, 31), SchoolYearStatus.Active);
+        var seed = await GradeSheetSeed.CreateAsync(db, SchoolYearStatus.Planned);
+        await seed.AddAssessmentAsync("Test A", new DateOnly(2026, 7, 15));
+        var draft = new SchoolYearDraft("2025/26", GradeSheetSeed.YearStart, new DateTime(2026, 6, 30));
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db, Aug2025).UpdatePlannedYearAsync(seed.YearId, draft));
+
+        await AssertYearAsync(db, seed.YearId, "2025/26", GradeSheetSeed.YearStart, GradeSheetSeed.YearEnd, SchoolYearStatus.Planned);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UpdatePlannedYearAsync_Throws_WhenAGradeWouldFallOutsideTheNewRange(bool voided)
+    {
+        using var db = new SqliteTestDatabase();
+        await SeedYearAsync(db, "2024/25", new DateTime(2024, 8, 1), new DateTime(2025, 7, 31), SchoolYearStatus.Active);
+        var seed = await GradeSheetSeed.CreateAsync(db, SchoolYearStatus.Planned);
+        var student = await seed.AddStudentAsync("Pat", "Test");
+        await seed.AddGradeAsync(student, 2m, new DateOnly(2025, 8, 15), voidedOn: voided ? new DateTime(2025, 8, 16) : null);
+        var draft = new SchoolYearDraft("2025/26", new DateTime(2025, 9, 1), GradeSheetSeed.YearEnd);
+
+        await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db, Aug2025).UpdatePlannedYearAsync(seed.YearId, draft));
+
+        await AssertYearAsync(db, seed.YearId, "2025/26", GradeSheetSeed.YearStart, GradeSheetSeed.YearEnd, SchoolYearStatus.Planned);
+    }
+
     private static async Task AssertYearCountAsync(SqliteTestDatabase db, int expected)
     {
         await using var context = db.CreateContext();
