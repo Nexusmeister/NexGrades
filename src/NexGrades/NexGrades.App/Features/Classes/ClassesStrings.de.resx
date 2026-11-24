@@ -7,7 +7,7 @@
   <data name="Classes_Overview_Title" xml:space="preserve"><value>Klassen</value></data>
   <data name="Classes_Overview_Add" xml:space="preserve"><value>Klasse hinzufügen</value></data>
   <data name="Classes_Overview_Edit" xml:space="preserve"><value>Klasse bearbeiten</value></data>
-  <data name="Classes_Overview_Empty" xml:space="preserve"><value>Noch keine Klassen vorhanden. Verwenden Sie „Klasse hinzufügen“, um eine anzulegen.</value></data>
+  <data name="Classes_Overview_Empty" xml:space="preserve"><value>In diesem Schuljahr gibt es keine Klassen.</value></data>
   <data name="Classes_Grid_Name_Header" xml:space="preserve"><value>Name</value></data>
   <data name="Classes_Overview_Cohort_Header" xml:space="preserve"><value>Klassenverband</value></data>
   <data name="Classes_Overview_Students_Header" xml:space="preserve"><value>Schülerinnen und Schüler</value></data>
@@ -42,6 +42,10 @@
   <data name="Classes_ClassPage_Saved" xml:space="preserve"><value>Die Klasse wurde gespeichert.</value></data>
   <data name="Classes_Overview_SelectToEdit" xml:space="preserve"><value>Bitte wählen Sie eine Klasse zum Bearbeiten aus.</value></data>
   <data name="Classes_Overview_ShowInactive" xml:space="preserve"><value>Archivierte und übernommene Klassen anzeigen</value></data>
+  <data name="Classes_Overview_SchoolYear" xml:space="preserve"><value>Schuljahr</value></data>
+  <data name="Classes_Overview_Year_Planned" xml:space="preserve"><value>(geplant)</value></data>
+  <data name="Classes_Overview_Year_Active" xml:space="preserve"><value>(aktiv)</value></data>
+  <data name="Classes_Overview_Year_Closed" xml:space="preserve"><value>(abgeschlossen)</value></data>
   <data name="Classes_Status_RolledForward" xml:space="preserve"><value>übernommen</value></data>
   <data name="Classes_Status_Archived" xml:space="preserve"><value>archiviert</value></data>
 </root>
