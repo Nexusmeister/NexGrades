@@ -1,7 +1,7 @@
 # School year lifecycle
 
 A `SchoolYear` is the root scope of the model. This page covers its statuses, how the next year is created and
-edited, how a year is closed, and how close readiness is reported.
+edited, how a year is closed, how close readiness is reported, and the year-end reminder on Home.
 
 ## Statuses
 
@@ -85,6 +85,28 @@ ids in an issue are for linking only.
 A grade counts for readiness only while neither it nor its assessment is voided; see
 [Grades, assessments and averages](grades-assessments-and-averages.md).
 
+## Year-end reminder
+
+From 28 days before the Active year's end date on, the Home page shows a reminder card. The lead time is the fixed
+`SchoolYearService.YearEndReminderLeadDays`, with no setting. There is no upper bound: the card stays until the
+Active year is closed, so it also shows once the end date has passed.
+
+`SchoolYearService.IsYearEndReminderDue` compares calendar days only. `SchoolYearService.GetYearEndReminderAsync`
+reads the clock through `IClock` and returns a `YearEndReminder` (the year's id and label, its end date, and whether
+the end has passed), or `null` when there is no Active year or the reminder is not due yet. A Planned successor does
+not hide the card; only closing the year does.
+
+The card says that the year ends on the end date or, once it has passed, that it has ended and is not closed yet.
+Home checks the reminder each time it is opened, not on a timer. A failed read hides the card without a message.
+
+"Not now" hides the card for that school year until the next app start. The dismissal is kept in memory only and
+nothing is persisted.
+
+The card's button opens the School year page with
+`PageNavigator.NavigateWithHierarchy<SchoolYearPage>(SchoolYearPageRequest.StartEndOfYearFlow)`.
+`SchoolYearViewModel.OnNavigatedToAsync` then runs the same start command as the overview's Start button, but only
+while the wizard is at the overview. A visit from the sidebar passes `null` and is unchanged.
+
 ## Rules
 
 See [Rules by area](../../AGENTS.md#rules-by-area) in `AGENTS.md`.
@@ -98,6 +120,9 @@ See [Rules by area](../../AGENTS.md#rules-by-area) in `AGENTS.md`.
 - `NexGrades.Domain/Services/CloseReadiness.cs`
 - `NexGrades.Domain/Services/CloseReadinessIssue.cs`
 - `NexGrades.Domain/Services/CloseReadinessIssueKind.cs`
+- `NexGrades.Domain/Services/YearEndReminder.cs`
+- `NexGrades.App/Features/Home/HomeViewModel.cs`
+- `NexGrades.App/Features/SchoolYears/SchoolYearPageRequest.cs`
 
 ## Related
 

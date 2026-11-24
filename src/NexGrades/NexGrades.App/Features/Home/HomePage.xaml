@@ -22,6 +22,7 @@
     <Grid Style="{StaticResource Ng.PageRoot}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -30,6 +31,34 @@
                                 Style="{StaticResource Ng.PageHeader}" />
 
         <ui:Card Grid.Row="1"
+                 Margin="{StaticResource Ng.Margin.ActionBar}"
+                 Style="{StaticResource Ng.Card}"
+                 Visibility="{Binding IsYearEndReminderVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel>
+                <ui:TextBlock Text="{loc:Text Home_YearEnd_Title}"
+                              FontTypography="Subtitle"
+                              TextWrapping="Wrap"
+                              Margin="{StaticResource Ng.Margin.Tight}" />
+                <ui:TextBlock Text="{Binding YearEndReminderMessage}"
+                              FontTypography="Body"
+                              TextWrapping="Wrap"
+                              Margin="{StaticResource Ng.Margin.Related}" />
+                <WrapPanel Style="{StaticResource Ng.ActionBar}">
+                    <ui:Button Content="{loc:Text Home_YearEnd_Open}"
+                               Command="{Binding OpenEndOfYearCommand}"
+                               Appearance="Primary"
+                               Margin="{StaticResource Ng.Margin.ActionItem}"
+                               AutomationProperties.Name="{loc:Text Home_YearEnd_Open}" />
+                    <ui:Button Content="{loc:Text Home_YearEnd_NotNow}"
+                               Command="{Binding DismissYearEndReminderCommand}"
+                               Appearance="Transparent"
+                               Margin="{StaticResource Ng.Margin.ActionItem}"
+                               AutomationProperties.Name="{loc:Text Home_YearEnd_NotNow}" />
+                </WrapPanel>
+            </StackPanel>
+        </ui:Card>
+
+        <ui:Card Grid.Row="2"
                  VerticalAlignment="Top"
                  Margin="{StaticResource Ng.Margin.ActionBar}"
                  Style="{StaticResource Ng.Card}">

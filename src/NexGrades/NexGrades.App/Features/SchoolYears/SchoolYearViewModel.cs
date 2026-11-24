@@ -176,7 +176,8 @@ public sealed partial class SchoolYearViewModel(
 
     /// <summary>
     /// Reloads the flow on every visit. A finished flow starts over at the overview; an unfinished one keeps its
-    /// step and any unsaved class choices.
+    /// step and any unsaved class choices. A <see cref="SchoolYearPageRequest.StartEndOfYearFlow"/> request starts the
+    /// flow, but only from the overview, so a flow that is already under way is never moved.
     /// </summary>
     protected override async Task OnNavigatedToAsync(object? parameter)
     {
@@ -187,6 +188,13 @@ public sealed partial class SchoolYearViewModel(
 
         await ReloadAsync();
         await ClosedYears.ReloadAsync();
+
+        if (parameter is SchoolYearPageRequest.StartEndOfYearFlow
+            && CurrentStep == EndYearStep.Overview
+            && StartCommand.CanExecute(null))
+        {
+            await StartCommand.ExecuteAsync(null);
+        }
     }
 
     private void ResetFlow()
