@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using NexGrades.App.Core;
 using NexGrades.App.Features.SchoolYears;
 using NexGrades.App.Infrastructure;
@@ -16,11 +17,14 @@ public sealed partial class HomeViewModel : ViewModel
 {
     private readonly SchoolYearService _schoolYearService;
     private readonly PageNavigator _navigator;
+    private readonly ILogger<HomeViewModel> _logger;
 
     // Kept in memory only: "Not now" lasts until the next app start, and the id is never logged.
     private int? _dismissedYearId;
     private int? _reminderYearId;
     private bool _isRefreshing;
+    private bool _dismissPending;
+    private int _loadVersion;
 
     /// <summary>The greeting shown on the home page: "Good Morning" before noon, "Hello" from noon on.</summary>
     public string WelcomeMessage { get; set; } = TextResources.Text("Home_Welcome_Default");
@@ -37,10 +41,12 @@ public sealed partial class HomeViewModel : ViewModel
     /// <param name="userService">Provides the user name for the greeting.</param>
     /// <param name="schoolYearService">Tells whether the Active school year is near its end.</param>
     /// <param name="navigator">Opens the School year page from the reminder card.</param>
-    public HomeViewModel(IUserService userService, SchoolYearService schoolYearService, PageNavigator navigator)
+    /// <param name="logger">Records a failed reminder read, without any record content.</param>
+    public HomeViewModel(IUserService userService, SchoolYearService schoolYearService, PageNavigator navigator, ILogger<HomeViewModel> logger)
     {
         _schoolYearService = schoolYearService;
         _navigator = navigator;
+        _logger = logger;
 
         var now = DateTime.Now;
         var username = userService.GetUserName();
@@ -61,17 +67,26 @@ public sealed partial class HomeViewModel : ViewModel
     /// </summary>
     public async Task RefreshYearEndReminderAsync()
     {
-        // Navigation and Loaded both trigger a refresh per visit; the second one is skipped while the first runs.
-        if (_isRefreshing)
-        {
-            return;
-        }
-
+        // Navigation and Loaded both trigger a refresh per visit; the newest run wins and an older one discards its result.
+        var version = ++_loadVersion;
         _isRefreshing = true;
         try
         {
             var reminder = await _schoolYearService.GetYearEndReminderAsync();
+            if (version != _loadVersion)
+            {
+                return;
+            }
+
+            // A "Not now" pressed while this run was in flight had no year id to record; it applies to this result.
+            var dismissedWhileLoading = _dismissPending;
+            _dismissPending = false;
             _reminderYearId = reminder?.SchoolYearId;
+            if (reminder is not null && dismissedWhileLoading)
+            {
+                _dismissedYearId = reminder.SchoolYearId;
+            }
+
             if (reminder is null || reminder.SchoolYearId == _dismissedYearId)
             {
                 IsYearEndReminderVisible = false;
@@ -87,25 +102,47 @@ public sealed partial class HomeViewModel : ViewModel
         {
             // Any failed read (Invariant, SqliteException, InvalidOperationException) hides the card. The page calls
             // this fire-and-forget, so nothing may escape as an unobserved faulted task.
-            _reminderYearId = null;
-            IsYearEndReminderVisible = false;
+            LogReminderFailed(ex);
+            if (version == _loadVersion)
+            {
+                _dismissPending = false;
+                _reminderYearId = null;
+                IsYearEndReminderVisible = false;
+            }
         }
         finally
         {
-            _isRefreshing = false;
+            if (version == _loadVersion)
+            {
+                _isRefreshing = false;
+            }
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Reading the year-end reminder failed; the reminder card stays hidden.")]
+    private partial void LogReminderFailed(Exception exception);
 
     /// <summary>Opens the School year page and starts the end-of-year flow there.</summary>
     [RelayCommand]
     private void OpenEndOfYear() =>
         _ = _navigator.NavigateWithHierarchy<SchoolYearPage>(SchoolYearPageRequest.StartEndOfYearFlow);
 
-    /// <summary>Hides the reminder card until the next app start.</summary>
+    /// <summary>
+    /// Hides the reminder card until the next app start. While a refresh is in flight and no reminder year is known
+    /// yet, the dismissal is remembered and applied to that refresh's result, so the card does not reappear.
+    /// </summary>
     [RelayCommand]
     private void DismissYearEndReminder()
     {
-        _dismissedYearId = _reminderYearId;
+        if (_reminderYearId is null && _isRefreshing)
+        {
+            _dismissPending = true;
+        }
+        else
+        {
+            _dismissedYearId = _reminderYearId;
+        }
+
         IsYearEndReminderVisible = false;
     }
 }

@@ -59,9 +59,15 @@ that creates a `SubjectInstance`.
 
 The Classes overview lists only the `Active` instances of the Active school year. The toggle "Show rolled-forward
 and archived classes" adds the `RolledForward` and `Archived` instances of that year. Each of them shows a status
-badge (`übernommen` or `archiviert`); an `Active` row has none. The toggle is not persisted and resets when the app
-starts. Every listed row stays openable, and renaming a rolled-forward or archived instance is still refused by
-`ClassService`. The filter is a plain display filter in the query of `ClassesOverviewViewModel`, not a Domain rule.
+badge, "Rolled forward" or "Archived", in the Status column; an `Active` row has none. The toggle is not persisted
+and resets when the app starts. Every listed row stays openable, and renaming a rolled-forward or archived instance
+is still refused by `ClassService`. The filter is a plain display filter in the query of
+`ClassesOverviewViewModel`, not a Domain rule. Reloads are latest-request-wins: when the toggle changes quickly, the
+last toggle state is shown, and a failed read is logged and leaves the list as it was.
+
+German (keys `Classes_Overview_ShowInactive`, `Classes_Status_RolledForward` and `Classes_Status_Archived` in
+`ClassesStrings.de.resx`): the toggle reads "Archivierte und übernommene Klassen anzeigen", the badges read
+"übernommen" and "archiviert".
 
 ## Teacher
 
