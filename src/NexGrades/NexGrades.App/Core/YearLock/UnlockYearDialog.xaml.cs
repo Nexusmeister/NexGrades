@@ -3,8 +3,9 @@ using Wpf.Ui.Controls;
 namespace NexGrades.App.Core.YearLock;
 
 /// <summary>
-/// Asks for the reason and the duration when unlocking a closed school year. The Unlock button is enabled only
-/// while the input is valid, and is checked again on click, because "in the future" changes while the dialog is open.
+/// Asks for the reason and the duration when unlocking a closed school year. The Unlock button stays visible, because
+/// the WPF-UI template hides a disabled primary button. The input is checked on click instead ("in the future" also
+/// changes while the dialog is open) and the reason it is refused is shown in the dialog.
 /// </summary>
 public partial class UnlockYearDialog : ContentDialog
 {

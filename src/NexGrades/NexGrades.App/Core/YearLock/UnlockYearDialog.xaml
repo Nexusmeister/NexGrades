@@ -4,11 +4,11 @@
                   xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                   xmlns:loc="clr-namespace:NexGrades.App.Localization"
                   xmlns:services="clr-namespace:NexGrades.Domain.Services;assembly=NexGrades.Domain"
+                  Style="{StaticResource {x:Type ui:ContentDialog}}"
                   Title="{Binding Title}"
                   PrimaryButtonText="{loc:Text Core_UnlockDialog_Unlock}"
                   CloseButtonText="{loc:Text Common_Cancel}"
-                  DefaultButton="Primary"
-                  IsPrimaryButtonEnabled="{Binding IsValid}">
+                  DefaultButton="Primary">
 
     <!-- Merged here because the dialog must build without the application resources. -->
     <ui:ContentDialog.Resources>
@@ -49,7 +49,7 @@
                         SelectedDate="{Binding CustomDate}" />
         </HeaderedContentControl>
 
-        <!-- Why Unlock is disabled -->
+        <!-- Why Unlock was refused -->
         <ui:TextBlock FontTypography="Caption"
                       Appearance="Secondary"
                       TextWrapping="Wrap"
