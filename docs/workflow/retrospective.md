@@ -37,6 +37,27 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-24: PR #219 (issue #210) Unlock dialog had no buttons
+
+- **Cost and friction:** 4 role-agent runs (ui-designer on sonnet twice, reviewer on sonnet, docs-writer on haiku), and
+  no architect, tester or csharp-coder run. The root cause was that the `ContentDialog` subclasses `UnlockYearDialog`
+  and `ExportNotesDialog` did not get the WPF-UI implicit style, so they had no template and no button row. The first
+  ui-designer run (sonnet) ran very long and was stopped by the usage limit without reporting; a second ui-designer
+  run finished the work from the uncommitted state. The orchestrator ended once with a `BLOCKED` report and was
+  resumed by the lead. Filing a follow-up issue through `issue_write` was denied by the permission classifier, so the
+  follow-up was written as a PR comment instead. No CI fix round. The review had one round with no blockers or majors
+  and two minors: `ExportNotesDialog` still hides its Export button while the range is invalid (the pattern this PR
+  removed from the unlock dialog), and the regression test in `DialogChromeTests` does not cover the refusal path or
+  the dark theme. The ui-designer should have checked sibling dialogs for the hidden-disabled-button pattern.
+- **Lessons:**
+  - A dialog button that a validation rule gates is disabled, not hidden; check sibling dialogs for the same pattern.
+  - A regression test for a fix covers the refusal path and both themes, not only the happy path.
+  - Hand back BLOCKED only when no role agent is still active, and judge waiting by the real clock (`date`) and file mtimes, not by round counts.
+  - Background sleep rounds return much faster than their nominal time, so round counts understate the elapsed time.
+- **Repeat check:** the background-wait lesson repeats PR #207 (the orchestrator ended before a background agent
+  finished) and PR #196 (a BLOCKED hand-back judged by round count). That is a repeat; it goes to the lead under the
+  Escalation rule. The hidden-button lesson is new.
+
 ### 2026-11-24: PR #216 (issue #215) Simplify dependabot.yml and releasing.md
 
 - **Cost and friction:** no retries: no CI fix round. One review round (haiku reviewer): no blockers or majors, and
