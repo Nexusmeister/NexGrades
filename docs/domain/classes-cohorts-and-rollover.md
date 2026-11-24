@@ -55,6 +55,14 @@ point from this.
 Today `RolloverService.RollClassInstanceForwardAsync` (through `CopySubjectInstancesAsync`) is the only code
 that creates a `SubjectInstance`.
 
+## Classes overview
+
+The Classes overview lists only the `Active` instances of the Active school year. The toggle "Show rolled-forward
+and archived classes" adds the `RolledForward` and `Archived` instances of that year. Each of them shows a status
+badge (`übernommen` or `archiviert`); an `Active` row has none. The toggle is not persisted and resets when the app
+starts. Every listed row stays openable, and renaming a rolled-forward or archived instance is still refused by
+`ClassService`. The filter is a plain display filter in the query of `ClassesOverviewViewModel`, not a Domain rule.
+
 ## Teacher
 
 A `Teacher` is in practice one row: the app owner (`IsCurrentUser`). It is an entity so that a future

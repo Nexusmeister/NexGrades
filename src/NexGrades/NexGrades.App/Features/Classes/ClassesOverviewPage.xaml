@@ -47,6 +47,10 @@
                        Content="{loc:Text Classes_Overview_Edit}"
                        Icon="{ui:SymbolIcon Edit24}"
                        Command="{Binding ViewModel.EditClassCommand}" />
+            <ui:ToggleSwitch Margin="{StaticResource Ng.Margin.ActionItem}"
+                             VerticalAlignment="Center"
+                             Content="{loc:Text Classes_Overview_ShowInactive}"
+                             IsChecked="{Binding ViewModel.ShowInactiveClasses, Mode=TwoWay}" />
         </WrapPanel>
 
         <ContentControl Grid.Row="2"
@@ -63,6 +67,18 @@
                 <DataGridTextColumn Header="{loc:Text Classes_Overview_Cohort_Header}" Binding="{Binding CohortLabel}" ElementStyle="{StaticResource Ng.DataGridText}" />
                 <DataGridTextColumn Header="{loc:Text Classes_Overview_Students_Header}" Binding="{Binding StudentCount}"
                                     ElementStyle="{StaticResource Ng.DataGridText.Numeric}" />
+                <DataGridTemplateColumn Header="{loc:Text Classes_Overview_Status_Header}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ui:Badge Margin="{StaticResource Ng.Margin.ActionItem}"
+                                      HorizontalAlignment="Left"
+                                      VerticalAlignment="Center"
+                                      Appearance="Secondary"
+                                      Content="{Binding StatusText}"
+                                      Visibility="{Binding HasStatusBadge, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </ui:DataGrid.Columns>
         </ui:DataGrid>
     </Grid>

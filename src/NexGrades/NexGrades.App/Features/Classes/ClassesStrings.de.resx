@@ -11,6 +11,7 @@
   <data name="Classes_Grid_Name_Header" xml:space="preserve"><value>Name</value></data>
   <data name="Classes_Overview_Cohort_Header" xml:space="preserve"><value>Klassenverband</value></data>
   <data name="Classes_Overview_Students_Header" xml:space="preserve"><value>Schülerinnen und Schüler</value></data>
+  <data name="Classes_Overview_Status_Header" xml:space="preserve"><value>Klassenstatus</value></data>
   <data name="Classes_ClassPage_Title" xml:space="preserve"><value>Klasse</value></data>
   <data name="Classes_ClassPage_Name_Header" xml:space="preserve"><value>Klassenname</value></data>
   <data name="Classes_ClassPage_Name_Placeholder" xml:space="preserve"><value>Klassenname</value></data>
@@ -40,4 +41,7 @@
   <data name="Classes_ClassPage_Rename_Failed_Format" xml:space="preserve"><value>Die Klasse konnte nicht umbenannt werden. Geben Sie einen Namen mit höchstens {0} Zeichen ein und kontrollieren Sie, ob die Klasse nicht bereits in das nächste Schuljahr übernommen oder archiviert wurde.</value><comment>{0} is the maximum number of characters of a class name.</comment></data>
   <data name="Classes_ClassPage_Saved" xml:space="preserve"><value>Die Klasse wurde gespeichert.</value></data>
   <data name="Classes_Overview_SelectToEdit" xml:space="preserve"><value>Bitte wählen Sie eine Klasse zum Bearbeiten aus.</value></data>
+  <data name="Classes_Overview_ShowInactive" xml:space="preserve"><value>Archivierte und übernommene Klassen anzeigen</value></data>
+  <data name="Classes_Status_RolledForward" xml:space="preserve"><value>übernommen</value></data>
+  <data name="Classes_Status_Archived" xml:space="preserve"><value>archiviert</value></data>
 </root>

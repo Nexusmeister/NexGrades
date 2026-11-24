@@ -12,7 +12,7 @@ using Wpf.Ui.Controls;
 namespace NexGrades.App.Features.Classes;
 
 /// <summary>
-/// Lists the classes of the active school year and opens the add and edit forms for them.
+/// Lists the classes of the active school year (only active ones unless <see cref="ShowInactiveClasses"/> is set) and opens the add and edit forms for them.
 /// </summary>
 /// <param name="navigator">Opens the class form and hands it the id of the class to edit.</param>
 /// <param name="dbContextFactory">Creates the short-lived context used to load the classes.</param>
@@ -27,6 +27,18 @@ public partial class ClassesOverviewViewModel(
 
     [ObservableProperty]
     private ClassRow? _selectedClass;
+
+    /// <summary>
+    /// Whether rolled-forward and archived classes of the active year are listed too. Off by default and not
+    /// persisted; the page has no editable input, so changing it reloads without an unsaved-input prompt.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showInactiveClasses;
+
+    partial void OnShowInactiveClassesChanged(bool value)
+    {
+        LoadClassesCommand.Execute(null);
+    }
 
     [RelayCommand]
     private void OnEditClass()
@@ -51,16 +63,22 @@ public partial class ClassesOverviewViewModel(
     {
         await using var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
+        var showInactive = ShowInactiveClasses;
+        var selectedId = SelectedClass?.Id;
+
         var classes = await dbcontext.ClassInstances
-            .Where(ci => ci.SchoolYear.Status == SchoolYearStatus.Active)
+            .Where(ci => ci.SchoolYear.Status == SchoolYearStatus.Active
+                && (showInactive || ci.Status == ClassInstanceStatus.Active))
             .OrderBy(ci => ci.Name)
             .Select(ci => new ClassRow(
                 ci.Id,
                 ci.Name,
                 ci.ClassGroup.CohortLabel,
-                ci.Enrollments.Count(e => e.LeftOn == null)))
+                ci.Enrollments.Count(e => e.LeftOn == null),
+                ci.Status))
             .ToListAsync(cancellationToken);
 
         Classes = classes.ToObservableCollection();
+        SelectedClass = classes.FirstOrDefault(c => c.Id == selectedId);
     }
 }
