@@ -105,6 +105,8 @@ proposal, and notes. The English column is quoted from the code where it exists.
 | archive | archivieren | Class or note; never delete. |
 | archived | archiviert | |
 | end this class | diese Klasse beenden | Only for a class in the active year. |
+| Show rolled-forward and archived classes | Archivierte und übernommene Klassen anzeigen | Toggle on the classes overview. |
+| rolled forward (badge) | übernommen | Status badge on a class row; the long form is "übernommen als 6A". |
 | carries over | wird übernommen | Used for students or classes that continue in the next year. |
 
 ### Students

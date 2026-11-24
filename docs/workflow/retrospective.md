@@ -34,6 +34,26 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-24: PR #205 (issue #162, part 2 of 3) Classes overview status toggle
+
+- **Cost and friction:** 6 role-agent runs (csharp-coder, ui-designer and tester on sonnet, reviewer on sonnet,
+  docs-writer on haiku twice), plus this entry run on haiku. No CI fix round and no denied actions. The review gave
+  "Ready to merge" with no blockers or majors and three minors: a rapid toggle could start an overlapping reload,
+  `StatusText` did not refresh on a language change, and the docs section mixed English and German labels. The
+  ui-designer added one resource key (the status header) beyond its XAML-only scope; the coder left the XAML to the
+  ui-designer on purpose. Role agents ran in the background again, although the brief said foreground, and were
+  awaited through notifications. The first smoke-start log filter was buggy (PowerShell `TryParse` into a typed
+  null) and was rerun with a fixed script. The lead corrected mid-run that the `dependabot.yml` check is a normal
+  gate, not an exempt one.
+- **Lessons:**
+  - Role agents run in the foreground when the brief says so; this is the third occurrence, so escalate it.
+  - A ui-designer brief must say whether resource keys are in scope; a key added outside that needs the coder's review.
+  - A rapid input that starts an async reload needs an overlap guard, and view-model text must refresh on a language change.
+  - Check a log filter against a known line before trusting an empty result from it.
+  - Run docs-writer after the UI work, as PR #202 asked; this PR did.
+- **Repeat check:** background role agents, also in PR #198 and PR #202 (escalation applies). The docs-writer ordering
+  lesson from PR #202 was followed here, so it is not repeated.
+
 ### 2026-11-24: PR #202 (issue #162, part 1 of 3) Edit the Planned school year
 
 - **Cost and friction:** 12 agent runs (architect opus 1, csharp-coder 1, ui-designer 1, tester 2, docs-writer 3,
