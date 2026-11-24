@@ -61,7 +61,7 @@ public class SchoolYearServiceYearEndReminderTests
         using var db = new SqliteTestDatabase();
         var id = await SeedYearAsync(db, SchoolYearStatus.Active);
 
-        var reminder = await CreateService(db, EndDate.AddDays(-28).AddHours(0).AddMinutes(1)).GetYearEndReminderAsync();
+        var reminder = await CreateService(db, EndDate.AddDays(-28).AddMinutes(1)).GetYearEndReminderAsync();
 
         Assert.NotNull(reminder);
         Assert.Equal(id, reminder.SchoolYearId);

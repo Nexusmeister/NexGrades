@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.App.Core;
 using NexGrades.App.Features.Home;
@@ -46,10 +47,25 @@ public class HomeViewModelTests
         }
     }
 
+    /// <summary>Delegates to the real factory until told to fail, like a database that became unreadable.</summary>
+    private sealed class FailingFactory(IDbContextFactory<AppDbContext> inner) : IDbContextFactory<AppDbContext>
+    {
+        public bool Fail { get; set; }
+
+        public AppDbContext CreateDbContext() =>
+            Fail ? throw new InvalidOperationException("Database unavailable.") : inner.CreateDbContext();
+
+        public Task<AppDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
+            Fail ? throw new InvalidOperationException("Database unavailable.") : inner.CreateDbContextAsync(cancellationToken);
+    }
+
     private static HomeViewModel CreateViewModel(LockTestEnvironment env, INavigationService? navigation = null) =>
+        CreateViewModel(env, env.Factory, navigation);
+
+    private static HomeViewModel CreateViewModel(LockTestEnvironment env, IDbContextFactory<AppDbContext> factory, INavigationService? navigation = null) =>
         new(
             new FakeUserService(),
-            new SchoolYearService(env.Factory, env.Clock, NullLogger<SchoolYearService>.Instance),
+            new SchoolYearService(factory, env.Clock, NullLogger<SchoolYearService>.Instance),
             new PageNavigator(navigation ?? FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { }));
 
     private static async Task SeedAsync(LockTestEnvironment env, SchoolYearStatus status = SchoolYearStatus.Active)
@@ -128,7 +144,7 @@ public class HomeViewModelTests
 
         await using (var context = new AppDbContext(env.Options))
         {
-            var year = context.SchoolYears.Single();
+            var year = await context.SchoolYears.SingleAsync();
             year.Status = SchoolYearStatus.Closed;
             await context.SaveChangesAsync();
         }
@@ -136,6 +152,50 @@ public class HomeViewModelTests
         await viewModel.OnNavigatedToAsync();
 
         Assert.False(viewModel.IsYearEndReminderVisible);
+    }
+
+    [Fact]
+    public async Task OnNavigatedToAsync_HidesTheReminderWithoutThrowing_WhenTheReadFails()
+    {
+        using var env = new LockTestEnvironment(EndDate.AddDays(-5));
+        await SeedAsync(env);
+        var factory = new FailingFactory(env.Factory) { Fail = true };
+        var viewModel = CreateViewModel(env, factory);
+
+        await viewModel.OnNavigatedToAsync();
+
+        Assert.False(viewModel.IsYearEndReminderVisible);
+    }
+
+    [Fact]
+    public async Task OnNavigatedToAsync_HidesAVisibleReminderWithoutThrowing_WhenTheReadFailsOnTheNextVisit()
+    {
+        using var env = new LockTestEnvironment(EndDate.AddDays(-5));
+        await SeedAsync(env);
+        var factory = new FailingFactory(env.Factory);
+        var viewModel = CreateViewModel(env, factory);
+        await viewModel.OnNavigatedToAsync();
+        Assert.True(viewModel.IsYearEndReminderVisible);
+
+        factory.Fail = true;
+        await viewModel.OnNavigatedToAsync();
+
+        Assert.False(viewModel.IsYearEndReminderVisible);
+    }
+
+    [Fact]
+    public async Task OnNavigatedToAsync_ShowsTheReminderAgain_WhenTheReadRecoversAfterAFailure()
+    {
+        using var env = new LockTestEnvironment(EndDate.AddDays(-5));
+        await SeedAsync(env);
+        var factory = new FailingFactory(env.Factory) { Fail = true };
+        var viewModel = CreateViewModel(env, factory);
+        await viewModel.OnNavigatedToAsync();
+
+        factory.Fail = false;
+        await viewModel.OnNavigatedToAsync();
+
+        Assert.True(viewModel.IsYearEndReminderVisible);
     }
 
     [Fact]

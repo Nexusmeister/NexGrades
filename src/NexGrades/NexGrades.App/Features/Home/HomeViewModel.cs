@@ -1,11 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.EntityFrameworkCore;
 using NexGrades.App.Core;
 using NexGrades.App.Features.SchoolYears;
 using NexGrades.App.Infrastructure;
 using NexGrades.App.Localization;
-using NexGrades.Domain.Exceptions;
 using NexGrades.Domain.Services;
 
 namespace NexGrades.App.Features.Home;
@@ -22,6 +20,7 @@ public sealed partial class HomeViewModel : ViewModel
     // Kept in memory only: "Not now" lasts until the next app start, and the id is never logged.
     private int? _dismissedYearId;
     private int? _reminderYearId;
+    private bool _isRefreshing;
 
     /// <summary>The greeting shown on the home page: "Good Morning" before noon, "Hello" from noon on.</summary>
     public string WelcomeMessage { get; set; } = TextResources.Text("Home_Welcome_Default");
@@ -62,6 +61,13 @@ public sealed partial class HomeViewModel : ViewModel
     /// </summary>
     public async Task RefreshYearEndReminderAsync()
     {
+        // Navigation and Loaded both trigger a refresh per visit; the second one is skipped while the first runs.
+        if (_isRefreshing)
+        {
+            return;
+        }
+
+        _isRefreshing = true;
         try
         {
             var reminder = await _schoolYearService.GetYearEndReminderAsync();
@@ -77,10 +83,16 @@ public sealed partial class HomeViewModel : ViewModel
                 : TextResources.Format("Home_YearEnd_Upcoming_Format", reminder.Label, reminder.EndDate);
             IsYearEndReminderVisible = true;
         }
-        catch (Exception ex) when (ex is InvariantViolationException or DbUpdateException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // Any failed read (Invariant, SqliteException, InvalidOperationException) hides the card. The page calls
+            // this fire-and-forget, so nothing may escape as an unobserved faulted task.
             _reminderYearId = null;
             IsYearEndReminderVisible = false;
+        }
+        finally
+        {
+            _isRefreshing = false;
         }
     }
 
