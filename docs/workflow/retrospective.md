@@ -12,7 +12,8 @@ of paying for the same mistake again.
 - This is one file. When two open PRs both add an entry, the one that merges second merges `origin/dev` and
   `docs-writer` (haiku) resolves the conflict, keeping both entries, newest first.
 - After the merge, the lead checks the log for repeats with the `retrospective` skill
-  (`.claude/skills/retrospective/SKILL.md`).
+  (`.claude/skills/retrospective/SKILL.md`). That check is the authoritative one; the lead corrects the entry's
+  "Repeat check" line in the next docs change, never in a PR of its own.
 
 ## Rules
 
@@ -25,7 +26,9 @@ of paying for the same mistake again.
   - **Cost and friction:** what went wrong or cost extra: blocked agents, retries, review findings a role should
     have caught, repeated fixes. Write "none" if nothing did.
   - **Lessons:** what to do differently, in one line each.
-  - **Repeat check:** earlier entries with the same lesson (PR numbers), or "none".
+  - **Repeat check:** earlier entries with the same lesson (PR numbers), or "none". Filled in before the merge from
+    the log as it is then; the lead's check after the merge is authoritative and corrects it in the next docs
+    change.
   ```
 
 - **Escalation.** A lesson that appears in two entries is a repeat. The lead then proposes an issue that changes
@@ -54,6 +57,48 @@ of paying for the same mistake again.
 - **Repeat check:** the background-wait lesson repeats PR #207 (the orchestrator ended before a background agent
   finished) and PR #196 (a BLOCKED hand-back judged by round count). That is a repeat; it goes to the lead under the
   Escalation rule. The hidden-button lesson is new.
+
+### 2026-11-24: PR #216 (issue #215) Simplify dependabot.yml and releasing.md
+
+- **Cost and friction:** no retries: no CI fix round. One review round (haiku reviewer): no blockers or majors, and
+  three minors, filed as one follow-up issue. The yml was written by csharp-coder (sonnet) and the docs by
+  docs-writer (haiku), run in parallel because the files did not overlap. The yml could only be checked for YAML
+  syntax (PyYAML); Dependabot's own semantics are confirmed only on its first run on GitHub. Reviewer minors: the
+  `velopack` label no longer lands on the Velopack package PR, the manual bump docs did not name the files, and one
+  wording was imprecise. The docs-writer could have caught the file names with a fuller brief. Orchestrator: polling
+  CI with several overlapping background sleeps produced many redundant notifications. Four role-agent runs plus this
+  entry run.
+- **Lessons:**
+  - Check each label or group rule in a Dependabot config against the PRs it is meant to match, not only the YAML syntax.
+  - Name the exact files in a docs brief, and have the docs step list the files it changed.
+  - Poll CI with one sleep per round, not several overlapping background sleeps.
+- **Repeat check:** none. The overlapping-sleep polling is new; the background role agent lesson (#198, #202, #205, #207)
+  is not repeated here.
+
+### 2026-11-24: PR #217 (issue #214) AsSplitQuery for Sonar S8733
+
+- **Cost and friction:** none (one coder run, one opus review, no CI fix rounds, no review findings; no tester run
+  because behaviour did not change).
+- **Lessons:**
+  - For a mechanical analyzer fix, skip architect and tester.
+  - Give the coder the transaction facts up front so it needs no discovery.
+- **Repeat check:** none.
+
+### 2026-11-24: PR #211 (issues #204 and #203) Orchestrator workflow lessons
+
+- **Cost and friction:** 6 role-agent runs: docs-writer on sonnet twice plus once for review fixes (three runs),
+  reviewer on sonnet twice, docs-writer on haiku for this entry. No CI fix round and no denied actions. Round 1 of
+  the review gave 1 major and 3 minors: the new rule "smoke start at the reported head SHA" conflicted with the
+  retrospective entry commit that comes after it; the orchestrator should have checked the new rules against steps
+  12 and 13 before the first review. Round 2 gave "Ready to merge" with three minors left (smoke-start skill intro
+  does not mention the retrospective-only exemption, env vars removed instead of restored, notes drafted before the
+  last CI waits). The docs-writer is slow on large multi-file briefs (about 15 minutes). The orchestrator stayed
+  alive for every role agent through background sleep rounds, as the new rule says.
+- **Lessons:**
+  - When a PR adds a rule to the workflow files, check it against the later steps (12, 13, final report) before the
+    first review.
+  - Split a many-file docs brief into smaller briefs to cut wall time.
+- **Repeat check:** none new; the background role agent lesson (#198, #202, #205, #207) is what this PR fixes.
 
 ### 2026-11-24: PR #212 (issues #206, #208) View-model load race guards
 

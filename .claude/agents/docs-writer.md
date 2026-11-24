@@ -23,6 +23,9 @@ does, never what you assume it does.
   matching the entity names) and you maintain the topic pages there. `AGENTS.md` holds only one-line rules
   with links to those pages.
 - **`docs/decisions`**: architecture decision records (ADRs), numbered `NNNN-<slug>.md`.
+- **`docs/workflow/`**: the workflow retrospective log `docs/workflow/retrospective.md`. You write its entries
+  from the orchestrator's "Workflow notes", in the format documented in that file, with no pupil data. The lead
+  and the `issue-orchestrator` delegate these entries to you.
 
 ## Style
 

@@ -162,20 +162,16 @@ Dependabot (`.github/dependabot.yml`) opens pull requests against `dev` every we
 - the GitHub Actions in `.github/workflows/`,
 - the .NET SDK pinned in `global.json`.
 
-Each ecosystem gets one grouped pull request for all its minor and patch updates, except Velopack and `vpk`, see
-below. Each major update is its own pull request, so a breaking change is reviewed alone. Security updates open as soon as they are published. The weekly
-groups for NuGet, GitHub Actions and the SDK never hold a security update back. Velopack and `vpk` security updates
-arrive in the `velopack` group, which has no `applies-to` setting. Whether that group holds them back is to be
-confirmed on the first Dependabot run.
+Dependabot writes the pull request titles itself (`Bump ...`), so no commit-message prefix is set. Each ecosystem gets
+one grouped pull request for its minor and patch updates, and NuGet has a second group for Velopack: `nuget-minor-patch`
+holds every other package, and `velopack` holds the Velopack packages. The `vpk` tool has its own entry. Each major update
+is its own pull request, so a breaking change is reviewed alone. All groups set `applies-to: version-updates`, so a
+group never holds a security update back; security updates open as soon as they are published.
 
 Velopack (NuGet) and `vpk` must have the same version, because `New-ReleaseAsset.ps1` refuses to pack when they differ,
-and the pack step of a pull request build fails with it. The NuGet entry joins the `velopack` multi-ecosystem group
-with `patterns: [Velopack]`, and the `vpk` entry joins it with `patterns: [vpk]`, so both move in one pull request.
-If the Dependabot page reports a configuration error, or if the NuGet entry stops updating packages other than
-Velopack, fall back as follows. Remove `multi-ecosystem-group` and `patterns` from the NuGet entry in
-`.github/dependabot.yml`, and add `exclude-patterns: [Velopack]` to the `nuget-minor-patch` group, so that group keeps
-its normal grouping without Velopack. Keep `vpk` in its own entry, and align the two versions by hand in the Velopack
-pull request. Check **Insights > Dependency graph > Dependabot** after the first run.
+and the pack step of a pull request build fails with it. Dependabot opens them as separate pull requests. Add the
+matching version bump by hand to whichever of the two comes first. The other pull request then needs rebasing or
+closing, because the bump is already in.
 
 Dependabot ignores `Aspire.Hosting.AppHost`. It must equal the `Aspire.AppHost.Sdk` version in
 `src/NexGrades/Aspire/NexGrades.AppHost/NexGrades.AppHost.csproj`, so bump both by hand.
