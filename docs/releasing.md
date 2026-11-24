@@ -152,4 +152,43 @@ affected.
 
 The app is unsigned, so Windows SmartScreen may warn when the installer or the app starts for the first time. Choose
 **More info**, then **Run anyway**.
+
+## Dependency updates
+
+Dependabot (`.github/dependabot.yml`) opens pull requests against `dev` every week for:
+
+- the NuGet packages in `src/NexGrades/Directory.Packages.props`, including the transitive pins,
+- the `vpk` dotnet tool in `.config/dotnet-tools.json`,
+- the GitHub Actions in `.github/workflows/`,
+- the .NET SDK pinned in `global.json`.
+
+Each ecosystem gets one grouped pull request for all its minor and patch updates, except Velopack and `vpk`, see
+below. Each major update is its own pull request, so a breaking change is reviewed alone. Security updates open as soon as they are published. The weekly
+groups for NuGet, GitHub Actions and the SDK never hold a security update back. Velopack and `vpk` security updates
+arrive in the `velopack` group, which has no `applies-to` setting. Whether that group holds them back is to be
+confirmed on the first Dependabot run.
+
+Velopack (NuGet) and `vpk` must have the same version, because `New-ReleaseAsset.ps1` refuses to pack when they differ,
+and the pack step of a pull request build fails with it. The NuGet entry joins the `velopack` multi-ecosystem group
+with `patterns: [Velopack]`, and the `vpk` entry joins it with `patterns: [vpk]`, so both move in one pull request.
+If the Dependabot page reports a configuration error, or if the NuGet entry stops updating packages other than
+Velopack, fall back as follows. Remove `multi-ecosystem-group` and `patterns` from the NuGet entry in
+`.github/dependabot.yml`, and add `exclude-patterns: [Velopack]` to the `nuget-minor-patch` group, so that group keeps
+its normal grouping without Velopack. Keep `vpk` in its own entry, and align the two versions by hand in the Velopack
+pull request. Check **Insights > Dependency graph > Dependabot** after the first run.
+
+Dependabot ignores `Aspire.Hosting.AppHost`. It must equal the `Aspire.AppHost.Sdk` version in
+`src/NexGrades/Aspire/NexGrades.AppHost/NexGrades.AppHost.csproj`, so bump both by hand.
+
+`src/NexGrades/Directory.Build.props` sets `EnableWindowsTargeting` to `true`. GitHub's dependency submission and
+Dependabot run restore on Linux, and without the property the Windows-targeting projects fail to restore there. The
+property has no effect on Windows builds.
+
+**One-time setup:** the labels `dependencies`, `nuget`, `github-actions`, `dotnet-sdk` and `velopack` must exist in the
+repository. Dependabot skips a label that does not exist.
+
+**Merge gate:** a Dependabot pull request goes through the same gate as any other. All checks must be green, including
+SonarCloud. A reviewer pass is required, with the `opus` model for major updates. If an App package changes, run a
+smoke start (see the `smoke-start` skill). The lead squash-merges. A Dependabot pull request is never merged on green
+alone.
 </content>

@@ -5,6 +5,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Lets the Windows-targeting App projects restore on Linux, as GitHub's automatic dependency submission and
+       Dependabot do; without it restore fails with "To build a project targeting Windows on this operating system,
+       set the EnableWindowsTargeting property to true". It has no effect on Windows builds. -->
+  <PropertyGroup>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
   <!-- Static code analysis. Rule severities are tuned in the root .editorconfig. -->
   <PropertyGroup>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>

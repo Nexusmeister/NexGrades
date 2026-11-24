@@ -20,7 +20,7 @@ continue the work.
 
 Start with a short header: the date, the session, and how to pick up. To pick up, a new lead session reads the
 file whole, then `AGENTS.md`, `CLAUDE.md`, `docs/domain/README.md`, the memory index and the lead skills
-`implement-issue`, `verify-and-merge`, `smoke-start` and `handoff`. The owner may ask to delete the file after it
+`implement-issue`, `verify-and-merge`, `smoke-start`, `retrospective` and `handoff`. The owner may ask to delete the file after it
 has been read.
 
 Then use these sections, in this order:

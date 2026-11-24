@@ -16,7 +16,10 @@ line and check every item yourself; don't rely on the report.
 2. All check runs on that SHA are completed and green, including SonarCloud.
 3. The PR merges cleanly with the current dev. After `git fetch origin`, run
    `git merge-tree --write-tree --name-only origin/dev <sha>`. If the output shows `CONFLICT` (a conflicted merge
-   also exits with code 1), send the PR back to merge `origin/dev`.
+   also exits with code 1), send the PR back to merge `origin/dev`. If the only conflicted file is
+   `docs/workflow/retrospective.md`, don't send it back for a full round: merge `origin/dev` in the PR's worktree
+   and have `docs-writer` (model: `haiku`) resolve it, keeping both entries, newest first. Commit, push and wait
+   for green CI on the new head. That is a change that needs no new review (item 7).
 4. When dev moved since the PR's base and the PR and dev changed the same files, build, test and format the merge
    result in a scratch worktree:
    - `git worktree add --detach <scratch> <sha>`
@@ -34,7 +37,11 @@ line and check every item yourself; don't rely on the report.
    - `.claude/settings.json` is not changed.
    - Every added `SuppressMessage` has a `Justification`.
    - The changed files match the scope of the issue.
-7. The latest reviewer verdict at that exact SHA has no blocker or major finding and says "Ready to merge".
+7. The latest reviewer verdict at that exact SHA has no blocker or major finding and says "Ready to merge". The
+   verdict may be at an earlier SHA when the only change since then is in `docs/workflow/retrospective.md` (an
+   entry-only commit, or a merge of `origin/dev` that resolves only conflicts in that file). Check it:
+   `git diff origin/dev...<reviewed sha>` and `git diff origin/dev...<head sha>` must differ only in that file.
+   Any other change needs a new verdict at the head SHA.
 8. For a PR that touches `NexGrades.App`: the smoke start passed at that SHA. An agent runs it with
    `.claude/skills/smoke-start/SKILL.md`, never the owner.
 9. The PR body has `Closes #<n>`, the decisions, the tests, the warning counts, and a manual UI test plan where the
@@ -44,6 +51,10 @@ line and check every item yourself; don't rely on the report.
 12. A new convention in `AGENTS.md` has the owner's OK before the merge.
 13. No `NoWarn` was added.
 14. Any worker action that was denied is reported to the owner, never redone.
+15. The PR contains its retrospective entry in `docs/workflow/retrospective.md`. If your own verification findings
+    (items that failed, anything you sent back, denied actions) should be in it, delegate the edit to `docs-writer`
+    (model: `haiku`) in the PR's worktree, commit and push it to the PR branch, and wait for green CI. That is an
+    entry-only commit, so no new review (item 7); the new head SHA is the one you merge. Redo items 1 and 2 for it.
 
 ## Merge
 
@@ -56,6 +67,8 @@ After the merge:
 
 1. Remove that issue's worktree.
 2. Update local `dev`.
-3. Update `HANDOVER.md` (see `.claude/skills/handoff/SKILL.md`).
+3. Run the `retrospective` skill (`.claude/skills/retrospective/SKILL.md`) for the merged PR: repeat check,
+   escalation and the handoff feed.
+4. Update `HANDOVER.md` (see `.claude/skills/handoff/SKILL.md`).
 
 Merging `dev` into `main` is the owner's call only.
