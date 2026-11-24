@@ -37,6 +37,23 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-24: PR #216 (issue #215) Simplify dependabot.yml and releasing.md
+
+- **Cost and friction:** no retries: no CI fix round. One review round (haiku reviewer): no blockers or majors, and
+  three minors, filed as one follow-up issue. The yml was written by csharp-coder (sonnet) and the docs by
+  docs-writer (haiku), run in parallel because the files did not overlap. The yml could only be checked for YAML
+  syntax (PyYAML); Dependabot's own semantics are confirmed only on its first run on GitHub. Reviewer minors: the
+  `velopack` label no longer lands on the Velopack package PR, the manual bump docs did not name the files, and one
+  wording was imprecise. The docs-writer could have caught the file names with a fuller brief. Orchestrator: polling
+  CI with several overlapping background sleeps produced many redundant notifications. Four role-agent runs plus this
+  entry run.
+- **Lessons:**
+  - Check each label or group rule in a Dependabot config against the PRs it is meant to match, not only the YAML syntax.
+  - Name the exact files in a docs brief, and have the docs step list the files it changed.
+  - Poll CI with one sleep per round, not several overlapping background sleeps.
+- **Repeat check:** none. The overlapping-sleep polling is new; the background role agent lesson (#198, #202, #205, #207)
+  is not repeated here.
+
 ### 2026-11-24: PR #211 (issues #204 and #203) Orchestrator workflow lessons
 
 - **Cost and friction:** 6 role-agent runs: docs-writer on sonnet twice plus once for review fixes (three runs),
