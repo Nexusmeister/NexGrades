@@ -56,6 +56,7 @@ After the merge:
 
 1. Remove that issue's worktree.
 2. Update local `dev`.
-3. Update `HANDOVER.md` (see `.claude/skills/handoff/SKILL.md`).
+3. Run the `retrospective` skill (`.claude/skills/retrospective/SKILL.md`) for the merged PR.
+4. Update `HANDOVER.md` (see `.claude/skills/handoff/SKILL.md`).
 
 Merging `dev` into `main` is the owner's call only.

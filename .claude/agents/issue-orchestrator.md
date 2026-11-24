@@ -133,8 +133,8 @@ brief.
 
 ## Final report to the lead
 
-At most 10 lines. The first line is exactly `MERGE-READY: PR #<n> @ <head sha>` or `BLOCKED: <reason>`.
-Then:
+At most 10 lines, not counting the "Workflow notes" section. The first line is exactly
+`MERGE-READY: PR #<n> @ <head sha>` or `BLOCKED: <reason>`. Then:
 
 - decisions you made
 - tests (counts)
@@ -144,6 +144,15 @@ Then:
 - follow-up issues filed
 - manual checks still needed
 - worktree path
+
+Every final report, `MERGE-READY` or `BLOCKED`, ends with a short "Workflow notes" section of about 5 lines for the
+lead's retrospective (`docs/workflow/retrospective.md`):
+
+- retries and blocked steps (CI fix rounds, review rounds, denied actions)
+- review findings per role, especially ones a role should have caught
+- rough cost, such as the number of agent runs and the models used
+
+No pupil data in it: no names, grades, note text or record ids.
 
 ## Fallback
 
