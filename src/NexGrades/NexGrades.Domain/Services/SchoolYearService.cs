@@ -9,8 +9,8 @@ namespace NexGrades.Domain.Services;
 
 /// <summary>
 /// School-year lifecycle rules: the startup bootstrap of an Active year, and the lookups and creation of the
-/// Planned successor year that the guided "End school year" flow (#72) needs. Closing and activating lives in
-/// <see cref="YearCloseService"/>.
+/// Planned successor year that the guided "End school year" flow (#72) needs, and editing that Planned year until
+/// it becomes active. Closing and activating lives in <see cref="YearCloseService"/>.
 /// </summary>
 /// <param name="contextFactory">Creates the short-lived context that each call opens.</param>
 /// <param name="clock">Source of "now", used to pick the school year that contains today.</param>
@@ -136,8 +136,6 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
                     $"School year {previousSchoolYearId} is not Active (current status: {previous.Status}); only the Active year can get a next year.");
             }
 
-            EnsureDatesFollow(previous, draft);
-
             var existingYears = await context.SchoolYears.AsNoTracking().ToListAsync(cancellationToken);
 
             if (existingYears.Any(sy => sy.Status == SchoolYearStatus.Planned && sy.StartDate > previous.StartDate))
@@ -146,15 +144,7 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
                     $"School year {previousSchoolYearId} already has a Planned successor.");
             }
 
-            if (existingYears.Any(sy => string.Equals(sy.Label.Trim(), label, StringComparison.OrdinalIgnoreCase)))
-            {
-                throw new InvariantViolationException("A school year with this label already exists.");
-            }
-
-            if (existingYears.Any(sy => sy.StartDate <= draft.EndDate && draft.StartDate <= sy.EndDate))
-            {
-                throw new InvariantViolationException("The school year overlaps an existing school year.");
-            }
+            EnsureDraftFits(previous, draft, label, existingYears);
 
             var schoolYear = new SchoolYear
             {
@@ -173,18 +163,108 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
         });
     }
 
-    /// <summary>Requires a valid date range that starts after <paramref name="previous"/> has ended.</summary>
-    private static void EnsureDatesFollow(SchoolYear previous, SchoolYearDraft draft)
+    /// <summary>
+    /// Changes the label and the dates of a Planned school year, under the same rules as creating it. Only a Planned
+    /// year can be edited: the Active year is running and a Closed year is history, even while unlocked. The new
+    /// dates must not leave an assessment or grade of the year outside them (voided ones count too, because
+    /// un-voiding them must stay possible).
+    /// </summary>
+    /// <exception cref="InvariantViolationException">
+    /// The year is missing or not Planned, there is no Active year, the label is empty or in use by another year, the
+    /// dates are not a valid range, the range does not start after the Active year ends, it overlaps another year, or
+    /// an assessment or grade of the year would lie outside the new dates.
+    /// </exception>
+    public Task<SchoolYearSummary> UpdatePlannedYearAsync(
+        int schoolYearId, SchoolYearDraft draft, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+
+        return DomainOperation.RunAsync("SchoolYearService.UpdatePlannedYear", async () =>
+        {
+            var label = RequiredText.Normalize(draft.Label, "A school year label");
+
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+
+            var years = await context.SchoolYears.ToListAsync(cancellationToken);
+
+            var schoolYear = years.FirstOrDefault(sy => sy.Id == schoolYearId)
+                ?? throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
+
+            if (schoolYear.Status != SchoolYearStatus.Planned)
+            {
+                throw new InvariantViolationException(
+                    $"School year {schoolYearId} is not Planned (current status: {schoolYear.Status}); only a Planned year can be edited.");
+            }
+
+            var active = years.FirstOrDefault(sy => sy.Status == SchoolYearStatus.Active)
+                ?? throw new InvariantViolationException(
+                    $"There is no Active school year to check school year {schoolYearId} against.");
+
+            EnsureDraftFits(active, draft, label, [.. years.Where(sy => sy.Id != schoolYearId)]);
+            await EnsureNoDatedRecordsOutsideAsync(context, schoolYearId, draft, cancellationToken);
+
+            schoolYear.Label = label;
+            schoolYear.StartDate = draft.StartDate;
+            schoolYear.EndDate = draft.EndDate;
+
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            LogPlannedYearUpdated();
+
+            return new SchoolYearSummary(schoolYear.Id, schoolYear.Label, schoolYear.StartDate, schoolYear.EndDate, schoolYear.Status);
+        });
+    }
+
+    /// <summary>
+    /// Requires a valid date range that starts after <paramref name="activeYear"/> has ended, a label that no year in
+    /// <paramref name="otherYears"/> uses and dates that overlap none of them. Shared by create and edit.
+    /// </summary>
+    private static void EnsureDraftFits(
+        SchoolYear activeYear, SchoolYearDraft draft, string label, IReadOnlyCollection<SchoolYear> otherYears)
     {
         if (draft.StartDate.Date >= draft.EndDate.Date)
         {
             throw new InvariantViolationException("The school year must start before it ends.");
         }
 
-        if (draft.StartDate.Date <= previous.EndDate.Date)
+        if (draft.StartDate.Date <= activeYear.EndDate.Date)
         {
             throw new InvariantViolationException(
-                $"The next school year must start after school year {previous.Id} ends.");
+                $"The school year must start after school year {activeYear.Id} ends ({DateOnly.FromDateTime(activeYear.EndDate):O}).");
+        }
+
+        var sameLabel = otherYears.FirstOrDefault(sy => string.Equals(sy.Label.Trim(), label, StringComparison.OrdinalIgnoreCase));
+        if (sameLabel is not null)
+        {
+            throw new InvariantViolationException($"The label is already used by school year {sameLabel.Id}.");
+        }
+
+        var overlapping = otherYears.FirstOrDefault(sy => sy.StartDate <= draft.EndDate && draft.StartDate <= sy.EndDate);
+        if (overlapping is not null)
+        {
+            throw new InvariantViolationException($"The dates overlap school year {overlapping.Id}.");
+        }
+    }
+
+    /// <summary>Requires that no assessment or grade (voided ones included) of the year lies outside the draft's dates.</summary>
+    private static async Task EnsureNoDatedRecordsOutsideAsync(
+        AppDbContext context, int schoolYearId, SchoolYearDraft draft, CancellationToken cancellationToken)
+    {
+        var start = DateOnly.FromDateTime(draft.StartDate);
+        var end = DateOnly.FromDateTime(draft.EndDate);
+
+        var hasAssessmentOutside = await context.Assessments.AsNoTracking()
+            .AnyAsync(a => a.GradeBucket.SubjectInstance.ClassInstance.SchoolYearId == schoolYearId
+                && (a.Date < start || a.Date > end), cancellationToken);
+        var hasGradeOutside = !hasAssessmentOutside && await context.Grades.AsNoTracking()
+            .AnyAsync(g => g.GradeBucket.SubjectInstance.ClassInstance.SchoolYearId == schoolYearId
+                && (g.RecordedOn < start || g.RecordedOn > end), cancellationToken);
+
+        if (hasAssessmentOutside || hasGradeOutside)
+        {
+            throw new InvariantViolationException(
+                $"School year {schoolYearId} has assessments or grades dated outside {start:O} to {end:O}.");
         }
     }
 
@@ -196,4 +276,7 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Created a Planned school year")]
     private partial void LogPlannedYearCreated();
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Updated a Planned school year")]
+    private partial void LogPlannedYearUpdated();
 }

@@ -171,6 +171,43 @@ public class RolloverServiceTests
     }
 
     [Fact]
+    public async Task RollClassInstanceForwardAsync_Succeeds_AfterThePlannedYearWasEdited()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedYearsAsync(db);
+        var (classId, _) = await AddClassAsync(db, years.OldId, "5A");
+        await AddStudentAsync(db, classId, "Test", new DateTime(2025, 8, 1));
+        var schoolYears = new SchoolYearService(db.CreateContextFactory(), new FixedClock(Now), NullLogger<SchoolYearService>.Instance);
+        await schoolYears.UpdatePlannedYearAsync(years.TargetId, new SchoolYearDraft("Edited", new DateTime(2026, 9, 1), new DateTime(2027, 8, 15)));
+
+        var rolled = await CreateService(db).RollClassInstanceForwardAsync(classId, years.TargetId, "6A");
+
+        Assert.Equal(years.TargetId, rolled.SchoolYearId);
+        await using var verify = db.CreateContext();
+        Assert.Equal(ClassInstanceStatus.RolledForward, (await verify.ClassInstances.AsNoTracking().SingleAsync(ci => ci.Id == classId)).Status);
+        Assert.Single(await verify.Enrollments.AsNoTracking().Where(e => e.ClassInstanceId == rolled.Id).ToListAsync());
+    }
+
+    [Fact]
+    public async Task UpdatePlannedYearAsync_Succeeds_AfterClassesWereRolledIntoThePlannedYear()
+    {
+        using var db = new SqliteTestDatabase();
+        var years = await SeedYearsAsync(db);
+        var (classId, _) = await AddClassAsync(db, years.OldId, "5A");
+        await AddStudentAsync(db, classId, "Test", new DateTime(2025, 8, 1));
+        var rolled = await CreateService(db).RollClassInstanceForwardAsync(classId, years.TargetId, "6A");
+        var schoolYears = new SchoolYearService(db.CreateContextFactory(), new FixedClock(Now), NullLogger<SchoolYearService>.Instance);
+
+        await schoolYears.UpdatePlannedYearAsync(years.TargetId, new SchoolYearDraft("Edited", new DateTime(2026, 9, 1), new DateTime(2027, 8, 15)));
+
+        await using var verify = db.CreateContext();
+        var target = await verify.SchoolYears.AsNoTracking().SingleAsync(sy => sy.Id == years.TargetId);
+        Assert.Equal("Edited", target.Label);
+        Assert.Equal(SchoolYearStatus.Planned, target.Status);
+        Assert.Equal(years.TargetId, (await verify.ClassInstances.AsNoTracking().SingleAsync(ci => ci.Id == rolled.Id)).SchoolYearId);
+    }
+
+    [Fact]
     public async Task RollClassInstanceForwardAsync_Throws_WhenTargetYearIsMissing()
     {
         using var db = new SqliteTestDatabase();

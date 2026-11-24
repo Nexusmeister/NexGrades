@@ -37,6 +37,44 @@ public class SchoolYearServiceLoggingTests
     }
 
     [Fact]
+    public async Task UpdatePlannedYearAsync_LogsInformation_WithoutTheLabel()
+    {
+        using var db = new SqliteTestDatabase();
+        int plannedId;
+        await using (var seed = db.CreateContext())
+        {
+            var planned = new SchoolYear
+            {
+                Label = "2026/27",
+                StartDate = new DateTime(2026, 8, 1),
+                EndDate = new DateTime(2027, 7, 31),
+                Status = SchoolYearStatus.Planned,
+            };
+            seed.SchoolYears.Add(new SchoolYear
+            {
+                Label = "2025/26",
+                StartDate = new DateTime(2025, 8, 1),
+                EndDate = new DateTime(2026, 7, 31),
+                Status = SchoolYearStatus.Active,
+            });
+            seed.SchoolYears.Add(planned);
+            await seed.SaveChangesAsync();
+            plannedId = planned.Id;
+        }
+
+        var logger = new CapturingLogger<SchoolYearService>();
+        var draft = new SchoolYearDraft("Secret Label", new DateTime(2026, 9, 1), new DateTime(2027, 7, 31));
+
+        await new SchoolYearService(db.CreateContextFactory(), new FixedClock(Now), logger).UpdatePlannedYearAsync(plannedId, draft);
+
+        var entry = Assert.Single(logger.Entries);
+        Assert.Equal(LogLevel.Information, entry.Level);
+        Assert.Equal("Updated a Planned school year", entry.Message);
+        Assert.DoesNotContain("Secret Label", entry.Message, StringComparison.Ordinal);
+        Assert.Null(entry.Exception);
+    }
+
+    [Fact]
     public async Task EnsureActiveYearAsync_LogsNothing_WhenAnActiveYearAlreadyExists()
     {
         using var db = new SqliteTestDatabase();

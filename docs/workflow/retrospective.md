@@ -34,6 +34,22 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-24: PR #202 (issue #162, part 1 of 3) Edit the Planned school year
+
+- **Cost and friction:** 12 agent runs (architect opus 1, csharp-coder 1, ui-designer 1, tester 2, docs-writer 3,
+  reviewer 2, plus one wasted haiku "wait" call). The docs-writer ran in parallel with the ui-designer and described
+  the old XAML, so it had to run again. The XAML still bound a removed view-model property (`IsNextYearEditable`) and
+  the build did not fail; the csharp-coder noticed it and the ui-designer removed the binding. The opus reviewer found
+  two minors at the first commit; the fix (docs and a test) was reviewed only by haiku. Role agents again ran in the
+  background although the brief said foreground. The smoke start ran on the tree before the first commit, and the lead
+  re-ran it at the final head. The orchestrator was started before the retrospective step existed, so the lead added
+  this entry.
+- **Lessons:** run docs-writer after the UI work, not in parallel with it, when it documents the UI. A XAML binding to
+  a missing property is a silent runtime failure, so a removed view-model property needs a XAML search. Run the smoke
+  start at the head SHA that will be reported.
+- **Repeat check:** role agents running in the background despite a foreground brief, also in PR #198. That is a
+  repeat; it goes to the lead under the Escalation rule.
+
 ### 2026-11-24: PR #198 (issue #173) Workflow retrospective log and skill
 
 - **Cost and friction:** the role agents ran in the background despite the brief. One owner round was needed

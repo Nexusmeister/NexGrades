@@ -277,6 +277,24 @@ public class YearCloseServiceTests
     }
 
     [Fact]
+    public async Task CloseAndActivateNextYearAsync_Succeeds_AfterThePlannedYearWasEdited()
+    {
+        using var db = new SqliteTestDatabase();
+        var seeded = await SeedAsync(db);
+        var schoolYears = new SchoolYearService(db.CreateContextFactory(), new FixedClock(Now), NullLogger<SchoolYearService>.Instance);
+        await schoolYears.UpdatePlannedYearAsync(seeded.NextYearId, new SchoolYearDraft("Edited", new DateTime(2026, 9, 1), new DateTime(2027, 8, 15)));
+
+        await CreateService(db).CloseAndActivateNextYearAsync(seeded.OldYearId, seeded.NextYearId);
+
+        var old = await LoadYearAsync(db, seeded.OldYearId);
+        var next = await LoadYearAsync(db, seeded.NextYearId);
+        Assert.Equal(SchoolYearStatus.Closed, old.Status);
+        Assert.Equal(SchoolYearStatus.Active, next.Status);
+        Assert.Equal("Edited", next.Label);
+        Assert.Equal(new DateTime(2026, 9, 1), next.StartDate);
+    }
+
+    [Fact]
     public async Task CloseAndActivateNextYearAsync_Throws_AndChangesNothing_WhenClassIsStillActive()
     {
         using var db = new SqliteTestDatabase();

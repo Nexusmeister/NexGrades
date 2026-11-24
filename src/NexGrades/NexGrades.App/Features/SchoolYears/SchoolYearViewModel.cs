@@ -46,11 +46,13 @@ public sealed partial class SchoolYearViewModel(
     /// <summary>The closed school years with their unlock controls.</summary>
     public ClosedYearsViewModel ClosedYears { get; } = closedYears;
 
+    private readonly LeaveGuard _leaveGuard = new(contentDialogService);
+
     private SchoolYearSummary? _activeYear;
     private SchoolYearSummary? _nextYear;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(StartCommand), nameof(CreateNextYearCommand), nameof(ApplyClassChoicesCommand), nameof(ContinueToReadinessCommand), nameof(ContinueToConfirmCommand), nameof(RunCloseCommand), nameof(BackCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartCommand), nameof(CreateNextYearCommand), nameof(ApplyClassChoicesCommand), nameof(ContinueToReadinessCommand), nameof(ContinueToConfirmCommand), nameof(RunCloseCommand), nameof(BackCommand), nameof(SaveNextYearCommand), nameof(ContinueToClassesCommand), nameof(EditNextYearCommand))]
     private bool _isBusy;
 
     [ObservableProperty]
@@ -75,19 +77,22 @@ public sealed partial class SchoolYearViewModel(
     private bool _isBeforeEndDate;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(CreateNextYearCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CreateNextYearCommand), nameof(SaveNextYearCommand))]
+    [NotifyPropertyChangedFor(nameof(NextYearValidationMessage), nameof(HasNextYearValidationMessage))]
     private string _nextYearLabel = string.Empty;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(CreateNextYearCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CreateNextYearCommand), nameof(SaveNextYearCommand))]
+    [NotifyPropertyChangedFor(nameof(NextYearValidationMessage), nameof(HasNextYearValidationMessage))]
     private DateTime? _nextYearStart;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(CreateNextYearCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CreateNextYearCommand), nameof(SaveNextYearCommand))]
+    [NotifyPropertyChangedFor(nameof(NextYearValidationMessage), nameof(HasNextYearValidationMessage))]
     private DateTime? _nextYearEnd;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsNextYearEditable))]
+    [NotifyCanExecuteChangedFor(nameof(CreateNextYearCommand), nameof(SaveNextYearCommand), nameof(ContinueToClassesCommand), nameof(EditNextYearCommand))]
     private bool _isNextYearCreated;
 
     [ObservableProperty]
@@ -131,8 +136,37 @@ public sealed partial class SchoolYearViewModel(
     /// <summary>Whether the result step is showing.</summary>
     public bool IsResultStep => CurrentStep == EndYearStep.Result;
 
-    /// <summary>Whether the next year's label and dates can still be edited; they are read-only once it exists.</summary>
-    public bool IsNextYearEditable => !IsNextYearCreated;
+    /// <summary>
+    /// Why the next year's label and dates cannot be saved yet, or <see langword="null"/> when they can. Checks only
+    /// what the form can know; the Domain still decides on overlaps and the other years.
+    /// </summary>
+    public string? NextYearValidationMessage
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(NextYearLabel))
+            {
+                return TextResources.Text("SchoolYears_NextYear_Validation_LabelRequired");
+            }
+
+            if (NextYearStart is not { } start || NextYearEnd is not { } end)
+            {
+                return TextResources.Text("SchoolYears_NextYear_Validation_DatesRequired");
+            }
+
+            return start.Date >= end.Date ? TextResources.Text("SchoolYears_NextYear_Validation_DateOrder") : null;
+        }
+    }
+
+    /// <summary>Whether <see cref="NextYearValidationMessage"/> has something to show.</summary>
+    public bool HasNextYearValidationMessage => NextYearValidationMessage is not null;
+
+    /// <summary>Whether the typed label or dates differ from the saved Planned year; false before it exists.</summary>
+    private bool HasUnsavedNextYearChanges =>
+        _nextYear is { } saved
+        && (!string.Equals(NextYearLabel.Trim(), saved.Label, StringComparison.Ordinal)
+            || NextYearStart?.Date != saved.StartDate.Date
+            || NextYearEnd?.Date != saved.EndDate.Date);
 
     /// <summary>Whether something blocks the close.</summary>
     public bool HasBlockingItems => BlockingItems.Count > 0;
@@ -231,6 +265,7 @@ public sealed partial class SchoolYearViewModel(
         NextYearLabel = next.Label;
         NextYearStart = next.StartDate;
         NextYearEnd = next.EndDate;
+        SaveNextYearCommand.NotifyCanExecuteChanged();
     }
 
     private void MergeClassStates(IReadOnlyList<ClassRolloverState> states)
@@ -327,43 +362,95 @@ public sealed partial class SchoolYearViewModel(
         await RunGuardedAsync(() => LoadReadinessAsync(_activeYear.Id));
     }
 
-    private bool CanCreateNextYear() =>
-        !IsBusy
-        && (IsNextYearCreated
-            || (!string.IsNullOrWhiteSpace(NextYearLabel)
-                && NextYearStart is { } start
-                && NextYearEnd is { } end
-                && start.Date < end.Date));
+    private bool CanCreateNextYear() => !IsBusy && !IsNextYearCreated && NextYearValidationMessage is null;
 
-    /// <summary>Creates the next year as a Planned year, then moves on to the classes. If it exists already, it only moves on.</summary>
+    /// <summary>Creates the next year as a Planned year, then moves on to the classes.</summary>
     [RelayCommand(CanExecute = nameof(CanCreateNextYear))]
     private async Task CreateNextYearAsync()
     {
-        if (_activeYear is null)
+        if (_activeYear is null || NextYearStart is not { } start || NextYearEnd is not { } end)
         {
             return;
         }
 
-        if (!IsNextYearCreated)
+        var created = await RunGuardedAsync(
+            async () => _ = await schoolYearService.CreateNextYearAsync(_activeYear.Id, new SchoolYearDraft(NextYearLabel, start, end)),
+            TextResources.Text("SchoolYears_NextYear_CreateFailed"));
+        if (!created)
         {
-            if (NextYearStart is not { } start || NextYearEnd is not { } end)
-            {
-                return;
-            }
-
-            var created = await RunGuardedAsync(
-                async () => _ = await schoolYearService.CreateNextYearAsync(_activeYear.Id, new SchoolYearDraft(NextYearLabel, start, end)),
-                TextResources.Text("SchoolYears_NextYear_CreateFailed"));
-            if (!created)
-            {
-                return;
-            }
-
-            await ReloadAsync();
+            return;
         }
 
+        await ReloadAsync();
         CurrentStep = EndYearStep.Classes;
     }
+
+    private bool CanSaveNextYear() =>
+        !IsBusy && IsNextYearCreated && HasUnsavedNextYearChanges && NextYearValidationMessage is null;
+
+    /// <summary>Saves the changed label and dates of the Planned next year and stays on the step.</summary>
+    [RelayCommand(CanExecute = nameof(CanSaveNextYear))]
+    private async Task SaveNextYearAsync()
+    {
+        if (_nextYear is not { } nextYear || NextYearStart is not { } start || NextYearEnd is not { } end)
+        {
+            return;
+        }
+
+        var saved = await RunGuardedAsync(
+            async () => _ = await schoolYearService.UpdatePlannedYearAsync(nextYear.Id, new SchoolYearDraft(NextYearLabel, start, end)),
+            TextResources.Text("SchoolYears_NextYear_SaveFailed"));
+        if (!saved)
+        {
+            return;
+        }
+
+        ShowSuccess(TextResources.Text("SchoolYears_NextYear_Saved"));
+        await ReloadAsync();
+    }
+
+    private bool CanContinueToClasses() => !IsBusy && IsNextYearCreated;
+
+    /// <summary>Moves from the next year to the classes, after asking what to do with unsaved edits.</summary>
+    [RelayCommand(CanExecute = nameof(CanContinueToClasses))]
+    private async Task ContinueToClassesAsync()
+    {
+        if (await ConfirmDiscardNextYearChangesAsync())
+        {
+            CurrentStep = EndYearStep.Classes;
+        }
+    }
+
+    private bool CanEditNextYear() => !IsBusy && IsNextYearCreated;
+
+    /// <summary>Opens the next-year step to edit the Planned year from the overview.</summary>
+    [RelayCommand(CanExecute = nameof(CanEditNextYear))]
+    private void EditNextYear() => CurrentStep = EndYearStep.NextYear;
+
+    /// <summary>
+    /// Asks before unsaved edits of the Planned year are dropped. When the user discards, the fields go back to the
+    /// saved values; when they keep editing, the typed input stays.
+    /// </summary>
+    private async Task<bool> ConfirmDiscardNextYearChangesAsync(CancellationToken cancellationToken = default)
+    {
+        if (!await _leaveGuard.CanLeaveAsync(HasUnsavedNextYearChanges, cancellationToken))
+        {
+            return false;
+        }
+
+        if (HasUnsavedNextYearChanges && _nextYear is { } saved)
+        {
+            NextYearLabel = saved.Label;
+            NextYearStart = saved.StartDate;
+            NextYearEnd = saved.EndDate;
+        }
+
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public override Task<bool> CanLeaveAsync(CancellationToken cancellationToken = default) =>
+        ConfirmDiscardNextYearChangesAsync(cancellationToken);
 
     private bool CanApplyClassChoices() =>
         !IsBusy
@@ -537,7 +624,11 @@ public sealed partial class SchoolYearViewModel(
         switch (CurrentStep)
         {
             case EndYearStep.NextYear:
-                CurrentStep = EndYearStep.Overview;
+                if (await ConfirmDiscardNextYearChangesAsync())
+                {
+                    CurrentStep = EndYearStep.Overview;
+                }
+
                 break;
             case EndYearStep.Classes:
                 CurrentStep = EndYearStep.NextYear;

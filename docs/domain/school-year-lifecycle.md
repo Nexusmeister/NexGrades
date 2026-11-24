@@ -1,7 +1,7 @@
 # School year lifecycle
 
-A `SchoolYear` is the root scope of the model. This page covers its statuses, how the next year is created,
-how a year is closed, and how close readiness is reported.
+A `SchoolYear` is the root scope of the model. This page covers its statuses, how the next year is created and
+edited, how a year is closed, and how close readiness is reported.
 
 ## Statuses
 
@@ -23,6 +23,44 @@ any existing year.
 `SchoolYearService.ProposeNextYearAsync` proposes the draft: the same dates one year later and the matching
 label. It saves nothing. `SchoolYearService.FindPlannedSuccessorAsync` finds the earliest `Planned` year that
 starts after a given year. The end-of-year flow uses it to resume after a restart.
+
+## Editing the planned year
+
+`SchoolYearService.UpdatePlannedYearAsync` changes the label, the start date and the end date of a `Planned`
+year. It applies the same rules as `CreateNextYearAsync`: the label is not empty and is unused by another year,
+the dates are a valid range, the range starts after the `Active` year ends, and it overlaps no other year. The
+year being edited is left out of the label and overlap checks, so it may keep its own label or its old dates.
+
+Only a `Planned` year can be edited. The `Active` year is running and a `Closed` year is history, so both are
+refused, even while a `Closed` year is unlocked. An `Active` year must exist to check the new dates against.
+
+The new dates must also keep every assessment and grade of the year inside them. Voided assessments and grades
+count, so that un-voiding one later cannot leave it outside the year.
+
+No `AuditEntry` is written. `SchoolYear` rows are outside the closed-year audit, and a `Planned` year is never
+locked, so the edit needs no unlock. The id of the year does not change. `FindPlannedSuccessorAsync`, the class
+rollover states and `YearCloseService.CloseAndActivateNextYearAsync` therefore still find and use the same year,
+and the start stays after the `Active` year ends.
+
+In the App, the School year page shows the planned year in its overview and in its next-year step. Once the
+planned year exists, the overview has a "Next school year (planned)" card with the label and the dates and an
+"Edit next school year" button (`EditNextYearCommand`), which opens the next-year step.
+
+The next-year step is a form with the label and the start and end dates. All three are always editable, because
+the Domain accepts a new label as well as new dates. Before the year exists, the step offers Create. Once it
+exists, the step offers Save, Continue and Back instead. Save is enabled only when the typed values differ from
+the saved year and pass the form's checks. It calls `UpdatePlannedYearAsync`, shows a success message and reloads
+the flow, and the user stays on the step. A validation line under the form names what is wrong (an empty label,
+missing dates, or an end date that is not after the start). A hint under the form says the year is planned and
+can be changed until it becomes active. The Domain still checks overlaps and the other years when Save runs.
+
+Leaving the step with unsaved edits asks first. This applies to Back, to Continue and to leaving the page by
+the sidebar or the back button (`CanLeaveAsync`). Discarding restores the saved values, and keeping editing keeps
+what was typed.
+
+The step is reached from the start of the flow only when no planned year exists. When one exists, the flow
+starts at the first unfinished step (the classes while any class is pending, otherwise the readiness check), and
+Back from the classes returns to the next-year step.
 
 ## Closing a year
 
@@ -56,6 +94,7 @@ See [Rules by area](../../AGENTS.md#rules-by-area) in `AGENTS.md`.
 - `NexGrades.Data/Entities/SchoolYear.cs`
 - `NexGrades.Domain/Services/SchoolYearService.cs`
 - `NexGrades.Domain/Services/YearCloseService.cs`
+- `NexGrades.App/Features/SchoolYears/SchoolYearViewModel.cs`
 - `NexGrades.Domain/Services/CloseReadiness.cs`
 - `NexGrades.Domain/Services/CloseReadinessIssue.cs`
 - `NexGrades.Domain/Services/CloseReadinessIssueKind.cs`
