@@ -1,0 +1,94 @@
+# Dependabot version updates, all against `dev` (the integration branch). The two entries in the velopack group below
+# inherit target-branch, commit-message prefix and open-pull-requests-limit from the group (Dependabot rejects them on
+# the entries themselves); every other entry sets them itself. The nuget-minor-patch, actions-minor-patch and
+# sdk-minor-patch groups have `applies-to: version-updates`, so a security update is not held back by them and gets
+# its own immediate PR. The velopack group has no `applies-to`: Velopack and vpk security updates arrive through it,
+# to be confirmed on the first Dependabot run.
+# Each ecosystem has one group for all minor and patch updates (one weekly PR), except Velopack and vpk, which share
+# the velopack group. A major update is not in any group and stays its own PR, so a breaking change is reviewed alone.
+#
+# Labels must exist in the repository, or Dependabot skips them: create `dependencies`, `nuget`, `github-actions`,
+# `dotnet-sdk` and `velopack` once.
+version: 2
+
+# Velopack (NuGet) and vpk (dotnet tool) must have the same version, so they move in one PR across both
+# ecosystems. Only the entries below that name `multi-ecosystem-group: velopack` join it.
+multi-ecosystem-groups:
+  velopack:
+    schedule:
+      interval: weekly
+    target-branch: dev
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - velopack
+    commit-message:
+      prefix: Bump
+
+updates:
+  # NuGet packages, including the transitive pins, from central package management.
+  - package-ecosystem: nuget
+    directory: /src/NexGrades
+    schedule:
+      interval: weekly
+    # Joins the velopack group for the Velopack package only (the vpk tool below is the other half).
+    multi-ecosystem-group: velopack
+    patterns:
+      - Velopack
+    labels:
+      - dependencies
+      - nuget
+    groups:
+      nuget-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Must equal the Aspire.AppHost.Sdk version in NexGrades.AppHost.csproj, which Dependabot does not update.
+      # Move both by hand (see Directory.Packages.props).
+      - dependency-name: Aspire.Hosting.AppHost
+
+  # Local dotnet tools in .config/dotnet-tools.json (only vpk), read by the nuget ecosystem.
+  - package-ecosystem: nuget
+    directory: /
+    multi-ecosystem-group: velopack
+    patterns:
+      - vpk
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: Bump
+    groups:
+      actions-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+
+  # SDK version in global.json.
+  - package-ecosystem: dotnet-sdk
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - dotnet-sdk
+    commit-message:
+      prefix: Bump
+    groups:
+      sdk-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
