@@ -341,7 +341,7 @@ live in Claude Code's folders:
   - `verify-and-merge`: the lead's merge gate checklist for a MERGE-READY pull request, then the squash-merge
   - `smoke-start`: the smoke start procedure (step 7 of the issue-orchestrator) for a pull request that touches `NexGrades.App`
   - `handoff`: creates or updates the lead's local `HANDOVER.md` (never committed) so a new lead session can continue
-  - `retrospective`: the lead's step after a merge: record what the workflow cost in `docs/workflow/retrospective.md` and escalate repeated lessons
+  - `retrospective`: the lead's workflow log: each PR carries its entry in `docs/workflow/retrospective.md`; after the merge, check for repeated lessons and escalate them
   - `grill-me`: interviews the user to settle open decisions before work starts
   - `wpf-ui-design`: UI design rules for this app
   - `new-feature-page`: adds a Page + ViewModel + DI registration and navigation

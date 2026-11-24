@@ -96,11 +96,25 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
     non-blocking findings that are out of scope become follow-up issues (`mcp__github__issue_write`),
     linked in the PR body (`mcp__github__update_pull_request`) or in a PR comment
     (`mcp__github__add_issue_comment`); they don't trigger more rounds.
-12. **Stop at merge-ready:** CI is green on the head SHA, the smoke start passed at that SHA
-    (App-touching PRs), and the latest reviewer run at that SHA has no
-    finding of severity blocker or major and its verdict line is "Ready to merge". Do not merge.
-    Once CI is green and the reviewer is done at the head SHA, send the final report right away;
+12. **Retrospective entry.** Once the reviewer's verdict is "Ready to merge", have `docs-writer` (model: `haiku`)
+    add this PR's entry at the top of "Entries" in `docs/workflow/retrospective.md`, in the format documented
+    there. Build it from your own "Workflow notes" (see the final report), and tell the agent to write no pupil
+    data. Commit, push and wait for CI as in step 10. This is an entry-only commit, so it needs green CI on the
+    new head and no new reviewer pass (see the rule below). The head SHA after this commit is the one you report.
+    If the PR conflicts with `origin/<base>` only in `docs/workflow/retrospective.md` (another PR added an entry
+    first), run `git merge origin/<base>` and have `docs-writer` (haiku) resolve the conflict: keep both entries,
+    newest first. CI then runs again on the merge commit.
+13. **Stop at merge-ready:** CI is green on the head SHA (the one after the entry commit), the smoke start passed
+    at that SHA (App-touching PRs), and the latest reviewer verdict, at that SHA or at an earlier one allowed by
+    the rule below, has no finding of severity blocker or major and says "Ready to merge". Do not merge.
+    Once CI is green at the head SHA, send the final report right away;
     no background work may still be running at that point (don't start waits you won't need).
+
+**Rule: changes that need no new reviewer pass.** A change whose only effect on the PR's diff against the base is in
+`docs/workflow/retrospective.md` (an entry-only commit, or a merge of `origin/<base>` that resolves only conflicts in
+that file) needs green CI on the new head and no new reviewer pass. Check it: `git diff origin/<base>...<reviewed sha>`
+and `git diff origin/<base>...<head sha>` differ only in that file. Any other change needs a new reviewer verdict at
+the new SHA.
 
 ## Model choice per call
 
@@ -125,6 +139,7 @@ brief.
   worktrees of other issues.
 - Never invent commit attribution or PR footer lines. If the brief lacks them, stop with `BLOCKED`.
 - Never report MERGE-READY for an App-touching PR without a passing smoke start at the head SHA.
+- Never report MERGE-READY without the retrospective entry in the PR (step 12) and green CI on the head SHA.
 - No pupil data (names, grades, note text) in telemetry, logs, committed test fixtures that look like real
   data, or issue and PR text.
 - Don't work around a denied permission or a blocked action. Report `BLOCKED` with the exact denial.
@@ -140,13 +155,15 @@ At most 10 lines, not counting the "Workflow notes" section. The first line is e
 - tests (counts)
 - CI result
 - smoke start result: pass, fail or not applicable (App-touching PRs)
-- reviewer verdict and the model used
+- reviewer verdict, the model used and the SHA it reviewed (the head SHA is later when only the retrospective
+  entry was added after it)
+- that the retrospective entry is in the PR
 - follow-up issues filed
 - manual checks still needed
 - worktree path
 
 Every final report, `MERGE-READY` or `BLOCKED`, ends with a short "Workflow notes" section of about 5 lines for the
-lead's retrospective (`docs/workflow/retrospective.md`):
+retrospective (`docs/workflow/retrospective.md`). Step 12 turns it into the PR's entry, and the lead sees it here too:
 
 - retries and blocked steps (CI fix rounds, review rounds, denied actions)
 - review findings per role, especially ones a role should have caught
