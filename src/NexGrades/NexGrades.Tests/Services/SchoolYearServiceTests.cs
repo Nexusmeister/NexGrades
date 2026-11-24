@@ -797,13 +797,15 @@ public class SchoolYearServiceTests
         await AssertPlannedUnchangedAsync(db, plannedId);
     }
 
-    [Fact]
-    public async Task UpdatePlannedYearAsync_Throws_WhenAnAssessmentWouldFallOutsideTheNewRange()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UpdatePlannedYearAsync_Throws_WhenAnAssessmentWouldFallOutsideTheNewRange(bool voided)
     {
         using var db = new SqliteTestDatabase();
         await SeedYearAsync(db, "2024/25", new DateTime(2024, 8, 1), new DateTime(2025, 7, 31), SchoolYearStatus.Active);
         var seed = await GradeSheetSeed.CreateAsync(db, SchoolYearStatus.Planned);
-        await seed.AddAssessmentAsync("Test A", new DateOnly(2026, 7, 15));
+        await seed.AddAssessmentAsync("Test A", new DateOnly(2026, 7, 15), voidedOn: voided ? new DateTime(2026, 7, 16) : null);
         var draft = new SchoolYearDraft("2025/26", GradeSheetSeed.YearStart, new DateTime(2026, 6, 30));
 
         await Assert.ThrowsAsync<InvariantViolationException>(() => CreateService(db, Aug2025).UpdatePlannedYearAsync(seed.YearId, draft));

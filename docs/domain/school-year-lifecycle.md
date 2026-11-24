@@ -59,7 +59,8 @@ the sidebar or the back button (`CanLeaveAsync`). Discarding restores the saved 
 what was typed.
 
 The step is reached from the start of the flow only when no planned year exists. When one exists, the flow
-starts at the classes, and Back from the classes returns to the next-year step.
+starts at the first unfinished step (the classes while any class is pending, otherwise the readiness check), and
+Back from the classes returns to the next-year step.
 
 ## Closing a year
 
