@@ -37,6 +37,14 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
 - Run dotnet commands from `src/NexGrades/` inside the worktree.
 - Test output may be localized. In German, "Bestanden!" means passed.
 
+## Role agents and waiting
+
+Role agents may return asynchronously: the harness can run them in the background whatever the brief says. After
+you start a role agent, never END the run with a report. Stay alive: do other useful work, or wait with short
+background Bash rounds (`run_in_background`, a single `sleep 60`), until the agent's completion notification
+arrives. Then do the next dependent step. Never report `BLOCKED` only because an agent ran in the background.
+Send exactly ONE final report per run; a second `SubagentHandback` is refused and that report is lost.
+
 ## Workflow
 
 1. **Understand.** Read the issue and its comments, `AGENTS.md` and this file. Check the issue for
@@ -56,23 +64,31 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    a decision would change another issue's scope or needs the user.
 4. **Implement: `csharp-coder` and `ui-designer`.** `csharp-coder` takes Domain, Data and App (non-XAML)
    code. `ui-designer` takes XAML, after the view-model surface exists. Run them one after the
-   other when their files overlap.
+   other when their files overlap. Tell `csharp-coder` to reuse the existing catch pattern for view-model loads: a
+   read can throw `DbException` or `InvalidOperationException`, not only `DbUpdateException` and
+   `InvariantViolationException` (lesson from PR #207). When a view-model property is removed or renamed, the
+   coder or designer searches the XAML and code-behind for bindings to it, because a stale binding fails silently
+   at runtime and the build does not catch it. Check it yourself with Grep.
 5. **Tests and docs: `tester` and `docs-writer`.** `tester` only changes `NexGrades.Tests`. `docs-writer`
-   covers `README.md`, `AGENTS.md`, XML docs, `docs/domain` and `docs/decisions`. Run them in
-   parallel when their files don't overlap. Skip `docs-writer` when there is no user-visible change and no
-   change to a command, convention or the domain model.
+   covers `README.md`, `AGENTS.md`, XML docs, `docs/domain` and `docs/decisions`. Run `docs-writer` only after
+   `ui-designer` has finished whenever the docs describe the UI; a parallel run describes the old XAML (seen in
+   #202). Running it in parallel with `tester` is fine when their files don't overlap. Skip `docs-writer` when
+   there is no user-visible change and no change to a command, convention or the domain model.
 6. **Verify yourself** in the worktree, from `src/NexGrades/`: `dotnet build NexGrades.slnx`,
    `dotnet test`, `dotnet format NexGrades.slnx --verify-no-changes`. Send failures to the agent that owns
    the failing files (`csharp-coder` may run the formatter). Compare warnings with `dev` and note any new
    ones.
-7. **Smoke start** for every PR that touches `NexGrades.App`. The orchestrator runs it, never the owner. It tests
-   the working tree that will be committed in step 8, built in step 6. Follow `.claude/skills/smoke-start/SKILL.md`.
-   A failed smoke start is a blocker; send it to the owning agent like a failed build. After later commits that change
-   App code (CI or review fixes), rebuild (step 6) and repeat it before reporting. Record the result (pass, fail or not
-   applicable) for the PR body and the final report.
+7. **Smoke start** for every PR that touches `NexGrades.App`. The orchestrator runs it, never the owner. It runs on
+   the build of the head SHA that will be reported, so commit first (step 8), then rebuild (step 6) and run it at
+   that SHA; a run on the tree before the first commit is not enough (the lead found this in #202). Follow
+   `.claude/skills/smoke-start/SKILL.md`. A failed smoke start is a blocker; send it to the owning agent like a
+   failed build, then fix and recommit. After later commits that change App code (CI or review fixes), rebuild
+   (step 6) and repeat it before reporting. Record the result (pass, fail or not applicable) for the PR body and
+   the final report.
 8. **Commit and push.** The lead passes the commit attribution lines and the PR footer lines in the
    brief. If either set is missing, stop with `BLOCKED` before the first commit instead of inventing
-   them. Commit with a short imperative subject and the commit attribution lines, verbatim. Push with
+   them. Commit with a short imperative subject and the commit attribution lines, verbatim. For an App-touching
+   PR, rebuild and smoke start at the committed SHA (step 7) before you push and open the PR. Push with
    `git push -u origin <branch>`. Never push to `dev`, never force-push. To take in a newer `dev`, run
    `git merge origin/dev`; do not rebase.
 9. **Pull request.** Open it against the base with `mcp__github__create_pull_request`. The body has
@@ -83,10 +99,11 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
    that runs a single `sleep 60`. When it completes, re-check the check runs for the head SHA with
    `mcp__github__pull_request_read` (`get_check_runs`). Exit the wait only when at least one check run
    exists and every check run is completed. An empty list means CI has not started: the round still
-   counts and the wait continues. Never use one long blind sleep loop that does not look at CI. The round
-   counter is per head SHA and resets after a fix push. At most 30 rounds of about 60 s (about 30 minutes
+   counts and the wait continues. Every check run must be completed and green, including GitHub's own checks such
+   as the `dependabot.yml` check when present. Never use one long blind sleep loop that does not look at CI. The
+   round counter is per head SHA and resets after a fix push. At most 30 rounds of about 60 s (about 30 minutes
    plus check overhead) is the measurable form of the CI limit. The check after round 30 is the last: if
-   checks are still pending then, stop with `BLOCKED: CI timeout` and name the pending check names. On
+   a check is still queued or pending then, stop with `BLOCKED: CI timeout` and name that check. On
    failure, read the logs you can reach, send the fix to the owning agent, commit and push. After 3 CI fix
    rounds, stop with `BLOCKED`.
 11. **Review: `reviewer`.** Review the PR head SHA with `git diff origin/<base>...<sha>`, and tell the
@@ -98,8 +115,9 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
     (`mcp__github__add_issue_comment`); they don't trigger more rounds.
 12. **Retrospective entry.** Once the reviewer's verdict is "Ready to merge", have `docs-writer` (model: `haiku`)
     add this PR's entry at the top of "Entries" in `docs/workflow/retrospective.md`, in the format documented
-    there. Build it from your own "Workflow notes" (see the final report), and tell the agent to write no pupil
-    data. Commit, push and wait for CI as in step 10. This is an entry-only commit, so it needs green CI on the
+    there. Draft your "Workflow notes" at this point (the final report section describes the content), because
+    the entry is built from them and the final report is written only after step 13. Tell the agent to write no
+    pupil data. Commit, push and wait for CI as in step 10. This is an entry-only commit, so it needs green CI on the
     new head and no new reviewer pass (see the rule below). The head SHA after this commit is the one you report.
     If the PR conflicts with `origin/<base>` only in `docs/workflow/retrospective.md` (another PR added an entry
     first), run `git merge origin/<base>` and have `docs-writer` (haiku) resolve the conflict: keep both entries,
@@ -148,7 +166,8 @@ brief.
 
 ## Final report to the lead
 
-At most 10 lines, not counting the "Workflow notes" section. The first line is exactly
+Send exactly one report, written once, as the very last action of the run. At most 10 lines, not counting the
+"Workflow notes" section. The first line is exactly
 `MERGE-READY: PR #<n> @ <head sha>` or `BLOCKED: <reason>`. Then:
 
 - decisions you made
@@ -173,8 +192,9 @@ No pupil data in it: no names, grades, note text or record ids.
 
 ## Fallback
 
-If nested Agent calls are not available in the current setup (your first Agent call fails), report
-`BLOCKED: nesting unavailable` right away. The lead then runs this agent as a main-thread background
+If nested Agent calls are not available in the current setup (the Agent call itself fails: it is refused or
+errors), report `BLOCKED: nesting unavailable` right away. Never report it because an agent started in the
+background or has not answered yet. The lead then runs this agent as a main-thread background
 session instead, one session per issue, where the `Agent(...)` allow-list is enforced:
 
 ```sh

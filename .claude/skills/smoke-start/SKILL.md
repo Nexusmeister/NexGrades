@@ -8,37 +8,66 @@ argument-hint: <worktree path>
 
 The App is a GUI, so a smoke start only shows that it starts. It does not replace the manual UI test plan.
 
-The agent runs it, never the owner. It is required for every PR that touches `NexGrades.App`. It tests the
-working tree that will be committed, after a build (`dotnet build NexGrades.slnx` from `src/NexGrades/`). Run it
-in PowerShell 5.1.
+The agent runs it, never the owner. It is required for every PR that touches `NexGrades.App`. It runs on the build
+of the head SHA that will be reported: commit first, build (`dotnet build NexGrades.slnx` from `src/NexGrades/`),
+then run it. Run it in PowerShell 5.1.
+
+## The script
+
+Set `$worktree` to the absolute worktree path and run the whole snippet. It replaces hand-written log filters; two
+earlier hand-written filters had parsing bugs (one cut 29 instead of 30 characters). Log lines start with a
+30-character timestamp, `yyyy-MM-dd HH:mm:ss.fff zzz`, so keep `Substring(0,30)` and the format string as they are.
+
+```powershell
+$worktree = '<absolute worktree path>'
+$temp = Join-Path $env:TEMP ([guid]::NewGuid().ToString())
+New-Item -ItemType Directory -Path $temp | Out-Null
+$p = $null
+try {
+    $env:DOTNET_ENVIRONMENT = 'Development'
+    $env:ConnectionStrings__sqlite = "Data Source=$temp\smoke.db"
+    $start = [DateTimeOffset]::Now
+    $p = Start-Process "$worktree\src\NexGrades\NexGrades.App\bin\Debug\net11.0-windows\NexGrades.App.exe" -WindowStyle Minimized -PassThru -WorkingDirectory $temp
+    Start-Sleep 20
+
+    $logDir = "$env:LOCALAPPDATA\NexGrades\logs"
+    $day = $start.ToString('yyyyMMdd')
+    $lines = @(foreach ($f in Get-ChildItem $logDir -Filter "nexgrades-$day*.log") { foreach ($l in Get-Content $f.FullName) { if ($l.Length -ge 30) { try { $ts = [DateTimeOffset]::ParseExact($l.Substring(0,30), 'yyyy-MM-dd HH:mm:ss.fff zzz', [Globalization.CultureInfo]::InvariantCulture); if ($ts -ge $start) { $l } } catch { } } } })
+
+    $starting = @($lines | Where-Object { $_ -match 'starting on' })
+    $errors = @($lines | Where-Object { $_ -match '\[(ERR|FTL)\]' })
+    $warnings = @($lines | Where-Object { $_ -match '\[WRN\]' })
+    "lines since start: $($lines.Count)"
+    "starting-on lines: $($starting.Count)"
+    "ERR/FTL lines: $($errors.Count)"
+    "WRN lines: $($warnings.Count)"
+    "process exited: $($p.HasExited)"
+    $errors
+    $warnings
+}
+finally {
+    if ($p -and -not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+    Remove-Item Env:\DOTNET_ENVIRONMENT, Env:\ConnectionStrings__sqlite -ErrorAction SilentlyContinue
+    Remove-Item $temp -Recurse -Force -ErrorAction SilentlyContinue
+}
+```
+
+The ERR, FTL and WRN lines are printed on purpose: a fresh database holds no pupil data.
 
 ## Steps
 
-1. Create a fresh, empty temp folder for this run under the session scratchpad or `$env:TEMP`.
-2. Set `$env:DOTNET_ENVIRONMENT='Development'` and
-   `$env:ConnectionStrings__sqlite="Data Source=<temp folder>\smoke.db"`. The connection string keeps the run off
-   the real `%LOCALAPPDATA%` database, which must never be used.
-3. `$start = [DateTimeOffset]::Now`.
-4. Start the app and wait about 20 s. The working directory keeps the run out of the build folder.
-
-   ```powershell
-   $p = Start-Process "<worktree>\src\NexGrades\NexGrades.App\bin\Debug\net11.0-windows\NexGrades.App.exe" -PassThru -WorkingDirectory "<temp folder>"
-   ```
-
-5. Read all of today's `%LOCALAPPDATA%\NexGrades\logs\nexgrades-<yyyyMMdd>*.log` files. The folder is shared with
-   the owner's session, and files roll over to `_001`. Parse each line's timestamp as a `DateTimeOffset` (the
-   format is `yyyy-MM-dd HH:mm:ss.fff zzz`, with a UTC offset). Judge only lines at or after `$start`, and look
-   for this run's `NexGrades <version> starting on` line.
-6. Judge the result.
-   - Pass: the process is still alive, and this run's log lines contain the "starting on" line and no `[ERR]` or
-     `[FTL]`.
+1. Run the script above. It creates a fresh temp folder, sets the environment so the run stays off the real
+   `%LOCALAPPDATA%` database (which must never be used), starts the app, waits 20 s, reads only this run's log
+   lines, and stops the app and deletes the temp files in `finally`.
+2. Judge the result from the printed counts.
+   - Pass: the "starting on" count is at least 1, the ERR/FTL count is 0 and the process has not exited.
    - A failed start shows a modal message box and exits with code 1 only after the box is closed, so the process
      can look alive. The log decides.
-   - If `[ERR]` or `[FTL]` appears in the window, check that it comes after this run's "starting on" line before
-     calling it a failure.
-7. Stop the app with `Stop-Process -Id $p.Id -Force`. Never kill by image name, because the owner may have the
-   app open.
-8. Delete the temp folder, including `smoke.db` and any `-journal`, `-wal` or `-shm` files.
+   - On a fresh database an EF `[WRN]` about `PRAGMA foreign_keys` is expected and is not a failure.
+   - If `[ERR]` or `[FTL]` appears, check that it comes after this run's "starting on" line before calling it a
+     failure.
+3. Never stop the app by image name, because the owner may have the app open. The script uses
+   `Stop-Process -Id $p.Id -Force`.
 
 ## After the run
 
