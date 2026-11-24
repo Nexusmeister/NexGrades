@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.App.Core;
 using NexGrades.App.Features.Home;
@@ -62,11 +63,12 @@ public class HomeViewModelTests
     private static HomeViewModel CreateViewModel(LockTestEnvironment env, INavigationService? navigation = null) =>
         CreateViewModel(env, env.Factory, navigation);
 
-    private static HomeViewModel CreateViewModel(LockTestEnvironment env, IDbContextFactory<AppDbContext> factory, INavigationService? navigation = null) =>
+    private static HomeViewModel CreateViewModel(LockTestEnvironment env, IDbContextFactory<AppDbContext> factory, INavigationService? navigation = null, ILogger<HomeViewModel>? logger = null) =>
         new(
             new FakeUserService(),
             new SchoolYearService(factory, env.Clock, NullLogger<SchoolYearService>.Instance),
-            new PageNavigator(navigation ?? FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { }));
+            new PageNavigator(navigation ?? FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { }),
+            logger ?? NullLogger<HomeViewModel>.Instance);
 
     private static async Task SeedAsync(LockTestEnvironment env, SchoolYearStatus status = SchoolYearStatus.Active)
     {
@@ -243,5 +245,109 @@ public class HomeViewModelTests
 
         Assert.Equal([typeof(SchoolYearPage)], recorder.Visited);
         Assert.Equal(SchoolYearPageRequest.StartEndOfYearFlow, NavigationParameters.Take(typeof(SchoolYearViewModel)));
+    }
+
+    [Fact]
+    public async Task DismissYearEndReminderCommand_KeepsTheCardHidden_WhenPressedWhileTheFirstRefreshIsInFlight()
+    {
+        using var env = new LockTestEnvironment(EndDate.AddDays(-5));
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        var viewModel = CreateViewModel(env, gate);
+        var held = gate.HoldNextQueryAsync(out var release);
+        var refresh = viewModel.RefreshYearEndReminderAsync();
+        await held;
+
+        viewModel.DismissYearEndReminderCommand.Execute(null);
+        release();
+        await refresh;
+
+        Assert.False(viewModel.IsYearEndReminderVisible);
+    }
+
+    [Fact]
+    public async Task RefreshYearEndReminderAsync_KeepsTheCardHidden_AfterADismissalDuringTheFirstRefresh()
+    {
+        using var env = new LockTestEnvironment(EndDate.AddDays(-5));
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        var viewModel = CreateViewModel(env, gate);
+        var held = gate.HoldNextQueryAsync(out var release);
+        var refresh = viewModel.RefreshYearEndReminderAsync();
+        await held;
+        viewModel.DismissYearEndReminderCommand.Execute(null);
+        release();
+        await refresh;
+
+        await viewModel.RefreshYearEndReminderAsync();
+
+        Assert.False(viewModel.IsYearEndReminderVisible);
+    }
+
+    [Fact]
+    public async Task DismissYearEndReminderCommand_StillHolds_WhenPressedWhileALaterRefreshIsInFlight()
+    {
+        using var env = new LockTestEnvironment(EndDate.AddDays(-5));
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        var viewModel = CreateViewModel(env, gate);
+        await viewModel.RefreshYearEndReminderAsync();
+        Assert.True(viewModel.IsYearEndReminderVisible);
+        var held = gate.HoldNextQueryAsync(out var release);
+        var refresh = viewModel.RefreshYearEndReminderAsync();
+        await held;
+
+        viewModel.DismissYearEndReminderCommand.Execute(null);
+        release();
+        await refresh;
+
+        Assert.False(viewModel.IsYearEndReminderVisible);
+    }
+
+    [Fact]
+    public async Task RefreshYearEndReminderAsync_HidesTheCardAndLogsOneWarningWithoutRecordContent_WhenTheReadFails()
+    {
+        using var env = new LockTestEnvironment(EndDate.AddDays(-5));
+        await SeedAsync(env);
+        var factory = new FailingFactory(env.Factory) { Fail = true };
+        var logger = new CapturingLogger<HomeViewModel>();
+        var viewModel = CreateViewModel(env, factory, logger: logger);
+
+        await viewModel.RefreshYearEndReminderAsync();
+
+        Assert.False(viewModel.IsYearEndReminderVisible);
+        var entry = Assert.Single(logger.Entries);
+        Assert.Equal(LogLevel.Warning, entry.Level);
+        Assert.NotNull(entry.Exception);
+        Assert.DoesNotContain("2025/26", entry.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("2025", entry.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Ada", entry.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RefreshYearEndReminderAsync_KeepsTheNewestResult_WhenAnOlderRefreshFinishesLast()
+    {
+        using var env = new LockTestEnvironment(EndDate.AddDays(-5));
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        var viewModel = CreateViewModel(env, gate);
+
+        // The older refresh has read an Active year in the window and is held; the year is then closed and the
+        // newer refresh reads no reminder. The older answer arrives last and must not bring the card back.
+        var held = gate.HoldNextQueryAsync(out var release);
+        var older = viewModel.RefreshYearEndReminderAsync();
+        await held;
+        await using (var context = new AppDbContext(env.Options))
+        {
+            var year = await context.SchoolYears.SingleAsync();
+            year.Status = SchoolYearStatus.Closed;
+            await context.SaveChangesAsync();
+        }
+
+        await viewModel.RefreshYearEndReminderAsync();
+        release();
+        await older;
+
+        Assert.False(viewModel.IsYearEndReminderVisible);
     }
 }
