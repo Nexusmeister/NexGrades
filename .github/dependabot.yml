@@ -1,4 +1,6 @@
-# Dependabot version updates, all against `dev` (the integration branch). Security updates are not delayed by the
+# Dependabot version updates, all against `dev` (the integration branch). The two entries in the velopack group below
+# inherit target-branch, commit-message prefix and open-pull-requests-limit from the group (Dependabot rejects them on
+# the entries themselves); every other entry sets them itself. Security updates are not delayed by the
 # groups below: every group has `applies-to: version-updates`, so a security fix gets its own immediate PR.
 # Each ecosystem has one group for all minor and patch updates (one weekly PR); a major update is not in any
 # group and stays its own PR, so a breaking change is reviewed alone.
@@ -14,6 +16,7 @@ multi-ecosystem-groups:
     schedule:
       interval: weekly
     target-branch: dev
+    open-pull-requests-limit: 5
     labels:
       - dependencies
       - velopack
@@ -24,19 +27,15 @@ updates:
   # NuGet packages, including the transitive pins, from central package management.
   - package-ecosystem: nuget
     directory: /src/NexGrades
-    target-branch: dev
     schedule:
       interval: weekly
     # Joins the velopack group for the Velopack package only (the vpk tool below is the other half).
     multi-ecosystem-group: velopack
     patterns:
       - Velopack
-    open-pull-requests-limit: 5
     labels:
       - dependencies
       - nuget
-    commit-message:
-      prefix: Bump
     groups:
       nuget-minor-patch:
         applies-to: version-updates
@@ -51,7 +50,6 @@ updates:
   # Local dotnet tools in .config/dotnet-tools.json (only vpk), read by the nuget ecosystem.
   - package-ecosystem: nuget
     directory: /
-    target-branch: dev
     multi-ecosystem-group: velopack
     patterns:
       - vpk
