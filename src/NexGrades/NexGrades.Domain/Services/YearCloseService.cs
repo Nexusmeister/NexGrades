@@ -43,12 +43,14 @@ public sealed partial class YearCloseService(IDbContextFactory<AppDbContext> con
             throw new InvariantViolationException($"School year {schoolYearId} does not exist.");
         }
 
+        // Several collections are included, so split the query to avoid a cartesian explosion of joined rows.
         var classInstances = await context.ClassInstances
             .Where(ci => ci.SchoolYearId == schoolYearId)
             .Include(ci => ci.Enrollments)
             .Include(ci => ci.SubjectInstances).ThenInclude(si => si.Subject)
             .Include(ci => ci.SubjectInstances).ThenInclude(si => si.GradeBuckets).ThenInclude(gb => gb.Grades).ThenInclude(g => g.Assessment)
             .Include(ci => ci.SubjectInstances).ThenInclude(si => si.SubjectParticipations)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
         var blockingIssues = new List<CloseReadinessIssue>();
