@@ -1,9 +1,11 @@
 # Dependabot version updates, all against `dev` (the integration branch). The two entries in the velopack group below
 # inherit target-branch, commit-message prefix and open-pull-requests-limit from the group (Dependabot rejects them on
-# the entries themselves); every other entry sets them itself. Security updates are not delayed by the
-# groups below: every group has `applies-to: version-updates`, so a security fix gets its own immediate PR.
-# Each ecosystem has one group for all minor and patch updates (one weekly PR); a major update is not in any
-# group and stays its own PR, so a breaking change is reviewed alone.
+# the entries themselves); every other entry sets them itself. The nuget-minor-patch, actions-minor-patch and
+# sdk-minor-patch groups have `applies-to: version-updates`, so a security update is not held back by them and gets
+# its own immediate PR. The velopack group has no `applies-to`: Velopack and vpk security updates arrive through it,
+# to be confirmed on the first Dependabot run.
+# Each ecosystem has one group for all minor and patch updates (one weekly PR), except Velopack and vpk, which share
+# the velopack group. A major update is not in any group and stays its own PR, so a breaking change is reviewed alone.
 #
 # Labels must exist in the repository, or Dependabot skips them: create `dependencies`, `nuget`, `github-actions`,
 # `dotnet-sdk` and `velopack` once.
