@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NexGrades.App.Core;
 using NexGrades.App.Localization;
 using NexGrades.Data;
@@ -17,11 +18,15 @@ namespace NexGrades.App.Features.Classes;
 /// <param name="navigator">Opens the class form and hands it the id of the class to edit.</param>
 /// <param name="dbContextFactory">Creates the short-lived context used to load the classes.</param>
 /// <param name="snackbarService">Reports when no class is selected for editing.</param>
+/// <param name="logger">Records a failed load, without any record content.</param>
 public partial class ClassesOverviewViewModel(
     PageNavigator navigator,
     IDbContextFactory<AppDbContext> dbContextFactory,
-    ISnackbarService snackbarService) : ViewModel
+    ISnackbarService snackbarService,
+    ILogger<ClassesOverviewViewModel> logger) : ViewModel
 {
+    private int _loadVersion;
+
     [ObservableProperty]
     private ObservableCollection<ClassRow> _classes = [];
 
@@ -61,24 +66,47 @@ public partial class ClassesOverviewViewModel(
     [RelayCommand]
     private async Task LoadClassesAsync(CancellationToken cancellationToken = default)
     {
-        await using var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-
+        // The newest run wins: a slower, older run (an earlier filter toggle) discards its result.
+        var version = ++_loadVersion;
         var showInactive = ShowInactiveClasses;
         var selectedId = SelectedClass?.Id;
 
-        var classes = await dbcontext.ClassInstances
-            .Where(ci => ci.SchoolYear.Status == SchoolYearStatus.Active
-                && (showInactive || ci.Status == ClassInstanceStatus.Active))
-            .OrderBy(ci => ci.Name)
-            .Select(ci => new ClassRow(
-                ci.Id,
-                ci.Name,
-                ci.ClassGroup.CohortLabel,
-                ci.Enrollments.Count(e => e.LeftOn == null),
-                ci.Status))
-            .ToListAsync(cancellationToken);
+        try
+        {
+            await using var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-        Classes = classes.ToObservableCollection();
-        SelectedClass = classes.FirstOrDefault(c => c.Id == selectedId);
+            var classes = await dbcontext.ClassInstances
+                .AsNoTracking()
+                .Where(ci => ci.SchoolYear.Status == SchoolYearStatus.Active
+                    && (showInactive || ci.Status == ClassInstanceStatus.Active))
+                .OrderBy(ci => ci.Name)
+                .Select(ci => new ClassRow(
+                    ci.Id,
+                    ci.Name,
+                    ci.ClassGroup.CohortLabel,
+                    ci.Enrollments.Count(e => e.LeftOn == null),
+                    ci.Status))
+                .ToListAsync(cancellationToken);
+
+            if (version != _loadVersion)
+            {
+                return;
+            }
+
+            Classes = classes.ToObservableCollection();
+            SelectedClass = classes.FirstOrDefault(c => c.Id == selectedId);
+        }
+        catch (OperationCanceledException)
+        {
+            // The command cancels the previous run when it is executed again; a newer run has taken over, so there
+            // is nothing to report and the toolkit must not see the exception.
+        }
+        catch (Exception ex)
+        {
+            LogLoadFailed(ex);
+        }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Loading the class list failed.")]
+    private partial void LogLoadFailed(Exception exception);
 }

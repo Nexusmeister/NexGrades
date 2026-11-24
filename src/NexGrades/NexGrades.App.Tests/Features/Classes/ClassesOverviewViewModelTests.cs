@@ -14,7 +14,7 @@ public class ClassesOverviewViewModelTests
     private static ClassesOverviewViewModel Create(LockTestEnvironment env)
     {
         var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
-        return new ClassesOverviewViewModel(navigator, env.Factory, env.Snackbar);
+        return new ClassesOverviewViewModel(navigator, env.Factory, env.Snackbar, NullLogger<ClassesOverviewViewModel>.Instance);
     }
 
     private static async Task<int> AddYearAsync(AppDbContext context, string label, int startYear, SchoolYearStatus status)
@@ -164,4 +164,68 @@ public class ClassesOverviewViewModelTests
         Assert.True(row.HasStatusBadge);
         Assert.Equal(expected, row.StatusText);
     }
+
+    /// <summary>
+    /// Toggles the filter twice through the real command: the first (older) load is held after the database answered,
+    /// the second cancels and supersedes it and finishes first, then the older load is released and awaited.
+    /// </summary>
+    private static async Task<(ClassesOverviewViewModel Vm, CapturingLogger<ClassesOverviewViewModel> Logger)> SupersedeHeldLoadAsync(LockTestEnvironment env)
+    {
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        var logger = new CapturingLogger<ClassesOverviewViewModel>();
+        var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
+        var vm = new ClassesOverviewViewModel(navigator, gate, env.Snackbar, logger);
+
+        var held = gate.HoldNextQueryAsync(out var release);
+        vm.ShowInactiveClasses = true;
+        await held;
+        var older = vm.LoadClassesCommand.ExecutionTask!;
+        vm.ShowInactiveClasses = false;
+        await LockTestEnvironment.WaitUntilAsync(() => vm.Classes.Count == 1);
+        release();
+        await older;
+        return (vm, logger);
+    }
+
+    [Fact]
+    public Task LoadClassesCommand_KeepsTheNewestResult_WhenAnOlderLoadIsCancelledAndFinishesLast() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+
+        var (vm, _) = await SupersedeHeldLoadAsync(env);
+
+        Assert.Equal(["A-Active"], Names(vm));
+    });
+
+    [Fact]
+    public Task LoadClassesCommand_LogsNoWarning_WhenARunIsCancelledBySupersedingOne() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+
+        var (_, logger) = await SupersedeHeldLoadAsync(env);
+
+        Assert.Empty(logger.Entries);
+    });
+
+    [Fact]
+    public Task LoadClassesCommand_LogsOneWarningAndKeepsTheList_WhenTheReadFails() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var flaky = new FlakyContextFactory(env.Factory, 1);
+        var logger = new CapturingLogger<ClassesOverviewViewModel>();
+        var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
+        var vm = new ClassesOverviewViewModel(navigator, flaky, env.Snackbar, logger);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+        var listed = vm.Classes;
+
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        Assert.Same(listed, vm.Classes);
+        Assert.Equal(["A-Active"], Names(vm));
+        var entry = Assert.Single(logger.Entries);
+        Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Warning, entry.Level);
+        Assert.IsType<InvalidOperationException>(entry.Exception);
+    });
 }
