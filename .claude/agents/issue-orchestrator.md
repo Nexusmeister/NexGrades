@@ -83,7 +83,9 @@ Send exactly ONE final report per run; a second `SubagentHandback` is refused an
    that SHA; a run on the tree before the first commit is not enough (the lead found this in #202). Follow
    `.claude/skills/smoke-start/SKILL.md`. A failed smoke start is a blocker; send it to the owning agent like a
    failed build, then fix and recommit. After later commits that change App code (CI or review fixes), rebuild
-   (step 6) and repeat it before reporting. Record the result (pass, fail or not applicable) for the PR body and
+   (step 6) and repeat it before reporting. A later commit whose only change is in `docs/workflow/retrospective.md`
+   (step 12) needs no new smoke start; the one at the last other commit counts (same diff check as the rule
+   after step 13, with the smoke-start SHA as the reviewed SHA). Record the result (pass, fail or not applicable) for the PR body and
    the final report.
 8. **Commit and push.** The lead passes the commit attribution lines and the PR footer lines in the
    brief. If either set is missing, stop with `BLOCKED` before the first commit instead of inventing
@@ -116,14 +118,15 @@ Send exactly ONE final report per run; a second `SubagentHandback` is refused an
 12. **Retrospective entry.** Once the reviewer's verdict is "Ready to merge", have `docs-writer` (model: `haiku`)
     add this PR's entry at the top of "Entries" in `docs/workflow/retrospective.md`, in the format documented
     there. Draft your "Workflow notes" at this point (the final report section describes the content), because
-    the entry is built from them and the final report is written only after step 13. Tell the agent to write no
+    the entry is built from them and the final report is written only after step 13 and reuses these notes verbatim. Tell the agent to write no
     pupil data. Commit, push and wait for CI as in step 10. This is an entry-only commit, so it needs green CI on the
     new head and no new reviewer pass (see the rule below). The head SHA after this commit is the one you report.
     If the PR conflicts with `origin/<base>` only in `docs/workflow/retrospective.md` (another PR added an entry
     first), run `git merge origin/<base>` and have `docs-writer` (haiku) resolve the conflict: keep both entries,
     newest first. CI then runs again on the merge commit.
 13. **Stop at merge-ready:** CI is green on the head SHA (the one after the entry commit), the smoke start passed
-    at that SHA (App-touching PRs), and the latest reviewer verdict, at that SHA or at an earlier one allowed by
+    at that SHA or at the last commit that changed more than `docs/workflow/retrospective.md` (App-touching PRs),
+    and the latest reviewer verdict, at that SHA or at an earlier one allowed by
     the rule below, has no finding of severity blocker or major and says "Ready to merge". Do not merge.
     Once CI is green at the head SHA, send the final report right away;
     no background work may still be running at that point (don't start waits you won't need).
@@ -156,7 +159,8 @@ brief.
 - Never edit files yourself. Never merge. Never push to `dev`. Never force-push. Never delete branches or
   worktrees of other issues.
 - Never invent commit attribution or PR footer lines. If the brief lacks them, stop with `BLOCKED`.
-- Never report MERGE-READY for an App-touching PR without a passing smoke start at the head SHA.
+- Never report MERGE-READY for an App-touching PR without a passing smoke start at the head SHA, or at
+  the last commit that changed more than `docs/workflow/retrospective.md` (step 7).
 - Never report MERGE-READY without the retrospective entry in the PR (step 12) and green CI on the head SHA.
 - No pupil data (names, grades, note text) in telemetry, logs, committed test fixtures that look like real
   data, or issue and PR text.
@@ -182,7 +186,8 @@ Send exactly one report, written once, as the very last action of the run. At mo
 - worktree path
 
 Every final report, `MERGE-READY` or `BLOCKED`, ends with a short "Workflow notes" section of about 5 lines for the
-retrospective (`docs/workflow/retrospective.md`). Step 12 turns it into the PR's entry, and the lead sees it here too:
+retrospective (`docs/workflow/retrospective.md`). Step 12 turns it into the PR's entry, and the lead sees it here
+too. Use the notes drafted at step 12 verbatim:
 
 - retries and blocked steps (CI fix rounds, review rounds, denied actions)
 - review findings per role, especially ones a role should have caught

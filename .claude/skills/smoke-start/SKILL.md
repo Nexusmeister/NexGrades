@@ -46,7 +46,7 @@ try {
     $warnings
 }
 finally {
-    if ($p -and -not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+    if ($p -and -not $p.HasExited) { Stop-Process -Id $p.Id -Force; $p.WaitForExit(5000) | Out-Null }
     Remove-Item Env:\DOTNET_ENVIRONMENT, Env:\ConnectionStrings__sqlite -ErrorAction SilentlyContinue
     Remove-Item $temp -Recurse -Force -ErrorAction SilentlyContinue
 }
