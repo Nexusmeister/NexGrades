@@ -56,6 +56,6 @@ After the merge:
 
 1. Remove that issue's worktree.
 2. Update local `dev`.
-3. Update `HANDOVER.md` (see `.claude/skills/lead-handover/SKILL.md`).
+3. Update `HANDOVER.md` (see `.claude/skills/handoff/SKILL.md`).
 
 Merging `dev` into `main` is the owner's call only.

@@ -340,7 +340,7 @@ live in Claude Code's folders:
   - `implement-issue`: the lead's front door: brief an issue-orchestrator, then verify-and-merge
   - `verify-and-merge`: the lead's merge gate checklist for a MERGE-READY pull request, then the squash-merge
   - `smoke-start`: the smoke start procedure (step 7 of the issue-orchestrator) for a pull request that touches `NexGrades.App`
-  - `lead-handover`: the rules for the lead's local `HANDOVER.md`, which is never committed
+  - `handoff`: creates or updates the lead's local `HANDOVER.md` (never committed) so a new lead session can continue
   - `grill-me`: interviews the user to settle open decisions before work starts
   - `wpf-ui-design`: UI design rules for this app
   - `new-feature-page`: adds a Page + ViewModel + DI registration and navigation
