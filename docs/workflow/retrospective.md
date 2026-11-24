@@ -37,6 +37,22 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-24: PR #211 (issues #204 and #203) Orchestrator workflow lessons
+
+- **Cost and friction:** 6 role-agent runs: docs-writer on sonnet twice plus once for review fixes (three runs),
+  reviewer on sonnet twice, docs-writer on haiku for this entry. No CI fix round and no denied actions. Round 1 of
+  the review gave 1 major and 3 minors: the new rule "smoke start at the reported head SHA" conflicted with the
+  retrospective entry commit that comes after it; the orchestrator should have checked the new rules against steps
+  12 and 13 before the first review. Round 2 gave "Ready to merge" with three minors left (smoke-start skill intro
+  does not mention the retrospective-only exemption, env vars removed instead of restored, notes drafted before the
+  last CI waits). The docs-writer is slow on large multi-file briefs (about 15 minutes). The orchestrator stayed
+  alive for every role agent through background sleep rounds, as the new rule says.
+- **Lessons:**
+  - When a PR adds a rule to the workflow files, check it against the later steps (12, 13, final report) before the
+    first review.
+  - Split a many-file docs brief into smaller briefs to cut wall time.
+- **Repeat check:** none new; the background role agent lesson (#198, #202, #205, #207) is what this PR fixes.
+
 ### 2026-11-24: PR #207 (issue #162, part 3 of 3) Home year-end reminder card
 
 - **Cost and friction:** 10 role-agent runs (architect, csharp-coder twice, ui-designer, tester twice, docs-writer
