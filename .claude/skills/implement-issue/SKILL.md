@@ -43,6 +43,10 @@ Model overrides: <optional, or "none">
 
 If the commit attribution lines or the PR footer lines are missing, the orchestrator stops with `BLOCKED`.
 
+The brief carries only the issue-specific facts from the template. Don't repeat what the agent file covers: role
+agents returning asynchronously and the waiting rules, `docs-writer` after `ui-designer`, the XAML binding search,
+the smoke start at the reported head SHA and the CI wait rules.
+
 ## 3. Launch the orchestrator
 
 - Start the `issue-orchestrator` agent with the brief and pass `model` explicitly on every Agent call.

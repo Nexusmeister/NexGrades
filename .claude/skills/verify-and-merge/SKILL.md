@@ -42,8 +42,9 @@ line and check every item yourself; don't rely on the report.
    entry-only commit, or a merge of `origin/dev` that resolves only conflicts in that file). Check it:
    `git diff origin/dev...<reviewed sha>` and `git diff origin/dev...<head sha>` must differ only in that file.
    Any other change needs a new verdict at the head SHA.
-8. For a PR that touches `NexGrades.App`: the smoke start passed at that SHA. An agent runs it with
-   `.claude/skills/smoke-start/SKILL.md`, never the owner.
+8. For a PR that touches `NexGrades.App`: the smoke start passed at that SHA, or at an earlier
+   one when the only change since then is in `docs/workflow/retrospective.md` (same diff check as item 7, with the
+   smoke-start SHA). An agent runs it with `.claude/skills/smoke-start/SKILL.md`, never the owner.
 9. The PR body has `Closes #<n>`, the decisions, the tests, the warning counts, and a manual UI test plan where the
    change needs one.
 10. Follow-up issues are filed and linked.

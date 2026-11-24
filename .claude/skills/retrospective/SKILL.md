@@ -28,8 +28,9 @@ ids.
 ## After the merge
 
 1. **Check for a repeat.** Read the merged log in `docs/workflow/retrospective.md` on updated `dev`. A lesson that
-   appears in two entries is a repeat. Name the earlier PRs in the "Repeat check" line of the new entry. If that
-   line is wrong, fix it with the next docs change; don't open a PR for it alone.
+   appears in two entries is a repeat. This check is the authoritative one: the "Repeat check" line the
+   orchestrator or `docs-writer` filled in before the merge reflects the log as it was then. If that line is wrong
+   or incomplete, correct it in the next docs change; never open a PR for it alone.
 2. **Escalate a repeat.** Propose an issue that changes the agent, skill or docs file behind the lesson, and show
    it to the owner. Nothing in `.claude/` or `AGENTS.md` changes without the owner's OK; open the issue only
    with it.

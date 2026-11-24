@@ -12,7 +12,8 @@ of paying for the same mistake again.
 - This is one file. When two open PRs both add an entry, the one that merges second merges `origin/dev` and
   `docs-writer` (haiku) resolves the conflict, keeping both entries, newest first.
 - After the merge, the lead checks the log for repeats with the `retrospective` skill
-  (`.claude/skills/retrospective/SKILL.md`).
+  (`.claude/skills/retrospective/SKILL.md`). That check is the authoritative one; the lead corrects the entry's
+  "Repeat check" line in the next docs change, never in a PR of its own.
 
 ## Rules
 
@@ -25,7 +26,9 @@ of paying for the same mistake again.
   - **Cost and friction:** what went wrong or cost extra: blocked agents, retries, review findings a role should
     have caught, repeated fixes. Write "none" if nothing did.
   - **Lessons:** what to do differently, in one line each.
-  - **Repeat check:** earlier entries with the same lesson (PR numbers), or "none".
+  - **Repeat check:** earlier entries with the same lesson (PR numbers), or "none". Filled in before the merge from
+    the log as it is then; the lead's check after the merge is authoritative and corrects it in the next docs
+    change.
   ```
 
 - **Escalation.** A lesson that appears in two entries is a repeat. The lead then proposes an issue that changes
@@ -33,6 +36,22 @@ of paying for the same mistake again.
   changes without the owner's OK.
 
 ## Entries
+
+### 2026-11-24: PR #211 (issues #204 and #203) Orchestrator workflow lessons
+
+- **Cost and friction:** 6 role-agent runs: docs-writer on sonnet twice plus once for review fixes (three runs),
+  reviewer on sonnet twice, docs-writer on haiku for this entry. No CI fix round and no denied actions. Round 1 of
+  the review gave 1 major and 3 minors: the new rule "smoke start at the reported head SHA" conflicted with the
+  retrospective entry commit that comes after it; the orchestrator should have checked the new rules against steps
+  12 and 13 before the first review. Round 2 gave "Ready to merge" with three minors left (smoke-start skill intro
+  does not mention the retrospective-only exemption, env vars removed instead of restored, notes drafted before the
+  last CI waits). The docs-writer is slow on large multi-file briefs (about 15 minutes). The orchestrator stayed
+  alive for every role agent through background sleep rounds, as the new rule says.
+- **Lessons:**
+  - When a PR adds a rule to the workflow files, check it against the later steps (12, 13, final report) before the
+    first review.
+  - Split a many-file docs brief into smaller briefs to cut wall time.
+- **Repeat check:** none new; the background role agent lesson (#198, #202, #205, #207) is what this PR fixes.
 
 ### 2026-11-24: PR #212 (issues #206, #208) View-model load race guards
 
