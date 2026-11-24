@@ -152,4 +152,32 @@ affected.
 
 The app is unsigned, so Windows SmartScreen may warn when the installer or the app starts for the first time. Choose
 **More info**, then **Run anyway**.
+
+## Dependency updates
+
+Dependabot (`.github/dependabot.yml`) opens pull requests against `dev` every week for:
+
+- the NuGet packages in `src/NexGrades/Directory.Packages.props`, including the transitive pins,
+- the `vpk` dotnet tool in `.config/dotnet-tools.json`,
+- the GitHub Actions in `.github/workflows/`,
+- the .NET SDK pinned in `global.json`.
+
+Each ecosystem gets one grouped pull request for all its minor and patch updates. Each major update is its own pull
+request, so a breaking change is reviewed alone. Security updates open as soon as they are published and are not
+grouped with the weekly pull request.
+
+Velopack (NuGet) and `vpk` must have the same version, because `New-ReleaseAsset.ps1` refuses to pack when they differ.
+The `velopack` multi-ecosystem group moves both in one pull request. If Dependabot rejects that configuration, keep the
+two versions aligned by hand. Check **Insights > Dependency graph > Dependabot** after the first run.
+
+Dependabot ignores `Aspire.Hosting.AppHost`. It must equal the `Aspire.AppHost.Sdk` version in
+`src/NexGrades/Aspire/NexGrades.AppHost/NexGrades.AppHost.csproj`, so bump both by hand.
+
+**One-time setup:** the labels `dependencies`, `nuget`, `github-actions`, `dotnet-sdk` and `velopack` must exist in the
+repository. Dependabot skips a label that does not exist.
+
+**Merge gate:** a Dependabot pull request goes through the same gate as any other. All checks must be green, including
+SonarCloud. A reviewer pass is required, with the `opus` model for major updates. If an App package changes, run a
+smoke start (see the `smoke-start` skill). The lead squash-merges. A Dependabot pull request is never merged on green
+alone.
 </content>
