@@ -27,6 +27,10 @@ updates:
     target-branch: dev
     schedule:
       interval: weekly
+    # Joins the velopack group for the Velopack package only (the vpk tool below is the other half).
+    multi-ecosystem-group: velopack
+    patterns:
+      - Velopack
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -40,19 +44,9 @@ updates:
           - minor
           - patch
     ignore:
-      # Handled by the velopack group below together with vpk.
-      - dependency-name: Velopack
       # Must equal the Aspire.AppHost.Sdk version in NexGrades.AppHost.csproj, which Dependabot does not update.
       # Move both by hand (see Directory.Packages.props).
       - dependency-name: Aspire.Hosting.AppHost
-
-  # Velopack package, moved together with the vpk tool below (same version required).
-  - package-ecosystem: nuget
-    directory: /src/NexGrades
-    target-branch: dev
-    multi-ecosystem-group: velopack
-    patterns:
-      - Velopack
 
   # Local dotnet tools in .config/dotnet-tools.json (only vpk), read by the nuget ecosystem.
   - package-ecosystem: nuget

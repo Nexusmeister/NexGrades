@@ -163,12 +163,18 @@ Dependabot (`.github/dependabot.yml`) opens pull requests against `dev` every we
 - the .NET SDK pinned in `global.json`.
 
 Each ecosystem gets one grouped pull request for all its minor and patch updates. Each major update is its own pull
-request, so a breaking change is reviewed alone. Security updates open as soon as they are published and are not
-grouped with the weekly pull request.
+request, so a breaking change is reviewed alone. Security updates open as soon as they are published. The weekly
+groups for NuGet, GitHub Actions and the SDK never hold a security update back. Velopack and `vpk` security updates
+arrive together in the `velopack` group.
 
-Velopack (NuGet) and `vpk` must have the same version, because `New-ReleaseAsset.ps1` refuses to pack when they differ.
-The `velopack` multi-ecosystem group moves both in one pull request. If Dependabot rejects that configuration, keep the
-two versions aligned by hand. Check **Insights > Dependency graph > Dependabot** after the first run.
+Velopack (NuGet) and `vpk` must have the same version, because `New-ReleaseAsset.ps1` refuses to pack when they differ,
+and the pack step of a pull request build fails with it. The NuGet entry joins the `velopack` multi-ecosystem group
+with `patterns: [Velopack]`, and the `vpk` entry joins it with `patterns: [vpk]`, so both move in one pull request.
+If the Dependabot page reports a configuration error, or if the NuGet entry stops updating packages other than
+Velopack, fall back as follows. Remove `multi-ecosystem-group` and `patterns` from the NuGet entry in
+`.github/dependabot.yml`, which restores its normal grouping with Velopack excluded via `exclude-patterns`. Keep `vpk`
+in its own entry, and align the two versions by hand in the Velopack pull request. Check **Insights > Dependency
+graph > Dependabot** after the first run.
 
 Dependabot ignores `Aspire.Hosting.AppHost`. It must equal the `Aspire.AppHost.Sdk` version in
 `src/NexGrades/Aspire/NexGrades.AppHost/NexGrades.AppHost.csproj`, so bump both by hand.
