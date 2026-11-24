@@ -34,6 +34,24 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-24: PR #212 (issues #206, #208) View-model load race guards
+
+- **Cost and friction:** 5 role-agent runs (csharp-coder on sonnet twice, tester on sonnet, docs-writer on haiku,
+  reviewer on sonnet), plus this entry on haiku. No CI fix round. The tester found a real bug in production code: a
+  cancelled, superseded Classes load escaped as `TaskCanceledException` through the `[RelayCommand]` and would have
+  crashed the app. It went to csharp-coder as a fix round, and the tests were then reworked to go through the real
+  command path. The overlap guard already existed in `GradeSheetViewModel` and `StudentGradesViewModel`, but was
+  missing in the Classes and Home view models; the review of #205 and #207 caught it only afterwards. The reviewer
+  (sonnet) gave no blockers or majors and three minors, left unfiled: a stale failing run still logs a Warning; a
+  pending "Not now" is lost if the winning refresh fails; and the Classes test passes through the cancel path rather
+  than isolating the version guard. The coder and tester runs were slow, with many wait rounds.
+- **Lessons:**
+  - Every async load triggered by a property change or navigation needs a version counter (latest request wins) and a catch-and-log.
+  - A `[RelayCommand]` with a `CancellationToken` must handle the cancellation of a superseded run.
+  - Test the version guard in isolation; a test that passes through the cancel path does not prove it.
+- **Repeat check:** the overlap guard lesson also appears in PR #205 (rapid toggle) and PR #207 (an action during an
+  in-flight load). It is escalated as issue #209 (reference documentation), so not raised again here.
+
 ### 2026-11-24: PR #207 (issue #162, part 3 of 3) Home year-end reminder card
 
 - **Cost and friction:** 10 role-agent runs (architect, csharp-coder twice, ui-designer, tester twice, docs-writer
