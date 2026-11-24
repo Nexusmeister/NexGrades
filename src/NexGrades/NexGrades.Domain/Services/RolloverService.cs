@@ -37,11 +37,13 @@ public sealed class RolloverService(IDbContextFactory<AppDbContext> contextFacto
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
             await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
+            // Several collections are included, so split the query to avoid a cartesian explosion of joined rows.
             var oldInstance = await context.ClassInstances
                 .Include(ci => ci.Enrollments)
                 .Include(ci => ci.SubjectInstances).ThenInclude(si => si.GradeBuckets)
                 .Include(ci => ci.SubjectInstances).ThenInclude(si => si.SubjectParticipations)
                 .Include(ci => ci.SubjectInstances).ThenInclude(si => si.Subject).ThenInclude(s => s.BucketTemplates)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(ci => ci.Id == classInstanceId, cancellationToken)
                 ?? throw new InvariantViolationException($"Class instance {classInstanceId} does not exist.");
 
