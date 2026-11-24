@@ -37,6 +37,24 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-24: PR #226 (issue #213) Classes overview: school year filter
+
+- **Cost and friction:** 6 role-agent runs: csharp-coder, ui-designer, tester and reviewer on sonnet, and docs-writer
+  on haiku twice. No CI fix round and no denied actions. One review round gave "Ready to merge" with no blockers or
+  majors and four minors. Three of them: the docs "Code" list misses `SchoolYearService`, `GetYearsAsync` orders
+  without a tiebreaker, and the fallback when the selected year disappears is untested. The csharp-coder also flagged
+  that the class page has no `YearLock` bar, so the issue's "read-only for Closed years" does not hold today. This is
+  documented; no lock logic was added. The orchestrator misjudged elapsed time by counting short sleep rounds and
+  reported a stalled csharp-coder as BLOCKED; the lead corrected it by comparing `date` with file modification times.
+  The smoke start passed at 1f3e9f3.
+- **Lessons:**
+  - Judge a stalled agent by `date` and file modification times, never by counting sleep rounds.
+  - Before coding a lock-related issue, check that the page has the shared `YearLockBar`; a missing bar is a gap to
+    document or file, not one to patch ad hoc.
+  - Give the tester the fallback path (the selected item disappears) and the ordering tiebreaker as explicit cases.
+  - Have the docs step check its code references against the services the change touches.
+- **Repeat check:** none. The docs miss is related to the docs-brief lesson in PR #215, but it is a different miss.
+
 ### 2026-11-24: PR #219 (issue #210) Unlock dialog had no buttons
 
 - **Cost and friction:** 4 role-agent runs (ui-designer on sonnet twice, reviewer on sonnet, docs-writer on haiku), and
