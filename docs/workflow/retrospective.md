@@ -54,6 +54,15 @@ of paying for the same mistake again.
 - **Repeat check:** none. The overlapping-sleep polling is new; the background role agent lesson (#198, #202, #205, #207)
   is not repeated here.
 
+### 2026-11-24: PR #217 (issue #214) AsSplitQuery for Sonar S8733
+
+- **Cost and friction:** none (one coder run, one opus review, no CI fix rounds, no review findings; no tester run
+  because behaviour did not change).
+- **Lessons:**
+  - For a mechanical analyzer fix, skip architect and tester.
+  - Give the coder the transaction facts up front so it needs no discovery.
+- **Repeat check:** none.
+
 ### 2026-11-24: PR #211 (issues #204 and #203) Orchestrator workflow lessons
 
 - **Cost and friction:** 6 role-agent runs: docs-writer on sonnet twice plus once for review fixes (three runs),
