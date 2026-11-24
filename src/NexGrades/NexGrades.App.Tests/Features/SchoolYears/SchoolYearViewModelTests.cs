@@ -12,6 +12,7 @@ using Wpf.Ui.Controls;
 
 namespace NexGrades.App.Tests.Features.SchoolYears;
 
+[Collection(NavigationParametersState.Name)]
 public class SchoolYearViewModelTests
 {
     private static readonly DateTime Now = new(2026, 3, 1, 12, 0, 0);
@@ -466,5 +467,59 @@ public class SchoolYearViewModelTests
 
         Assert.Null(viewModel.NextYearValidationMessage);
         Assert.False(viewModel.HasNextYearValidationMessage);
+    });
+
+    [Fact]
+    public Task OnNavigatedToAsync_StartsTheFlowAtTheNextYearStep_ForTheStartRequestWithoutAPlannedYear() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedActiveAsync(env);
+        var viewModel = Create(env).ViewModel;
+        NavigationParameters.Set(typeof(SchoolYearViewModel), SchoolYearPageRequest.StartEndOfYearFlow);
+
+        await viewModel.OnNavigatedToAsync();
+
+        Assert.Equal(EndYearStep.NextYear, viewModel.CurrentStep);
+    });
+
+    [Fact]
+    public Task OnNavigatedToAsync_StaysOnTheOverview_WithoutAParameter() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedActiveAsync(env);
+        var viewModel = Create(env).ViewModel;
+        NavigationParameters.Discard(typeof(SchoolYearViewModel));
+
+        await viewModel.OnNavigatedToAsync();
+
+        Assert.Equal(EndYearStep.Overview, viewModel.CurrentStep);
+    });
+
+    [Fact]
+    public Task OnNavigatedToAsync_StaysOnTheOverview_ForTheStartRequestWithoutAnActiveYear() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var viewModel = Create(env).ViewModel;
+        NavigationParameters.Set(typeof(SchoolYearViewModel), SchoolYearPageRequest.StartEndOfYearFlow);
+
+        await viewModel.OnNavigatedToAsync();
+
+        Assert.Equal(EndYearStep.Overview, viewModel.CurrentStep);
+    });
+
+    [Fact]
+    public Task OnNavigatedToAsync_DoesNotMoveTheFlow_ForTheStartRequestWhenAlreadyMidFlow() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedActiveAndPlannedAsync(env);
+        var viewModel = Create(env).ViewModel;
+        await viewModel.OnNavigatedToAsync();
+        viewModel.EditNextYearCommand.Execute(null);
+        Assert.Equal(EndYearStep.NextYear, viewModel.CurrentStep);
+        NavigationParameters.Set(typeof(SchoolYearViewModel), SchoolYearPageRequest.StartEndOfYearFlow);
+
+        await viewModel.OnNavigatedToAsync();
+
+        Assert.Equal(EndYearStep.NextYear, viewModel.CurrentStep);
     });
 }

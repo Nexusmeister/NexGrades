@@ -34,6 +34,25 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-24: PR #207 (issue #162, part 3 of 3) Home year-end reminder card
+
+- **Cost and friction:** 10 role-agent runs (architect, csharp-coder twice, ui-designer, tester twice, docs-writer
+  twice including this entry, reviewer twice), all on sonnet except docs-writer on haiku. The smoke start ran twice
+  and passed both times. No CI fix round. The first review gave 1 major and 3 minors. The csharp-coder caught only
+  `DbUpdateException` and `InvariantViolationException` on a read path, but a failed read throws `DbException` or
+  `InvalidOperationException`; the reviewer found it, and the coder should have used the existing catch pattern for
+  view-model loads. The second review gave "Ready to merge" with two minors left unfixed: a small race when "Not now"
+  is pressed during the first in-flight refresh, and a culture-dependent date assertion in a test. The tester left a
+  redundant `AddHours(0)`. The architect's plan was accurate; the orchestrator decided its open questions (past
+  tense after the end date, reuse of the wizard button text). The orchestrator's first attempt ended early because it
+  did not stay alive for the architect's background completion, and the lead resumed it (see #204).
+- **Lessons:**
+  - Brief csharp-coder to copy the existing catch pattern for view-model loads; a read can throw `DbException` or `InvalidOperationException`.
+  - An action that can run during an in-flight load needs the same overlap guard as a rapid toggle.
+  - Tests that assert a formatted date must fix the culture.
+- **Repeat check:** background role agents, also in PR #198, #202 and #205; escalated as #204, so not raised again here.
+  The overlap guard lesson also appears in PR #205 (a repeat; it goes to the lead under the Escalation rule).
+
 ### 2026-11-24: PR #205 (issue #162, part 2 of 3) Classes overview status toggle
 
 - **Cost and friction:** 6 role-agent runs (csharp-coder, ui-designer and tester on sonnet, reviewer on sonnet,

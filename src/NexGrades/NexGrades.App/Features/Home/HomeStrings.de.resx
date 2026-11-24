@@ -8,4 +8,9 @@
   <data name="Home_Welcome_Default" xml:space="preserve"><value>Willkommen bei NexGrades!</value></data>
   <data name="Home_Welcome_Morning_Format" xml:space="preserve"><value>Guten Morgen, {0}!</value><comment>{0} is the user name.</comment></data>
   <data name="Home_Welcome_Day_Format" xml:space="preserve"><value>Guten Tag, {0}!</value><comment>{0} is the user name.</comment></data>
+  <data name="Home_YearEnd_Title" xml:space="preserve"><value>Ende des Schuljahres</value></data>
+  <data name="Home_YearEnd_Upcoming_Format" xml:space="preserve"><value>Das Schuljahr {0} endet am {1:d}.</value><comment>{0} is the school year label, such as 2025/26. {1} is the last day of the school year, a date shown in the short format of the current culture.</comment></data>
+  <data name="Home_YearEnd_Ended_Format" xml:space="preserve"><value>Das Schuljahr {0} ist am {1:d} zu Ende und noch nicht abgeschlossen.</value><comment>{0} is the school year label, such as 2025/26. {1} is the last day of the school year, a date shown in the short format of the current culture.</comment></data>
+  <data name="Home_YearEnd_Open" xml:space="preserve"><value>Schuljahr beenden</value></data>
+  <data name="Home_YearEnd_NotNow" xml:space="preserve"><value>Nicht jetzt</value></data>
 </root>

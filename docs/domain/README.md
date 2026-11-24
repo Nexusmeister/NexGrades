@@ -10,7 +10,7 @@ column.
 
 | Page | What it covers | Key types |
 |---|---|---|
-| [School year lifecycle](school-year-lifecycle.md) | Planned, Active and Closed; creating the next year; closing a year; close readiness | `SchoolYear`, `SchoolYearService`, `YearCloseService`, `CloseReadinessIssue` |
+| [School year lifecycle](school-year-lifecycle.md) | Planned, Active and Closed; creating the next year; closing a year; close readiness; the year-end reminder | `SchoolYear`, `SchoolYearService`, `YearCloseService`, `CloseReadinessIssue`, `YearEndReminder` |
 | [Classes, cohorts and rollover](classes-cohorts-and-rollover.md) | Cohorts and yearly classes, renaming, rolling a class into the next year, the teacher | `ClassGroup`, `ClassInstance`, `ClassService`, `RolloverService`, `Teacher` |
 | [Students and enrollment](students-and-enrollment.md) | Students and their class membership | `Student`, `Enrollment`, `EnrollmentService`, `EnrollmentInvariants` |
 | [Subjects, buckets and participation](subjects-buckets-and-participation.md) | The subject catalogue, bucket templates and snapshots, who takes part in a subject | `Subject`, `BucketTemplate`, `SubjectInstance`, `GradeBucket`, `SubjectParticipation` |

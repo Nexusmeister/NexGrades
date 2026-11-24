@@ -62,6 +62,37 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
                 .FirstOrDefaultAsync(cancellationToken);
         });
 
+    /// <summary>How many days before the Active year's end date the Home page starts reminding the teacher.</summary>
+    public const int YearEndReminderLeadDays = 28;
+
+    /// <summary>
+    /// Whether the end-of-year reminder is due: from <see cref="YearEndReminderLeadDays"/> days before
+    /// <paramref name="endDate"/> on, with no upper bound, because the year stays Active until it is closed. Only the
+    /// calendar days count, not the time of day.
+    /// </summary>
+    public static bool IsYearEndReminderDue(DateTime endDate, DateTime now) =>
+        now.Date >= endDate.Date.AddDays(-YearEndReminderLeadDays);
+
+    /// <summary>
+    /// Returns the reminder for the Active school year when its end is within <see cref="YearEndReminderLeadDays"/>
+    /// days or has passed, or <see langword="null"/> when there is no Active year or it is not due yet. A Planned
+    /// successor does not silence it: only closing the year does.
+    /// </summary>
+    public Task<YearEndReminder?> GetYearEndReminderAsync(CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync("SchoolYearService.GetYearEndReminder", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var active = await context.SchoolYears.AsNoTracking()
+                .Where(sy => sy.Status == SchoolYearStatus.Active)
+                .Select(sy => new SchoolYearSummary(sy.Id, sy.Label, sy.StartDate, sy.EndDate, sy.Status))
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var now = clock.Now;
+            return active is not null && IsYearEndReminderDue(active.EndDate, now)
+                ? new YearEndReminder(active.Id, active.Label, active.EndDate, now.Date > active.EndDate.Date)
+                : null;
+        });
+
     /// <summary>
     /// Finds the earliest Planned school year that starts after <paramref name="schoolYearId"/>, or
     /// <see langword="null"/> when there is none. The end-of-year flow uses it to resume after a restart.
