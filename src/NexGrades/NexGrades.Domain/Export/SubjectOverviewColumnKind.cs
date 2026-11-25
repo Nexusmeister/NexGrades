@@ -18,6 +18,6 @@ public enum SubjectOverviewColumnKind
     /// <summary>The final grade that applies: the teacher's override, otherwise the proposal; empty when there is neither.</summary>
     FinalGrade,
 
-    /// <summary>"Yes" when the final grade is an override set by the teacher, otherwise empty.</summary>
+    /// <summary>Always left empty by the Domain; <see cref="SubjectOverviewRow.IsFinalGradeOverridden"/> says whether the final grade is a teacher override, and the export writer words that for the UI culture.</summary>
     FinalGradeOverridden,
 }

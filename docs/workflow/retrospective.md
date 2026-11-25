@@ -45,6 +45,22 @@ of paying for the same mistake again.
   - The orchestrator's wait rounds do not advance wall-clock time visibly; judge CI by started_at and check runs, not by the number of sleeps.
 - **Repeat check:** none.
 
+### 2026-11-25: PR #233 (issues #164 and #166) Doc fixes and too-long class name hint in the rollover dialog
+
+- **Cost and friction:** 5 role-agent runs, all on sonnet except docs-writer on haiku: csharp-coder, ui-designer,
+  tester, reviewer and docs-writer. No architect was needed. No CI fix round. One review round gave no blockers or
+  majors and three minors, none needing action. The csharp-coder deviated from the brief on purpose: the brief asked
+  it to reuse the `Classes_` resource key, but the localization rules require area-prefixed keys, so it added a new
+  key with the same text in both languages. Background waiting was slow because the completion notifications of
+  sleep rounds arrived late.
+- **Lessons:**
+  - Check a brief's resource key reuse against the key-naming rule in the UI text and localization page before
+    sending the brief.
+  - Judge background waiting by `date` and file modification times, not by the number of sleep rounds.
+- **Repeat check:** the background-wait lesson repeats PR #228, PR #219, PR #207 and PR #196. The key-reuse lesson is
+  new; it is related to PR #205 (say in the ui-designer brief whether resource keys are in scope), but it is not the
+  same lesson.
+>
 ### 2026-11-25: PR #232 (issue #227) Classes year filter follow-ups
 
 - **Cost and friction:** 7 role-agent runs: csharp-coder (sonnet), tester (sonnet), docs-writer (haiku) three times,
@@ -57,7 +73,7 @@ of paying for the same mistake again.
   - Brief docs-writer on CRLF files with explicit end-of-file expectations.
 - **Repeat check:** PR #202 (docs-writer run in parallel with the code it documented). PR #205 followed the lesson; this
   PR repeats it, so it goes to the lead under the Escalation rule. The CRLF lesson is new.
-
+>
 ### 2026-11-25: PR #229 (issue #218) Clarify Velopack/vpk bump, labels and grouping in dependabot docs
 
 - **Cost and friction:** 5 role-agent runs on 2 models: csharp-coder (sonnet) for the yml comments, docs-writer (haiku)
