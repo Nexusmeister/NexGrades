@@ -8,7 +8,7 @@ namespace NexGrades.Domain.Export;
 /// <param name="ClassName">The class instance's name.</param>
 /// <param name="SchoolYearLabel">The school year's label, for example "2025/26".</param>
 /// <param name="Columns">The columns, in order: student, then per bucket its grades and average, then the subject average.</param>
-/// <param name="Rows">Active students first, then students who left but have grades, each group sorted by name.</param>
+/// <param name="Rows">Active students first, then students who left but have grades or a final-grade override, each group sorted by name.</param>
 public sealed record SubjectOverviewTable(
     string SubjectName,
     string ClassName,
