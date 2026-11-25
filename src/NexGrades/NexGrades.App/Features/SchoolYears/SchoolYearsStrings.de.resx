@@ -60,7 +60,7 @@
   <data name="SchoolYears_Action_Apply" xml:space="preserve"><value>Übernehmen</value></data>
   <data name="SchoolYears_Action_Apply_Tooltip" xml:space="preserve"><value>Die Auswahl für alle noch offenen Klassen übernehmen</value></data>
   <data name="SchoolYears_Action_Continue" xml:space="preserve"><value>Weiter</value></data>
-  <data name="SchoolYears_Action_Close" xml:space="preserve"><value>Schuljahr abschließen und nächstes aktivieren</value></data>
+  <data name="SchoolYears_Action_Close" xml:space="preserve"><value>Schuljahr abschließen und nächstes aktivieren ...</value></data>
   <data name="SchoolYears_Action_GoToClasses" xml:space="preserve"><value>Zu den Klassen</value></data>
   <data name="SchoolYears_Class_CarryOver_One_Format" xml:space="preserve"><value>{0} Schülerin / Schüler wird übernommen.</value><comment>{0} is the number of students that carry over, here exactly one.</comment></data>
   <data name="SchoolYears_Class_CarryOver_Many_Format" xml:space="preserve"><value>{0} Schülerinnen und Schüler werden übernommen.</value><comment>{0} is the number of students that carry over, none or more than one.</comment></data>

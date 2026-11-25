@@ -60,7 +60,7 @@
   <data name="SchoolYears_Action_Apply" xml:space="preserve"><value>Apply</value></data>
   <data name="SchoolYears_Action_Apply_Tooltip" xml:space="preserve"><value>Apply the choices for all classes that are still waiting</value></data>
   <data name="SchoolYears_Action_Continue" xml:space="preserve"><value>Continue</value></data>
-  <data name="SchoolYears_Action_Close" xml:space="preserve"><value>Close school year and activate next</value></data>
+  <data name="SchoolYears_Action_Close" xml:space="preserve"><value>Close school year and activate next…</value></data>
   <data name="SchoolYears_Action_GoToClasses" xml:space="preserve"><value>Go to classes</value></data>
   <data name="SchoolYears_Class_CarryOver_One_Format" xml:space="preserve"><value>{0} student carries over.</value><comment>{0} is the number of students that carry over, here exactly one.</comment></data>
   <data name="SchoolYears_Class_CarryOver_Many_Format" xml:space="preserve"><value>{0} students carry over.</value><comment>{0} is the number of students that carry over, none or more than one.</comment></data>

@@ -36,7 +36,7 @@ public class GradesGermanTextTests
             var cell = new GradeCellViewModel(
                 1, new GradeSheetCell(AssessmentId: 10, State: GradeSheetCellState.Exempt, Grade: null), false, true, _ => { });
 
-            Assert.Equal("Die Schülerin / der Schüler ist von diesem Fach befreit.", cell.Description);
+            Assert.Equal("Die Schülerin / der Schüler ist von der Benotung befreit.", cell.Description);
 
             cell.HasError = true;
 
@@ -51,7 +51,7 @@ public class GradesGermanTextTests
         {
             var cell = new FinalGradeCellViewModel(1, false, 3m, 2m, true, _ => { });
 
-            Assert.Equal("Diese Zeugnisnote überschreibt den Vorschlag 2.", cell.Description);
+            Assert.Equal("Diese Zeugnisnote ist manuell festgelegt (Vorschlag 2).", cell.Description);
         });
     }
 
@@ -86,7 +86,7 @@ public class GradesGermanTextTests
 
             var row = new GradeSheetRow(student, [], true, _ => { }, _ => { });
 
-            Assert.Equal("Von diesem Fach befreit.", row.StatusText);
+            Assert.Equal("Von der Benotung befreit.", row.StatusText);
             Assert.Equal("Lovelace, Ada", row.StudentName);
         });
     }
