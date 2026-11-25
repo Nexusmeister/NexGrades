@@ -52,7 +52,7 @@
         <ContentControl Grid.Row="2"
                         Content="{loc:Text Students_Overview_Empty}"
                         Tag="{Binding ViewModel.Students}"
-                        Style="{StaticResource Ng.EmptyState.WhenNoItems}" />
+                        Style="{StaticResource Ng.EmptyState.WhenNoItemsAfterLoad}" />
 
         <ui:DataGrid Grid.Row="3"
                      Style="{StaticResource Ng.DataGrid}"

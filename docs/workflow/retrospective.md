@@ -37,6 +37,34 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #235 (issue #178) Empty state on the overview pages only after the first load
+
+- **Cost and friction:** 7 role-agent runs: csharp-coder twice, ui-designer, tester, reviewer (all sonnet), and
+  docs-writer twice on haiku (once for the retrospective entry). No architect and no CI fix round. The first clean,
+  non-incremental build failed on MA0051 (the Classes load method was 66 lines, limit 60); an earlier incremental build
+  had hidden it, so an extra csharp-coder run extracted `ApplyLoad`. The ui-designer ran while the csharp-coder was
+  still editing the same file, saw a half-edited file and reported a false build break; the orchestrator verified the
+  tree with its own `--no-incremental` build. The docs-writer's late edit needed a second docs commit. One review
+  round gave "Ready to merge" with no blockers or majors and two minors; the first (a failed load shows the empty
+  state) is deliberate. After a lead session change the reviewed SHA was not recorded in the handover, so the lead
+  ran a second review (sonnet) at the head `46a9731`: Ready to merge, no blockers or majors, four minors (an untested
+  superseded-load case for Classes became follow-up issue #236; the others need no action). The lead's own
+  `-warnaserror` build, started while that reviewer built in the same worktree, reported one transient error; a
+  rebuild afterwards had 0 warnings and 0 errors. Lead smoke start pass at `46a9731`. Role-agent results arrived
+  with long delays, but the notes do not say whether the runs were in the background.
+- **Lessons:**
+  - Check a C# change with a non-incremental build (`dotnet build --no-incremental`) before handing back; an
+    incremental build can hide analyzer failures such as MA0051.
+  - Run each role agent to completion before the next one reads the same worktree, and let the orchestrator confirm
+    the build itself.
+  - Run docs-writer to completion before the docs commit, so its late edit does not need a second commit.
+  - Record the reviewed SHA and the smoke-start SHA in the handover, so a new lead session need not repeat the review.
+  - Don't build in a worktree while another agent builds there; parallel builds lock files and report false errors.
+- **Repeat check:** the concurrent-worktree lesson repeats PR #228 (ui-designer and tester in the same solution). The
+  docs-writer timing lesson repeats PR #202 and PR #232, so it goes to the lead under the Escalation rule. The
+  analyzer-before-handback lesson is new. The parallel-build lesson repeats this PR's own
+  ui-designer/csharp-coder overlap and PR #228. The handover-SHA lesson is new.
+
 ### 2026-11-25: PR #234 (issues #171, #172, #193, #197) Docs and config minors
 
 - **Cost and friction:** 3 role-agent runs: docs-writer (haiku) for the edits, reviewer (haiku), docs-writer (haiku) for this entry; no architect, coder or tester. No CI fix round, one review round with two minor findings (a version number in a comment for an unpinned transitive package that can go stale; a commit trailer model name, which was the lead's verbatim attribution line and was kept). No smoke start (no App code). Issue #172 had to be adjusted by the lead because PR #223 had made its premise stale; the orchestrator verified TFMs in the local NuGet cache instead of trusting the issue. The #171 CONTRIBUTING.md line was already pinned, so only the update alternative was added.
@@ -60,7 +88,7 @@ of paying for the same mistake again.
 - **Repeat check:** the background-wait lesson repeats PR #228, PR #219, PR #207 and PR #196. The key-reuse lesson is
   new; it is related to PR #205 (say in the ui-designer brief whether resource keys are in scope), but it is not the
   same lesson.
->
+
 ### 2026-11-25: PR #232 (issue #227) Classes year filter follow-ups
 
 - **Cost and friction:** 7 role-agent runs: csharp-coder (sonnet), tester (sonnet), docs-writer (haiku) three times,
@@ -73,7 +101,7 @@ of paying for the same mistake again.
   - Brief docs-writer on CRLF files with explicit end-of-file expectations.
 - **Repeat check:** PR #202 (docs-writer run in parallel with the code it documented). PR #205 followed the lesson; this
   PR repeats it, so it goes to the lead under the Escalation rule. The CRLF lesson is new.
->
+
 ### 2026-11-25: PR #229 (issue #218) Clarify Velopack/vpk bump, labels and grouping in dependabot docs
 
 - **Cost and friction:** 5 role-agent runs on 2 models: csharp-coder (sonnet) for the yml comments, docs-writer (haiku)

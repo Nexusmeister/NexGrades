@@ -89,8 +89,8 @@
                                          IsChecked="{Binding IsArchiveChosen, Mode=TwoWay}"/>
                         </StackPanel>
                         <ds:FormPanel Margin="0,8,0,0"
-                                    Style="{StaticResource Ng.FormPanel}"
-                                    Visibility="{Binding IsRollForwardPending, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                      Style="{StaticResource Ng.FormPanel}"
+                                      Visibility="{Binding IsRollForwardPending, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <HeaderedContentControl Header="{loc:Text SchoolYears_Class_NewName_Header}"
                                                     Margin="0"
                                                     Style="{StaticResource Ng.FormField}">

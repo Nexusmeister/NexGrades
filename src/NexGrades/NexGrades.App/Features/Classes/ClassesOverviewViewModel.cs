@@ -32,6 +32,13 @@ public partial class ClassesOverviewViewModel(
     private int _loadVersion;
     private bool _isApplyingLoad;
 
+    /// <summary>
+    /// True once the first load has finished, successfully or not, so the page shows its empty-state text only
+    /// after the list is known to be empty rather than while it is still loading.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasLoaded;
+
     [ObservableProperty]
     private ObservableCollection<ClassRow> _classes = [];
 
@@ -131,19 +138,7 @@ public partial class ClassesOverviewViewModel(
                 return;
             }
 
-            _isApplyingLoad = true;
-            try
-            {
-                Years = years.ToObservableCollection();
-                SelectedYear = year;
-            }
-            finally
-            {
-                _isApplyingLoad = false;
-            }
-
-            Classes = classes.ToObservableCollection();
-            SelectedClass = classes.FirstOrDefault(c => c.Id == selectedId);
+            ApplyLoad(years, year, classes, selectedId);
         }
         catch (OperationCanceledException)
         {
@@ -153,7 +148,30 @@ public partial class ClassesOverviewViewModel(
         catch (Exception ex)
         {
             LogLoadFailed(ex);
+
+            if (version == _loadVersion)
+            {
+                HasLoaded = true;
+            }
         }
+    }
+
+    private void ApplyLoad(IReadOnlyList<SchoolYearSummary> years, SchoolYearSummary? year, List<ClassRow> classes, int? selectedId)
+    {
+        _isApplyingLoad = true;
+        try
+        {
+            Years = years.ToObservableCollection();
+            SelectedYear = year;
+        }
+        finally
+        {
+            _isApplyingLoad = false;
+        }
+
+        Classes = classes.ToObservableCollection();
+        SelectedClass = classes.FirstOrDefault(c => c.Id == selectedId);
+        HasLoaded = true;
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Loading the class list failed.")]
