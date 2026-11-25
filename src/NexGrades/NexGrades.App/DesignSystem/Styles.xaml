@@ -134,6 +134,22 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Like Ng.EmptyState.WhenNoItems, but also waits for the first load, so an empty list is not announced
+         while the data is still loading. Use it on a page whose DataContext exposes ViewModel.HasLoaded:
+         Tag="{Binding ViewModel.Items}". -->
+    <Style x:Key="Ng.EmptyState.WhenNoItemsAfterLoad" TargetType="ContentControl" BasedOn="{StaticResource Ng.EmptyState}">
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Style.Triggers>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag.Count}" Value="0" />
+                    <Condition Binding="{Binding ViewModel.HasLoaded}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Visibility" Value="Visible" />
+            </MultiDataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="Ng.DataGridRow" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
         <Setter Property="Margin" Value="0" />
     </Style>

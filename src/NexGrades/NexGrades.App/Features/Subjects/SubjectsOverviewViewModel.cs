@@ -12,6 +12,13 @@ namespace NexGrades.App.Features.Subjects;
 /// <param name="dbContextFactory">Creates the short-lived context used to load the subjects.</param>
 public partial class SubjectsOverviewViewModel(PageNavigator navigator, IDbContextFactory<AppDbContext> dbContextFactory) : ViewModel
 {
+    /// <summary>
+    /// True once the first load has finished, successfully or not, so the page shows its empty-state text only
+    /// after the list is known to be empty rather than while it is still loading.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasLoaded;
+
     [ObservableProperty]
     private ObservableCollection<SubjectRow> _subjects = [];
 
@@ -35,6 +42,20 @@ public partial class SubjectsOverviewViewModel(PageNavigator navigator, IDbConte
     [RelayCommand]
     private async Task LoadSubjectsAsync(CancellationToken cancellationToken = default)
     {
+        try
+        {
+            await LoadCoreAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // A failed load still ends the loading state; the exception goes on to the command as before.
+            HasLoaded = true;
+            throw;
+        }
+    }
+
+    private async Task LoadCoreAsync(CancellationToken cancellationToken)
+    {
         await using var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var subjects = await dbcontext.Subjects
             .OrderBy(s => s.Name)
@@ -42,5 +63,6 @@ public partial class SubjectsOverviewViewModel(PageNavigator navigator, IDbConte
             .ToListAsync(cancellationToken);
 
         Subjects = subjects.ToObservableCollection();
+        HasLoaded = true;
     }
 }

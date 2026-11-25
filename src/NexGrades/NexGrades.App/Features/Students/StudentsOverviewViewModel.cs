@@ -22,6 +22,13 @@ public partial class StudentsOverviewViewModel(
     IDbContextFactory<AppDbContext> dbContextFactory,
     ISnackbarService snackbarService) : ViewModel
 {
+    /// <summary>
+    /// True once the first load has finished, successfully or not, so the page shows its empty-state text only
+    /// after the list is known to be empty rather than while it is still loading.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasLoaded;
+
     [ObservableProperty]
     private ObservableCollection<StudentRow> _students = [];
 
@@ -49,6 +56,20 @@ public partial class StudentsOverviewViewModel(
     [RelayCommand]
     private async Task LoadStudentsAsync(CancellationToken cancellationToken = default)
     {
+        try
+        {
+            await LoadCoreAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // A failed load still ends the loading state; the exception goes on to the command as before.
+            HasLoaded = true;
+            throw;
+        }
+    }
+
+    private async Task LoadCoreAsync(CancellationToken cancellationToken)
+    {
         await using var dbcontext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         // A student's "current" class is their enrollment in the currently Active school year; a student
@@ -67,5 +88,6 @@ public partial class StudentsOverviewViewModel(
             .ToListAsync(cancellationToken);
 
         Students = students.ToObservableCollection();
+        HasLoaded = true;
     }
 }
