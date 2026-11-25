@@ -37,6 +37,18 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #250 (issue #247) Line-wrap rule for the docs-writer role
+
+- **Cost and friction:** no retries, no CI fix rounds, no blocked steps. One review round (reviewer, sonnet) gave two
+  minors (the "about 120" versus "paragraph width" wording; a vague line-length check) and "Ready to merge" at
+  a6e9af8; both minors left as is. docs-writer (haiku) made the edit and applied its own new rule. Three role-agent
+  runs (docs-writer haiku twice, reviewer sonnet once); no architect, coder, ui-designer or tester. Open decision for
+  the owner: whether the brief template in `.claude/skills/implement-issue/SKILL.md` should mention the wrap rule.
+  Several orchestrator background sleeps returned instantly, so waits relied on notifications.
+- **Lessons:**
+  - The wrap rule now lives in `docs-writer.md`; watch whether the extra re-wrap round disappears.
+- **Repeat check:** PR #246 and PR #229 (docs-writer left lines over the wrap width); this PR is the fix.
+
 ### 2026-11-25: PR #249 (issue #248) Let the lead invoke implement-issue and verify-and-merge
 
 - **Cost and friction:** the lead could not start `implement-issue` for #247, because the skill's
