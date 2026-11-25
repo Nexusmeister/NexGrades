@@ -46,7 +46,7 @@ dotnet build NexGrades.App/NexGrades.App.csproj
 dotnet build NexGrades.slnx -warnaserror                             # build every project with warnings as errors
 dotnet test
 dotnet format NexGrades.slnx                                         # apply the .editorconfig style and whitespace rules
-dotnet ef migrations add <MigrationName> --project NexGrades.Data --startup-project NexGrades.Data   # needs the dotnet-ef global tool
+dotnet ef migrations add <MigrationName> --project NexGrades.Data --startup-project NexGrades.Data   # needs the dotnet-ef 11.x global tool
 dotnet run --project Aspire/NexGrades.AppHost                        # run the app for development
 ```
 
