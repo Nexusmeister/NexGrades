@@ -97,15 +97,15 @@
   <data name="Grades_Column_Proposal" xml:space="preserve"><value>Vorschlag</value></data>
   <data name="Grades_Column_FinalGrade" xml:space="preserve"><value>Zeugnisnote</value></data>
   <data name="Grades_Row_StudentName_Format" xml:space="preserve"><value>{0}, {1}</value><comment>{0} is the last name, {1} is the first name.</comment></data>
-  <data name="Grades_Row_Exempt" xml:space="preserve"><value>Von diesem Fach befreit.</value></data>
+  <data name="Grades_Row_Exempt" xml:space="preserve"><value>Von der Benotung befreit.</value></data>
   <data name="Grades_Row_Left_Format" xml:space="preserve"><value>Ausgetreten am {0:d}.</value><comment>{0} is the date the student left the class.</comment></data>
   <data name="Grades_Cell_Error_Description" xml:space="preserve"><value>Diese Note ist nicht gespeichert. Geben Sie eine Note von 1+ bis 6 ein, oder leeren Sie die Zelle.</value></data>
-  <data name="Grades_Cell_Exempt_Description" xml:space="preserve"><value>Die Schülerin / der Schüler ist von diesem Fach befreit.</value></data>
+  <data name="Grades_Cell_Exempt_Description" xml:space="preserve"><value>Die Schülerin / der Schüler ist von der Benotung befreit.</value></data>
   <data name="Grades_Cell_NotEnrolled_Description" xml:space="preserve"><value>Die Schülerin / der Schüler war an diesem Datum der Klasse nicht zugeordnet.</value></data>
   <data name="Grades_Cell_AssessmentVoided_Description" xml:space="preserve"><value>Dieser Leistungsnachweis ist gestrichen.</value></data>
   <data name="Grades_Cell_Voided_Description" xml:space="preserve"><value>Diese Note ist gestrichen.</value></data>
   <data name="Grades_FinalCell_Error_Description" xml:space="preserve"><value>Diese Zeugnisnote ist nicht gespeichert. Geben Sie eine ganze Note von 1 bis 6 ein, oder leeren Sie die Zelle.</value></data>
-  <data name="Grades_FinalCell_Override_Description_Format" xml:space="preserve"><value>Diese Zeugnisnote überschreibt den Vorschlag {0}.</value><comment>{0} is the proposed final grade.</comment></data>
+  <data name="Grades_FinalCell_Override_Description_Format" xml:space="preserve"><value>Diese Zeugnisnote ist manuell festgelegt (Vorschlag {0}).</value><comment>{0} is the proposed final grade.</comment></data>
   <data name="Grades_FinalCell_OverrideNoProposal_Description" xml:space="preserve"><value>Diese Zeugnisnote überschreibt den Vorschlag. Es gibt noch keinen Vorschlag.</value></data>
   <data name="Grades_FinalCell_NoOverride_Description" xml:space="preserve"><value>Keine Überschreibung. Der Vorschlag wird verwendet.</value></data>
 </root>

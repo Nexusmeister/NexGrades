@@ -37,6 +37,22 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #240 (issue #194) Localization nits
+
+- **Cost and friction:** 4 role-agent runs: csharp-coder (sonnet), tester (sonnet), reviewer (sonnet) and docs-writer
+  (haiku); no architect. No CI fix round and no denied actions. One review round gave no blockers or majors and two
+  minors: a sibling German tooltip still had the old wording (filed as a follow-up issue), and no tests pin the
+  resource strings of items 3 and 6. Nothing in the review was a blocker that a role should have caught. The
+  orchestrator reported the csharp-coder as BLOCKED after about 2.5 hours, because it counted background sleep rounds
+  as elapsed time. Real time (`date`) showed about 12 minutes, and the lead corrected the report.
+- **Lessons:**
+  - Judge a stalled agent by `date` and file modification times, never by counting sleep rounds.
+  - When a wording changes, search every language's resource file and the XAML for the old text, so no sibling is left behind.
+  - Name in the tester brief each changed resource string that needs a test, or say why none is pinned.
+- **Repeat check:** the first lesson repeats PR #226, PR #219 and PR #196 (a BLOCKED report judged by round count); it
+  goes to the lead under the Escalation rule. The sibling-text lesson is related to PR #219 (sibling dialogs) but is not
+  the same lesson. The tester-brief lesson is new.
+
 ### 2026-11-25: PR #237 (issue #224) Orchestrator waits by the real clock, one builder per worktree
 
 - **Cost and friction:** none blocking: no retries, no blocked agents and no CI fix round. One review round (sonnet
