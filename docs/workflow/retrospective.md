@@ -46,17 +46,24 @@ of paying for the same mistake again.
   still editing the same file, saw a half-edited file and reported a false build break; the orchestrator verified the
   tree with its own `--no-incremental` build. The docs-writer's late edit needed a second docs commit. One review
   round gave "Ready to merge" with no blockers or majors and two minors; the first (a failed load shows the empty
-  state) is deliberate. Role-agent results arrived with long delays, but the notes do not say whether the runs were
-  in the background.
+  state) is deliberate. After a lead session change the reviewed SHA was not recorded in the handover, so the lead
+  ran a second review (sonnet) at the head `46a9731`: Ready to merge, no blockers or majors, four minors (an untested
+  superseded-load case for Classes became follow-up issue #236; the others need no action). The lead's own
+  `-warnaserror` build, started while that reviewer built in the same worktree, reported one transient error; a
+  rebuild afterwards had 0 warnings and 0 errors. Lead smoke start pass at `46a9731`. Role-agent results arrived
+  with long delays, but the notes do not say whether the runs were in the background.
 - **Lessons:**
   - Check a C# change with a non-incremental build (`dotnet build --no-incremental`) before handing back; an
     incremental build can hide analyzer failures such as MA0051.
   - Run each role agent to completion before the next one reads the same worktree, and let the orchestrator confirm
     the build itself.
   - Run docs-writer to completion before the docs commit, so its late edit does not need a second commit.
+  - Record the reviewed SHA and the smoke-start SHA in the handover, so a new lead session need not repeat the review.
+  - Don't build in a worktree while another agent builds there; parallel builds lock files and report false errors.
 - **Repeat check:** the concurrent-worktree lesson repeats PR #228 (ui-designer and tester in the same solution). The
   docs-writer timing lesson repeats PR #202 and PR #232, so it goes to the lead under the Escalation rule. The
-  analyzer-before-handback lesson is new.
+  analyzer-before-handback lesson is new. The parallel-build lesson repeats this PR's own
+  ui-designer/csharp-coder overlap and PR #228. The handover-SHA lesson is new.
 
 ### 2026-11-25: PR #234 (issues #171, #172, #193, #197) Docs and config minors
 
