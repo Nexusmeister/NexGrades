@@ -32,6 +32,9 @@ line and check every item yourself; don't rely on the report.
    ```sh
    (cd "<worktree>/src/NexGrades" && export CI=true && dotnet build NexGrades.slnx -warnaserror && dotnet test -warnaserror && dotnet format NexGrades.slnx --verify-no-changes)
    ```
+
+   The lead runs these checks only when no agent is building in that worktree (for example after the reviewer has
+   finished), or in a scratch worktree.
 6. Diff sanity check on `git diff --name-status origin/dev...<sha>` and the added lines:
    - No migration file is hand-edited: existing migrations are unchanged in the diff.
    - `.claude/settings.json` is not changed.

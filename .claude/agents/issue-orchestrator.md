@@ -40,10 +40,18 @@ verify the results, open the PR and shepherd it to merge-ready. The lead merges.
 ## Role agents and waiting
 
 Role agents may return asynchronously: the harness can run them in the background whatever the brief says. After
-you start a role agent, never END the run with a report. Stay alive: do other useful work, or wait with short
-background Bash rounds (`run_in_background`, a single `sleep 60`), until the agent's completion notification
+you start a role agent, never END the run with a report. Stay alive: do other useful work, or wait with a background
+Bash command (`run_in_background`) that sleeps in date-checked chunks, until the agent's completion notification
 arrives. Then do the next dependent step. Never report `BLOCKED` only because an agent ran in the background.
 Send exactly ONE final report per run; a second `SubagentHandback` is refused and that report is lost.
+
+Before you state any duration or report a stall, run `date` and compare it with the file mtimes in the worktree.
+Counted `sleep 60` rounds return almost instantly in this harness and say nothing about elapsed time. Report a
+role-agent stall only after 30+ real minutes with no file change and no agent report.
+
+One worktree per issue: every issue starts in its own independent worktree. Inside a worktree, only one agent
+builds or tests at a time. Never run two role agents that build or test the same worktree in parallel; agents that
+build at the same time in one worktree report false build failures (seen in #228 and #235).
 
 ## Workflow
 
@@ -70,9 +78,9 @@ Send exactly ONE final report per run; a second `SubagentHandback` is refused an
    coder or designer searches the XAML and code-behind for bindings to it, because a stale binding fails silently
    at runtime and the build does not catch it. Check it yourself with Grep.
 5. **Tests and docs: `tester` and `docs-writer`.** `tester` only changes `NexGrades.Tests`. `docs-writer`
-   covers `README.md`, `AGENTS.md`, XML docs, `docs/domain` and `docs/decisions`. Run `docs-writer` only after
-   `ui-designer` has finished whenever the docs describe the UI; a parallel run describes the old XAML (seen in
-   #202). Running it in parallel with `tester` is fine when their files don't overlap. Skip `docs-writer` when
+   covers `README.md`, `AGENTS.md`, XML docs, `docs/domain` and `docs/decisions`. Run `docs-writer` only after ALL
+   code roles (`csharp-coder`, `ui-designer`, `tester`) have finished; a parallel run describes the old code or XAML
+   (seen in #202 and #232). Skip `docs-writer` when
    there is no user-visible change and no change to a command, convention or the domain model.
 6. **Verify yourself** in the worktree, from `src/NexGrades/`: `dotnet build NexGrades.slnx`,
    `dotnet test`, `dotnet format NexGrades.slnx --verify-no-changes`. Send failures to the agent that owns
@@ -97,17 +105,17 @@ Send exactly ONE final report per run; a second `SubagentHandback` is refused an
    `Closes #<n>`, a summary, the decisions, the tests, the warning counts, the smoke start result (App-touching
    PRs), a numbered manual UI test plan when the change needs one, and the
    PR footer lines the lead passed.
-10. **CI.** Wait for CI in rounds. Each round is one short background Bash command (`run_in_background`)
-   that runs a single `sleep 60`. When it completes, re-check the check runs for the head SHA with
-   `mcp__github__pull_request_read` (`get_check_runs`). Exit the wait only when at least one check run
-   exists and every check run is completed. An empty list means CI has not started: the round still
-   counts and the wait continues. Every check run must be completed and green, including GitHub's own checks such
-   as the `dependabot.yml` check when present. Never use one long blind sleep loop that does not look at CI. The
-   round counter is per head SHA and resets after a fix push. At most 30 rounds of about 60 s (about 30 minutes
-   plus check overhead) is the measurable form of the CI limit. The check after round 30 is the last: if
-   a check is still queued or pending then, stop with `BLOCKED: CI timeout` and name that check. On
-   failure, read the logs you can reach, send the fix to the owning agent, commit and push. After 3 CI fix
-   rounds, stop with `BLOCKED`.
+10. **CI.** Wait for CI with one background Bash command (`run_in_background`) that loops until every check
+   run for the head SHA is complete. The loop compares `date` with a deadline and sleeps between polls. Where the
+   command can reach the check runs (for example curl on the public check-runs API), it polls them. Otherwise it
+   sleeps in date-checked chunks of at most 5 minutes, and you re-check with `mcp__github__pull_request_read`
+   (`get_check_runs`) when it exits. Exit the wait only when at least one check run exists and every check run is
+   completed. An empty list means CI has not started: the wait continues. Every check run must be completed and
+   green, including GitHub's own checks such as the `dependabot.yml` check when present. Report
+   `BLOCKED: CI timeout` (naming the check) only when `date` shows 30+ minutes since the jobs' `started_at` for
+   the current head SHA and a check is still queued or pending. Counted `sleep` rounds say nothing about elapsed
+   time. On failure, read the logs you can reach, send the fix to the owning agent, commit and push. After 3 CI
+   fix rounds, stop with `BLOCKED`.
 11. **Review: `reviewer`.** Review the PR head SHA with `git diff origin/<base>...<sha>`, and tell the
     reviewer to review exactly that SHA. Send blockers and majors to the owning agent, then re-verify,
     push and review again. Majors are resolved like blockers. A review round counts toward the limit when
