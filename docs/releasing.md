@@ -162,12 +162,12 @@ Dependabot (`.github/dependabot.yml`) opens pull requests against `dev` every we
 - the GitHub Actions in `.github/workflows/`,
 - the .NET SDK pinned in `global.json`.
 
-Dependabot writes the pull request titles itself (`Bump ...`), so no commit-message prefix is set. The NuGet packages,
-the GitHub Actions and the SDK each get one grouped pull request for their minor and patch updates. NuGet has a second
-group, `velopack`, for the Velopack packages; `nuget-minor-patch` holds every other NuGet package. The `vpk` tool has its
-own ungrouped entry, so each of its updates is one pull request. Each major update is its own pull request, so a
-breaking change is reviewed alone. All groups set `applies-to: version-updates`, so a group never holds a security
-update back; security updates open as soon as they are published.
+Dependabot writes the pull request titles itself (`Bump ...`), so no commit-message prefix is set. GitHub Actions and
+the SDK each get one grouped pull request for their minor and patch updates. NuGet gets two: `nuget-minor-patch` holds
+every other NuGet package, and `velopack` holds the Velopack packages. The `vpk` tool has its own ungrouped entry, so
+each of its updates is one pull request. Each major update is its own pull request, so a breaking change is reviewed
+alone. All groups set `applies-to: version-updates`, so a group never holds a security update back; security updates
+open as soon as they are published.
 
 Labels are set per entry, not per group. The Velopack package pull request therefore arrives labelled `dependencies` and
 `nuget`; only the `vpk` pull request carries `velopack`.
