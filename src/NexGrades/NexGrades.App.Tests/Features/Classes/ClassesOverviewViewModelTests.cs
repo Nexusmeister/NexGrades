@@ -514,4 +514,58 @@ public class ClassesOverviewViewModelTests
         Assert.False(beforeRelease);
         Assert.True(vm.HasLoaded);
     });
+
+    [Fact]
+    public Task LoadClassesCommand_ChangesNothing_WhenASupersededLoadFinishesAfterTheNewestOne() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
+        var vm = new ClassesOverviewViewModel(navigator, gate, YearService(env, gate), env.Snackbar, NullLogger<ClassesOverviewViewModel>.Instance);
+
+        var held = gate.HoldNextQueryAsync(out var release);
+        vm.ShowInactiveClasses = true;
+        await held;
+        var older = vm.LoadClassesCommand.ExecutionTask!;
+        vm.ShowInactiveClasses = false;
+        await LockTestEnvironment.WaitUntilAsync(() => vm.HasLoaded && Names(vm) is ["A-Active"]);
+        var listed = vm.Classes;
+        var year = vm.SelectedYear;
+        release();
+        await older;
+
+        Assert.True(vm.HasLoaded);
+        Assert.Same(listed, vm.Classes);
+        Assert.Equal(["A-Active"], Names(vm));
+        Assert.Same(year, vm.SelectedYear);
+    });
+
+    [Fact]
+    public Task HasLoaded_StaysFalse_WhenASupersededLoadFinishesWhileTheNewestIsHeld() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
+        var vm = new ClassesOverviewViewModel(navigator, gate, YearService(env, gate), env.Snackbar, NullLogger<ClassesOverviewViewModel>.Instance);
+
+        var heldOlder = gate.HoldNextQueryAsync(out var releaseOlder);
+        vm.ShowInactiveClasses = true;
+        await heldOlder;
+        var older = vm.LoadClassesCommand.ExecutionTask!;
+        var heldNewer = gate.HoldNextQueryAsync(out var releaseNewer);
+        vm.ShowInactiveClasses = false;
+        await heldNewer;
+        var newer = vm.LoadClassesCommand.ExecutionTask!;
+        releaseOlder();
+        await older;
+        var whileNewerHeld = vm.HasLoaded;
+        releaseNewer();
+        await newer;
+
+        Assert.False(whileNewerHeld);
+        Assert.True(vm.HasLoaded);
+        Assert.Equal(["A-Active"], Names(vm));
+    });
 }
