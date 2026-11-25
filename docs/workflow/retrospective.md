@@ -37,6 +37,23 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #257 (issues #179, #180, #181, #182) Selected DataGrid rows readable in dark mode
+
+- **Cost and friction:** none blocking: no CI fix round, no retries and no denied actions. One review round (reviewer,
+  sonnet) gave "Ready to merge" with only minors, and no follow-up issues were needed. Four role-agent runs:
+  architect, ui-designer, reviewer (sonnet) and docs-writer (haiku). No tester, because `XamlLoadTests` and
+  `DesignSystemRulesTests` already cover the shared styles. The architect's diagnosis was only partly confirmed: no
+  page selects a new row automatically, but the WPF-UI default row template is compiled BAML, so the fallback colour
+  could not be read from source. A manual visual check in dark mode is still needed, because the App cannot run
+  headless. Orchestrator waits were slow because counted sleeps returned instantly in the harness.
+- **Lessons:**
+  - When a fix depends on a template that cannot be read from source, name the unverified part in the PR and ask for
+    a manual visual check.
+  - Give every wait a deadline checked against `date`, never a count of sleep rounds.
+- **Repeat check:** the wait lesson repeats PR #196, #219, #226, #233, #234, #238 and #240. It is already a rule in
+  `.claude/agents/issue-orchestrator.md` (date-checked waits), so no new escalation. The unverified-template lesson is
+  new.
+
 ### 2026-11-25: PR #255 (issue #254) Role and orchestrator build checks use the CI-equivalent build
 
 - **Cost and friction:** none blocking: no CI fix round, no retries and no blocked agent. One review round (sonnet)
