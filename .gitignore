@@ -420,6 +420,9 @@ FodyWeavers.xsd
 # Claude Code personal settings
 .claude/settings.local.json
 
+# Lead's local handover notes (never committed)
+HANDOVER.md
+
 # Agent worktrees
 .claude/worktrees/
 

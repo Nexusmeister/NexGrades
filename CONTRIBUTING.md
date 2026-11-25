@@ -11,6 +11,7 @@ before you change code.
   installs the SDK from that file.
 - A clone with its git tags. The version comes from the `vX.Y.Z` tags; see [Releases and versions](#releases-and-versions).
 - The `dotnet-ef` global tool for EF Core 11, only if you add an EF Core migration: `dotnet tool install --global dotnet-ef --version "11.*"`.
+  If the tool is already installed, use `dotnet tool update --global dotnet-ef --version "11.*"` instead.
 - Docker, or another container runtime that Aspire supports, to run the AppHost. The AppHost starts SQLite Web
   (`WithSqliteWeb()`), which runs in a container. The Aspire SDK comes from NuGet with restore, so no separate
   Aspire install is needed.

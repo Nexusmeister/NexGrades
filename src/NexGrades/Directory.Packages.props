@@ -7,13 +7,13 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <!-- No stable net11.0 build exists yet for the packages below. They run on their net10.0 (or net10.0-windows)
-         build through forward compatibility, which the owner accepted for the .NET 11 upgrade (#142):
-         dev-time only, Aspire.Hosting.AppHost 13.6.5 and CommunityToolkit.Aspire.Hosting.Sqlite 13.6.1;
-         shipped in the app, WPF-UI and WPF-UI.DependencyInjection 4.3.0, Microsoft.Xaml.Behaviors.Wpf 1.1.161
-         and Velopack 1.2.161; and the vpk tool (see .config/dotnet-tools.json). Move each to a net11.0 build
-         when one ships. Keep Aspire.Hosting.AppHost equal to the Aspire.AppHost.Sdk version in
-         NexGrades.AppHost.csproj. -->
+    <!-- No net11.0 build exists yet for these packages. They run on their net10.0 (or net10.0-windows, or for
+         Serilog.Sinks.File net9.0) build through forward compatibility, which the owner accepted for the .NET 11
+         upgrade (#142): dev-time only, Aspire.Hosting.AppHost 13.6.5 and CommunityToolkit.Aspire.Hosting.Sqlite
+         13.6.1; shipped in the app, WPF-UI and WPF-UI.DependencyInjection 4.3.0, Microsoft.Xaml.Behaviors.Wpf
+         1.1.161, Velopack 1.2.161, Serilog 4.4.0 (transitive, its newest build is net10.0) and Serilog.Sinks.File
+         7.0.0; and the vpk tool (see .config/dotnet-tools.json). Move each to a net11.0 build when one ships. Keep
+         Aspire.Hosting.AppHost equal to the Aspire.AppHost.Sdk version in NexGrades.AppHost.csproj. -->
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.6.5" />
     <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Sqlite" Version="13.6.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0" />
