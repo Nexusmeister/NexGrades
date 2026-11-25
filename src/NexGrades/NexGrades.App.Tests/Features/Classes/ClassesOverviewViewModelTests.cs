@@ -426,7 +426,7 @@ public class ClassesOverviewViewModelTests
     });
 
     [Fact]
-    public Task LoadClassesCommand_LogsOneWarningAndKeepsTheList_WhenTheReadFails() => StaTestRunner.RunAsync(async () =>
+    public Task LoadClassesCommand_LogsOneWarningWithoutRecordContentAndKeepsTheList_WhenTheReadFails() => StaTestRunner.RunAsync(async () =>
     {
         using var env = new LockTestEnvironment(Now);
         await SeedAsync(env);
@@ -444,6 +444,10 @@ public class ClassesOverviewViewModelTests
         var entry = Assert.Single(logger.Entries);
         Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Warning, entry.Level);
         Assert.IsType<InvalidOperationException>(entry.Exception);
+        foreach (var content in new[] { "A-Active", "B-Rolled", "C-Archived", "Old", "2024/25", "2025/26" })
+        {
+            Assert.DoesNotContain(content, entry.Message, StringComparison.Ordinal);
+        }
     });
 
     [Fact]

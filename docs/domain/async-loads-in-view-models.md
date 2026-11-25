@@ -32,8 +32,10 @@ if (version != _loadVersion)
 Rules:
 
 - Take the version at the start of the load, before the first `await`, and take it on every path that starts a load.
-- After each `await`, and before assigning anything, check `version != _loadVersion` and return. A superseded run
-  writes nothing.
+- After each `await` whose result the view model assigns, check `version != _loadVersion` and return before
+  assigning anything. A superseded run does not assign its result. A step that only re-applies the current state,
+  such as `ApplyWritability()` after `await YearLock.ShowAsync(...)`, is harmless when repeated and may run
+  without the check.
 - A `finally` that clears a busy flag (`IsLoading`, `_isRefreshing`) clears it only when `version == _loadVersion`,
   so an old run does not switch the flag off while a newer run is still loading.
 - A catch that changes state (hiding a card, clearing a list, showing an error) does so only when
@@ -127,7 +129,7 @@ Tests are deterministic and use no sleeps or delays.
 For every view model that loads asynchronously or reloads on a toggle, a year change or a navigation:
 
 - [ ] The load takes `var version = ++_loadVersion;` before its first `await`.
-- [ ] After every `await`, `version != _loadVersion` returns before anything is assigned.
+- [ ] After each `await` whose result is assigned, `version != _loadVersion` returns before the assignment.
 - [ ] Busy flags and error states change only for `version == _loadVersion`.
 - [ ] An action the user can take during a load is remembered and applied to the newest result.
 - [ ] A cancelled `[RelayCommand]` run is caught quietly; other catches use `when (ex is not OperationCanceledException)`.
