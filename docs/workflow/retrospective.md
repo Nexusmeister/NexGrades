@@ -37,6 +37,25 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #246 (issue #244) Aspire comment and docs minors from the #239 review
+
+- **Cost and friction:** no retries, no CI fix round and no blocked steps. One review round (reviewer, sonnet)
+  gave no findings and "Ready to merge" at 41ae703. The docs-writer (sonnet) left two lines over the wrap width
+  (a CONTRIBUTING.md bullet and a sentence in this file); the orchestrator caught them in the diff, and a
+  docs-writer (haiku) re-wrapped them. Role-agent runs: four after the PR was opened (docs-writer sonnet once,
+  docs-writer haiku twice, reviewer sonnet once) and four before it. No architect, csharp-coder, ui-designer
+  or tester ran. Several orchestrator background sleeps returned instantly, so the waits relied on agent
+  notifications.
+- **Lessons:**
+  - Give docs-writer the exact wrap width up front and check each changed line's length before handing back.
+  - Check a wording an issue suggests against the tool's real behaviour before writing it, and drop it if it
+    does not apply (here the nuget-minor-patch group never reaches the three ignored packages).
+  - Judge waits by `date` and check-run times, not by the number of sleep rounds.
+- **Repeat check:** the wrap-width lesson repeats PR #229 (the docs brief needs the line limit), so it goes
+  to the lead under the Escalation rule. The wait lesson repeats PR #196, #219, #226, #233, #234, #238, #239
+  and #240. The wording-check lesson is new; it is related to PR #226 (docs steps check their references), but
+  it is about external package behaviour. This entry also corrects the PR #239 entry's repeat check.
+
 ### 2026-11-25: PR #245 (issue #243) Tester role: mutation check and App.Tests scope
 
 - **Cost and friction:** none. Single docs-writer run (sonnet) for the agent file, one reviewer run (sonnet); no CI or review fix rounds. Reviewer agreed that reviewer.md stays unchanged.
