@@ -26,6 +26,8 @@ about to change and the code around them, plus the page in `docs/domain/` for th
 - View models derive from `NexGrades.App.Core.ViewModel` and use `[ObservableProperty]` and
   `[RelayCommand]`. Register new pages, view models and services in
   `NexGrades.App/Extensions/HostBuilderExtensions.cs`.
+- A view model that loads asynchronously, or reloads on a toggle, year change or navigation, follows
+  `docs/domain/async-loads-in-view-models.md` (latest request wins, user actions during a load, failed reads).
 - Package versions go only in `src/NexGrades/Directory.Packages.props`.
 - User-facing strings are English and translation-friendly: whole format strings, no concatenated
   sentence fragments, culture-aware number and date formatting.
