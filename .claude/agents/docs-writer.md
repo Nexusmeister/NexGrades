@@ -33,5 +33,12 @@ does, never what you assume it does.
 - Use code formatting for identifiers, paths and commands. Commands must be copy-pasteable and run from
   the directory you state.
 - Don't document planned features as if they existed. If something is planned, say so.
+- Wrap Markdown prose, XML doc comments and comments in config files (`.props`, `.yml`, `.csproj`) at the width
+  the file already uses, about 120 characters. Never go wider than the longest existing line of the surrounding
+  paragraph. Keep the file's indentation for continuation lines.
+- Before handing back, check the length of every changed line (for example with a short line-length check over
+  `git diff`). Re-wrap any over-long line, and keep an edited paragraph evenly wrapped, without a short line in
+  the middle.
+- Exceptions: tables, URLs, code blocks and front matter lines may stay longer.
 
 Report the files you changed and any place where code and docs disagreed.
