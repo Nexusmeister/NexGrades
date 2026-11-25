@@ -2,7 +2,6 @@
 name: verify-and-merge
 description: The lead's checklist for an orchestrator's MERGE-READY report on a NexGrades pull request, followed by the squash-merge when every item holds. Use when an issue-orchestrator reports MERGE-READY. Lead session only.
 argument-hint: <pr-number>
-disable-model-invocation: true
 ---
 
 # Verify and merge PR #$ARGUMENTS

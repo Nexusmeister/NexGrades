@@ -37,6 +37,18 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #249 (issue #248) Let the lead invoke implement-issue and verify-and-merge
+
+- **Cost and friction:** the lead could not start `implement-issue` for #247, because the skill's
+  `disable-model-invocation: true` refused the Skill tool, and the lead had to ask the owner to type the
+  command. The owner wanted the lead to call the skill itself. The same flag was on `verify-and-merge`.
+  The lead made the two-line change directly, without an orchestrator; one review round (reviewer, sonnet);
+  docs-writer (haiku) wrote this entry.
+- **Lessons:**
+  - Check a skill's front matter for `disable-model-invocation` before planning to call it, and ask the owner
+    early if it blocks the plan.
+- **Repeat check:** none.
+
 ### 2026-11-25: PR #246 (issue #244) Aspire comment and docs minors from the #239 review
 
 - **Cost and friction:** no retries, no CI fix round and no blocked steps. One review round (reviewer, sonnet)

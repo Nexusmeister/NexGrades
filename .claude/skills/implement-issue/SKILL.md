@@ -2,7 +2,6 @@
 name: implement-issue
 description: The lead's front door for one NexGrades GitHub issue. Reads the issue, settles open questions, hands a complete brief to the issue-orchestrator agent, then verifies and merges. Use when the user asks to implement, work on or pick up an issue by number.
 argument-hint: <issue-number>
-disable-model-invocation: true
 ---
 
 # Implement issue #$ARGUMENTS
