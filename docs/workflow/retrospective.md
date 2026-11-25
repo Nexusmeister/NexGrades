@@ -37,6 +37,23 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #230 (issue #209) Guidance for async loads in view models
+
+- **Cost and friction:** 4 role-agent runs (docs-writer on sonnet, reviewer on sonnet, docs-writer on haiku). No retries
+  and no CI fix round. One review round gave no blockers or majors and two minors, both filed as a follow-up issue
+  instead of fixed, to avoid another review pass: a checklist rule is worded stricter than `GradeSheetViewModel` follows
+  (`YearLock.ShowAsync` is awaited without a version re-check), and a testing bullet claims a message assertion that the
+  Classes test does not make. The docs-writer (sonnet) wrote the page and the two agent-file lines in one run, after
+  reading the four view models and their tests, and noted the Warning vs Error log levels itself. Docs-only: no App
+  change, so the smoke start does not apply. The PR needs the owner's OK because it changes `.claude/agents`.
+- **Lessons:**
+  - Check each rule in a docs page against the code it cites before the first review; a rule stricter than the reference code costs a review round.
+  - Check each test claim in a docs page against the test it names before the first review.
+  - A change to `.claude/agents` waits for the owner's OK before it merges.
+- **Repeat check:** the docs-matches-code lesson repeats PR #226 (have the docs step check its code references), so it
+  goes to the lead under the Escalation rule. The owner's OK lesson is new. The lead's `retrospective` skill check after
+  the merge is authoritative.
+
 ### 2026-11-24: PR #226 (issue #213) Classes overview: school year filter
 
 - **Cost and friction:** 6 role-agent runs: csharp-coder, ui-designer, tester and reviewer on sonnet, and docs-writer
