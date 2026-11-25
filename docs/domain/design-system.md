@@ -275,7 +275,7 @@ Short usage examples:
 The `Tag` binding is the collection itself. The empty state reads `Tag.Count` through a `RelativeSource`, so the
 message appears when the collection has no items. `WhenNoItemsAfterLoad` also needs `ViewModel.HasLoaded` to be true,
 so a list that is still loading shows no message. A view model sets `HasLoaded` only once its first load has finished,
-or has failed. A load that a newer one has superseded does not set it.
+or has failed. On the Classes overview, a load that a newer one has superseded does not set it.
 
 ## Data grids
 
@@ -335,8 +335,10 @@ the student page have.
 
 ## Empty, loading and status states
 
-- **Empty list.** Use `Ng.EmptyState` or `Ng.EmptyState.WhenNoItems`. The message is a whole sentence that names the
-  action that fills the list, for example "No classes yet. Use Add class to create one."
+- **Empty list.** Use `Ng.EmptyState` as the base, and show it with `Ng.EmptyState.WhenNoItemsAfterLoad` on a page that
+  has `ViewModel.HasLoaded`, or with `Ng.EmptyState.WhenNoItems` on a page that has none (the grade sheet).
+  The message is a whole sentence that names the action that fills the list, for example "No classes yet. Use Add
+  class to create one."
 - **Loading.** Use an indeterminate `ui:ProgressRing` with an `AutomationProperties.Name` that says what loads, for
   example "Loading grades". It sits next to the action bar or in the content. The loading state does not yet
   disable the action bar on every page (see [Known gaps](#known-gaps)).
@@ -416,5 +418,3 @@ The rules above are the target. These places do not follow them yet:
 5. The comment on `Ng.PageRoot` describes a five-row page. The pages use three to six rows, with the content in the
    `*` row.
 6. The action bars of the grade sheet and other pages do not all disable while a load runs.
-7. The overview pages show their `Ng.EmptyState.WhenNoItems` message briefly before the list loads, because the
-   collections start empty and are filled when the page loads. The view models expose no loaded flag to wait for.
