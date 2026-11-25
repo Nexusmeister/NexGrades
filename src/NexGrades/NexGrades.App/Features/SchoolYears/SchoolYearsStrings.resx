@@ -64,6 +64,7 @@
   <data name="SchoolYears_Action_GoToClasses" xml:space="preserve"><value>Go to classes</value></data>
   <data name="SchoolYears_Class_CarryOver_One_Format" xml:space="preserve"><value>{0} student carries over.</value><comment>{0} is the number of students that carry over, here exactly one.</comment></data>
   <data name="SchoolYears_Class_CarryOver_Many_Format" xml:space="preserve"><value>{0} students carry over.</value><comment>{0} is the number of students that carry over, none or more than one.</comment></data>
+  <data name="SchoolYears_Class_NewName_TooLong_Format" xml:space="preserve"><value>The class name can be at most {0} characters.</value><comment>{0} is the maximum number of characters. Same text as Classes_ClassPage_Name_TooLong_Format; keys carry the area prefix.</comment></data>
   <data name="SchoolYears_Class_RolledForward_Format" xml:space="preserve"><value>Rolled forward as {0}.</value><comment>{0} is the name of the class in the next school year.</comment></data>
   <data name="SchoolYears_Class_Archived" xml:space="preserve"><value>Archived.</value></data>
   <data name="SchoolYears_Class_Failed" xml:space="preserve"><value>This class could not be rolled forward or archived. Check the new name, and that none of its students is already in a class of the next year.</value></data>
