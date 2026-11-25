@@ -92,6 +92,17 @@ public sealed partial class LanguageSettingsViewModel(AppLanguageService languag
             return;
         }
 
+        // Show the choice that is really stored, so the combo does not suggest a change that was never saved.
+        _loading = true;
+        try
+        {
+            SelectedLanguage = languageService.Saved;
+        }
+        finally
+        {
+            _loading = false;
+        }
+
         try
         {
             snackbar.Show(

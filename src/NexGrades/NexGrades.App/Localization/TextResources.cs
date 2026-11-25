@@ -85,8 +85,9 @@ public static class TextResources
     /// <summary>
     /// Looks up a format string and fills it in. The text is read in <see cref="CultureInfo.CurrentUICulture"/> (the
     /// language), while numbers, dates and averages in <paramref name="args"/> are formatted in
-    /// <see cref="CultureInfo.CurrentCulture"/> (the Windows regional format), so a German-language user with a
-    /// British region still sees dates the way the region writes them.
+    /// <see cref="CultureInfo.CurrentCulture"/> (the Windows regional format). With the System language setting, a
+    /// German-language user with a British region therefore still sees dates the way the region writes them; an explicit
+    /// language choice makes the culture resolver use that language's formats instead.
     /// </summary>
     /// <param name="key">The key of a whole format string with placeholders, never a sentence fragment.</param>
     /// <param name="args">The values for the placeholders.</param>

@@ -32,6 +32,8 @@ in context.
    XML docs on public API.
 8. **Stale domain docs**: a behaviour change that leaves the matching `docs/domain/` page (or its glossary
    line) saying something that is no longer true.
+9. **Async loads in view models**: overlapping loads, user actions taken during a load, and failed-read handling,
+   checked against `docs/domain/async-loads-in-view-models.md`.
 
 Only report problems you can point to in the diff with a concrete failure scenario. Don't report style
 preferences that the surrounding code doesn't follow either.
