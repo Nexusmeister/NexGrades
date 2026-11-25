@@ -37,6 +37,22 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #233 (issues #164 and #166) Doc fixes and too-long class name hint in the rollover dialog
+
+- **Cost and friction:** 5 role-agent runs, all on sonnet except docs-writer on haiku: csharp-coder, ui-designer,
+  tester, reviewer and docs-writer. No architect was needed. No CI fix round. One review round gave no blockers or
+  majors and three minors, none needing action. The csharp-coder deviated from the brief on purpose: the brief asked
+  it to reuse the `Classes_` resource key, but the localization rules require area-prefixed keys, so it added a new
+  key with the same text in both languages. Background waiting was slow because the completion notifications of
+  sleep rounds arrived late.
+- **Lessons:**
+  - Check a brief's resource key reuse against the key-naming rule in the UI text and localization page before
+    sending the brief.
+  - Judge background waiting by `date` and file modification times, not by the number of sleep rounds.
+- **Repeat check:** the background-wait lesson repeats PR #228, PR #219, PR #207 and PR #196. The key-reuse lesson is
+  new; it is related to PR #205 (say in the ui-designer brief whether resource keys are in scope), but it is not the
+  same lesson.
+
 ### 2026-11-25: PR #229 (issue #218) Clarify Velopack/vpk bump, labels and grouping in dependabot docs
 
 - **Cost and friction:** 5 role-agent runs on 2 models: csharp-coder (sonnet) for the yml comments, docs-writer (haiku)
