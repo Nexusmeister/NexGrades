@@ -37,6 +37,24 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-24: PR #228 (issue #220) Notes export dialog keeps Export visible
+
+- **Cost and friction:** 3 role-agent runs plus the review (ui-designer sonnet, tester sonnet, reviewer sonnet); no
+  architect, and no docs-writer run was needed for the code. No CI fix round (CI result is recorded in the PR). One
+  review round with no blockers or majors and two minors: `TryCreateRequest` raised `PropertyChanged` through
+  `Revalidate`, and the click test relied on WPF-UI's button command wiring. The ui-designer's solution build hit a
+  VSTHRD002 error in the tester's still-in-progress test file, because both agents worked in the same worktree at
+  once; the tester fixed it. The tester could not assert on the `ShowAsync` task (a dispatcher frame made other tests
+  flaky) and watched the synchronous `Closing` event instead. Background wait rounds again returned almost instantly;
+  waiting was judged by file mtimes and running test hosts.
+- **Lessons:**
+  - Run ui-designer and tester one after the other when the tester's files are built in the same solution, or expect a
+    transient build error from half-written tests.
+  - Test a refused dialog click through the dialog's `Closing` event, not the `ShowAsync` task, in the shared STA test
+    setup.
+  - The fix for a sibling dialog was a copy of the #219 pattern: check the reference PR's follow-up list first.
+- **Repeat check:** the background-wait lesson repeats PR #219, PR #207 and PR #196; the rest is new.
+
 ### 2026-11-24: PR #226 (issue #213) Classes overview: school year filter
 
 - **Cost and friction:** 6 role-agent runs: csharp-coder, ui-designer, tester and reviewer on sonnet, and docs-writer
