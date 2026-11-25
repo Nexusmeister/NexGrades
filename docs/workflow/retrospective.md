@@ -37,6 +37,25 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #252 (issue #231) Async load doc and test
+
+- **Cost and friction:** the orchestrator's first `git worktree add` call left out the path argument, so it
+  created a stray worktree. The stray worktree was removed and the call redone. The tester (sonnet) and
+  docs-writer (haiku) ran in parallel on docs-only and test-only files. A transient build error appeared once
+  while the tester was building at the same time as another run; a clean rebuild passed. The tester's mutation
+  check on the new assertion failed as expected and was reverted before the tests were reported as done. One
+  review round (reviewer, sonnet) gave "Ready to merge" with three minors; one of them was filed as a follow-up
+  issue about the `YearLock.ShowAsync` wording. Four role-agent runs before this entry (docs-writer haiku, tester
+  sonnet, reviewer sonnet) and this entry (haiku). No CI fix round and no denied actions. Docs and test only, no
+  App production change, so no smoke start.
+- **Lessons:**
+  - Give `git worktree add` its path explicitly and check `git worktree list` before the next step.
+  - Don't build in a worktree while another agent builds there, even when the agents edit different files.
+- **Repeat check:** the parallel-build lesson repeats PR #228 and PR #235 (handled by PR #237), so it goes to the
+  lead under the Escalation rule. The `YearLock.ShowAsync` follow-up may be the same wording minor as in PR #230;
+  the lead should confirm. The worktree-path lesson is new. The mutation check was run before the report, as the
+  PR #238 lesson asks, so it is not repeated here.
+
 ### 2026-11-25: PR #250 (issue #247) Line-wrap rule for the docs-writer role
 
 - **Cost and friction:** no retries, no CI fix rounds, no blocked steps. One review round (reviewer, sonnet) gave two
