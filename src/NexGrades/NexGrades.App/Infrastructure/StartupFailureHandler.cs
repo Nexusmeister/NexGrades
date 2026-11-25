@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Resources;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Localization;
@@ -141,7 +142,7 @@ public sealed partial class StartupFailureHandler(IStartupErrorDialog dialog, Ac
         {
             return build(exception, logDirectory);
         }
-        catch (Exception ex) when (ex is InvalidOperationException or MissingManifestResourceException or MissingSatelliteAssemblyException or FormatException)
+        catch (Exception ex) when (ex is InvalidOperationException or MissingManifestResourceException or MissingSatelliteAssemblyException or FormatException or FileLoadException or BadImageFormatException or FileNotFoundException or IOException)
         {
             Debug.WriteLine($"Building the startup error text failed: {ex.GetType().Name}");
             return FallbackMessage;

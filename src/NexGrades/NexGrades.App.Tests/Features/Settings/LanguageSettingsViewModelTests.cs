@@ -143,6 +143,25 @@ public sealed class LanguageSettingsViewModelTests
     }
 
     [Fact]
+    public async Task SelectedLanguage_ResetsToSavedWithoutWriting_WhenSaveFails()
+    {
+        _store.UpdateFailure = new IOException("disk full");
+        await StaTestRunner.RunAsync(async () =>
+        {
+            var (viewModel, _, service) = await CreateAsync();
+            var updatesBefore = _store.UpdateCalls;
+
+            viewModel.SelectedLanguage = LanguagePreference.German;
+            await viewModel.PendingSave;
+
+            Assert.Equal(service.Saved, viewModel.SelectedLanguage);
+            Assert.Equal(LanguagePreference.System, viewModel.SelectedLanguage);
+            Assert.False(viewModel.IsRestartPending);
+            Assert.Equal(updatesBefore + 1, _store.UpdateCalls);
+        });
+    }
+
+    [Fact]
     public async Task SelectedLanguage_SavesLaterChoice_WhenEarlierSaveFailed()
     {
         _store.UpdateFailure = new IOException("disk full");

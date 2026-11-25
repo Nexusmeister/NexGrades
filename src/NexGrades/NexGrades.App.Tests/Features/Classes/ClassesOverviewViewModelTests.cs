@@ -514,4 +514,68 @@ public class ClassesOverviewViewModelTests
         Assert.False(beforeRelease);
         Assert.True(vm.HasLoaded);
     });
+
+    /// <summary>
+    /// Starts a load outside the command, with a token that is never cancelled. Through the command, a newer run cancels
+    /// the older one, whose gated class read then throws <see cref="OperationCanceledException"/> before the
+    /// version guard is reached; only an uncancelled older run can reach it.
+    /// </summary>
+    private static Task StartUncancelledLoadAsync(ClassesOverviewViewModel vm) =>
+        (Task)typeof(ClassesOverviewViewModel)
+            .GetMethod("LoadClassesAsync", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(vm, [CancellationToken.None])!;
+
+    [Fact]
+    public Task LoadClassesCommand_ChangesNothing_WhenASupersededLoadFinishesAfterTheNewestOne() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        // Only the class query is held (the years read uses the ungated factory), so the superseded run reaches the version guard.
+        var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
+        var vm = new ClassesOverviewViewModel(navigator, gate, YearService(env, env.Factory), env.Snackbar, NullLogger<ClassesOverviewViewModel>.Instance);
+
+        var held = gate.HoldNextQueryAsync(out var release);
+        var older = StartUncancelledLoadAsync(vm);
+        await held;
+        vm.ShowInactiveClasses = true;
+        await LockTestEnvironment.WaitUntilAsync(() => vm.HasLoaded && Names(vm) is ["A-Active", "B-Rolled", "C-Archived"]);
+        var listed = vm.Classes;
+        var year = vm.SelectedYear;
+        release();
+        await older;
+
+        Assert.True(vm.HasLoaded);
+        Assert.Same(listed, vm.Classes);
+        Assert.Equal(["A-Active", "B-Rolled", "C-Archived"], Names(vm));
+        Assert.Same(year, vm.SelectedYear);
+    });
+
+    [Fact]
+    public Task HasLoaded_StaysFalse_WhenASupersededLoadFinishesWhileTheNewestIsHeld() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        // Only the class query is held (the years read uses the ungated factory), so the superseded run reaches the version guard.
+        var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
+        var vm = new ClassesOverviewViewModel(navigator, gate, YearService(env, env.Factory), env.Snackbar, NullLogger<ClassesOverviewViewModel>.Instance);
+
+        var heldOlder = gate.HoldNextQueryAsync(out var releaseOlder);
+        var older = StartUncancelledLoadAsync(vm);
+        await heldOlder;
+        var heldNewer = gate.HoldNextQueryAsync(out var releaseNewer);
+        vm.ShowInactiveClasses = true;
+        await heldNewer;
+        var newer = vm.LoadClassesCommand.ExecutionTask!;
+        releaseOlder();
+        await older;
+        var whileNewerHeld = vm.HasLoaded;
+        releaseNewer();
+        await newer;
+
+        Assert.False(whileNewerHeld);
+        Assert.True(vm.HasLoaded);
+        Assert.Equal(["A-Active", "B-Rolled", "C-Archived"], Names(vm));
+    });
 }
