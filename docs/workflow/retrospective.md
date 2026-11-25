@@ -37,9 +37,74 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #235 (issue #178) Empty state on the overview pages only after the first load
+
+- **Cost and friction:** 7 role-agent runs: csharp-coder twice, ui-designer, tester, reviewer (all sonnet), and
+  docs-writer twice on haiku (once for the retrospective entry). No architect and no CI fix round. The first clean,
+  non-incremental build failed on MA0051 (the Classes load method was 66 lines, limit 60); an earlier incremental build
+  had hidden it, so an extra csharp-coder run extracted `ApplyLoad`. The ui-designer ran while the csharp-coder was
+  still editing the same file, saw a half-edited file and reported a false build break; the orchestrator verified the
+  tree with its own `--no-incremental` build. The docs-writer's late edit needed a second docs commit. One review
+  round gave "Ready to merge" with no blockers or majors and two minors; the first (a failed load shows the empty
+  state) is deliberate. After a lead session change the reviewed SHA was not recorded in the handover, so the lead
+  ran a second review (sonnet) at the head `46a9731`: Ready to merge, no blockers or majors, four minors (an untested
+  superseded-load case for Classes became follow-up issue #236; the others need no action). The lead's own
+  `-warnaserror` build, started while that reviewer built in the same worktree, reported one transient error; a
+  rebuild afterwards had 0 warnings and 0 errors. Lead smoke start pass at `46a9731`. Role-agent results arrived
+  with long delays, but the notes do not say whether the runs were in the background.
+- **Lessons:**
+  - Check a C# change with a non-incremental build (`dotnet build --no-incremental`) before handing back; an
+    incremental build can hide analyzer failures such as MA0051.
+  - Run each role agent to completion before the next one reads the same worktree, and let the orchestrator confirm
+    the build itself.
+  - Run docs-writer to completion before the docs commit, so its late edit does not need a second commit.
+  - Record the reviewed SHA and the smoke-start SHA in the handover, so a new lead session need not repeat the review.
+  - Don't build in a worktree while another agent builds there; parallel builds lock files and report false errors.
+- **Repeat check:** the concurrent-worktree lesson repeats PR #228 (ui-designer and tester in the same solution). The
+  docs-writer timing lesson repeats PR #202 and PR #232, so it goes to the lead under the Escalation rule. The
+  analyzer-before-handback lesson is new. The parallel-build lesson repeats this PR's own
+  ui-designer/csharp-coder overlap and PR #228. The handover-SHA lesson is new.
+
+### 2026-11-25: PR #234 (issues #171, #172, #193, #197) Docs and config minors
+
+- **Cost and friction:** 3 role-agent runs: docs-writer (haiku) for the edits, reviewer (haiku), docs-writer (haiku) for this entry; no architect, coder or tester. No CI fix round, one review round with two minor findings (a version number in a comment for an unpinned transitive package that can go stale; a commit trailer model name, which was the lead's verbatim attribution line and was kept). No smoke start (no App code). Issue #172 had to be adjusted by the lead because PR #223 had made its premise stale; the orchestrator verified TFMs in the local NuGet cache instead of trusting the issue. The #171 CONTRIBUTING.md line was already pinned, so only the update alternative was added.
+- **Lessons:**
+  - Re-check bundled follow-up issues against current dev before briefing; one of four was already partly done or stale.
+  - The orchestrator's wait rounds do not advance wall-clock time visibly; judge CI by started_at and check runs, not by the number of sleeps.
+- **Repeat check:** none.
+
+### 2026-11-25: PR #233 (issues #164 and #166) Doc fixes and too-long class name hint in the rollover dialog
+
+- **Cost and friction:** 5 role-agent runs, all on sonnet except docs-writer on haiku: csharp-coder, ui-designer,
+  tester, reviewer and docs-writer. No architect was needed. No CI fix round. One review round gave no blockers or
+  majors and three minors, none needing action. The csharp-coder deviated from the brief on purpose: the brief asked
+  it to reuse the `Classes_` resource key, but the localization rules require area-prefixed keys, so it added a new
+  key with the same text in both languages. Background waiting was slow because the completion notifications of
+  sleep rounds arrived late.
+- **Lessons:**
+  - Check a brief's resource key reuse against the key-naming rule in the UI text and localization page before
+    sending the brief.
+  - Judge background waiting by `date` and file modification times, not by the number of sleep rounds.
+- **Repeat check:** the background-wait lesson repeats PR #228, PR #219, PR #207 and PR #196. The key-reuse lesson is
+  new; it is related to PR #205 (say in the ui-designer brief whether resource keys are in scope), but it is not the
+  same lesson.
+
+### 2026-11-25: PR #232 (issue #227) Classes year filter follow-ups
+
+- **Cost and friction:** 7 role-agent runs: csharp-coder (sonnet), tester (sonnet), docs-writer (haiku) three times,
+  reviewer (sonnet); no architect. No CI fix round. One review round with no findings. No smoke start (tests, Domain
+  and docs only). The first docs-writer run ran in parallel with the csharp-coder, so its docs said the order of equal
+  start dates was undefined while the code added an `Id` tiebreaker; a second run fixed it. Two further docs-writer
+  runs fixed a dropped word and an extra blank line at the end of `releasing.md`.
+- **Lessons:**
+  - Run docs-writer after the csharp-coder when the docs describe the behaviour the coder is changing.
+  - Brief docs-writer on CRLF files with explicit end-of-file expectations.
+- **Repeat check:** PR #202 (docs-writer run in parallel with the code it documented). PR #205 followed the lesson; this
+  PR repeats it, so it goes to the lead under the Escalation rule. The CRLF lesson is new.
+
 ### 2026-11-25: PR #230 (issue #209) Guidance for async loads in view models
 
-- **Cost and friction:** 4 role-agent runs (docs-writer on sonnet, reviewer on sonnet, docs-writer on haiku). No retries
+- **Cost and friction:** 3 role-agent runs (docs-writer on sonnet, reviewer on sonnet, docs-writer on haiku). No retries
   and no CI fix round. One review round gave no blockers or majors and two minors, both filed as a follow-up issue
   instead of fixed, to avoid another review pass: a checklist rule is worded stricter than `GradeSheetViewModel` follows
   (`YearLock.ShowAsync` is awaited without a version re-check), and a testing bullet claims a message assertion that the
@@ -53,6 +118,37 @@ of paying for the same mistake again.
 - **Repeat check:** the docs-matches-code lesson repeats PR #226 (have the docs step check its code references), so it
   goes to the lead under the Escalation rule. The owner's OK lesson is new. The lead's `retrospective` skill check after
   the merge is authoritative.
+
+### 2026-11-25: PR #229 (issue #218) Clarify Velopack/vpk bump, labels and grouping in dependabot docs
+
+- **Cost and friction:** 5 role-agent runs on 2 models: csharp-coder (sonnet) for the yml comments, docs-writer (haiku)
+  three times (for releasing.md, for the post-review wording fix made with this entry, and for a count correction),
+  reviewer (haiku) once. No CI fix round, no denied actions. The reviewer gave "Ready to merge" with two minors in the
+  docs-writer's wording (a 121-character line, and "one grouped pull request" wrong for NuGet, which has two groups);
+  both fixed in the PR. The csharp-coder and docs-writer ran in parallel on different files without conflict. Sleep
+  rounds returned instantly, so the wait for CI and the reviewer was spent on many short polls.
+- **Lessons:**
+  - When a docs sentence states a count (one group, one PR), check it against the config it describes.
+  - Give docs-writer the exact line limit up front.
+- **Repeat check:** none.
+
+### 2026-11-24: PR #228 (issue #220) Notes export dialog keeps Export visible
+
+- **Cost and friction:** 3 role-agent runs plus the review (ui-designer sonnet, tester sonnet, reviewer sonnet); no
+  architect, and no docs-writer run was needed for the code. No CI fix round (CI result is recorded in the PR). One
+  review round with no blockers or majors and two minors: `TryCreateRequest` raised `PropertyChanged` through
+  `Revalidate`, and the click test relied on WPF-UI's button command wiring. The ui-designer's solution build hit a
+  VSTHRD002 error in the tester's still-in-progress test file, because both agents worked in the same worktree at
+  once; the tester fixed it. The tester could not assert on the `ShowAsync` task (a dispatcher frame made other tests
+  flaky) and watched the synchronous `Closing` event instead. Background wait rounds again returned almost instantly;
+  waiting was judged by file mtimes and running test hosts.
+- **Lessons:**
+  - Run ui-designer and tester one after the other when the tester's files are built in the same solution, or expect a
+    transient build error from half-written tests.
+  - Test a refused dialog click through the dialog's `Closing` event, not the `ShowAsync` task, in the shared STA test
+    setup.
+  - The fix for a sibling dialog was a copy of the #219 pattern: check the reference PR's follow-up list first.
+- **Repeat check:** the background-wait lesson repeats PR #219, PR #207 and PR #196; the rest is new.
 
 ### 2026-11-24: PR #226 (issue #213) Classes overview: school year filter
 
@@ -93,6 +189,15 @@ of paying for the same mistake again.
   finished) and PR #196 (a BLOCKED hand-back judged by round count). That is a repeat; it goes to the lead under the
   Escalation rule. The hidden-button lesson is new.
 
+### 2026-11-24: PR #217 (issue #214) AsSplitQuery for Sonar S8733
+
+- **Cost and friction:** none (one coder run, one opus review, no CI fix rounds, no review findings; no tester run
+  because behaviour did not change).
+- **Lessons:**
+  - For a mechanical analyzer fix, skip architect and tester.
+  - Give the coder the transaction facts up front so it needs no discovery.
+- **Repeat check:** none.
+
 ### 2026-11-24: PR #216 (issue #215) Simplify dependabot.yml and releasing.md
 
 - **Cost and friction:** no retries: no CI fix round. One review round (haiku reviewer): no blockers or majors, and
@@ -109,31 +214,6 @@ of paying for the same mistake again.
   - Poll CI with one sleep per round, not several overlapping background sleeps.
 - **Repeat check:** none. The overlapping-sleep polling is new; the background role agent lesson (#198, #202, #205, #207)
   is not repeated here.
-
-### 2026-11-24: PR #217 (issue #214) AsSplitQuery for Sonar S8733
-
-- **Cost and friction:** none (one coder run, one opus review, no CI fix rounds, no review findings; no tester run
-  because behaviour did not change).
-- **Lessons:**
-  - For a mechanical analyzer fix, skip architect and tester.
-  - Give the coder the transaction facts up front so it needs no discovery.
-- **Repeat check:** none.
-
-### 2026-11-24: PR #211 (issues #204 and #203) Orchestrator workflow lessons
-
-- **Cost and friction:** 6 role-agent runs: docs-writer on sonnet twice plus once for review fixes (three runs),
-  reviewer on sonnet twice, docs-writer on haiku for this entry. No CI fix round and no denied actions. Round 1 of
-  the review gave 1 major and 3 minors: the new rule "smoke start at the reported head SHA" conflicted with the
-  retrospective entry commit that comes after it; the orchestrator should have checked the new rules against steps
-  12 and 13 before the first review. Round 2 gave "Ready to merge" with three minors left (smoke-start skill intro
-  does not mention the retrospective-only exemption, env vars removed instead of restored, notes drafted before the
-  last CI waits). The docs-writer is slow on large multi-file briefs (about 15 minutes). The orchestrator stayed
-  alive for every role agent through background sleep rounds, as the new rule says.
-- **Lessons:**
-  - When a PR adds a rule to the workflow files, check it against the later steps (12, 13, final report) before the
-    first review.
-  - Split a many-file docs brief into smaller briefs to cut wall time.
-- **Repeat check:** none new; the background role agent lesson (#198, #202, #205, #207) is what this PR fixes.
 
 ### 2026-11-24: PR #212 (issues #206, #208) View-model load race guards
 
@@ -152,6 +232,22 @@ of paying for the same mistake again.
   - Test the version guard in isolation; a test that passes through the cancel path does not prove it.
 - **Repeat check:** the overlap guard lesson also appears in PR #205 (rapid toggle) and PR #207 (an action during an
   in-flight load). It is escalated as issue #209 (reference documentation), so not raised again here.
+
+### 2026-11-24: PR #211 (issues #204 and #203) Orchestrator workflow lessons
+
+- **Cost and friction:** 6 role-agent runs: docs-writer on sonnet twice plus once for review fixes (three runs),
+  reviewer on sonnet twice, docs-writer on haiku for this entry. No CI fix round and no denied actions. Round 1 of
+  the review gave 1 major and 3 minors: the new rule "smoke start at the reported head SHA" conflicted with the
+  retrospective entry commit that comes after it; the orchestrator should have checked the new rules against steps
+  12 and 13 before the first review. Round 2 gave "Ready to merge" with three minors left (smoke-start skill intro
+  does not mention the retrospective-only exemption, env vars removed instead of restored, notes drafted before the
+  last CI waits). The docs-writer is slow on large multi-file briefs (about 15 minutes). The orchestrator stayed
+  alive for every role agent through background sleep rounds, as the new rule says.
+- **Lessons:**
+  - When a PR adds a rule to the workflow files, check it against the later steps (12, 13, final report) before the
+    first review.
+  - Split a many-file docs brief into smaller briefs to cut wall time.
+- **Repeat check:** none new; the background role agent lesson (#198, #202, #205, #207) is what this PR fixes.
 
 ### 2026-11-24: PR #207 (issue #162, part 3 of 3) Home year-end reminder card
 
@@ -215,6 +311,14 @@ of paying for the same mistake again.
 - **Lessons:** a skill that tells the lead to commit must name the route.
 - **Repeat check:** none.
 
+### 2026-11-24: PR #196 (issue #169) Handoff skill
+
+- **Cost and friction:** the orchestrator reported `BLOCKED: CI timeout` after 30 rounds on a Markdown-only PR.
+  CI was only slow and finished green; the lead re-checked and merged. The reviewer (haiku) found 2 minors:
+  `HANDOVER.md` was not in `.gitignore` (filed as #197).
+- **Lessons:** slow CI is not a failure; the lead re-checks the check runs before acting on a timeout.
+- **Repeat check:** none.
+
 ### 2026-11-24: PR #195 (issue #170) Dependabot configuration
 
 - **Cost and friction:** GitHub's validator rejected `target-branch`, `commit-message` and
@@ -224,12 +328,4 @@ of paying for the same mistake again.
   second orchestrator round with `EnableWindowsTargeting`.
 - **Lessons:** read the failing check's annotations (public API) before reporting. MERGE-READY needs every check
   green, so a failing non-required check is a question for the lead, not a caveat.
-- **Repeat check:** none.
-
-### 2026-11-24: PR #196 (issue #169) Handoff skill
-
-- **Cost and friction:** the orchestrator reported `BLOCKED: CI timeout` after 30 rounds on a Markdown-only PR.
-  CI was only slow and finished green; the lead re-checked and merged. The reviewer (haiku) found 2 minors:
-  `HANDOVER.md` was not in `.gitignore` (filed as #197).
-- **Lessons:** slow CI is not a failure; the lead re-checks the check runs before acting on a timeout.
 - **Repeat check:** none.

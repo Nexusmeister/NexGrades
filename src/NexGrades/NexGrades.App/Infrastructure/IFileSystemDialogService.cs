@@ -6,8 +6,8 @@ namespace NexGrades.App.Infrastructure;
 /// </summary>
 public interface IFileSystemDialogService
 {
-    /// <summary>Lets the user pick one or more folders, starting in <paramref name="basePath"/>.</summary>
+    /// <summary>Lets the user select a single folder, starting in <paramref name="basePath"/>.</summary>
     /// <param name="basePath">The folder the picker opens in. Empty means the picker's default folder.</param>
-    /// <returns>The chosen folder paths, or an empty sequence when the user cancels.</returns>
+    /// <returns>A sequence with the one chosen folder path, or an empty sequence when the user cancels.</returns>
     IEnumerable<string> SelectFolder(string basePath = "");
 }

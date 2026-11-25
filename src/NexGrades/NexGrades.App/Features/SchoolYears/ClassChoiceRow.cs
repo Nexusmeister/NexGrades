@@ -18,6 +18,7 @@ public sealed partial class ClassChoiceRow : ObservableObject
     private ClassYearEndChoice _choice;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNewNameValid), nameof(NewNameValidationMessage), nameof(HasNewNameValidationMessage))]
     private string _newName = string.Empty;
 
     [ObservableProperty]
@@ -76,6 +77,24 @@ public sealed partial class ClassChoiceRow : ObservableObject
             return trimmed.Length > 0 && (trimmed.Length <= MaxNameLength || trimmed == Name);
         }
     }
+
+    /// <summary>
+    /// Why <see cref="NewName"/> is refused: it is longer than <see cref="MaxNameLength"/> and is not the unchanged
+    /// old name. Null when there is nothing to explain; an empty name keeps no message.
+    /// </summary>
+    public string? NewNameValidationMessage
+    {
+        get
+        {
+            var trimmed = NewName.Trim();
+            return trimmed.Length > MaxNameLength && trimmed != Name
+                ? TextResources.Format("SchoolYears_Class_NewName_TooLong_Format", MaxNameLength)
+                : null;
+        }
+    }
+
+    /// <summary>Whether <see cref="NewNameValidationMessage"/> has a message to show.</summary>
+    public bool HasNewNameValidationMessage => NewNameValidationMessage is not null;
 
     /// <summary>Whether the class has been rolled forward or archived already.</summary>
     public bool IsDone => Status != ClassInstanceStatus.Active;

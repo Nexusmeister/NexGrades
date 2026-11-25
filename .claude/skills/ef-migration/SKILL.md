@@ -22,7 +22,9 @@ factory (`AppDbContextFactory`), so it is both the target and the startup projec
 ## 2. Generate the migration
 
 ```sh
-dotnet ef --version   # if missing: dotnet tool install --global dotnet-ef
+# Pin dotnet-ef to EF Core 11. If another major is installed, update it instead of installing.
+dotnet ef --version   # if missing: dotnet tool install --global dotnet-ef --version "11.*"
+                      # if another major is installed: dotnet tool update --global dotnet-ef --version "11.*"
 dotnet ef migrations add <MigrationName> --project NexGrades.Data --startup-project NexGrades.Data
 ```
 

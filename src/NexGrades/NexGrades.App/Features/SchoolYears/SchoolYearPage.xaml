@@ -89,16 +89,25 @@
                                          IsChecked="{Binding IsArchiveChosen, Mode=TwoWay}"/>
                         </StackPanel>
                         <ds:FormPanel Margin="0,8,0,0"
-                                    Style="{StaticResource Ng.FormPanel}"
-                                    Visibility="{Binding IsRollForwardPending, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                      Style="{StaticResource Ng.FormPanel}"
+                                      Visibility="{Binding IsRollForwardPending, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <HeaderedContentControl Header="{loc:Text SchoolYears_Class_NewName_Header}"
                                                     Margin="0"
                                                     Style="{StaticResource Ng.FormField}">
-                                <ui:TextBox Width="240"
-                                            HorizontalAlignment="Left"
-                                            AutomationProperties.Name="{loc:Text SchoolYears_Class_NewName_A11y}"
-                                            MaxLength="{Binding MaxNameLength, Mode=OneTime}"
-                                            Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"/>
+                                <StackPanel>
+                                    <ui:TextBox Width="240"
+                                                HorizontalAlignment="Left"
+                                                AutomationProperties.Name="{loc:Text SchoolYears_Class_NewName_A11y}"
+                                                MaxLength="{Binding MaxNameLength, Mode=OneTime}"
+                                                Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <!-- Why this name cannot be used -->
+                                    <ui:TextBlock Margin="0,4,0,0"
+                                                  FontTypography="Caption"
+                                                  Appearance="Secondary"
+                                                  TextWrapping="Wrap"
+                                                  Text="{Binding NewNameValidationMessage}"
+                                                  Visibility="{Binding HasNewNameValidationMessage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                </StackPanel>
                             </HeaderedContentControl>
                         </ds:FormPanel>
                         <CheckBox Margin="0,8,0,0"

@@ -246,7 +246,8 @@ All keys are defined in `Styles.xaml`.
 | `Ng.FormField` | `HeaderedContentControl` | A `Body` label above the field, with a 16 bottom margin | The label is not a tab stop; the field inside is |
 | `Ng.TextBox.Multiline` | `ui:TextBox` | Wraps, accepts Enter, scrolls, and is 72 to 120 high | Used for comments and notes |
 | `Ng.EmptyState` | `ContentControl` | A secondary `Body` message | Not a tab stop |
-| `Ng.EmptyState.WhenNoItems` | `ContentControl` | Shows the message while the collection in `Tag` is empty | Extends `Ng.EmptyState` |
+| `Ng.EmptyState.WhenNoItems` | `ContentControl` | Shows the message while the collection in `Tag` is empty | Extends `Ng.EmptyState`. Used on the grade sheet, which has no loaded flag. |
+| `Ng.EmptyState.WhenNoItemsAfterLoad` | `ContentControl` | Shows the message while the collection in `Tag` is empty and `ViewModel.HasLoaded` is true | Extends `Ng.EmptyState`. Used on the Classes, Students and Subjects overviews. |
 | `Ng.DataGrid` | `ui:DataGrid` | Read-only, single row selection, 32 row height, no add, delete or row resizing (columns can still be resized) | Overview grids and the grade sheet extend it |
 | `Ng.DataGridText` | `TextBlock` (element style) | Horizontal margin `Ng.Margin.CellText`, vertically centred | For every `DataGridTextColumn`; the library margin otherwise makes rows taller than 32 |
 | `Ng.DataGridText.Numeric` | `TextBlock` (element style) | Extends `Ng.DataGridText`; right aligned, with tabular figures | For numeric columns |
@@ -268,11 +269,13 @@ Short usage examples:
 ```xml
 <ContentControl Tag="{Binding ViewModel.Classes}"
                 Content="{loc:Text Classes_Overview_Empty}"
-                Style="{StaticResource Ng.EmptyState.WhenNoItems}" />
+                Style="{StaticResource Ng.EmptyState.WhenNoItemsAfterLoad}" />
 ```
 
 The `Tag` binding is the collection itself. The empty state reads `Tag.Count` through a `RelativeSource`, so the
-message appears when the collection has no items.
+message appears when the collection has no items. `WhenNoItemsAfterLoad` also needs `ViewModel.HasLoaded` to be true,
+so a list that is still loading shows no message. A view model sets `HasLoaded` only once its first load has finished,
+or has failed. On the Classes overview, a load that a newer one has superseded does not set it.
 
 ## Data grids
 
@@ -281,8 +284,8 @@ message appears when the collection has no items.
 - Every text column uses `ElementStyle="{StaticResource Ng.DataGridText}"`, so the library text margin does not
   make rows taller than 32. A numeric column uses `Ng.DataGridText.Numeric` instead.
 - The grid sits in a `*` row, so it scrolls and stays virtualized.
-- An empty overview uses `Ng.EmptyState.WhenNoItems` above the grid, with a message that names the action that fills
-  the list.
+- An empty overview uses `Ng.EmptyState.WhenNoItemsAfterLoad` above the grid, with a message that names the action that
+  fills the list. The overview pages wait for `ViewModel.HasLoaded`, so the message does not show before the first load.
 - The grade sheet is the exception. It is editable, selects single cells and shows marks in its cells. It
   overrides `Ng.DataGrid` locally, and its cells use `GradeSheetCellBase`, which applies `Ng.Padding.Cell` and
   `Ng.Size.RowHeight`. These grade cell styles stay on the page. They are not shared.
@@ -332,8 +335,10 @@ the student page have.
 
 ## Empty, loading and status states
 
-- **Empty list.** Use `Ng.EmptyState` or `Ng.EmptyState.WhenNoItems`. The message is a whole sentence that names the
-  action that fills the list, for example "No classes yet. Use Add class to create one."
+- **Empty list.** Use `Ng.EmptyState` as the base, and show it with `Ng.EmptyState.WhenNoItemsAfterLoad` on a page that
+  has `ViewModel.HasLoaded`, or with `Ng.EmptyState.WhenNoItems` on a page that has none (the grade sheet).
+  The message is a whole sentence that names the action that fills the list, for example "No classes yet. Use Add
+  class to create one."
 - **Loading.** Use an indeterminate `ui:ProgressRing` with an `AutomationProperties.Name` that says what loads, for
   example "Loading grades". It sits next to the action bar or in the content. The loading state does not yet
   disable the action bar on every page (see [Known gaps](#known-gaps)).
@@ -413,5 +418,3 @@ The rules above are the target. These places do not follow them yet:
 5. The comment on `Ng.PageRoot` describes a five-row page. The pages use three to six rows, with the content in the
    `*` row.
 6. The action bars of the grade sheet and other pages do not all disable while a load runs.
-7. The overview pages show their `Ng.EmptyState.WhenNoItems` message briefly before the list loads, because the
-   collections start empty and are filled when the page loads. The view models expose no loaded flag to wait for.

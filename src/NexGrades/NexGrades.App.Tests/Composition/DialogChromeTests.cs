@@ -39,6 +39,67 @@ public class DialogChromeTests
                 "Cancel"));
     }
 
+    [Fact]
+    public void ExportNotesDialog_ShowsPrimaryAndCloseButtons_ForReversedRange()
+    {
+        SharedStaThread.Run(() => AssertButtonsInsideArea(
+                host => new ExportNotesDialog(host, new ExportNotesDialogViewModel(new DateOnly(2026, 12, 31), new DateOnly(2026, 1, 1))),
+                "Export",
+                "Cancel"));
+    }
+
+    [Fact]
+    public void ExportNotesDialog_StaysOpen_WhenPrimaryIsClickedWithReversedRange()
+    {
+        SharedStaThread.Run(() =>
+        {
+            var viewModel = new ExportNotesDialogViewModel(new DateOnly(2026, 12, 31), new DateOnly(2026, 1, 1));
+            var (dialog, closing) = ShowAndClickPrimary(host => new ExportNotesDialog(host, viewModel));
+
+            Assert.Null(closing);
+            Assert.True(viewModel.HasValidationMessage);
+            var button = FindByName<System.Windows.Controls.Button>(dialog, "PrimaryButton");
+            Assert.True(button is { Visibility: Visibility.Visible, ActualWidth: > 0 });
+        });
+    }
+
+    [Fact]
+    public void ExportNotesDialog_ClosesWithPrimaryResult_WhenPrimaryIsClickedWithValidRange()
+    {
+        SharedStaThread.Run(() =>
+        {
+            var viewModel = new ExportNotesDialogViewModel(new DateOnly(2026, 1, 1), new DateOnly(2026, 12, 31));
+            var (_, closing) = ShowAndClickPrimary(host => new ExportNotesDialog(host, viewModel));
+
+            Assert.NotNull(closing);
+            Assert.Equal(ContentDialogResult.Primary, closing.Result);
+        });
+    }
+
+    private static (ContentDialog Dialog, ContentDialogClosingEventArgs? Closing) ShowAndClickPrimary(Func<ContentDialogHost, ContentDialog> createDialog)
+    {
+        EnsureApplicationResources();
+
+        var host = new ContentDialogHost();
+        var root = new System.Windows.Controls.Grid { Width = WindowWidth, Height = WindowHeight };
+        root.Children.Add(host);
+
+        var dialog = createDialog(host);
+        ContentDialogClosingEventArgs? closing = null;
+        dialog.Closing += (_, e) => closing = e;
+        _ = dialog.ShowAsync();
+        root.Measure(new Size(WindowWidth, WindowHeight));
+        root.Arrange(new Rect(0, 0, WindowWidth, WindowHeight));
+        root.UpdateLayout();
+
+        var button = FindByName<System.Windows.Controls.Button>(dialog, "PrimaryButton");
+        Assert.True(button is not null, "PrimaryButton is missing.");
+        Assert.True(button.Command?.CanExecute(button.CommandParameter) ?? false, "PrimaryButton has no executable command.");
+        button.Command.Execute(button.CommandParameter);
+
+        return (dialog, closing);
+    }
+
     private static void AssertButtonsInsideArea(Func<ContentDialogHost, ContentDialog> createDialog, string primaryText, string closeText)
     {
         EnsureApplicationResources();

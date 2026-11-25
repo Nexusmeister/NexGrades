@@ -202,6 +202,20 @@ public class SchoolYearServiceTests
     }
 
     [Fact]
+    public async Task GetYearsAsync_OrdersByIdDescending_WhenStartDatesAreEqual()
+    {
+        using var db = new SqliteTestDatabase();
+        var firstId = await SeedYearAsync(db, "2025/26 A", new DateTime(2025, 8, 1), new DateTime(2026, 7, 31), SchoolYearStatus.Closed);
+        var secondId = await SeedYearAsync(db, "2025/26 B", new DateTime(2025, 8, 1), new DateTime(2026, 7, 31), SchoolYearStatus.Planned);
+        var service = CreateService(db, new DateTime(2026, 3, 15));
+
+        var years = await service.GetYearsAsync();
+
+        Assert.True(secondId > firstId);
+        Assert.Equal([secondId, firstId], years.Select(y => y.Id));
+    }
+
+    [Fact]
     public async Task GetYearsAsync_ReturnsEmptyList_WhenNoYearExists()
     {
         using var db = new SqliteTestDatabase();

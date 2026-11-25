@@ -26,12 +26,12 @@ Only the tip of `dev` is published. Every push to `dev` that passes the test and
 **pre-release** `vX.Y.Z-beta.<height>` with the assets attached, provided its commit is still the tip of `dev`. The
 beta job checks this at the start and again right before it creates the release. If `dev` has moved on, it logs a
 notice and publishes nothing, so an older commit is never published after a newer one; the newer push publishes its
-own beta. The tip is read through the GitHub API with the workflow token (`.github/scripts/Get-BranchTip.ps1`), so the
-job keeps working if the repository becomes private. Only the 10 newest beta pre-releases are kept. Older ones are deleted together with their
-tags. The cleanup only considers pre-releases whose tag matches `v*-beta.*`, sorts them by publish date and always keeps
-the one just published. Drafts are neither counted nor deleted by the cleanup. If the dev tip carries a stable tag (for
-example after merging `main` back into `dev`), the version has no pre-release part; the job then logs a notice and
-publishes nothing.
+own beta if it passes CI. The tip is read through the GitHub API with the workflow token
+(`.github/scripts/Get-BranchTip.ps1`), so the job keeps working if the repository becomes private. Only the 10 newest
+beta pre-releases are kept. Older ones are deleted together with their tags. The cleanup only considers pre-releases
+whose tag matches `v*-beta.*`, sorts them by publish date and always keeps the one just published. Drafts are neither
+counted nor deleted by the cleanup. If the dev tip carries a stable tag (for example after merging `main` back into
+`dev`), the version has no pre-release part; the job then logs a notice and publishes nothing.
 
 ## Stable releases (push to `main`)
 
@@ -162,16 +162,21 @@ Dependabot (`.github/dependabot.yml`) opens pull requests against `dev` every we
 - the GitHub Actions in `.github/workflows/`,
 - the .NET SDK pinned in `global.json`.
 
-Dependabot writes the pull request titles itself (`Bump ...`), so no commit-message prefix is set. Each ecosystem gets
-one grouped pull request for its minor and patch updates, and NuGet has a second group for Velopack: `nuget-minor-patch`
-holds every other package, and `velopack` holds the Velopack packages. The `vpk` tool has its own entry. Each major update
-is its own pull request, so a breaking change is reviewed alone. All groups set `applies-to: version-updates`, so a
-group never holds a security update back; security updates open as soon as they are published.
+Dependabot writes the pull request titles itself (`Bump ...`), so no commit-message prefix is set. GitHub Actions and
+the SDK each get one grouped pull request for their minor and patch updates. NuGet gets two: `nuget-minor-patch` holds
+every other NuGet package, and `velopack` holds the Velopack packages. The `vpk` tool has its own ungrouped entry, so
+each of its updates is one pull request. Each major update is its own pull request, so a breaking change is reviewed
+alone. All groups set `applies-to: version-updates`, so a group never holds a security update back; security updates
+open as soon as they are published.
+
+Labels are set per entry, not per group. The Velopack package pull request therefore arrives labelled `dependencies` and
+`nuget`; only the `vpk` pull request carries `velopack`.
 
 Velopack (NuGet) and `vpk` must have the same version, because `New-ReleaseAsset.ps1` refuses to pack when they differ,
 and the pack step of a pull request build fails with it. Dependabot opens them as separate pull requests. Add the
-matching version bump by hand to whichever of the two comes first. The other pull request then needs rebasing or
-closing, because the bump is already in.
+matching bump by hand to whichever of the two comes first: `.config/dotnet-tools.json` (`vpk` version) and
+`src/NexGrades/Directory.Packages.props` (Velopack version). Dependabot stops rebasing a branch someone pushed to, so
+close the other pull request by hand.
 
 Dependabot ignores `Aspire.Hosting.AppHost`. It must equal the `Aspire.AppHost.Sdk` version in
 `src/NexGrades/Aspire/NexGrades.AppHost/NexGrades.AppHost.csproj`, so bump both by hand.
@@ -187,4 +192,3 @@ repository. Dependabot skips a label that does not exist.
 SonarCloud. A reviewer pass is required, with the `opus` model for major updates. If an App package changes, run a
 smoke start (see the `smoke-start` skill). The lead squash-merges. A Dependabot pull request is never merged on green
 alone.
-</content>

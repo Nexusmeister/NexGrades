@@ -304,6 +304,23 @@ public class ClassesOverviewViewModelTests
     });
 
     [Fact]
+    public Task LoadClassesCommand_FallsBackToTheActiveYear_WhenTheSelectedYearNoLongerExists() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var vm = Create(env);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+        var missing = new SchoolYearSummary(9999, "2020/21", new DateTime(2020, 8, 1), new DateTime(2021, 7, 31), SchoolYearStatus.Closed);
+
+        vm.SelectedYear = missing;
+        await LockTestEnvironment.WaitUntilAsync(() => vm.SelectedYear?.Label == "2025/26");
+
+        Assert.Equal(SchoolYearStatus.Active, vm.SelectedYear.Status);
+        Assert.DoesNotContain(vm.Years, y => y.Id == missing.Id);
+        Assert.Equal(["A-Active"], Names(vm));
+    });
+
+    [Fact]
     public Task SelectedYear_ClearsSelectedClass_WhenTheClassIsNotInTheNewYear() => StaTestRunner.RunAsync(async () =>
     {
         using var env = new LockTestEnvironment(Now);
@@ -427,5 +444,74 @@ public class ClassesOverviewViewModelTests
         var entry = Assert.Single(logger.Entries);
         Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Warning, entry.Level);
         Assert.IsType<InvalidOperationException>(entry.Exception);
+    });
+
+    [Fact]
+    public void HasLoaded_IsFalse_BeforeAnyLoad()
+    {
+        using var env = new LockTestEnvironment(Now);
+
+        var vm = Create(env);
+
+        Assert.False(vm.HasLoaded);
+    }
+
+    [Fact]
+    public Task HasLoaded_IsTrue_AfterTheFirstLoadWithClasses() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var vm = Create(env);
+
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        Assert.True(vm.HasLoaded);
+    });
+
+    [Fact]
+    public Task HasLoaded_IsTrue_AfterTheFirstLoadWithNoYears() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var vm = Create(env);
+
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        Assert.True(vm.HasLoaded);
+        Assert.Empty(vm.Classes);
+    });
+
+    [Fact]
+    public Task HasLoaded_IsTrue_AfterAFailedFirstLoad() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var flaky = new FlakyContextFactory(env.Factory, 0);
+        var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
+        var vm = new ClassesOverviewViewModel(navigator, flaky, YearService(env, flaky), env.Snackbar, new CapturingLogger<ClassesOverviewViewModel>());
+
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        Assert.True(vm.HasLoaded);
+        Assert.Empty(vm.Classes);
+    });
+
+    [Fact]
+    public Task HasLoaded_IsFalse_WhileTheOnlyLoadIsHeld() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
+        var vm = new ClassesOverviewViewModel(navigator, gate, YearService(env, gate), env.Snackbar, NullLogger<ClassesOverviewViewModel>.Instance);
+
+        var held = gate.HoldNextQueryAsync(out var release);
+        var load = vm.LoadClassesCommand.ExecuteAsync(null);
+        await held;
+        var beforeRelease = vm.HasLoaded;
+        release();
+        await load;
+
+        Assert.False(beforeRelease);
+        Assert.True(vm.HasLoaded);
     });
 }
