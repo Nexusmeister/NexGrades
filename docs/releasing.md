@@ -179,8 +179,8 @@ matching bump by hand to whichever of the two comes first: `.config/dotnet-tools
 close the other pull request by hand.
 
 Dependabot ignores `Aspire.Hosting.AppHost`, `Aspire.Hosting.Dotnet` and `CommunityToolkit.Aspire.Hosting.Sqlite`. They
-must be raised together by hand in `src/NexGrades/Directory.Packages.props`, because a Dependabot bump of one alone can
-leave `Aspire.Hosting` versions mismatched (even minor/patch).
+are raised together by hand in `src/NexGrades/Directory.Packages.props`. Major bumps would arrive as separate pull
+requests, and the CommunityToolkit package ships on its own schedule, so the three could drift apart.
 
 `src/NexGrades/Directory.Build.props` sets `EnableWindowsTargeting` to `true`. GitHub's dependency submission and
 Dependabot run restore on Linux, and without the property the Windows-targeting projects fail to restore there. The

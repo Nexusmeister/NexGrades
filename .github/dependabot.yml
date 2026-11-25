@@ -44,9 +44,9 @@ updates:
           - minor
           - patch
     ignore:
-      # Aspire.Hosting.AppHost, Aspire.Hosting.Dotnet and CommunityToolkit.Aspire.Hosting.Sqlite must be raised together
-      # by hand in src/NexGrades/Directory.Packages.props, because a Dependabot bump of one alone can leave
-      # Aspire.Hosting versions mismatched (even minor/patch).
+      # Aspire.Hosting.AppHost, Aspire.Hosting.Dotnet and CommunityToolkit.Aspire.Hosting.Sqlite are raised together
+      # by hand in src/NexGrades/Directory.Packages.props. Major bumps would arrive as separate pull requests, and
+      # the CommunityToolkit package ships on its own schedule, so the three could drift apart.
       - dependency-name: Aspire.Hosting.AppHost
       - dependency-name: Aspire.Hosting.Dotnet
       - dependency-name: CommunityToolkit.Aspire.Hosting.Sqlite
