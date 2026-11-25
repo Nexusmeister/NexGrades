@@ -304,6 +304,23 @@ public class ClassesOverviewViewModelTests
     });
 
     [Fact]
+    public Task LoadClassesCommand_FallsBackToTheActiveYear_WhenTheSelectedYearNoLongerExists() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var vm = Create(env);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+        var missing = new SchoolYearSummary(9999, "2020/21", new DateTime(2020, 8, 1), new DateTime(2021, 7, 31), SchoolYearStatus.Closed);
+
+        vm.SelectedYear = missing;
+        await LockTestEnvironment.WaitUntilAsync(() => vm.SelectedYear?.Label == "2025/26");
+
+        Assert.Equal(SchoolYearStatus.Active, vm.SelectedYear.Status);
+        Assert.DoesNotContain(vm.Years, y => y.Id == missing.Id);
+        Assert.Equal(["A-Active"], Names(vm));
+    });
+
+    [Fact]
     public Task SelectedYear_ClearsSelectedClass_WhenTheClassIsNotInTheNewYear() => StaTestRunner.RunAsync(async () =>
     {
         using var env = new LockTestEnvironment(Now);

@@ -192,4 +192,3 @@ repository. Dependabot skips a label that does not exist.
 SonarCloud. A reviewer pass is required, with the `opus` model for major updates. If an App package changes, run a
 smoke start (see the `smoke-start` skill). The lead squash-merges. A Dependabot pull request is never merged on green
 alone.
-</content>
