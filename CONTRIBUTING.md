@@ -13,8 +13,9 @@ before you change code.
 - The `dotnet-ef` global tool for EF Core 11, only if you add an EF Core migration: `dotnet tool install --global dotnet-ef --version "11.*"`.
   If the tool is already installed, use `dotnet tool update --global dotnet-ef --version "11.*"` instead.
 - Docker, or another container runtime that Aspire supports, to run the AppHost. The AppHost starts SQLite Web
-  (`WithSqliteWeb()`), which runs in a container. The Aspire SDK comes from NuGet with restore, so no separate
-  Aspire install is needed.
+  (`WithSqliteWeb()`), which runs in a container. The AppHost uses the Aspire.Hosting.AppHost package; on the first
+  build it fetches the matching Aspire CLI bundle through `dnx` (network needed once), so no separate Aspire install is
+  needed.
 
 ## Build, test and run
 

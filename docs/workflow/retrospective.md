@@ -53,6 +53,35 @@ of paying for the same mistake again.
   goes to the lead under the Escalation rule. The sibling-text lesson is related to PR #219 (sibling dialogs) but is not
   the same lesson. The tester-brief lesson is new.
 
+### 2026-11-25: PR #239 (issue #225) Aspire upgrade to 17.0.0
+
+- **Cost and friction:** no CI fix round. Wait rounds for CI were judged by counted sleep rounds, which returned almost
+  instantly; the orchestrator wrongly reported `BLOCKED: CI timeout` while the real clock had advanced only minutes.
+  Review: opus reviewer gave "Ready to merge" with four minors, all fixed in a docs/config commit and re-reviewed by
+  haiku (ready to merge). Deviation: `Aspire.AppHost.Sdk` 17.0.0 is obsolete (ASPIRE012 error), so the AppHost moved to
+  `Microsoft.NET.Sdk` with explicit package references and no `ProjectReference` to the App; this was found only at
+  build time. The AGENTS.md layout table cell for the AppHost had to be corrected, and the reviewer found a wrong
+  "no minimum" comment on the UserSecrets pin that the coder had written. Other review findings per role: the
+  csharp-coder wrote an inaccurate Dependabot reason comment; the docs-writer left CONTRIBUTING.md saying the Aspire SDK
+  comes from NuGet, which the reviewer caught. Agent runs: csharp-coder (sonnet) 1, reviewer opus 1 and haiku 1,
+  docs-writer haiku 3 (including this entry). The coder run was slow because builds competed with other worktrees.
+  Lead verification: the orchestrator's final report never reached the lead, so the lead merged `origin/dev`
+  (retrospective conflict only, resolved by docs-writer on haiku) and ran a new opus review at the head, which found
+  no blockers or majors (2 minors and 3 nits, filed as #244). The PR body said the AppHost trial-run processes were
+  stopped, but the AppHost, its DCP processes and a SQLite Web Docker container kept running for about 4.5 hours.
+  They locked the AppHost build output in the worktree until the lead stopped them with the owner's OK.
+- **Lessons:**
+  - Wait on a real deadline (a loop on `date` or epoch seconds against the check runs), never by counting sleep rounds.
+  - Check a pinned SDK or package for obsolescence (for example a diagnostic such as ASPIRE012) before briefing a coder.
+  - Have the docs step search the whole repository for statements the change makes false, not only the files it names.
+  - Have the coder check its own comments (version minimums, reasons) against the source before handing back.
+  - Don't run builds for several worktrees at the same time; they compete for the same resources and slow every run.
+  - An agent that starts the AppHost stops the whole process tree (including DCP and any containers) and checks with
+    a process list that nothing from the worktree is still running before it reports.
+- **Repeat check:** the background-wait lesson repeats PR #196, #207, #219, #226, #233 and #234; it is escalated to the
+  lead under the Escalation rule. The docs-miss lesson is related to PR #226 (a docs step that did not check its code
+  references), but it is not the same miss. The parallel-build lesson repeats PR #228 and PR #235.
+
 ### 2026-11-25: PR #238 (issue #236) Test that a superseded Classes overview load never sets HasLoaded
 
 - **Cost and friction:** about 5 role-agent runs: tester (sonnet) twice, reviewer (haiku) twice and docs-writer

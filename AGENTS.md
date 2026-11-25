@@ -30,7 +30,7 @@ All code lives under `src/NexGrades/` (solution: `NexGrades.slnx`).
 | `NexGrades.Data` | EF Core `AppDbContext`, entities, entity configurations, migrations | — |
 | `NexGrades.Tests` | xUnit tests for Domain and Data | Data, Domain |
 | `NexGrades.App.Tests` | xUnit tests for the App's DI composition and XAML loading (Windows only) | App |
-| `Aspire/NexGrades.AppHost` | Dev-time orchestration (SQLite + SQLite Web) | App |
+| `Aspire/NexGrades.AppHost` | Dev-time orchestration (SQLite + SQLite Web) | — (starts App by project path) |
 | `Aspire/NexGrades.ServiceDefaults` | OpenTelemetry logs, metrics and traces, used by App; exports only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set | — |
 
 Dependency direction is App → Domain → Data. Data must not reference Domain or App; Domain must not
