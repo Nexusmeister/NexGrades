@@ -1,12 +1,17 @@
 # Dependabot version updates, all against `dev` (the integration branch). Each entry sets target-branch and
 # open-pull-requests-limit itself. The nuget-minor-patch, velopack, actions-minor-patch and sdk-minor-patch groups have
 # `applies-to: version-updates`, so a security update is not held back by them and gets its own immediate PR.
-# Each ecosystem has one group for all minor and patch updates (one weekly PR). A major update is not in any group and
-# stays its own PR, so a breaking change is reviewed alone.
+# Each ecosystem has one group for minor and patch updates (one weekly PR), except the vpk entry (the second nuget
+# entry, for /), which has no group, and NuGet, which has a second group `velopack`. A major update is not in any group
+# and stays its own PR, so a breaking change is reviewed alone.
 #
 # Velopack (NuGet) and vpk (dotnet tool) must have the same version, but they now arrive as separate PRs: the Velopack
 # package in the `velopack` group of the NuGet entry, vpk in its own entry. New-ReleaseAsset.ps1 fails the PR build when
-# the two differ, so add the matching bump by hand to whichever PR arrives first.
+# the two differ, so add the matching bump by hand to whichever PR arrives first. The manual bump touches
+# `.config/dotnet-tools.json` (vpk) and `src/NexGrades/Directory.Packages.props` (Velopack). Dependabot stops rebasing
+# a branch someone pushed to, so close the other PR by hand.
+# Dependabot labels groups by the entry, so the Velopack package PR arrives labelled `dependencies` and `nuget` (not
+# `velopack`); only the vpk PR carries `velopack`.
 #
 # Labels must exist in the repository, or Dependabot skips them: create `dependencies`, `nuget`, `github-actions`,
 # `dotnet-sdk` and `velopack` once.

@@ -37,6 +37,19 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #229 (issue #218) Clarify Velopack/vpk bump, labels and grouping in dependabot docs
+
+- **Cost and friction:** 5 role-agent runs on 2 models: csharp-coder (sonnet) for the yml comments, docs-writer (haiku)
+  three times (for releasing.md, for the post-review wording fix made with this entry, and for a count correction),
+  reviewer (haiku) once. No CI fix round, no denied actions. The reviewer gave "Ready to merge" with two minors in the
+  docs-writer's wording (a 121-character line, and "one grouped pull request" wrong for NuGet, which has two groups);
+  both fixed in the PR. The csharp-coder and docs-writer ran in parallel on different files without conflict. Sleep
+  rounds returned instantly, so the wait for CI and the reviewer was spent on many short polls.
+- **Lessons:**
+  - When a docs sentence states a count (one group, one PR), check it against the config it describes.
+  - Give docs-writer the exact line limit up front.
+- **Repeat check:** none.
+
 ### 2026-11-24: PR #228 (issue #220) Notes export dialog keeps Export visible
 
 - **Cost and friction:** 3 role-agent runs plus the review (ui-designer sonnet, tester sonnet, reviewer sonnet); no
