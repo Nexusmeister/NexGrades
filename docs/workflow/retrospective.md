@@ -37,6 +37,12 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #245 (issue #243) Tester role: mutation check and App.Tests scope
+
+- **Cost and friction:** none. Single docs-writer run (sonnet) for the agent file, one reviewer run (sonnet); no CI or review fix rounds. Reviewer agreed that reviewer.md stays unchanged.
+- **Lessons:** A guard test must fail with the guard removed (mutation check); the tester now does this and reports it. The tester's scope now includes NexGrades.App.Tests, so the lead no longer needs a scope note in the brief.
+- **Repeat check:** none (this PR is the escalation of the repeat in PR #212 and PR #238).
+
 ### 2026-11-25: PR #240 (issue #194) Localization nits
 
 - **Cost and friction:** 4 role-agent runs: csharp-coder (sonnet), tester (sonnet), reviewer (sonnet) and docs-writer
