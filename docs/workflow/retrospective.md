@@ -37,6 +37,22 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #237 (issue #224) Workflow notes for issue #224
+
+- **Cost and friction:** none blocking: no retries, no blocked agents and no CI fix round. One review round (sonnet
+  reviewer) gave "Ready to merge" with three minor clarity findings, left as they were: the loop deadline and the
+  `started_at` source are not the same clock, one sentence is duplicated, and one worktree rule is repeated. Three
+  role-agent runs: docs-writer (haiku) for the two agent and skill file edits and for this entry, and reviewer
+  (sonnet). No architect, csharp-coder or tester. The sandbox clock barely moved during the run: `date` advanced by
+  seconds while waits of many minutes were requested, so counted sleep rounds are no measure of elapsed time. No App
+  code changed, so no smoke start.
+- **Lessons:**
+  - Judge a CI timeout by `date` against the run's `started_at`, never by the count of sleep rounds or the requested
+    wait time.
+  - Give each loop deadline one clock source, and check a workflow file for duplicated sentences before the review.
+- **Repeat check:** the round-count lesson repeats PR #234, PR #228, PR #219, PR #207 and PR #196; it goes to the lead
+  under the Escalation rule. The duplicate-sentence lesson is new.
+
 ### 2026-11-25: PR #235 (issue #178) Empty state on the overview pages only after the first load
 
 - **Cost and friction:** 7 role-agent runs: csharp-coder twice, ui-designer, tester, reviewer (all sonnet), and
