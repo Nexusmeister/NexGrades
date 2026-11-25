@@ -15,7 +15,7 @@
          7.0.0; and the vpk tool (see .config/dotnet-tools.json). Move each to a net11.0 build when one ships. Keep
          Aspire.Hosting.AppHost equal to the Aspire.AppHost.Sdk version in NexGrades.AppHost.csproj. -->
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.6.5" />
-    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Sqlite" Version="13.6.1" />
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Sqlite" Version="17.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="11.0.0" />
     <!-- Security pin for the NU1903 high-severity advisory (CVE-2025-6965) in the SQLitePCLRaw package that
