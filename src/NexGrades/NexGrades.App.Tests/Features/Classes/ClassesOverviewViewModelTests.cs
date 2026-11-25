@@ -13,6 +13,9 @@ public class ClassesOverviewViewModelTests
 {
     private static readonly DateTime Now = new(2026, 3, 1, 12, 0, 0);
 
+    // The class names and year labels that SeedAsync writes; none may reach the log.
+    private static readonly string[] SeededRecordContent = ["A-Active", "B-Rolled", "C-Archived", "Old", "2024/25", "2025/26"];
+
     private static SchoolYearService YearService(LockTestEnvironment env, IDbContextFactory<AppDbContext> factory) =>
         new(factory, env.Clock, NullLogger<SchoolYearService>.Instance);
 
@@ -444,7 +447,7 @@ public class ClassesOverviewViewModelTests
         var entry = Assert.Single(logger.Entries);
         Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Warning, entry.Level);
         Assert.IsType<InvalidOperationException>(entry.Exception);
-        foreach (var content in new[] { "A-Active", "B-Rolled", "C-Archived", "Old", "2024/25", "2025/26" })
+        foreach (var content in SeededRecordContent)
         {
             Assert.DoesNotContain(content, entry.Message, StringComparison.Ordinal);
         }
