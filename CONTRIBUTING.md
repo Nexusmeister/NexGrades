@@ -14,8 +14,8 @@ before you change code.
   If the tool is already installed, use `dotnet tool update --global dotnet-ef --version "11.*"` instead.
 - Docker, or another container runtime that Aspire supports, to run the AppHost. The AppHost starts SQLite Web
   (`WithSqliteWeb()`), which runs in a container. The AppHost uses the Aspire.Hosting.AppHost package; on the first
-  build it fetches the matching Aspire CLI bundle through `dnx` (network needed once), so no separate Aspire install is
-  needed.
+  build it fetches the matching Aspire CLI bundle through `dnx` (or `aspire setup` when an Aspire CLI is on PATH;
+  network needed once), so no separate Aspire install is needed.
 
 ## Build, test and run
 

@@ -86,7 +86,8 @@ of paying for the same mistake again.
     a process list that nothing from the worktree is still running before it reports.
 - **Repeat check:** the background-wait lesson repeats PR #196, #207, #219, #226, #233 and #234; it is escalated to the
   lead under the Escalation rule. The docs-miss lesson is related to PR #226 (a docs step that did not check its code
-  references), but it is not the same miss. The parallel-build lesson repeats PR #228 and PR #235.
+  references), but it is not the same miss. The parallel-build lesson is related to PR #228 and PR #235 (builds in the
+  same worktree, handled by PR #237); builds in separate worktrees slowing each other down is new.
 
 ### 2026-11-25: PR #238 (issue #236) Test that a superseded Classes overview load never sets HasLoaded
 
