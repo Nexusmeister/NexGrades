@@ -35,12 +35,17 @@ about to change and the code around them, plus the page in `docs/domain/` for th
 
 ## Done means
 
-From `src/NexGrades/`, both of these succeed:
+From `src/NexGrades/`, before handing back, both of these succeed. They are the checks CI runs, so the whole
+solution is built with warnings as errors, not only the App project:
 
 ```sh
-dotnet build NexGrades.App/NexGrades.App.csproj
-dotnet test
+CI=true dotnet build NexGrades.slnx -warnaserror --no-incremental
+dotnet test -warnaserror
 ```
+
+In PowerShell, set the variable first: `$env:CI = 'true'; dotnet build NexGrades.slnx -warnaserror --no-incremental`.
+Both must report `0 Warning(s)` and `0 Error(s)` in the summary (German: `0 Warnung(en)`, `0 Fehler`). Read the
+summary lines, not only the tail of the output.
 
 Report: the files you changed, anything you deliberately left out, and any manual UI check that is still
 needed. If the build or tests fail and you can't fix them, report the failing output; don't hide it.
