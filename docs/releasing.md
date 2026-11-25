@@ -178,8 +178,8 @@ matching bump by hand to whichever of the two comes first: `.config/dotnet-tools
 `src/NexGrades/Directory.Packages.props` (Velopack version). Dependabot stops rebasing a branch someone pushed to, so
 close the other pull request by hand.
 
-Dependabot ignores `Aspire.Hosting.AppHost`. It must equal the `Aspire.AppHost.Sdk` version in
-`src/NexGrades/Aspire/NexGrades.AppHost/NexGrades.AppHost.csproj`, so bump both by hand.
+Dependabot ignores `Aspire.Hosting.AppHost` and `Aspire.Hosting.Dotnet`. They must have the same version, so bump
+both by hand in `src/NexGrades/Directory.Packages.props`.
 
 `src/NexGrades/Directory.Build.props` sets `EnableWindowsTargeting` to `true`. GitHub's dependency submission and
 Dependabot run restore on Linux, and without the property the Windows-targeting projects fail to restore there. The

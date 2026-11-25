@@ -44,9 +44,10 @@ updates:
           - minor
           - patch
     ignore:
-      # Must equal the Aspire.AppHost.Sdk version in NexGrades.AppHost.csproj, which Dependabot does not update.
-      # Move both by hand (see Directory.Packages.props).
+      # Aspire.Hosting.AppHost and Aspire.Hosting.Dotnet must have the same version, and separate pull requests would
+      # break the AppHost build. Move both by hand (see Directory.Packages.props).
       - dependency-name: Aspire.Hosting.AppHost
+      - dependency-name: Aspire.Hosting.Dotnet
 
   # Local dotnet tools in .config/dotnet-tools.json (only vpk), read by the nuget ecosystem.
   - package-ecosystem: nuget
