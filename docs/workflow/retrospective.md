@@ -40,19 +40,20 @@ of paying for the same mistake again.
 ### 2026-11-25: PR #252 (issue #231) Async load doc and test
 
 - **Cost and friction:** the orchestrator's first `git worktree add` call left out the path argument, so it
-  created a stray worktree. The stray worktree was removed and the call redone. The tester (sonnet) and
-  docs-writer (haiku) ran in parallel on docs-only and test-only files. The tester's mutation check on the new
-  assertion failed as expected and was reverted before the tests were reported as done. The first push failed CI
-  with CA1861 (an inline array in the new test). The local build had been run without `CI=true`, so the warning
-  did not fail it, and the lead read the `1 Fehler` line in the tail of the output as noise. The tester moved the
-  array into a static readonly field in one CI fix round, and a second review round at the new SHA gave "Ready to
-  merge" again. The first review round (reviewer, sonnet) had also given "Ready to merge", with three minors; one
-  of them was filed as a follow-up issue about the `YearLock.ShowAsync` wording. Seven role-agent runs in total:
-  five before this entry (docs-writer haiku once, tester sonnet twice, reviewer sonnet twice), and two haiku runs
-  for this entry and its correction. No denied actions. Docs and test only, no App production change, so no smoke
-  start.
+  created a stray worktree. The stray worktree was removed and the call redone. The removal left an empty `origin`
+  folder in the main checkout; the lead found and removed it during verification. The tester (sonnet) and docs-writer
+  (haiku) ran in parallel on docs-only and test-only files. The tester's mutation check on the new assertion
+  failed as expected and was reverted before the tests were reported as done. The first push failed CI with CA1861
+  (an inline array in the new test). The local build had been run without `CI=true`, so the warning did not fail
+  it, and the orchestrator read the `1 Fehler` line in the tail of the output as noise. The tester moved the array
+  into a static readonly field in one CI fix round, and a second review round at the new SHA gave "Ready to merge"
+  again. The first review round (reviewer, sonnet) had also given "Ready to merge" with three minors; one of them was
+  filed as a follow-up issue about the `YearLock.ShowAsync` wording. Seven role-agent runs in total: five before this
+  entry (docs-writer haiku once, tester sonnet twice, reviewer sonnet twice), and two haiku runs for this entry and
+  its correction. No denied actions. Docs and test only, no App production change, so no smoke start.
 - **Lessons:**
-  - Give `git worktree add` its path explicitly and check `git worktree list` before the next step.
+  - Give `git worktree add` its path explicitly and check `git worktree list` before the next step; after removing a
+    stray worktree, check the main checkout for a leftover folder.
   - Before the first push, run the CI-equivalent build and read all of its output, not only the tail:
     `CI=true dotnet build NexGrades.slnx -warnaserror --no-incremental`, from `src/NexGrades/`.
 - **Repeat check:** the CI-build lesson repeats PR #235 (an incremental build hid MA0051 before the handback), so it
