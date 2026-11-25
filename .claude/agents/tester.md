@@ -39,7 +39,18 @@ covering and follow its structure.
 
 ## Done means
 
-`dotnet test` from `src/NexGrades/` passes, apart from any failing test you added on purpose to show a
-production bug. Report: the tests added, what each covers, and any bugs found. For each guard, branch or
-rejection test, state the mutation-check result (mutation applied and the test failed as expected, or not
-applicable), and that `git diff` shows no production change.
+From `src/NexGrades/`, before handing back, both of these succeed, the same checks CI runs. Apart from any failing
+test you added on purpose to show a production bug, the test run must pass:
+
+```sh
+CI=true dotnet build NexGrades.slnx -warnaserror --no-incremental
+dotnet test -warnaserror
+```
+
+In PowerShell, set the variable first: `$env:CI = 'true'; dotnet build NexGrades.slnx -warnaserror --no-incremental`.
+The build must report `0 Warning(s)` and `0 Error(s)` in the summary (German: `0 Warnung(en)`, `0 Fehler`). Read the
+summary lines, not only the tail of the output.
+
+Report: the tests added, what each covers, and any bugs found. For each guard, branch or rejection test, state the
+mutation-check result (mutation applied and the test failed as expected, or not applicable), and that `git diff`
+shows no production change.

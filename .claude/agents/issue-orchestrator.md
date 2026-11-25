@@ -82,10 +82,27 @@ build at the same time in one worktree report false build failures (seen in #228
    code roles (`csharp-coder`, `ui-designer`, `tester`) have finished; a parallel run describes the old code or XAML
    (seen in #202 and #232). Skip `docs-writer` when
    there is no user-visible change and no change to a command, convention or the domain model.
-6. **Verify yourself** in the worktree, from `src/NexGrades/`: `dotnet build NexGrades.slnx`,
-   `dotnet test`, `dotnet format NexGrades.slnx --verify-no-changes`. Send failures to the agent that owns
-   the failing files (`csharp-coder` may run the formatter). Compare warnings with `dev` and note any new
-   ones.
+6. **Verify yourself** in the worktree, from `src/NexGrades/`, before the first push. Run the CI-equivalent checks
+   (the same as `verify-and-merge` item 5) in Git Bash:
+
+   ```sh
+   CI=true dotnet build NexGrades.slnx -warnaserror --no-incremental
+   dotnet test -warnaserror
+   dotnet format NexGrades.slnx --verify-no-changes
+   ```
+
+   In PowerShell, set the variable first, because PowerShell has no inline `CI=true` prefix:
+
+   ```powershell
+   $env:CI = 'true'; dotnet build NexGrades.slnx -warnaserror --no-incremental
+   dotnet test -warnaserror
+   dotnet format NexGrades.slnx --verify-no-changes
+   ```
+
+   The build passes only when its summary reports `0 Warning(s)` and `0 Error(s)` (German: `0 Warnung(en)` and
+   `0 Fehler`). Read the summary lines, not only the tail of the output: a `1 Fehler` line is a failure. Send failures
+   to the agent that owns the failing files (`csharp-coder` may run the formatter). Compare warnings with `dev` and
+   note any new ones.
 7. **Smoke start** for every PR that touches `NexGrades.App`. The orchestrator runs it, never the owner. It runs on
    the build of the head SHA that will be reported, so commit first (step 8), then rebuild (step 6) and run it at
    that SHA; a run on the tree before the first commit is not enough (the lead found this in #202). Follow

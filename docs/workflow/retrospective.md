@@ -37,6 +37,25 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #255 (issue #254) Role and orchestrator build checks use the CI-equivalent build
+
+- **Cost and friction:** none blocking: no CI fix round, no retries and no blocked agent. One review round (sonnet)
+  gave no blockers or majors and two minors. The lead filed them as follow-up issue #256, because the orchestrator had
+  left them without one, against the minors-to-follow-up rule: one is that the "same as verify-and-merge item 5"
+  wording is slightly stricter than that item, the other is that the Git Bash `CI=true` prefix applies only to
+  the build. Sleep-based waits returned instantly in the harness, so the wait for CI used a loop checked against
+  `date`. Three role-agent runs: docs-writer (haiku) twice and reviewer (sonnet) once. No architect, csharp-coder,
+  ui-designer, tester or smoke start: the change is docs-only, in three `.claude/agents` files.
+- **Lessons:**
+  - Give every wait a deadline checked against `date`, never a count of sleep rounds.
+  - Say which command an environment prefix such as `CI=true` applies to, and where the shell changes that.
+  - Make a "same as" cross-reference quote the referenced rule exactly, or say where it differs.
+- **Repeat check:** the wait lesson repeats PR #196, #219, #226, #233, #234, #238 and #240. It is already a rule in
+  `.claude/agents/issue-orchestrator.md` (date-checked waits, escalated earlier), and this run followed it, so no new
+  escalation. The prefix lesson is new. The cross-reference lesson is related to PR #230 (a docs rule stricter than
+  the code it cites), but it is about wording, not behaviour. The CI-build check is what PR #252 and PR #235
+  asked for; this PR writes it into the agent files, so it is not counted as a repeat.
+
 ### 2026-11-25: PR #252 (issue #231) Async load doc and test
 
 - **Cost and friction:** the orchestrator's first `git worktree add` call left out the path argument, so it
