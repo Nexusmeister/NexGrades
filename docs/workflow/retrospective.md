@@ -37,6 +37,14 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #234 (issues #171, #172, #193, #197) Docs and config minors
+
+- **Cost and friction:** 3 role-agent runs: docs-writer (haiku) for the edits, reviewer (haiku), docs-writer (haiku) for this entry; no architect, coder or tester. No CI fix round, one review round with two minor findings (a version number in a comment for an unpinned transitive package that can go stale; a commit trailer model name, which was the lead's verbatim attribution line and was kept). No smoke start (no App code). Issue #172 had to be adjusted by the lead because PR #223 had made its premise stale; the orchestrator verified TFMs in the local NuGet cache instead of trusting the issue. The #171 CONTRIBUTING.md line was already pinned, so only the update alternative was added.
+- **Lessons:**
+  - Re-check bundled follow-up issues against current dev before briefing; one of four was already partly done or stale.
+  - The orchestrator's wait rounds do not advance wall-clock time visibly; judge CI by started_at and check runs, not by the number of sleeps.
+- **Repeat check:** none.
+
 ### 2026-11-25: PR #233 (issues #164 and #166) Doc fixes and too-long class name hint in the rollover dialog
 
 - **Cost and friction:** 5 role-agent runs, all on sonnet except docs-writer on haiku: csharp-coder, ui-designer,
@@ -52,7 +60,7 @@ of paying for the same mistake again.
 - **Repeat check:** the background-wait lesson repeats PR #228, PR #219, PR #207 and PR #196. The key-reuse lesson is
   new; it is related to PR #205 (say in the ui-designer brief whether resource keys are in scope), but it is not the
   same lesson.
-
+>
 ### 2026-11-25: PR #232 (issue #227) Classes year filter follow-ups
 
 - **Cost and friction:** 7 role-agent runs: csharp-coder (sonnet), tester (sonnet), docs-writer (haiku) three times,

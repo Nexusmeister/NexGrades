@@ -26,12 +26,12 @@ Only the tip of `dev` is published. Every push to `dev` that passes the test and
 **pre-release** `vX.Y.Z-beta.<height>` with the assets attached, provided its commit is still the tip of `dev`. The
 beta job checks this at the start and again right before it creates the release. If `dev` has moved on, it logs a
 notice and publishes nothing, so an older commit is never published after a newer one; the newer push publishes its
-own beta. The tip is read through the GitHub API with the workflow token (`.github/scripts/Get-BranchTip.ps1`), so the
-job keeps working if the repository becomes private. Only the 10 newest beta pre-releases are kept. Older ones are deleted together with their
-tags. The cleanup only considers pre-releases whose tag matches `v*-beta.*`, sorts them by publish date and always keeps
-the one just published. Drafts are neither counted nor deleted by the cleanup. If the dev tip carries a stable tag (for
-example after merging `main` back into `dev`), the version has no pre-release part; the job then logs a notice and
-publishes nothing.
+own beta if it passes CI. The tip is read through the GitHub API with the workflow token
+(`.github/scripts/Get-BranchTip.ps1`), so the job keeps working if the repository becomes private. Only the 10 newest
+beta pre-releases are kept. Older ones are deleted together with their tags. The cleanup only considers pre-releases
+whose tag matches `v*-beta.*`, sorts them by publish date and always keeps the one just published. Drafts are neither
+counted nor deleted by the cleanup. If the dev tip carries a stable tag (for example after merging `main` back into
+`dev`), the version has no pre-release part; the job then logs a notice and publishes nothing.
 
 ## Stable releases (push to `main`)
 
