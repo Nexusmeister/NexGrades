@@ -1,3 +1,4 @@
+using System.IO;
 using System.Resources;
 using Microsoft.Extensions.Logging;
 using NexGrades.App.Infrastructure;
@@ -189,6 +190,10 @@ public sealed class StartupFailureHandlerTests
         new MissingManifestResourceException("x"),
         new MissingSatelliteAssemblyException("x"),
         new FormatException("x"),
+        new FileLoadException("x"),
+        new BadImageFormatException("x"),
+        new FileNotFoundException("x"),
+        new IOException("x"),
     ];
 
     [Theory]
