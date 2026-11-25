@@ -37,6 +37,27 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #235 (issue #178) Empty state on the overview pages only after the first load
+
+- **Cost and friction:** 7 role-agent runs: csharp-coder twice, ui-designer, tester, reviewer (all sonnet), and
+  docs-writer twice on haiku (once for the retrospective entry). No architect and no CI fix round. The first clean,
+  non-incremental build failed on MA0051 (the Classes load method was 66 lines, limit 60); an earlier incremental build
+  had hidden it, so an extra csharp-coder run extracted `ApplyLoad`. The ui-designer ran while the csharp-coder was
+  still editing the same file, saw a half-edited file and reported a false build break; the orchestrator verified the
+  tree with its own `--no-incremental` build. The docs-writer's late edit needed a second docs commit. One review
+  round gave "Ready to merge" with no blockers or majors and two minors; the first (a failed load shows the empty
+  state) is deliberate. Role-agent results arrived with long delays, but the notes do not say whether the runs were
+  in the background.
+- **Lessons:**
+  - Check a C# change with a non-incremental build (`dotnet build --no-incremental`) before handing back; an
+    incremental build can hide analyzer failures such as MA0051.
+  - Run each role agent to completion before the next one reads the same worktree, and let the orchestrator confirm
+    the build itself.
+  - Run docs-writer to completion before the docs commit, so its late edit does not need a second commit.
+- **Repeat check:** the concurrent-worktree lesson repeats PR #228 (ui-designer and tester in the same solution). The
+  docs-writer timing lesson repeats PR #202 and PR #232, so it goes to the lead under the Escalation rule. The
+  analyzer-before-handback lesson is new.
+
 ### 2026-11-25: PR #233 (issues #164 and #166) Doc fixes and too-long class name hint in the rollover dialog
 
 - **Cost and friction:** 5 role-agent runs, all on sonnet except docs-writer on haiku: csharp-coder, ui-designer,
