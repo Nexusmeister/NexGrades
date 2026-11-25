@@ -37,6 +37,30 @@ of paying for the same mistake again.
 
 ## Entries
 
+### 2026-11-25: PR #238 (issue #236) Test that a superseded Classes overview load never sets HasLoaded
+
+- **Cost and friction:** about 5 role-agent runs: tester (sonnet) twice, reviewer (haiku) twice and docs-writer
+  (haiku) once. The orchestrator mistook fast-returning background sleep rounds for elapsed CI time and reported a
+  false "CI timeout"; the lead corrected it. The first version of the two tests passed even with the production
+  version guard removed: the gate held the years read, so the superseded run was cancelled by the newer command run
+  and threw `OperationCanceledException` before it reached the guard. The haiku reviewer caught this as a major
+  (unconfirmed), and a mutation check by the tester confirmed it. The tests were reworked to gate on the class query
+  and to start the superseded run with an uncancelled token, via reflection. The tester should have run that mutation
+  check itself before reporting the tests as done. One review round with a major, then one re-review: "Ready to
+  merge". The tester role is limited to `NexGrades.Tests`, so the lead's explicit scope note was needed for
+  `NexGrades.App.Tests`.
+- **Lessons:**
+  - A new test for a guard or branch is not done until a mutation check (remove the guard, the test must fail) has
+    run; put this in the tester brief.
+  - Count CI wait rounds against a real clock (loop on `date` with a deadline and poll the check-runs API), never by
+    the number of sleep calls.
+  - For latest-request-wins loads, a test that goes through the command cancels the older run first; reach the guard
+    by starting the older run with an uncancelled token.
+  - Name the test project in the tester brief when it is outside `NexGrades.Tests`.
+- **Repeat check:** the CI-clock lesson repeats PR #196, PR #219, PR #226, PR #233 and PR #234, so it goes to the lead
+  under the Escalation rule. The guard-isolation lesson repeats PR #212. The mutation-check and project-scope lessons
+  are new.
+
 ### 2026-11-25: PR #235 (issue #178) Empty state on the overview pages only after the first load
 
 - **Cost and friction:** 7 role-agent runs: csharp-coder twice, ui-designer, tester, reviewer (all sonnet), and
