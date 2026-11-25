@@ -76,7 +76,8 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
                 .ToListAsync(cancellationToken);
 
             // Ordered in memory, like the other date comparisons in this service: it is a handful of rows.
-            return [.. years.OrderByDescending(sy => sy.StartDate)];
+            // The Id tie-break keeps the order deterministic when two years share a start date.
+            return [.. years.OrderByDescending(sy => sy.StartDate).ThenByDescending(sy => sy.Id)];
         });
 
     /// <summary>How many days before the Active year's end date the Home page starts reminding the teacher.</summary>

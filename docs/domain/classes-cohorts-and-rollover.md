@@ -63,9 +63,11 @@ that creates a `SubjectInstance`.
 ## Classes overview
 
 The Classes overview lists the classes of one school year, chosen in a year selector. The selector offers every
-school year (Planned, Active and Closed), newest first, read through `SchoolYearService.GetYearsAsync`. It starts on
-the Active year, or on the newest year when none is Active. The choice is not persisted, so every app start begins
-at the Active year again. It is kept across reloads and toggle flips. The selector exists because a class would
+school year (Planned, Active and Closed), newest start date first, read through `SchoolYearService.GetYearsAsync`. It
+starts on the Active year, or on the newest year when none is Active. The choice is not persisted, so every app start
+begins at the Active year again. It is kept across reloads and toggle flips. When the chosen year is missing at a reload,
+the selector falls back to the Active year, or to the newest year when none is Active. Years with the same start
+date are ordered by higher Id first, so the order is deterministic. The selector exists because a class would
 otherwise drop out of the overview once its year is closed.
 
 Within the selected year, the list shows only the `Active` instances. The toggle "Show rolled-forward and archived
@@ -109,6 +111,7 @@ See [Rules by area](../../AGENTS.md#rules-by-area) in `AGENTS.md`.
 - `NexGrades.Domain/Services/ClassService.cs`
 - `NexGrades.Domain/Services/RolloverService.cs`
 - `NexGrades.Domain/Services/ClassRolloverState.cs`
+- `NexGrades.Domain/Services/SchoolYearService.cs`
 
 ## Related
 
