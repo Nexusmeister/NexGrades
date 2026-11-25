@@ -165,6 +165,7 @@ All colours are theme brushes, used through `DynamicResource`. No XAML file in t
 | Closed or unlocked year | A `ui:InfoBar` in `YearLockBar` | A lock icon and text |
 | Keyboard focus | `AccentFillColorDefaultBrush` | A 2-pixel border on a grade cell |
 | Selected grade cell | `ControlFillColorSecondaryBrush` | The cell fill |
+| Selected grid row, focused or not | `ControlFillColorSecondaryBrush` with `TextFillColorPrimaryBrush` text | `Ng.DataGridRow` sets it on `IsSelected`. `Ng.DataGrid` overrides the system selection brushes, which would turn white in dark mode. |
 | Lines and borders | `ControlStrokeColorDefaultBrush` | Borders of cards and item surfaces |
 | Card and item background | `CardBackgroundFillColorSecondaryBrush` | `Ng.Surface.Item` |
 

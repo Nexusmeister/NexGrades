@@ -152,9 +152,22 @@
 
     <Style x:Key="Ng.DataGridRow" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
         <Setter Property="Margin" Value="0" />
+        <!-- A selected row looks the same focused or not; the system selection colours would turn white in dark mode. -->
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="Ng.DataGrid" TargetType="ui:DataGrid" BasedOn="{StaticResource {x:Type ui:DataGrid}}">
+        <Style.Resources>
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{DynamicResource ControlFillColorSecondary}" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{DynamicResource ControlFillColorSecondary}" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{DynamicResource TextFillColorPrimary}" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="{DynamicResource TextFillColorPrimary}" />
+        </Style.Resources>
         <Setter Property="AutoGenerateColumns" Value="False" />
         <Setter Property="IsReadOnly" Value="True" />
         <Setter Property="SelectionMode" Value="Single" />
