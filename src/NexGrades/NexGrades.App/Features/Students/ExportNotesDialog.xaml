@@ -7,8 +7,7 @@
                   Title="{loc:Text Students_ExportDialog_Title}"
                   PrimaryButtonText="{loc:Text Students_ExportDialog_Export}"
                   CloseButtonText="{loc:Text Common_Cancel}"
-                  DefaultButton="Primary"
-                  IsPrimaryButtonEnabled="{Binding IsValid}">
+                  DefaultButton="Primary">
 
     <!-- Merged here because the dialog must build without the application resources. -->
     <ui:ContentDialog.Resources>
