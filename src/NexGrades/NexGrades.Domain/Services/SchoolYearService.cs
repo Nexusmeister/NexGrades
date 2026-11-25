@@ -62,6 +62,23 @@ public sealed partial class SchoolYearService(IDbContextFactory<AppDbContext> co
                 .FirstOrDefaultAsync(cancellationToken);
         });
 
+    /// <summary>
+    /// Returns every school year (Planned, Active and Closed), newest first by start date. Pages that let the
+    /// teacher pick a year, such as the Classes overview, read the choices here instead of querying the table
+    /// themselves.
+    /// </summary>
+    public Task<IReadOnlyList<SchoolYearSummary>> GetYearsAsync(CancellationToken cancellationToken = default) =>
+        DomainOperation.RunAsync<IReadOnlyList<SchoolYearSummary>>("SchoolYearService.GetYears", async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var years = await context.SchoolYears.AsNoTracking()
+                .Select(sy => new SchoolYearSummary(sy.Id, sy.Label, sy.StartDate, sy.EndDate, sy.Status))
+                .ToListAsync(cancellationToken);
+
+            // Ordered in memory, like the other date comparisons in this service: it is a handful of rows.
+            return [.. years.OrderByDescending(sy => sy.StartDate)];
+        });
+
     /// <summary>How many days before the Active year's end date the Home page starts reminding the teacher.</summary>
     public const int YearEndReminderLeadDays = 28;
 

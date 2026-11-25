@@ -25,6 +25,11 @@ historic one.
 `ClassService.RenameClassAsync` renames an `Active` instance in place. A rolled-forward or archived instance
 keeps its historic name, so renaming it is refused. The cohort label of the `ClassGroup` is not changed.
 
+An `Active` instance of a Closed year is still renamable by `ClassService`, so the closed-year lock decides. The
+class page has no year lock bar, so the save reaches `ClosedYearAuditInterceptor`, which throws
+`ClosedYearException` while the year is locked. An unlocked year accepts the rename and writes audit entries. See
+[Closed-year lock and audit](closed-year-lock-and-audit.md).
+
 A new or changed name is at most 20 characters (`ClassService.MaxNameLength`). This is not a schema limit. A
 longer name that already exists, for example one rolled forward unchanged, stays valid and can be saved unchanged.
 
@@ -57,17 +62,34 @@ that creates a `SubjectInstance`.
 
 ## Classes overview
 
-The Classes overview lists only the `Active` instances of the Active school year. The toggle "Show rolled-forward
-and archived classes" adds the `RolledForward` and `Archived` instances of that year. Each of them shows a status
-badge, "Rolled forward" or "Archived", in the Status column; an `Active` row has none. The toggle is not persisted
-and resets when the app starts. Every listed row stays openable, and renaming a rolled-forward or archived instance
-is still refused by `ClassService`. The filter is a plain display filter in the query of
-`ClassesOverviewViewModel`, not a Domain rule. Reloads are latest-request-wins: when the toggle changes quickly, the
-last toggle state is shown, and a failed read is logged and leaves the list as it was.
+The Classes overview lists the classes of one school year, chosen in a year selector. The selector offers every
+school year (Planned, Active and Closed), newest first, read through `SchoolYearService.GetYearsAsync`. It starts on
+the Active year, or on the newest year when none is Active. The choice is not persisted, so every app start begins
+at the Active year again. It is kept across reloads and toggle flips. The selector exists because a class would
+otherwise drop out of the overview once its year is closed.
+
+Within the selected year, the list shows only the `Active` instances. The toggle "Show rolled-forward and archived
+classes" adds the `RolledForward` and `Archived` instances of that same year. Each of them shows a status badge,
+"Rolled forward" or "Archived", in the Status column; an `Active` row has none. The toggle is not persisted and
+resets when the app starts.
+
+Every listed row stays openable, including those of a Closed year. Opening a class of a Closed year does not make
+its page read-only: the class page has no year lock bar, and a rename there is refused by the closed-year lock (see
+[Renaming](#renaming)). Renaming a rolled-forward or archived instance is refused by `ClassService` as before.
+
+The Add button always creates the class in the Active year (`ClassService.CreateClassAsync`), whichever year is
+selected. A new cohort starts in the year being taught now; the selector does not offer a way to create one in
+another year.
+
+The year choice and the toggle are display state in `ClassesOverviewViewModel`, not Domain rules. Year changes and
+toggle flips share one guarded load, and the newest request wins: when the selection or the toggle changes quickly,
+the last choice is shown. A failed read is logged and leaves the list as it was.
 
 German (keys `Classes_Overview_ShowInactive`, `Classes_Status_RolledForward` and `Classes_Status_Archived` in
 `ClassesStrings.de.resx`): the toggle reads "Archivierte und übernommene Klassen anzeigen", the badges read
-"übernommen" and "archiviert".
+"übernommen" and "archiviert". The year selector is labelled "Schuljahr" (`Classes_Overview_SchoolYear`), and its
+entries end in "(geplant)", "(aktiv)" or "(abgeschlossen)" (`Classes_Overview_Year_Planned`,
+`Classes_Overview_Year_Active` and `Classes_Overview_Year_Closed`).
 
 ## Teacher
 

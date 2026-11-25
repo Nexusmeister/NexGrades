@@ -183,6 +183,35 @@ public class SchoolYearServiceTests
         Assert.Equal("2025/26", year.Label);
     }
 
+    [Fact]
+    public async Task GetYearsAsync_ReturnsAllYearsNewestFirst_AcrossStatuses()
+    {
+        using var db = new SqliteTestDatabase();
+        var closedId = await SeedYearAsync(db, "2024/25", new DateTime(2024, 8, 1), new DateTime(2025, 7, 31), SchoolYearStatus.Closed);
+        var plannedId = await SeedYearAsync(db, "2026/27", new DateTime(2026, 8, 1), new DateTime(2027, 7, 31), SchoolYearStatus.Planned);
+        var activeId = await SeedYearAsync(db, "2025/26", new DateTime(2025, 8, 1), new DateTime(2026, 7, 31), SchoolYearStatus.Active);
+        var service = CreateService(db, new DateTime(2026, 3, 15));
+
+        var years = await service.GetYearsAsync();
+
+        Assert.Equal([plannedId, activeId, closedId], years.Select(y => y.Id));
+        Assert.Equal([SchoolYearStatus.Planned, SchoolYearStatus.Active, SchoolYearStatus.Closed], years.Select(y => y.Status));
+        Assert.Equal("2025/26", years[1].Label);
+        Assert.Equal(new DateTime(2025, 8, 1), years[1].StartDate);
+        Assert.Equal(new DateTime(2026, 7, 31), years[1].EndDate);
+    }
+
+    [Fact]
+    public async Task GetYearsAsync_ReturnsEmptyList_WhenNoYearExists()
+    {
+        using var db = new SqliteTestDatabase();
+        var service = CreateService(db, new DateTime(2026, 3, 15));
+
+        var years = await service.GetYearsAsync();
+
+        Assert.Empty(years);
+    }
+
     private static SchoolYearService CreateService(SqliteTestDatabase db, DateTime now) =>
         new(db.CreateContextFactory(), new FixedClock(now), NullLogger<SchoolYearService>.Instance);
 

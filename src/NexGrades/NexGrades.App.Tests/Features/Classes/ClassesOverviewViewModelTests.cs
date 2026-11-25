@@ -1,9 +1,11 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NexGrades.App.Core;
 using NexGrades.App.Features.Classes;
 using NexGrades.App.Tests.TestSupport;
 using NexGrades.Data;
 using NexGrades.Data.Entities;
+using NexGrades.Domain.Services;
 
 namespace NexGrades.App.Tests.Features.Classes;
 
@@ -11,10 +13,13 @@ public class ClassesOverviewViewModelTests
 {
     private static readonly DateTime Now = new(2026, 3, 1, 12, 0, 0);
 
+    private static SchoolYearService YearService(LockTestEnvironment env, IDbContextFactory<AppDbContext> factory) =>
+        new(factory, env.Clock, NullLogger<SchoolYearService>.Instance);
+
     private static ClassesOverviewViewModel Create(LockTestEnvironment env)
     {
         var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
-        return new ClassesOverviewViewModel(navigator, env.Factory, env.Snackbar, NullLogger<ClassesOverviewViewModel>.Instance);
+        return new ClassesOverviewViewModel(navigator, env.Factory, YearService(env, env.Factory), env.Snackbar, NullLogger<ClassesOverviewViewModel>.Instance);
     }
 
     private static async Task<int> AddYearAsync(AppDbContext context, string label, int startYear, SchoolYearStatus status)
@@ -43,6 +48,7 @@ public class ClassesOverviewViewModelTests
         var rows = new[]
         {
             Instance(closedId, closedId, "Old", ClassInstanceStatus.Active),
+            Instance(closedId, closedId, "Old-Archived", ClassInstanceStatus.Archived),
             Instance(closedId, activeId, "A-Active", ClassInstanceStatus.Active),
             Instance(closedId, activeId, "B-Rolled", ClassInstanceStatus.RolledForward),
             Instance(closedId, activeId, "C-Archived", ClassInstanceStatus.Archived),
@@ -145,6 +151,200 @@ public class ClassesOverviewViewModelTests
         Assert.Null(vm.SelectedClass);
     });
 
+    private static SchoolYearSummary YearNamed(ClassesOverviewViewModel vm, string label) => vm.Years.Single(y => y.Label == label);
+
+    private static async Task AddPlannedYearAsync(LockTestEnvironment env)
+    {
+        await using var context = new AppDbContext(env.Options);
+        await AddYearAsync(context, "2026/27", 2026, SchoolYearStatus.Planned);
+    }
+
+    [Fact]
+    public Task LoadClassesCommand_ListsYearsNewestFirst_OnFirstLoad() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        await AddPlannedYearAsync(env);
+        var vm = Create(env);
+
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        Assert.Equal(["2026/27", "2025/26", "2024/25"], vm.Years.Select(y => y.Label));
+    });
+
+    [Fact]
+    public Task LoadClassesCommand_SelectsTheActiveYear_OnFirstLoad() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        await AddPlannedYearAsync(env);
+        var vm = Create(env);
+
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        Assert.Equal("2025/26", vm.SelectedYear?.Label);
+    });
+
+    [Fact]
+    public Task LoadClassesCommand_SelectsTheNewestYear_WhenNoYearIsActive() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await using (var context = new AppDbContext(env.Options))
+        {
+            var older = await AddYearAsync(context, "2023/24", 2023, SchoolYearStatus.Closed);
+            var newer = await AddYearAsync(context, "2024/25", 2024, SchoolYearStatus.Closed);
+            context.ClassInstances.AddRange(
+                Instance(older, older, "Older", ClassInstanceStatus.Active),
+                Instance(older, newer, "Newer", ClassInstanceStatus.Active));
+            await context.SaveChangesAsync();
+        }
+
+        var vm = Create(env);
+
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        Assert.Equal("2024/25", vm.SelectedYear?.Label);
+        Assert.Equal(["Newer"], Names(vm));
+    });
+
+    [Fact]
+    public Task LoadClassesCommand_ListsNoClassesAndNoYear_WhenThereAreNoYears() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        var vm = Create(env);
+
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        Assert.Null(vm.SelectedYear);
+        Assert.Empty(vm.Years);
+        Assert.Empty(vm.Classes);
+    });
+
+    [Fact]
+    public Task SelectedYear_ListsActiveClassesOfThatYear_WhenAClosedYearIsChosen() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var vm = Create(env);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        vm.SelectedYear = YearNamed(vm, "2024/25");
+        await LockTestEnvironment.WaitUntilAsync(() => Names(vm) is ["Old"]);
+
+        Assert.Equal("2024/25", vm.SelectedYear.Label);
+    });
+
+    [Fact]
+    public Task ShowInactiveClasses_ListsArchivedClassWithBadgeOfAClosedYear_WhenTurnedOn() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var vm = Create(env);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+        vm.SelectedYear = YearNamed(vm, "2024/25");
+        await LockTestEnvironment.WaitUntilAsync(() => Names(vm) is ["Old"]);
+
+        vm.ShowInactiveClasses = true;
+        await LockTestEnvironment.WaitUntilAsync(() => vm.Classes.Count == 2);
+
+        Assert.Equal(["Old", "Old-Archived"], Names(vm));
+        Assert.False(vm.Classes[0].HasStatusBadge);
+        Assert.True(vm.Classes[1].HasStatusBadge);
+    });
+
+    [Fact]
+    public Task SelectedYear_ListsNoClasses_WhenAPlannedYearHasNone() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        await AddPlannedYearAsync(env);
+        var vm = Create(env);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+        Assert.NotEmpty(vm.Classes);
+
+        vm.SelectedYear = YearNamed(vm, "2026/27");
+        await LockTestEnvironment.WaitUntilAsync(() => vm.Classes.Count == 0);
+
+        Assert.Equal("2026/27", vm.SelectedYear.Label);
+    });
+
+    [Fact]
+    public Task SelectedYear_SurvivesAToggleFlip_WhenAnotherYearIsChosen() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var vm = Create(env);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+        vm.SelectedYear = YearNamed(vm, "2024/25");
+        await LockTestEnvironment.WaitUntilAsync(() => Names(vm) is ["Old"]);
+
+        vm.ShowInactiveClasses = true;
+        await LockTestEnvironment.WaitUntilAsync(() => vm.Classes.Count == 2);
+        vm.ShowInactiveClasses = false;
+        await LockTestEnvironment.WaitUntilAsync(() => vm.Classes.Count == 1);
+
+        Assert.Equal("2024/25", vm.SelectedYear?.Label);
+        Assert.Equal(["Old"], Names(vm));
+    });
+
+    [Fact]
+    public Task LoadClassesCommand_KeepsTheSelectedYear_WhenReloaded() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var vm = Create(env);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+        vm.SelectedYear = YearNamed(vm, "2024/25");
+        await LockTestEnvironment.WaitUntilAsync(() => Names(vm) is ["Old"]);
+
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+
+        Assert.Equal("2024/25", vm.SelectedYear?.Label);
+        Assert.Equal(["Old"], Names(vm));
+    });
+
+    [Fact]
+    public Task SelectedYear_ClearsSelectedClass_WhenTheClassIsNotInTheNewYear() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var vm = Create(env);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+        vm.SelectedClass = vm.Classes.Single();
+
+        vm.SelectedYear = YearNamed(vm, "2024/25");
+        await LockTestEnvironment.WaitUntilAsync(() => Names(vm) is ["Old"]);
+
+        Assert.Null(vm.SelectedClass);
+    });
+
+    [Fact]
+    public Task LoadClassesCommand_KeepsTheNewestYearAndToggle_WhenAnOlderYearLoadIsHeldAndSuperseded() => StaTestRunner.RunAsync(async () =>
+    {
+        using var env = new LockTestEnvironment(Now);
+        await SeedAsync(env);
+        var gate = new QueryGatedContextFactory(env.Options);
+        var logger = new CapturingLogger<ClassesOverviewViewModel>();
+        var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
+        var vm = new ClassesOverviewViewModel(navigator, gate, YearService(env, gate), env.Snackbar, logger);
+        await vm.LoadClassesCommand.ExecuteAsync(null);
+        var closed = YearNamed(vm, "2024/25");
+
+        var held = gate.HoldNextQueryAsync(out var release);
+        vm.SelectedYear = closed;
+        await held;
+        var older = vm.LoadClassesCommand.ExecutionTask!;
+        vm.ShowInactiveClasses = true;
+        await LockTestEnvironment.WaitUntilAsync(() => Names(vm) is ["Old", "Old-Archived"]);
+        release();
+        await older;
+
+        Assert.Equal(["Old", "Old-Archived"], Names(vm));
+        Assert.Equal("2024/25", vm.SelectedYear?.Label);
+        Assert.True(vm.ShowInactiveClasses);
+        Assert.Empty(logger.Entries);
+    });
+
     [Fact]
     public void ClassRow_HasNoBadgeAndEmptyText_ForAnActiveClass()
     {
@@ -175,7 +375,7 @@ public class ClassesOverviewViewModelTests
         var gate = new QueryGatedContextFactory(env.Options);
         var logger = new CapturingLogger<ClassesOverviewViewModel>();
         var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
-        var vm = new ClassesOverviewViewModel(navigator, gate, env.Snackbar, logger);
+        var vm = new ClassesOverviewViewModel(navigator, gate, YearService(env, gate), env.Snackbar, logger);
 
         var held = gate.HoldNextQueryAsync(out var release);
         vm.ShowInactiveClasses = true;
@@ -213,10 +413,10 @@ public class ClassesOverviewViewModelTests
     {
         using var env = new LockTestEnvironment(Now);
         await SeedAsync(env);
-        var flaky = new FlakyContextFactory(env.Factory, 1);
+        var flaky = new FlakyContextFactory(env.Factory, 2);
         var logger = new CapturingLogger<ClassesOverviewViewModel>();
         var navigator = new PageNavigator(FakeNavigationService.Create(), NullLogger<PageNavigator>.Instance, _ => { });
-        var vm = new ClassesOverviewViewModel(navigator, flaky, env.Snackbar, logger);
+        var vm = new ClassesOverviewViewModel(navigator, flaky, YearService(env, flaky), env.Snackbar, logger);
         await vm.LoadClassesCommand.ExecuteAsync(null);
         var listed = vm.Classes;
 

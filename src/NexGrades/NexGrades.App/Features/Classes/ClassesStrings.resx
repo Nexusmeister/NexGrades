@@ -7,7 +7,7 @@
   <data name="Classes_Overview_Title" xml:space="preserve"><value>Classes</value></data>
   <data name="Classes_Overview_Add" xml:space="preserve"><value>Add class</value></data>
   <data name="Classes_Overview_Edit" xml:space="preserve"><value>Edit class</value></data>
-  <data name="Classes_Overview_Empty" xml:space="preserve"><value>No classes yet. Use Add class to create one.</value></data>
+  <data name="Classes_Overview_Empty" xml:space="preserve"><value>There are no classes in this school year.</value></data>
   <data name="Classes_Grid_Name_Header" xml:space="preserve"><value>Name</value></data>
   <data name="Classes_Overview_Cohort_Header" xml:space="preserve"><value>Cohort</value></data>
   <data name="Classes_Overview_Students_Header" xml:space="preserve"><value>Students</value></data>
@@ -42,6 +42,10 @@
   <data name="Classes_ClassPage_Saved" xml:space="preserve"><value>Class has been saved.</value></data>
   <data name="Classes_Overview_SelectToEdit" xml:space="preserve"><value>Please select a class to edit.</value></data>
   <data name="Classes_Overview_ShowInactive" xml:space="preserve"><value>Show rolled-forward and archived classes</value></data>
+  <data name="Classes_Overview_SchoolYear" xml:space="preserve"><value>School year</value></data>
+  <data name="Classes_Overview_Year_Planned" xml:space="preserve"><value>(Planned)</value></data>
+  <data name="Classes_Overview_Year_Active" xml:space="preserve"><value>(Active)</value></data>
+  <data name="Classes_Overview_Year_Closed" xml:space="preserve"><value>(Closed)</value></data>
   <data name="Classes_Status_RolledForward" xml:space="preserve"><value>Rolled forward</value></data>
   <data name="Classes_Status_Archived" xml:space="preserve"><value>Archived</value></data>
 </root>

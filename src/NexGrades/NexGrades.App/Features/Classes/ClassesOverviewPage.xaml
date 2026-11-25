@@ -23,6 +23,31 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/NexGrades.App;component/DesignSystem/DesignSystem.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Year label followed by its localized status, e.g. "2026/27 (Active)". -->
+            <DataTemplate x:Key="SchoolYearChoiceTemplate">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Label}" />
+                    <TextBlock Margin="8,0,0,0"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="Planned">
+                                        <Setter Property="Text" Value="{loc:Text Classes_Overview_Year_Planned}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Active">
+                                        <Setter Property="Text" Value="{loc:Text Classes_Overview_Year_Active}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Closed">
+                                        <Setter Property="Text" Value="{loc:Text Classes_Overview_Year_Closed}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </DataTemplate>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -47,6 +72,15 @@
                        Content="{loc:Text Classes_Overview_Edit}"
                        Icon="{ui:SymbolIcon Edit24}"
                        Command="{Binding ViewModel.EditClassCommand}" />
+            <HeaderedContentControl Header="{loc:Text Classes_Overview_SchoolYear}"
+                                    Margin="{StaticResource Ng.Margin.ActionItem}"
+                                    Style="{StaticResource Ng.FormField}">
+                <ComboBox MinWidth="200"
+                          AutomationProperties.Name="{loc:Text Classes_Overview_SchoolYear}"
+                          ItemsSource="{Binding ViewModel.Years}"
+                          SelectedItem="{Binding ViewModel.SelectedYear, Mode=TwoWay}"
+                          ItemTemplate="{StaticResource SchoolYearChoiceTemplate}" />
+            </HeaderedContentControl>
             <ui:ToggleSwitch Margin="{StaticResource Ng.Margin.ActionItem}"
                              VerticalAlignment="Center"
                              Content="{loc:Text Classes_Overview_ShowInactive}"
